@@ -5,7 +5,6 @@ import { applyCardAriaLabel } from "./card-label.js";
 import { GITHUB_README_URL, GITHUB_REPO_URL, creditsPanelHtml } from "./credits.js";
 import { fillDuelCard } from "./duel-card.js";
 import { hpFillWidth } from "./hp-bar.js";
-import { bindHoloTilt } from "./holo.js";
 import { applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
 import { runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
@@ -761,13 +760,11 @@ export async function initGame({ requireApi = false } = {}) {
     const losses = state.losses[id] || 0;
     const wr = winRate(state, id);
     const barWidth = hpFillWidth(wins, losses, wr);
-    const leaderId = findLeaderId(candidates.map((candidate) => candidate.id), state);
-    const rarity = rarityFor(state, id, leaderId);
     el.dataset.id = id;
-    el.dataset.rarity = rarity.id;
+    el.removeAttribute("data-rarity");
     clearPickFeedback(el);
     applyCardAriaLabel(el, c);
-    fillDuelCard(el, c, { elo, wr, barWidth, rarity, crowned: id === leaderId });
+    fillDuelCard(el, c, { elo, wr, barWidth });
   }
 
   function nextDuel() {
@@ -978,7 +975,6 @@ export async function initGame({ requireApi = false } = {}) {
   els.cardB.addEventListener("click", () => pick(els.cardB));
   els.modePresidentes.addEventListener("click", () => setMode("presidentes"));
   els.modeVices.addEventListener("click", () => setMode("vices"));
-  bindHoloTilt([els.cardA, els.cardB, els.tournamentCardA, els.tournamentCardB]);
   document.addEventListener("keydown", handleQuickControlKey);
   els.duelCards.addEventListener("pointerdown", beginSwipe);
   els.duelCards.addEventListener("pointermove", moveSwipe);

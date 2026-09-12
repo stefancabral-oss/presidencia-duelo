@@ -117,6 +117,19 @@ test("duel progress bar and goal modal match the existing card theme", () => {
   assert.match(reduced, /transition:\s*none/);
 });
 
+test("combo banner and achievement toast match the gold card theme", () => {
+  assert.match(clean, /\.combo-banner\[hidden\]\s*\{[^}]*display:\s*none/);
+  assert.match(clean, /\.combo-label\.combo-pop\s*\{[^}]*animation:\s*combo-pop/);
+  assert.match(clean, /@keyframes combo-pop/);
+  assert.match(clean, /\.achievement-toast\s*\{[^}]*animation:\s*achievement-toast-in/);
+  assert.match(clean, /@keyframes achievement-toast-in/);
+  assert.match(clean, /\.achievement-chip\.unlocked\s*\{/);
+  const reduced = mediaBlocks(clean, "(prefers-reduced-motion: reduce)").join("\n");
+  assert.match(reduced, /\.combo-label\.combo-pop/);
+  assert.match(reduced, /\.achievement-toast/);
+  assert.match(reduced, /animation:\s*none/);
+});
+
 test("zebra badge stamps on the winner card and respects reduced motion", () => {
   assert.match(clean, /\.zebra-badge\s*\{[^}]*animation:\s*zebra-stamp/);
   assert.match(clean, /@keyframes zebra-stamp/);

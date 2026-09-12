@@ -223,9 +223,11 @@ h1 {
   animation: pick-flash .42s ease-out;
 }
 .poke-card.picked-lose {
+  animation: pick-shake .42s ease-in-out;
+}
+.poke-card.picked-lose > :not(.elo-float) {
   opacity: .55;
   filter: grayscale(.4);
-  animation: pick-shake .42s ease-in-out;
 }
 
 .elo-float {

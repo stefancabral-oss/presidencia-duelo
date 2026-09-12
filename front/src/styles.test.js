@@ -76,6 +76,12 @@ test("elo-float uses win green and lose red", () => {
   assert.match(clean, /@keyframes elo-float-pop/);
 });
 
+test("loser dimming does not gray out the floating Elo delta", () => {
+  assert.match(clean, /\.poke-card\.picked-lose\s*>\s*:not\(\.elo-float\)\s*\{/);
+  assert.doesNotMatch(clean, /\.poke-card\.picked-lose\s*\{[^}]*\bopacity:/);
+  assert.doesNotMatch(clean, /\.poke-card\.picked-lose\s*\{[^}]*\bfilter:/);
+});
+
 test("prefers-reduced-motion disables pick shake, flash, and float", () => {
   const reduced = mediaBlocks(clean, "(prefers-reduced-motion: reduce)").join("\n");
   assert.ok(reduced.length > 0, "expected @media (prefers-reduced-motion: reduce)");

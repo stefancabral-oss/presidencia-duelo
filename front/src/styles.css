@@ -516,6 +516,123 @@ h1 {
   align-items: center;
   margin-bottom: 12px;
 }
+
+.tournament-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.tournament-bracket {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(190px, 1fr);
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 2px 12px;
+  scrollbar-color: var(--gold2) var(--bg2);
+}
+.bracket-round h3 {
+  margin: 0 0 8px;
+  color: var(--gold);
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.bracket-match,
+.bracket-byes {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 7px;
+  padding: 6px;
+  border: 1px solid #334155;
+  border-radius: 9px;
+  background: rgba(11, 18, 32, .72);
+}
+.bracket-match.active {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(246, 216, 96, .22);
+}
+.bracket-candidate,
+.bracket-byes span {
+  overflow: hidden;
+  padding: 3px 5px;
+  color: var(--muted);
+  font-size: .7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bracket-candidate.winner {
+  color: #052e16;
+  background: var(--win);
+  border-radius: 5px;
+  font-weight: 800;
+}
+.bracket-byes strong {
+  padding: 2px 5px;
+  color: var(--accent);
+  font-size: .68rem;
+}
+.tournament-stage {
+  margin-top: 4px;
+  padding: 14px;
+  border: 1px solid #334155;
+  border-radius: var(--radius);
+  background: rgba(18, 26, 43, .74);
+}
+.tournament-round {
+  margin: 0 0 12px;
+  color: var(--gold);
+  font-weight: 800;
+  text-align: center;
+}
+.tournament-stage .poke-card .hp-bar,
+.tournament-stage .poke-card .elo-mini {
+  display: none;
+}
+.tournament-winner {
+  text-align: center;
+}
+.tournament-winner[hidden],
+#tournament-duel[hidden] {
+  display: none;
+}
+.tournament-kicker {
+  margin: 0 0 5px;
+  color: var(--gold);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: .78rem;
+}
+.tournament-winner h2 {
+  margin: 0 0 14px;
+  font-size: clamp(1.35rem, 5vw, 2rem);
+}
+.tournament-winner-card {
+  width: min(230px, 78vw);
+  margin: 0 auto 16px;
+  padding: 10px;
+  border: 3px solid var(--gold);
+  border-radius: var(--radius);
+  background: linear-gradient(160deg, #2b3550, #151c2c 60%, #0f1420);
+  box-shadow: var(--shadow);
+}
+.tournament-winner-card img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 11px;
+}
+.tournament-winner-card strong,
+.tournament-winner-card span {
+  display: block;
+}
+.tournament-winner-card strong { margin-top: 8px; }
+.tournament-winner-card span { margin-top: 3px; color: var(--accent); font-size: .8rem; font-weight: 800; }
 .ranking-actions {
   display: flex;
   flex-wrap: wrap;

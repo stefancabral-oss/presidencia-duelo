@@ -212,7 +212,7 @@ test("resetCombo clears sequência; unlocks are not revoked", () => {
   assert.deepEqual(unlockDueAchievements(state, { candidateIds: ["a", "b"] }), []);
 });
 
-test("game wires toast, combo, persist migrate, and does not add tournament mode", () => {
+test("game wires toast, combo, persistence, and tournament completion", () => {
   assert.match(gameSrc, /id="combo-banner"/);
   assert.match(gameSrc, /id="achievement-toasts"/);
   assert.match(gameSrc, /id="achievements-list"/);
@@ -223,6 +223,7 @@ test("game wires toast, combo, persist migrate, and does not add tournament mode
   assert.match(gameSrc, /achievements: \[\]/);
   assert.match(gameSrc, /x5 combo|combo-label/);
   assert.match(gameSrc, /milestones stay unlocked|resetCombo/);
-  assert.doesNotMatch(gameSrc, /Modo Torneio|mata-mata|tab-tournament/);
+  assert.match(gameSrc, /unlockTournamentCompleted\(state\)/);
+  assert.match(gameSrc, /tab-tournament/);
   assert.equal(ACHIEVEMENT_IDS.includes(COMPLETOU_TORNEIO), true);
 });

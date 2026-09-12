@@ -2,6 +2,8 @@
 
 Monorepo do jogo web casual estilo **Facemash**: dois candidatos à Presidência do Brasil (2026) lado a lado; você escolhe um; surge o próximo par aleatório; o ranking Elo fica no `localStorage` e, se a API estiver no ar, também num agregado no servidor.
 
+Além do duelo contínuo, a aba **Torneio** oferece um mata-mata conclusivo com os 12 candidatos: oito disputam a primeira rodada e quatro avançam direto, seguindo por quartas, semifinais e final. São 11 escolhas até a tela “Seu presidente é X”, com compartilhamento do resultado. O torneio é salvo separadamente e não altera o Elo local nem o agregado da API.
+
 > **Não é pesquisa oficial.** Não mede intenção de voto real. É só entretenimento.
 
 ```

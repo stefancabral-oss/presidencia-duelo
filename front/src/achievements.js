@@ -8,10 +8,7 @@
  * on undo. pairCount is show history and is not reverted, so
  * "Viu todos os candidatos" also stays if it already unlocked.
  *
- * Tournament mode (#15) is not implemented here. `completou-torneio`
- * unlocks only when a completion flag is already detectable on state
- * (`tournamentCompleted`, `tournamentWinner`, or `tournament.completed` /
- * `tournament.winner`). Call `unlockTournamentCompleted` when #15 lands.
+ * Tournament mode calls `unlockTournamentCompleted` when a champion is chosen.
  */
 
 import { unseenCandidateIds } from "./matchmaking.js";
@@ -110,8 +107,7 @@ export function hasSeenAllCandidates(candidateIds, pairCount) {
 }
 
 /**
- * Detect tournament completion without implementing #15.
- * Future tournament mode can set any of these flags.
+ * Detect tournament completion from persisted compatibility flags.
  */
 export function isTournamentCompleted(state) {
   if (!state || typeof state !== "object") return false;

@@ -1,6 +1,7 @@
 import FALLBACK_CANDIDATES from "../../shared/candidates.json";
 import { applyElo } from "../../shared/elo.js";
 import { fetchCandidates, fetchHealth, fetchServerRanking, postVote } from "./api.js";
+import { hpFillWidth } from "./hp-bar.js";
 
 const STORAGE_KEY = "presidencia-duelo-v1";
 const ELO_START = 1000;
@@ -218,7 +219,10 @@ export async function initGame() {
   function renderCard(el, id) {
     const c = byId[id];
     const elo = state.ratings[id];
+    const wins = state.wins[id] || 0;
+    const losses = state.losses[id] || 0;
     const wr = winRate(state, id);
+    const barWidth = hpFillWidth(wins, losses, wr);
     el.dataset.id = id;
     el.classList.remove("picked-win", "picked-lose");
     el.innerHTML = `
@@ -233,7 +237,7 @@ export async function initGame() {
       </div>
       <div class="card-bottom">
         <div class="vice">Vice: <strong>${escapeHtml(c.vice)}</strong></div>
-        <div class="hp-bar" aria-hidden="true"><div class="hp-fill" style="width:${Math.min(100, Math.max(18, wr || 55))}%"></div></div>
+        <div class="hp-bar" aria-hidden="true"><div class="hp-fill" style="width:${barWidth}%"></div></div>
         <div class="elo-mini">Elo ${elo} · ${wr}% vitórias</div>
       </div>
     `;

@@ -10,6 +10,7 @@ import { runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
 import { RANKING_SUBTITLE, rankMetaText, sortCandidatesByRank } from "./ranking.js";
 import { saveState, STORAGE_KEY, STORAGE_UNAVAILABLE_MESSAGE } from "./storage.js";
+import { lastDuelFromParsed, restoreDuel, snapshotDuel, undoPair } from "./undo.js";
 
 const ELO_START = 1000;
 
@@ -22,7 +23,7 @@ function escapeHtml(value) {
 }
 
 function defaultState(candidates) {
-  return { ...emptyStats(candidates.map((c) => c.id)), lastPair: null };
+  return { ...emptyStats(candidates.map((c) => c.id)), lastPair: null, lastDuel: null };
 }
 
 function loadState(candidates) {
@@ -33,6 +34,7 @@ function loadState(candidates) {
     return {
       ...mergeStats(defaultState(candidates), parsed),
       lastPair: parsed.lastPair || null,
+      lastDuel: lastDuelFromParsed(parsed),
     };
   } catch {
     return defaultState(candidates);
@@ -105,6 +107,10 @@ function renderShell(root) {
           <button type="button" class="poke-card" id="card-a"></button>
           <div class="vs-badge" aria-hidden="true">VS</div>
           <button type="button" class="poke-card" id="card-b"></button>
+        </div>
+
+        <div class="duel-actions">
+          <button type="button" class="btn" id="undo-duel" disabled>Desfazer</button>
         </div>
 
         <p class="hint">Cards inspirados em cromos/Pokémon · fotos reais (Wikimedia) · funciona offline após o cache</p>
@@ -193,6 +199,7 @@ export async function initGame() {
     duelCount: document.getElementById("duel-count"),
     cardA: document.getElementById("card-a"),
     cardB: document.getElementById("card-b"),
+    undoBtn: document.getElementById("undo-duel"),
     rankList: document.getElementById("rank-list"),
     resetBtn: document.getElementById("reset-ranking"),
     serverWrap: document.getElementById("server-rank-wrap"),
@@ -208,6 +215,18 @@ export async function initGame() {
   let state = loadState(candidates);
   let currentPair = null;
   let locked = false;
+  let pickTimer = null;
+
+  function cancelPickTimer() {
+    if (pickTimer == null) return;
+    clearTimeout(pickTimer);
+    pickTimer = null;
+  }
+
+  function syncUndoButton() {
+    if (!els.undoBtn) return;
+    els.undoBtn.disabled = !state.lastDuel;
+  }
 
   function setTab(name) {
     const tabs = [
@@ -241,24 +260,28 @@ export async function initGame() {
 
   function nextDuel() {
     locked = false;
+    pickTimer = null;
     currentPair = randomPair(candidates, state);
     state.lastPair = currentPair;
     persist();
     renderCard(els.cardA, currentPair[0]);
     renderCard(els.cardB, currentPair[1]);
     els.duelCount.textContent = String(state.duels);
+    syncUndoButton();
   }
 
   function pick(winnerEl) {
     if (locked || !currentPair) return;
     locked = true;
-    runLockedPick(() => {
+    pickTimer = runLockedPick(() => {
       const winnerId = winnerEl.dataset.id;
       const loserId = currentPair[0] === winnerId ? currentPair[1] : currentPair[0];
       const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
 
+      state.lastDuel = snapshotDuel(state, winnerId, loserId, currentPair);
       const { winnerDelta, loserDelta, zebra } = applyElo(state, winnerId, loserId);
       persist();
+      syncUndoButton();
 
       if (apiOnline) {
         postVote(winnerId, loserId).catch(() => {
@@ -272,6 +295,28 @@ export async function initGame() {
       applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta, { zebra });
       els.duelCount.textContent = String(state.duels);
     }, nextDuel);
+  }
+
+  function undoLastDuel() {
+    const snap = state.lastDuel;
+    if (!restoreDuel(state, snap)) return;
+    cancelPickTimer();
+    const pair = undoPair(snap);
+    state.lastDuel = null;
+    if (pair && byId[pair[0]] && byId[pair[1]]) {
+      currentPair = pair;
+      state.lastPair = pair;
+    }
+    persist();
+    locked = false;
+    clearPickFeedback(els.cardA);
+    clearPickFeedback(els.cardB);
+    if (currentPair) {
+      renderCard(els.cardA, currentPair[0]);
+      renderCard(els.cardB, currentPair[1]);
+    }
+    els.duelCount.textContent = String(state.duels);
+    syncUndoButton();
   }
 
   function renderRanking() {
@@ -319,9 +364,11 @@ export async function initGame() {
   els.openCredits.addEventListener("click", () => setTab("credits"));
   els.cardA.addEventListener("click", () => pick(els.cardA));
   els.cardB.addEventListener("click", () => pick(els.cardB));
+  els.undoBtn.addEventListener("click", () => undoLastDuel());
 
   els.resetBtn.addEventListener("click", () => {
     if (!confirm("Zerar ranking e duelos salvos neste aparelho?")) return;
+    cancelPickTimer();
     state = defaultState(candidates);
     persist();
     nextDuel();

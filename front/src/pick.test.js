@@ -4,13 +4,17 @@ import { runLockedPick } from "./pick.js";
 
 test("runLockedPick schedules onDone after a successful pick", () => {
   const calls = [];
-  runLockedPick(
+  const timer = runLockedPick(
     () => calls.push("work"),
     () => calls.push("done"),
-    (fn) => fn(),
+    (fn) => {
+      fn();
+      return 77;
+    },
     0,
   );
   assert.deepEqual(calls, ["work", "done"]);
+  assert.equal(timer, 77);
 });
 
 test("runLockedPick still unlocks when work throws (save/DOM failure)", () => {

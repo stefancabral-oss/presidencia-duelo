@@ -118,6 +118,7 @@ h1 {
 
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
   margin-bottom: 16px;
@@ -396,6 +397,35 @@ h1 {
   font-size: .7rem;
 }
 
+.credits-intro,
+.credits-notes {
+  color: var(--muted);
+  font-size: .8rem;
+  line-height: 1.4;
+}
+.credits-intro { margin: 0 0 14px; }
+.credits-notes { margin: 16px 0 0; }
+.credits-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.credit-item {
+  background: rgba(26, 35, 56, .9);
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+.credit-name { font-weight: 800; font-size: .92rem; }
+.credit-meta {
+  font-size: .75rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.credit-meta a { color: var(--gold); }
+
 footer {
   margin-top: 28px;
   text-align: center;
@@ -403,6 +433,16 @@ footer {
   font-size: .75rem;
 }
 footer a { color: var(--gold); }
+.footer-link {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--gold);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
 
 @media (max-width: 520px) {
   .vs-row { gap: 6px; }

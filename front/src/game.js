@@ -5,6 +5,7 @@ import { applyCardAriaLabel } from "./card-label.js";
 import { GITHUB_README_URL, GITHUB_REPO_URL, creditsPanelHtml } from "./credits.js";
 import { fillDuelCard } from "./duel-card.js";
 import { hpFillWidth } from "./hp-bar.js";
+import { bindHoloTilt } from "./holo.js";
 import { applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
 import { runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
@@ -23,6 +24,7 @@ import {
   SHARE_TITLE,
 } from "./podium.js";
 import { RANKING_SUBTITLE, rankMetaText, sortCandidatesByRank } from "./ranking.js";
+import { findLeaderId, rarityFor } from "./rarity.js";
 import { normalizePairCount, takeNextPair } from "./matchmaking.js";
 import {
   INITIAL_GOAL,
@@ -59,6 +61,7 @@ import {
   tournamentPick,
 } from "./tournament.js";
 import { lastDuelFromParsed, restoreDuel, snapshotDuel, undoPair } from "./undo.js";
+import { MODES, VICE_STORAGE_KEY, candidateForMode } from "./vice-mode.js";
 
 const ELO_START = 1000;
 
@@ -84,9 +87,9 @@ function defaultState(candidates) {
   };
 }
 
-function loadState(candidates) {
+function loadState(candidates, storageKey = STORAGE_KEY) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey);
     if (!raw) return defaultState(candidates);
     const parsed = JSON.parse(raw);
     const merged = mergeStats(defaultState(candidates), parsed);
@@ -145,11 +148,16 @@ function renderShell(root) {
       </nav>
 
       <section id="panel-duel" class="panel active" aria-label="Duelo">
+        <div class="mode-switch" aria-label="Categoria do duelo">
+          <span class="mode-label">Disputar:</span>
+          <button type="button" class="mode-btn active" id="mode-presidentes" aria-pressed="true">Presidentes</button>
+          <button type="button" class="mode-btn" id="mode-vices" aria-pressed="false">Vices</button>
+        </div>
         <div class="combo-banner" id="combo-banner" hidden>
           <span class="combo-label" id="combo-label"></span>
         </div>
         <div class="duel-stats">
-          <span>Toque no candidato preferido</span>
+          <span id="duel-prompt">Toque no candidato preferido</span>
           <span>Duelos: <strong id="duel-count">0</strong></span>
         </div>
 
@@ -232,7 +240,7 @@ function renderShell(root) {
       <section id="panel-rank" class="panel" aria-label="Ranking">
         <div class="ranking-toolbar">
           <div>
-            <strong>Ranking Elo local</strong>
+            <strong>Ranking Elo · <span id="rank-mode">Presidentes</span></strong>
             <div class="rank-sub">${RANKING_SUBTITLE}</div>
           </div>
           <div class="ranking-actions">
@@ -283,20 +291,21 @@ function renderShell(root) {
   `;
 }
 
-function renderRankItems(candidates, byId, getStats) {
+function renderRankItems(candidates, byId, getStats, getRarity = () => null) {
   const ranked = sortCandidatesByRank(candidates, getStats);
 
   return ranked
     .map((c, i) => {
       const { elo, wins, losses, wr, zebras = 0 } = getStats(c.id);
+      const rarity = getRarity(c.id);
       return `
-        <li class="rank-item">
+        <li class="rank-item"${rarity ? ` data-rarity="${rarity.id}"` : ""}>
           <div class="rank-pos">${i + 1}º</div>
           <img src="${escapeHtml(c.photo)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';" />
           <div class="rank-ph" style="display:none">${escapeHtml(c.initials)}</div>
           <div>
             <div class="rank-name">${escapeHtml(c.name)}</div>
-            <div class="rank-meta">${escapeHtml(rankMetaText({ party: c.party, vice: c.vice, wins, losses, zebras }))}</div>
+            <div class="rank-meta">${rarity ? `<span class="rarity-tag">${escapeHtml(rarity.label)}</span>` : ""}${escapeHtml(rankMetaText({ party: c.party, vice: c.vice, wins, losses, zebras }))}</div>
           </div>
           <div class="rank-score">${elo}<small>${wr}% vitórias</small></div>
         </li>`;
@@ -335,6 +344,10 @@ export async function initGame() {
     tabRank: document.getElementById("tab-rank"),
     tabCredits: document.getElementById("tab-credits"),
     openCredits: document.getElementById("open-credits"),
+    duelPrompt: document.getElementById("duel-prompt"),
+    rankMode: document.getElementById("rank-mode"),
+    modePresidentes: document.getElementById("mode-presidentes"),
+    modeVices: document.getElementById("mode-vices"),
     duelCount: document.getElementById("duel-count"),
     comboBanner: document.getElementById("combo-banner"),
     comboLabel: document.getElementById("combo-label"),
@@ -383,11 +396,17 @@ export async function initGame() {
   };
 
   function persist() {
-    if (saveState(state)) return;
+    const key = mode === "vices" ? VICE_STORAGE_KEY : STORAGE_KEY;
+    if (saveState(state, undefined, key)) return;
     if (els.storageNotice) els.storageNotice.hidden = false;
   }
 
-  let state = loadState(candidates);
+  const states = {
+    presidentes: loadState(candidates),
+    vices: loadState(candidates, VICE_STORAGE_KEY),
+  };
+  let mode = "presidentes";
+  let state = states[mode];
   let currentPair = null;
   let locked = false;
   let pickTimer = null;
@@ -413,6 +432,40 @@ export async function initGame() {
   let swipeStartX = null;
   let swipePointerId = null;
 
+  function displayCandidates() {
+    return candidates.map((candidate) => candidateForMode(candidate, mode));
+  }
+
+  function displayCandidate(id) {
+    return candidateForMode(byId[id], mode);
+  }
+
+  function renderModeUi() {
+    const config = MODES[mode];
+    const isPresidentes = mode === "presidentes";
+    els.modePresidentes.classList.toggle("active", isPresidentes);
+    els.modePresidentes.setAttribute("aria-pressed", String(isPresidentes));
+    els.modeVices.classList.toggle("active", !isPresidentes);
+    els.modeVices.setAttribute("aria-pressed", String(!isPresidentes));
+    els.duelPrompt.textContent = `Toque no ${config.singular} preferido`;
+    els.rankMode.textContent = config.label;
+  }
+
+  function setMode(nextMode) {
+    if (!MODES[nextMode] || nextMode === mode) return;
+    cancelPickTimer();
+    locked = false;
+    mode = nextMode;
+    state = states[mode];
+    currentPair = null;
+    hideGoalMoment();
+    closePodium();
+    renderModeUi();
+    nextDuel();
+    renderRanking();
+    renderServerRanking();
+  }
+
   function cancelPickTimer() {
     if (pickTimer == null) return;
     clearTimeout(pickTimer);
@@ -429,11 +482,11 @@ export async function initGame() {
       elo: state.ratings[id],
       wins: state.wins[id] || 0,
     }));
-    return byId[ranked[0]?.id]?.name || "";
+    return ranked[0] ? displayCandidate(ranked[0].id).name : "";
   }
 
   function localPodiumPlaces() {
-    return selectTopThree(candidates, (id) => ({
+    return selectTopThree(displayCandidates(), (id) => ({
       elo: state.ratings[id],
       wins: state.wins[id] || 0,
       losses: state.losses[id] || 0,
@@ -681,16 +734,19 @@ export async function initGame() {
   }
 
   function renderCard(el, id) {
-    const c = byId[id];
+    const c = displayCandidate(id);
     const elo = state.ratings[id];
     const wins = state.wins[id] || 0;
     const losses = state.losses[id] || 0;
     const wr = winRate(state, id);
     const barWidth = hpFillWidth(wins, losses, wr);
+    const leaderId = findLeaderId(candidates.map((candidate) => candidate.id), state);
+    const rarity = rarityFor(state, id, leaderId);
     el.dataset.id = id;
+    el.dataset.rarity = rarity.id;
     clearPickFeedback(el);
     applyCardAriaLabel(el, c);
-    fillDuelCard(el, c, { elo, wr, barWidth });
+    fillDuelCard(el, c, { elo, wr, barWidth, rarity, crowned: id === leaderId });
   }
 
   function nextDuel() {
@@ -724,7 +780,7 @@ export async function initGame() {
       persist();
       syncUndoButton();
 
-      if (apiOnline) {
+      if (apiOnline && mode === "presidentes") {
         postVote(winnerId, loserId).catch(() => {
           apiOnline = false;
           statusEl.textContent = "Modo local — falha ao enviar voto; o ranking deste aparelho segue intacto";
@@ -821,17 +877,20 @@ export async function initGame() {
   }
 
   function renderRanking() {
-    els.rankList.innerHTML = renderRankItems(candidates, byId, (id) => ({
+    const visible = displayCandidates();
+    const visibleById = Object.fromEntries(visible.map((candidate) => [candidate.id, candidate]));
+    const leaderId = findLeaderId(candidates.map((candidate) => candidate.id), state);
+    els.rankList.innerHTML = renderRankItems(visible, visibleById, (id) => ({
       elo: state.ratings[id],
       wins: state.wins[id] || 0,
       losses: state.losses[id] || 0,
       wr: winRate(state, id),
       zebras: state.zebras?.[id] || 0,
-    }));
+    }), (id) => rarityFor(state, id, leaderId));
   }
 
   async function renderServerRanking() {
-    if (!apiOnline) {
+    if (!apiOnline || mode === "vices") {
       els.serverWrap.hidden = true;
       return;
     }
@@ -866,6 +925,9 @@ export async function initGame() {
   els.openCredits.addEventListener("click", () => setTab("credits"));
   els.cardA.addEventListener("click", () => pick(els.cardA));
   els.cardB.addEventListener("click", () => pick(els.cardB));
+  els.modePresidentes.addEventListener("click", () => setMode("presidentes"));
+  els.modeVices.addEventListener("click", () => setMode("vices"));
+  bindHoloTilt([els.cardA, els.cardB, els.tournamentCardA, els.tournamentCardB]);
   document.addEventListener("keydown", handleQuickControlKey);
   els.duelCards.addEventListener("pointerdown", beginSwipe);
   els.duelCards.addEventListener("pointermove", moveSwipe);
@@ -898,7 +960,8 @@ export async function initGame() {
     cancelPickTimer();
     hideGoalMoment();
     closePodium();
-    state = defaultState(candidates);
+    states[mode] = defaultState(candidates);
+    state = states[mode];
     persist();
     nextDuel();
     renderRanking();
@@ -906,6 +969,7 @@ export async function initGame() {
     renderCombo();
   });
 
+  renderModeUi();
   renderAchievements();
   renderCombo();
   nextDuel();

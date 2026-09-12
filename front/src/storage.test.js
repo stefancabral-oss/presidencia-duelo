@@ -14,6 +14,13 @@ test("saveState writes JSON when setItem works", () => {
   assert.equal(store.get(STORAGE_KEY), JSON.stringify(state));
 });
 
+test("saveState can persist an independent ranking under another key", () => {
+  const store = new Map();
+  const storage = { setItem: (key, value) => store.set(key, value) };
+  assert.equal(saveState({ duels: 2 }, storage, "presidencia-duelo-vices-v1"), true);
+  assert.equal(JSON.parse(store.get("presidencia-duelo-vices-v1")).duels, 2);
+});
+
 test("saveState swallows setItem throws and continues in memory", () => {
   const storage = {
     setItem() {

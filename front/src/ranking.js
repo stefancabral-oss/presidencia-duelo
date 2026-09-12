@@ -10,6 +10,20 @@
 export const RANKING_SUBTITLE =
   "Ordenado por Elo; vitórias como desempate visual. Sempre funciona no aparelho.";
 
+export function formatZebraCount(count) {
+  const n = Math.max(0, Math.trunc(Number(count)));
+  if (!Number.isFinite(n)) return "0 zebras";
+  return n === 1 ? "1 zebra" : `${n} zebras`;
+}
+
+/** Ranking row subtitle: party, vice, W/L, and zebra count when there is at least one. */
+export function rankMetaText({ party, vice, wins, losses, zebras = 0 }) {
+  const record = `${wins}V / ${losses}D`;
+  const n = Math.max(0, Math.trunc(Number(zebras) || 0));
+  if (n <= 0) return `${party} · vice ${vice} · ${record}`;
+  return `${party} · vice ${vice} · ${record} · ${formatZebraCount(n)}`;
+}
+
 export function compareRankStats(a, b) {
   const eloDelta = a.elo - b.elo;
   if (eloDelta !== 0) return -eloDelta;

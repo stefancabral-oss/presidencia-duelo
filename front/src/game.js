@@ -1,5 +1,5 @@
 import FALLBACK_CANDIDATES from "../../shared/candidates.json";
-import { applyElo } from "../../shared/elo.js";
+import { applyElo, emptyStats, mergeStats } from "../../shared/elo.js";
 import { fetchCandidates, fetchHealth, fetchServerRanking, postVote } from "./api.js";
 import { applyCardAriaLabel } from "./card-label.js";
 import { GITHUB_README_URL, GITHUB_REPO_URL, creditsPanelHtml } from "./credits.js";
@@ -8,7 +8,7 @@ import { hpFillWidth } from "./hp-bar.js";
 import { applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
 import { runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
-import { RANKING_SUBTITLE, sortCandidatesByRank } from "./ranking.js";
+import { RANKING_SUBTITLE, rankMetaText, sortCandidatesByRank } from "./ranking.js";
 import { saveState, STORAGE_KEY, STORAGE_UNAVAILABLE_MESSAGE } from "./storage.js";
 
 const ELO_START = 1000;
@@ -22,15 +22,7 @@ function escapeHtml(value) {
 }
 
 function defaultState(candidates) {
-  const ratings = {};
-  const wins = {};
-  const losses = {};
-  candidates.forEach((c) => {
-    ratings[c.id] = ELO_START;
-    wins[c.id] = 0;
-    losses[c.id] = 0;
-  });
-  return { ratings, wins, losses, duels: 0, lastPair: null };
+  return { ...emptyStats(candidates.map((c) => c.id)), lastPair: null };
 }
 
 function loadState(candidates) {
@@ -38,12 +30,8 @@ function loadState(candidates) {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultState(candidates);
     const parsed = JSON.parse(raw);
-    const base = defaultState(candidates);
     return {
-      ratings: { ...base.ratings, ...(parsed.ratings || {}) },
-      wins: { ...base.wins, ...(parsed.wins || {}) },
-      losses: { ...base.losses, ...(parsed.losses || {}) },
-      duels: parsed.duels || 0,
+      ...mergeStats(defaultState(candidates), parsed),
       lastPair: parsed.lastPair || null,
     };
   } catch {
@@ -157,7 +145,7 @@ function renderRankItems(candidates, byId, getStats) {
 
   return ranked
     .map((c, i) => {
-      const { elo, wins, losses, wr } = getStats(c.id);
+      const { elo, wins, losses, wr, zebras = 0 } = getStats(c.id);
       return `
         <li class="rank-item">
           <div class="rank-pos">${i + 1}º</div>
@@ -165,7 +153,7 @@ function renderRankItems(candidates, byId, getStats) {
           <div class="rank-ph" style="display:none">${escapeHtml(c.initials)}</div>
           <div>
             <div class="rank-name">${escapeHtml(c.name)}</div>
-            <div class="rank-meta">${escapeHtml(c.party)} · vice ${escapeHtml(c.vice)} · ${wins}V / ${losses}D</div>
+            <div class="rank-meta">${escapeHtml(rankMetaText({ party: c.party, vice: c.vice, wins, losses, zebras }))}</div>
           </div>
           <div class="rank-score">${elo}<small>${wr}% vitórias</small></div>
         </li>`;
@@ -269,7 +257,7 @@ export async function initGame() {
       const loserId = currentPair[0] === winnerId ? currentPair[1] : currentPair[0];
       const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
 
-      const { winnerDelta, loserDelta } = applyElo(state, winnerId, loserId);
+      const { winnerDelta, loserDelta, zebra } = applyElo(state, winnerId, loserId);
       persist();
 
       if (apiOnline) {
@@ -281,7 +269,7 @@ export async function initGame() {
         });
       }
 
-      applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta);
+      applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta, { zebra });
       els.duelCount.textContent = String(state.duels);
     }, nextDuel);
   }
@@ -292,6 +280,7 @@ export async function initGame() {
       wins: state.wins[id] || 0,
       losses: state.losses[id] || 0,
       wr: winRate(state, id),
+      zebras: state.zebras?.[id] || 0,
     }));
   }
 
@@ -309,12 +298,13 @@ export async function initGame() {
       }
       const stats = Object.fromEntries(rows.map((r) => [r.id, r]));
       els.serverList.innerHTML = renderRankItems(candidates, byId, (id) => {
-        const row = stats[id] || { elo: ELO_START, wins: 0, losses: 0, winRate: 0 };
+        const row = stats[id] || { elo: ELO_START, wins: 0, losses: 0, winRate: 0, zebras: 0 };
         return {
           elo: row.elo,
           wins: row.wins || 0,
           losses: row.losses || 0,
           wr: row.winRate ?? 0,
+          zebras: row.zebras || 0,
         };
       });
       els.serverWrap.hidden = false;

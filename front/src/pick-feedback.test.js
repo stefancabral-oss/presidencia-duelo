@@ -5,8 +5,10 @@ import {
   clearPickFeedback,
   formatEloDelta,
   showEloFloat,
+  showZebraBadge,
   tryVibrate,
   VIBRATE_MS,
+  ZEBRA_BADGE_TEXT,
 } from "./pick-feedback.js";
 
 function mockClassList() {
@@ -49,14 +51,46 @@ function mockCard() {
       },
     },
     querySelector(sel) {
-      if (sel === ".elo-float") return children[0] ?? null;
-      return null;
+      const cls = sel.startsWith(".") ? sel.slice(1) : sel;
+      if (cls === "art-frame") return null;
+      return children.find((child) => String(child.className).split(/\s+/).includes(cls)) ?? null;
     },
     appendChild(node) {
       children.push(node);
       return node;
     },
   };
+  return card;
+}
+
+function mockCardWithArt() {
+  const card = mockCard();
+  const artChildren = [];
+  const art = {
+    className: "art-frame",
+    children: artChildren,
+    ownerDocument: card.ownerDocument,
+    querySelector(sel) {
+      const cls = sel.startsWith(".") ? sel.slice(1) : sel;
+      return artChildren.find((child) => String(child.className).split(/\s+/).includes(cls)) ?? null;
+    },
+    appendChild(node) {
+      artChildren.push(node);
+      const origRemove = node.remove;
+      node.remove = () => {
+        const i = artChildren.indexOf(node);
+        if (i >= 0) artChildren.splice(i, 1);
+        origRemove?.();
+      };
+      return node;
+    },
+  };
+  const cardQuery = card.querySelector;
+  card.querySelector = (sel) => {
+    if (sel === ".art-frame") return art;
+    return cardQuery(sel) || art.querySelector(sel);
+  };
+  card.art = art;
   return card;
 }
 
@@ -128,4 +162,37 @@ test("clearPickFeedback removes hit classes and the float", () => {
   clearPickFeedback(el);
   assert.equal(el.classList.contains("picked-win"), false);
   assert.equal(el.children[0], undefined);
+});
+
+test("showZebraBadge stamps ZEBRA! on the photo frame and replaces a previous badge", () => {
+  const el = mockCardWithArt();
+  showZebraBadge(el);
+  showZebraBadge(el);
+  assert.equal(el.art.children.length, 1);
+  assert.equal(el.art.children[0].textContent, ZEBRA_BADGE_TEXT);
+  assert.equal(el.art.children[0].className, "zebra-badge");
+  assert.equal(el.art.children[0].attrs["aria-hidden"], "true");
+});
+
+test("applyPickFeedback stamps ZEBRA! on the winner only when zebra is true", () => {
+  const winner = mockCardWithArt();
+  const loser = mockCardWithArt();
+  applyPickFeedback(winner, loser, 20, -20, { zebra: true, navigator: { vibrate() {} } });
+  assert.equal(winner.art.children[0].textContent, "ZEBRA!");
+  assert.equal(loser.art.children.length, 0);
+
+  const evenWinner = mockCardWithArt();
+  applyPickFeedback(evenWinner, mockCardWithArt(), 16, -16, {
+    zebra: false,
+    navigator: { vibrate() {} },
+  });
+  assert.equal(evenWinner.art.children.length, 0);
+});
+
+test("clearPickFeedback also removes the zebra badge", () => {
+  const el = mockCardWithArt();
+  applyPickFeedback(el, mockCardWithArt(), 20, -20, { zebra: true, navigator: { vibrate() {} } });
+  clearPickFeedback(el);
+  assert.equal(el.children.length, 0);
+  assert.equal(el.art.children.length, 0);
 });

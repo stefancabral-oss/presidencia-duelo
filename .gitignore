@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+.env
+.env.local
+back/data/*.json
+!back/data/.gitkeep
+app/public/candidates/
+app/public/CREDITS.md
+app/public/icons/
+app/public/og-cover.png

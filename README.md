@@ -1,74 +1,121 @@
 # Presidência Duelo 2026
 
-Jogo web casual estilo **Facemash**: dois candidatos à Presidência do Brasil (2026) lado a lado; você escolhe um; surge o próximo par aleatório; o ranking Elo fica salvo no `localStorage` do navegador.
+Monorepo do jogo web casual estilo **Facemash**: dois candidatos à Presidência do Brasil (2026) lado a lado; você escolhe um; surge o próximo par aleatório; o ranking Elo fica no `localStorage` e, se a API estiver no ar, também num agregado no servidor.
+
+Além do duelo contínuo, a aba **Torneio** oferece um mata-mata conclusivo com os 12 candidatos: oito disputam a primeira rodada e quatro avançam direto, seguindo por quartas, semifinais e final. São 11 escolhas até a tela “Seu presidente é X”, com compartilhamento do resultado. O torneio é salvo separadamente e não altera o Elo local nem o agregado da API.
 
 > **Não é pesquisa oficial.** Não mede intenção de voto real. É só entretenimento.
 
-## Como abrir
-
-1. Abra o arquivo `index.html` no navegador (duplo clique ou “Abrir arquivo”).
-2. Funciona **offline** depois que as fotos em `candidates/` já estão no disco.
-3. Opcional (servidor local):
-
-```bash
-cd /workspace/presidencia-duelo
-python3 -m http.server 8080
-# depois acesse http://localhost:8080
+```
+/
+  README.md                 # este guia
+  CREDITS.md                # atribuição das fotos (Wikimedia)
+  shared/                   # lista dos 12 candidatos + Elo compartilhado
+  front/                    # UI web (Vite + vanilla JS)
+  back/                     # API (Node + Express)
+  app/                      # PWA (wrapper do mesmo jogo + manifest/SW)
 ```
 
-## Funcionalidades
+Pablo Marçal **não** está na lista. Fotos reais em `front/public/candidates/` — nenhuma face gerada por IA.
 
-- UI em **português**, mobile-first
-- Cards com visual inspirado em cromos / Pokémon
-- 12 chapas (presidente + vice)
-- Dois modos: duelo de **presidentes** e duelo de **vices**, com rankings separados
-- Ranking **Elo** + taxa de vitórias
-- **Raridade de cromo** por Elo: Comum, Raro, Épico e Lendário
-- Efeito **holográfico** nos cards Épico e Lendário
-- Dados só no seu aparelho (botão para zerar)
+## Requisitos
 
-## Modos de duelo
+- Node.js 20+ (testado com 22)
+- npm
 
-O seletor **Duelando: Presidentes / Vices** troca quem entra em campo. Cada
-modo tem seu próprio Elo, suas próprias vitórias e seu próprio contador de
-duelos, então votar num vice não mexe no ranking dos presidentes. O botão
-**Zerar ranking** limpa só o modo aberto no momento.
+```bash
+npm install --prefix front
+npm install --prefix back
+npm install --prefix app
+```
 
-Os vices ainda não têm foto: cada card usa as iniciais sobre uma cor própria,
-gerada a partir da posição na lista para que as doze fiquem bem distintas.
-Para dar rosto a um vice, basta colocar a imagem em `candidates/`, apontar o
-campo `photo` dele em `app.js` e registrar o crédito em `CREDITS.md`.
+## Como rodar cada parte
 
-## Raridade dos cards
+### 1. API (`back`)
 
-A raridade sai só de dados do próprio jogo (Elo e número de duelos). Nenhum
-atributo político entra na conta.
+```bash
+npm run dev --prefix back
+# http://localhost:3001
+```
 
-| Raridade | Elo | Visual |
+| Método | Rota | Descrição |
 |---|---|---|
-| Comum | abaixo de 1040 | moldura cinza |
-| Raro | 1040 a 1099 | moldura azul |
-| Épico | 1100 a 1179 | moldura roxa + foil holográfico |
-| Lendário | 1180 ou mais | moldura dourada + foil + aura pulsante |
+| `GET` | `/api/health` | Saúde do serviço |
+| `GET` | `/api/candidates` | 12 candidatos (`id`, `name`, `party`, `vice`, `photo`, `initials`) |
+| `GET` | `/api/ranking` | Ranking Elo agregado (arquivo JSON em `back/data/elo.json`) |
+| `POST` | `/api/vote` | Corpo `{ "winnerId", "loserId" }` — atualiza o Elo do servidor |
 
-O líder isolado da tabela também recebe Lendário e a coroa (♛), desde que
-tenha ao menos 6 duelos e Elo acima dos 1000 iniciais. Empate no topo não
-coroa ninguém.
+CORS está aberto para o front local. Sem banco: o agregado fica em memória + `back/data/elo.json` (não versionado).
 
-O foil holográfico acompanha o ponteiro do mouse e, em celulares Android,
-o giroscópio. No iOS o sensor exige uma permissão explícita, então o card
-usa apenas a varredura animada. Quem ativa `prefers-reduced-motion` no
-sistema vê os cards sem animação.
+### 2. Front web (`front`)
 
-## Arquivos
+```bash
+npm run dev --prefix front
+# http://localhost:5173
+```
 
-| Arquivo | Descrição |
-|---|---|
-| `index.html` | Página principal |
-| `styles.css` | Estilos |
-| `app.js` | Lógica do duelo e Elo |
-| `candidates/` | Fotos públicas baixadas |
-| `CREDITS.md` | Atribuição das imagens |
+O Vite faz proxy de `/api` para `http://localhost:3001`. Com a API ligada, o jogo lista candidatos pelo back e envia votos. **Se a API estiver fora, o front cai no JSON local + `localStorage`** — o duelo anônimo continua igual.
+
+No modo Duelo, também é possível votar rapidamente com **← / →** no desktop ou deslizando a área dos cards para a esquerda/direita no celular.
+
+Build estático:
+
+```bash
+npm run build --prefix front
+# pasta de publicação: front/dist
+```
+
+Para apontar o front compilado a uma API remota:
+
+```bash
+VITE_API_URL=https://sua-api.exemplo.com npm run build --prefix front
+```
+
+Se `VITE_API_URL` estiver vazio, as chamadas usam `/api` (útil atrás de um proxy reverso).
+
+### 3. App PWA (`app`)
+
+Casca instalável do **mesmo jogo** (`front/src/game.js` + fotos). Inclui `manifest.webmanifest` e service worker. Não é um app nativo iOS — é um PWA deployável como site estático.
+
+```bash
+npm run dev --prefix app
+# http://localhost:5174
+```
+
+O script `predev`/`prebuild` copia `front/public/candidates`, ícones, `CREDITS.md` e `og-cover.png` para `app/public/`.
+
+```bash
+npm run build --prefix app
+# pasta de publicação: app/dist
+```
+
+No celular: abra o `app` no navegador → “Adicionar à tela inicial”. Offline, o SW serve o shell e as fotos já cacheadas. Votos anônimos seguem no `localStorage`; o `POST /api/vote` só ocorre se a API responder.
+
+## Deploy no Dokploy
+
+### Front estático (principal)
+
+1. Build: `cd front && npm ci && npm run build`
+2. **Publish directory:** `front/dist`
+3. SPA: fallback para `index.html`
+4. Opcional: variável `VITE_API_URL` no build, apontando para o serviço da API
+
+### API opcional
+
+1. Root do serviço: `back`
+2. Install: `npm ci`
+3. Start: `npm start` (ou `node src/server.js`)
+4. Porta: `3001` (ou `PORT`)
+5. Healthcheck: `GET /api/health`
+6. Persistência: monte um volume em `back/data` se quiser manter o Elo entre deploys
+
+Se o front e a API ficarem no mesmo domínio, deixe `VITE_API_URL` vazio e encaminhe `/api` para o serviço Node.
+
+### App PWA (alternativa ao front)
+
+1. Build: `cd app && npm ci && npm run build`
+2. **Publish directory:** `app/dist`
+3. Mesmas regras de proxy `/api` que o front
 
 ## Candidatos incluídos
 
@@ -85,13 +132,12 @@ sistema vê os cards sem animação.
 11. Wilson Grassi (Democrata) — Suêd Haidar (Democrata)
 12. Clariana Barão (DC) — Fabiana Torquato (DC)
 
-Pablo Marçal **não** está na lista.
-
 ## Privacidade
 
-Nenhum servidor recebe seus votos. Tudo fica em `localStorage` (`presidencia-duelo-v1`).
+- Jogo anônimo: ranking local em `localStorage` (`presidencia-duelo-v1`), mesmo sem API.
+- Com API: cada escolha também incrementa o Elo agregado do servidor (sem login, sem cookie de identidade).
+- Zerar ranking no UI limpa só o aparelho, não o arquivo do servidor.
 
-## Licença do código
+## Licença
 
-Código deste jogo: use livremente. Fotos: veja `CREDITS.md` (licenças CC / Attribution).
-
+Código: use livremente. Fotos: veja `CREDITS.md` (licenças CC / Attribution).

@@ -6,7 +6,9 @@
 export function runLockedPick(work, onDone, schedule = setTimeout, delay = 420) {
   try {
     work();
-  } finally {
+    return schedule(onDone, delay);
+  } catch (error) {
     schedule(onDone, delay);
+    throw error;
   }
 }

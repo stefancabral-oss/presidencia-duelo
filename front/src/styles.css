@@ -389,6 +389,12 @@ h1 {
   font-weight: 700;
 }
 
+.duel-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
 .hint {
   text-align: center;
   color: var(--muted);
@@ -424,6 +430,12 @@ h1 {
   cursor: pointer;
 }
 .btn:hover { border-color: var(--gold); }
+.btn:disabled,
+.btn:disabled:hover {
+  opacity: .45;
+  cursor: not-allowed;
+  border-color: #334155;
+}
 .btn.danger { border-color: #7f1d1d; background: #3f1212; color: #fecaca; }
 
 .rank-list {

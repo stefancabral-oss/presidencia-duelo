@@ -91,6 +91,13 @@ test("prefers-reduced-motion disables pick shake, flash, and float", () => {
   assert.match(reduced, /animation:\s*none/);
 });
 
+test("Desfazer button uses the shared btn style and a disabled mute", () => {
+  assert.match(clean, /\.duel-actions\s*\{/);
+  assert.match(clean, /\.btn:disabled/);
+  assert.match(clean, /\.btn:disabled:hover/);
+  assert.match(clean, /cursor:\s*not-allowed/);
+});
+
 test("zebra badge stamps on the winner card and respects reduced motion", () => {
   assert.match(clean, /\.zebra-badge\s*\{[^}]*animation:\s*zebra-stamp/);
   assert.match(clean, /@keyframes zebra-stamp/);

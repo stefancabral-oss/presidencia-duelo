@@ -2,6 +2,7 @@ import FALLBACK_CANDIDATES from "../../shared/candidates.json";
 import { applyElo } from "../../shared/elo.js";
 import { fetchCandidates, fetchHealth, fetchServerRanking, postVote } from "./api.js";
 import { applyCardAriaLabel } from "./card-label.js";
+import { GITHUB_README_URL, GITHUB_REPO_URL, creditsPanelHtml } from "./credits.js";
 import { fillDuelCard } from "./duel-card.js";
 import { hpFillWidth } from "./hp-bar.js";
 import { runLockedPick } from "./pick.js";
@@ -102,6 +103,7 @@ function renderShell(root) {
       <nav class="tabs" aria-label="Seções">
         <button type="button" class="tab active" id="tab-duel">Duelo</button>
         <button type="button" class="tab" id="tab-rank">Ranking</button>
+        <button type="button" class="tab" id="tab-credits">Créditos</button>
       </nav>
 
       <section id="panel-duel" class="panel active" aria-label="Duelo">
@@ -135,9 +137,15 @@ function renderShell(root) {
         </div>
       </section>
 
+      <section id="panel-credits" class="panel" aria-label="Créditos">
+        ${creditsPanelHtml()}
+      </section>
+
       <footer>
-        Fotos de fontes públicas (Wikimedia Commons e similares) — veja <a href="/CREDITS.md">CREDITS.md</a>.
-        · <a href="https://github.com/stefancabral-oss/presidencia-duelo">Repositório</a>
+        Fotos de fontes públicas (Wikimedia Commons e similares) —
+        <button type="button" class="footer-link" id="open-credits">Créditos</button>.
+        · <a href="${GITHUB_README_URL}">README</a>
+        · <a href="${GITHUB_REPO_URL}">Repositório</a>
       </footer>
     </div>
   `;
@@ -188,8 +196,11 @@ export async function initGame() {
   const els = {
     panelDuel: document.getElementById("panel-duel"),
     panelRank: document.getElementById("panel-rank"),
+    panelCredits: document.getElementById("panel-credits"),
     tabDuel: document.getElementById("tab-duel"),
     tabRank: document.getElementById("tab-rank"),
+    tabCredits: document.getElementById("tab-credits"),
+    openCredits: document.getElementById("open-credits"),
     duelCount: document.getElementById("duel-count"),
     cardA: document.getElementById("card-a"),
     cardB: document.getElementById("card-b"),
@@ -210,12 +221,17 @@ export async function initGame() {
   let locked = false;
 
   function setTab(name) {
-    const duel = name === "duel";
-    els.panelDuel.classList.toggle("active", duel);
-    els.panelRank.classList.toggle("active", !duel);
-    els.tabDuel.classList.toggle("active", duel);
-    els.tabRank.classList.toggle("active", !duel);
-    if (!duel) {
+    const tabs = [
+      ["duel", els.panelDuel, els.tabDuel],
+      ["rank", els.panelRank, els.tabRank],
+      ["credits", els.panelCredits, els.tabCredits],
+    ];
+    for (const [id, panel, tab] of tabs) {
+      const on = id === name;
+      panel.classList.toggle("active", on);
+      tab.classList.toggle("active", on);
+    }
+    if (name === "rank") {
       renderRanking();
       renderServerRanking();
     }
@@ -309,6 +325,8 @@ export async function initGame() {
 
   els.tabDuel.addEventListener("click", () => setTab("duel"));
   els.tabRank.addEventListener("click", () => setTab("rank"));
+  els.tabCredits.addEventListener("click", () => setTab("credits"));
+  els.openCredits.addEventListener("click", () => setTab("credits"));
   els.cardA.addEventListener("click", () => pick(els.cardA));
   els.cardB.addEventListener("click", () => pick(els.cardB));
 

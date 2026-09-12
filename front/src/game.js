@@ -1,6 +1,7 @@
 import FALLBACK_CANDIDATES from "../../shared/candidates.json";
 import { applyElo } from "../../shared/elo.js";
 import { fetchCandidates, fetchHealth, fetchServerRanking, postVote } from "./api.js";
+import { applyCardAriaLabel } from "./card-label.js";
 import { hpFillWidth } from "./hp-bar.js";
 import { runLockedPick } from "./pick.js";
 import { saveState, STORAGE_KEY, STORAGE_UNAVAILABLE_MESSAGE } from "./storage.js";
@@ -107,9 +108,9 @@ function renderShell(root) {
         </div>
 
         <div class="vs-row">
-          <button type="button" class="poke-card" id="card-a" aria-label="Candidato A"></button>
+          <button type="button" class="poke-card" id="card-a"></button>
           <div class="vs-badge" aria-hidden="true">VS</div>
-          <button type="button" class="poke-card" id="card-b" aria-label="Candidato B"></button>
+          <button type="button" class="poke-card" id="card-b"></button>
         </div>
 
         <p class="hint">Cards inspirados em cromos/Pokémon · fotos reais (Wikimedia) · funciona offline após o cache</p>
@@ -229,6 +230,7 @@ export async function initGame() {
     const barWidth = hpFillWidth(wins, losses, wr);
     el.dataset.id = id;
     el.classList.remove("picked-win", "picked-lose");
+    applyCardAriaLabel(el, c);
     el.innerHTML = `
       <div class="card-top">
         <div class="card-name">${escapeHtml(c.name)}</div>

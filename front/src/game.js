@@ -311,18 +311,6 @@ export async function initGame() {
   els.tabRank.addEventListener("click", () => setTab("rank"));
   els.cardA.addEventListener("click", () => pick(els.cardA));
   els.cardB.addEventListener("click", () => pick(els.cardB));
-  els.cardA.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      pick(els.cardA);
-    }
-  });
-  els.cardB.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      pick(els.cardB);
-    }
-  });
 
   els.resetBtn.addEventListener("click", () => {
     if (!confirm("Zerar ranking e duelos salvos neste aparelho?")) return;

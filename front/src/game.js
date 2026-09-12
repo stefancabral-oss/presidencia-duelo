@@ -9,6 +9,7 @@ import { applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
 import { runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
 import { RANKING_SUBTITLE, rankMetaText, sortCandidatesByRank } from "./ranking.js";
+import { normalizePairCount, takeNextPair } from "./matchmaking.js";
 import { saveState, STORAGE_KEY, STORAGE_UNAVAILABLE_MESSAGE } from "./storage.js";
 import { lastDuelFromParsed, restoreDuel, snapshotDuel, undoPair } from "./undo.js";
 
@@ -23,7 +24,7 @@ function escapeHtml(value) {
 }
 
 function defaultState(candidates) {
-  return { ...emptyStats(candidates.map((c) => c.id)), lastPair: null, lastDuel: null };
+  return { ...emptyStats(candidates.map((c) => c.id)), lastPair: null, lastDuel: null, pairCount: {} };
 }
 
 function loadState(candidates) {
@@ -35,32 +36,11 @@ function loadState(candidates) {
       ...mergeStats(defaultState(candidates), parsed),
       lastPair: parsed.lastPair || null,
       lastDuel: lastDuelFromParsed(parsed),
+      pairCount: normalizePairCount(parsed.pairCount),
     };
   } catch {
     return defaultState(candidates);
   }
-}
-
-function randomPair(candidates, state) {
-  const ids = candidates.map((c) => c.id);
-  let a;
-  let b;
-  let tries = 0;
-  do {
-    a = ids[Math.floor(Math.random() * ids.length)];
-    b = ids[Math.floor(Math.random() * ids.length)];
-    tries += 1;
-  } while (
-    (a === b ||
-      (state.lastPair &&
-        ((state.lastPair[0] === a && state.lastPair[1] === b) ||
-          (state.lastPair[0] === b && state.lastPair[1] === a)))) &&
-    tries < 40
-  );
-  if (a === b) {
-    b = ids[(ids.indexOf(a) + 1) % ids.length];
-  }
-  return [a, b];
 }
 
 function winRate(state, id) {
@@ -261,8 +241,7 @@ export async function initGame() {
   function nextDuel() {
     locked = false;
     pickTimer = null;
-    currentPair = randomPair(candidates, state);
-    state.lastPair = currentPair;
+    currentPair = takeNextPair(candidates, state);
     persist();
     renderCard(els.cardA, currentPair[0]);
     renderCard(els.cardB, currentPair[1]);

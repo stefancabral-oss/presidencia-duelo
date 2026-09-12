@@ -143,6 +143,15 @@ test("one-level undo restores only the last snapshot, not an earlier pick", () =
   assert.equal(state.losses.b, 1);
 });
 
+test("restoreDuel leaves pairCount unchanged (show history, not vote history)", () => {
+  const state = duelState();
+  state.pairCount = { "a|b": 2, "a|c": 1 };
+  const snap = snapshotDuel(state, "a", "b", ["a", "b"]);
+  applyElo(state, "a", "b");
+  assert.equal(restoreDuel(state, snap), true);
+  assert.deepEqual(state.pairCount, { "a|b": 2, "a|c": 1 });
+});
+
 test("restoreDuel returns false and leaves state alone for a bad snapshot", () => {
   const state = duelState();
   applyElo(state, "a", "b");

@@ -22,7 +22,30 @@ python3 -m http.server 8080
 - Cards com visual inspirado em cromos / Pokémon
 - 12 chapas (presidente + vice)
 - Ranking **Elo** + taxa de vitórias
+- **Raridade de cromo** por Elo: Comum, Raro, Épico e Lendário
+- Efeito **holográfico** nos cards Épico e Lendário
 - Dados só no seu aparelho (botão para zerar)
+
+## Raridade dos cards
+
+A raridade sai só de dados do próprio jogo (Elo e número de duelos). Nenhum
+atributo político entra na conta.
+
+| Raridade | Elo | Visual |
+|---|---|---|
+| Comum | abaixo de 1040 | moldura cinza |
+| Raro | 1040 a 1099 | moldura azul |
+| Épico | 1100 a 1179 | moldura roxa + foil holográfico |
+| Lendário | 1180 ou mais | moldura dourada + foil + aura pulsante |
+
+O líder isolado da tabela também recebe Lendário e a coroa (♛), desde que
+tenha ao menos 6 duelos e Elo acima dos 1000 iniciais. Empate no topo não
+coroa ninguém.
+
+O foil holográfico acompanha o ponteiro do mouse e, em celulares Android,
+o giroscópio. No iOS o sensor exige uma permissão explícita, então o card
+usa apenas a varredura animada. Quem ativa `prefers-reduced-motion` no
+sistema vê os cards sem animação.
 
 ## Arquivos
 

@@ -9,6 +9,14 @@
   --accent: #4fd1c5;
   --danger: #ff6b6b;
   --win: #6ee7a8;
+  --r-comum: #8b93a7;
+  --r-comum-ring: #4b5468;
+  --r-raro: #7dd3fc;
+  --r-raro-ring: #0e7490;
+  --r-epico: #c084fc;
+  --r-epico-ring: #6d28d9;
+  --r-lendario: #ffd76a;
+  --r-lendario-ring: #b8860b;
   --shadow: 0 12px 40px rgba(0,0,0,.45);
   --radius: 18px;
   --font: "Segoe UI", system-ui, -apple-system, Roboto, Ubuntu, sans-serif;
@@ -153,10 +161,10 @@ h1 {
   background: linear-gradient(160deg, #2b3550, #151c2c 60%, #0f1420);
   border-radius: var(--radius);
   padding: 10px;
-  border: 3px solid var(--gold2);
+  border: 3px solid var(--rarity, var(--gold2));
   box-shadow:
     inset 0 0 0 2px rgba(255,255,255,.12),
-    0 0 0 2px #7a5a10,
+    0 0 0 2px var(--rarity-ring, #7a5a10),
     var(--shadow);
   cursor: pointer;
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
@@ -169,11 +177,10 @@ h1 {
 }
 .poke-card:hover, .poke-card:focus-visible {
   transform: translateY(-4px) scale(1.01);
-  border-color: var(--gold);
   box-shadow:
     inset 0 0 0 2px rgba(255,255,255,.18),
-    0 0 0 2px #b8860b,
-    0 16px 36px rgba(246, 216, 96, .22);
+    0 0 0 2px var(--rarity-ring, #b8860b),
+    0 16px 36px var(--rarity-glow, rgba(246, 216, 96, .22));
 }
 .poke-card:active { transform: scale(.98); }
 .poke-card.picked-win {
@@ -215,7 +222,7 @@ h1 {
   overflow: hidden;
   aspect-ratio: 3 / 4;
   background: #0a0f1a;
-  border: 2px solid rgba(246, 216, 96, .55);
+  border: 2px solid var(--rarity, rgba(246, 216, 96, .55));
   box-shadow: inset 0 0 24px rgba(0,0,0,.45);
 }
 .art-frame img {
@@ -308,6 +315,7 @@ h1 {
   align-items: center;
   background: rgba(26, 35, 56, .9);
   border: 1px solid #334155;
+  border-left: 4px solid var(--rarity, #334155);
   border-radius: 14px;
   padding: 8px 10px;
 }
@@ -322,7 +330,7 @@ h1 {
   height: 52px;
   border-radius: 12px;
   object-fit: cover;
-  border: 2px solid rgba(246,216,96,.45);
+  border: 2px solid var(--rarity, rgba(246,216,96,.45));
   background: #0f172a;
 }
 .rank-ph {
@@ -353,6 +361,133 @@ footer {
   font-size: .75rem;
 }
 footer a { color: var(--gold); }
+
+/* ---------- Raridade dos cards ---------- */
+/* A raridade vem do Elo (e da coroa do líder), nunca de dados políticos. */
+[data-rarity="comum"] {
+  --rarity: var(--r-comum);
+  --rarity-ring: var(--r-comum-ring);
+  --rarity-glow: rgba(139, 147, 167, .22);
+}
+[data-rarity="raro"] {
+  --rarity: var(--r-raro);
+  --rarity-ring: var(--r-raro-ring);
+  --rarity-glow: rgba(125, 211, 252, .26);
+}
+[data-rarity="epico"] {
+  --rarity: var(--r-epico);
+  --rarity-ring: var(--r-epico-ring);
+  --rarity-glow: rgba(192, 132, 252, .3);
+}
+[data-rarity="lendario"] {
+  --rarity: var(--r-lendario);
+  --rarity-ring: var(--r-lendario-ring);
+  --rarity-glow: rgba(246, 216, 96, .38);
+}
+
+/* Aura pulsante do Lendário. Usa filter para não brigar com o box-shadow
+   do estado :hover do card. */
+.poke-card[data-rarity="lendario"] {
+  animation: legendary-aura 3.2s ease-in-out infinite;
+}
+@keyframes legendary-aura {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(255, 215, 106, .45)); }
+  50% { filter: drop-shadow(0 0 16px rgba(224, 163, 255, .55)); }
+}
+
+.rarity-chip {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  z-index: 2;
+  font-size: .58rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: #0b1220;
+  background: var(--rarity, var(--gold));
+  border: 1px solid rgba(255, 255, 255, .45);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .5);
+}
+
+/* ---------- Camada holográfica ---------- */
+/* Três camadas em um único elemento (blend modes não se acumulam entre
+   pai e pseudo-elemento):
+   1. brilho pontual, que segue --mx/--my e só acende com ponteiro ou
+      giroscópio ativo (--holo-hl);
+   2. varredura branca que atravessa o card sozinha, então o efeito
+      também funciona em tela de toque sem sensor;
+   3. textura de foil arco-íris, que dá o aspecto de cromo. */
+.art-frame .holo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity .3s ease;
+  background-image:
+    radial-gradient(
+      circle at var(--mx, 50%) var(--my, 50%),
+      rgba(255, 255, 255, var(--holo-hl, 0)),
+      rgba(255, 255, 255, 0) 42%
+    ),
+    linear-gradient(
+      115deg,
+      transparent 42%,
+      rgba(255, 255, 255, .42) 50%,
+      transparent 58%
+    ),
+    repeating-linear-gradient(
+      115deg,
+      rgba(255, 0, 128, .13) 0px,
+      rgba(255, 170, 0, .13) 13px,
+      rgba(0, 255, 170, .13) 26px,
+      rgba(0, 160, 255, .13) 39px,
+      rgba(170, 0, 255, .13) 52px,
+      rgba(255, 0, 128, .13) 65px
+    );
+  background-size: 100% 100%, 320% 100%, auto;
+  background-repeat: no-repeat, no-repeat, repeat;
+  animation: holo-sweep 5s linear infinite;
+}
+@keyframes holo-sweep {
+  0% { background-position: 0 0, -70% 0, 0 0; }
+  100% { background-position: 0 0, 170% 0, 65px 0; }
+}
+
+.poke-card[data-rarity="epico"] .holo { opacity: .32; }
+.poke-card[data-rarity="lendario"] .holo { opacity: .55; }
+
+/* ---------- Raridade na lista do ranking ---------- */
+.rarity-tag {
+  display: inline-block;
+  font-size: .64rem;
+  font-weight: 900;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-right: 5px;
+  color: #0b1220;
+  background: var(--rarity, var(--gold));
+}
+
+.rarity-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: .74rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .poke-card[data-rarity="lendario"] { animation: none; }
+  .art-frame .holo { animation: none; }
+}
 
 @media (max-width: 520px) {
   .vs-row { gap: 6px; }

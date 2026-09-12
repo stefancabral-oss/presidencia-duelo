@@ -5,9 +5,10 @@ export const STORAGE_UNAVAILABLE_MESSAGE = "ranking não será salvo neste naveg
  * Persist ranking state. Returns false when the browser blocks or fills storage
  * so the game can keep going in memory.
  */
-export function saveState(state, storage = globalThis.localStorage) {
+export function saveState(state, storage, key = STORAGE_KEY) {
   try {
-    storage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const store = storage ?? globalThis.localStorage;
+    store.setItem(key, JSON.stringify(state));
     return true;
   } catch {
     return false;

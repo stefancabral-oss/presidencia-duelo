@@ -27,10 +27,12 @@ function createCardEl() {
     ".card-name": { textContent: "" },
     ".party-chip": { textContent: "" },
     ".vice strong": { textContent: "" },
+    ".vice": { firstChild: { textContent: "Vice: " } },
     ".elo-mini": { textContent: "" },
     ".hp-fill": { style: {} },
     ".placeholder": { textContent: "", style: { display: "none" } },
     ".art-frame img": img,
+    ".rarity-chip": { textContent: "", hidden: true },
   };
   let html = "";
   let writes = 0;
@@ -100,4 +102,21 @@ test("fillDuelCard builds the card once, then only swaps src and text", () => {
   assert.equal(el.fields[".elo-mini"].textContent, "Elo 1016 · 50% vitórias");
   assert.equal(el.fields[".placeholder"].textContent, "RZ");
   assert.equal(el.fields[".placeholder"].style.display, "none");
+});
+
+test("fillDuelCard renders vice placeholders and rarity without a broken image", () => {
+  const el = createCardEl();
+  fillDuelCard(el, {
+    ...lula,
+    name: "Geraldo Alckmin",
+    party: "PSB",
+    vice: "Luiz Inácio Lula da Silva (PT)",
+    mateLabel: "Presidente",
+    photo: null,
+    initials: "GA",
+  }, { elo: 1100, wr: 60, barWidth: 60, rarity: { id: "epico", label: "Épico" } });
+  assert.equal(el.fields[".vice"].firstChild.textContent, "Presidente: ");
+  assert.equal(el.fields[".placeholder"].style.display, "grid");
+  assert.equal(el.img.getAttribute("src"), undefined);
+  assert.equal(el.fields[".rarity-chip"].textContent, "Épico");
 });

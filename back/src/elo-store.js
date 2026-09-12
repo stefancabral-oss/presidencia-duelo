@@ -14,9 +14,18 @@ function blank() {
 function load() {
   try {
     const parsed = JSON.parse(readFileSync(DATA_PATH, "utf8"));
-    return mergeStats(blank(), parsed);
+    if (parsed?.pools) {
+      return {
+        pools: {
+          presidentes: mergeStats(blank(), parsed.pools.presidentes),
+          vices: mergeStats(blank(), parsed.pools.vices),
+        },
+      };
+    }
+    // Migra o arquivo legado sem perder o ranking presidencial existente.
+    return { pools: { presidentes: mergeStats(blank(), parsed), vices: blank() } };
   } catch {
-    return blank();
+    return { pools: { presidentes: blank(), vices: blank() } };
   }
 }
 
@@ -27,41 +36,52 @@ function persist(state) {
 
 let state = load();
 
-export function vote(winnerId, loserId) {
+function modePool(mode) {
+  if (mode !== "presidentes" && mode !== "vices") {
+    const error = new Error("modo inválido");
+    error.status = 400;
+    throw error;
+  }
+  return state.pools[mode];
+}
+
+export function vote(winnerId, loserId, mode = "presidentes") {
   if (!CANDIDATE_IDS.has(winnerId) || !CANDIDATE_IDS.has(loserId) || winnerId === loserId) {
     const error = new Error("voto inválido");
     error.status = 400;
     throw error;
   }
-  applyElo(state, winnerId, loserId);
+  applyElo(modePool(mode), winnerId, loserId);
   persist(state);
-  return snapshot();
+  return snapshot(mode);
 }
 
-function winRate(id) {
-  const w = state.wins[id] || 0;
-  const l = state.losses[id] || 0;
+function winRate(pool, id) {
+  const w = pool.wins[id] || 0;
+  const l = pool.losses[id] || 0;
   const t = w + l;
   if (!t) return 0;
   return Math.round((100 * w) / t);
 }
 
-export function snapshot() {
+export function snapshot(mode = "presidentes") {
+  const pool = modePool(mode);
   const ranking = CANDIDATES.map((c) => ({
     id: c.id,
     name: c.name,
     party: c.party,
     vice: c.vice,
     photo: c.photo,
-    elo: state.ratings[c.id],
-    wins: state.wins[c.id] || 0,
-    losses: state.losses[c.id] || 0,
-    zebras: state.zebras?.[c.id] || 0,
-    winRate: winRate(c.id),
+    elo: pool.ratings[c.id],
+    wins: pool.wins[c.id] || 0,
+    losses: pool.losses[c.id] || 0,
+    zebras: pool.zebras?.[c.id] || 0,
+    winRate: winRate(pool, c.id),
   })).sort((a, b) => b.elo - a.elo || b.wins - a.wins);
 
   return {
-    duels: state.duels,
+    mode,
+    duels: pool.duels,
     ranking,
   };
 }

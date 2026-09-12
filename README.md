@@ -2,6 +2,8 @@
 
 Monorepo do jogo web casual estilo **Facemash**: dois candidatos à Presidência do Brasil (2026) lado a lado; você escolhe um; surge o próximo par aleatório; o ranking Elo fica no `localStorage` e, se a API estiver no ar, também num agregado no servidor.
 
+Além do duelo contínuo, a aba **Torneio** oferece um mata-mata conclusivo com os 12 candidatos: oito disputam a primeira rodada e quatro avançam direto, seguindo por quartas, semifinais e final. São 11 escolhas até a tela “Seu presidente é X”, com compartilhamento do resultado. O torneio é salvo separadamente e não altera o Elo local nem o agregado da API.
+
 > **Não é pesquisa oficial.** Não mede intenção de voto real. É só entretenimento.
 
 ```
@@ -54,6 +56,8 @@ npm run dev --prefix front
 
 O Vite faz proxy de `/api` para `http://localhost:3001`. Com a API ligada, o jogo lista candidatos pelo back e envia votos. **Se a API estiver fora, o front cai no JSON local + `localStorage`** — o duelo anônimo continua igual.
 
+No modo Duelo, também é possível votar rapidamente com **← / →** no desktop ou deslizando a área dos cards para a esquerda/direita no celular.
+
 Build estático:
 
 ```bash
@@ -86,6 +90,8 @@ npm run build --prefix app
 ```
 
 No celular: abra o `app` no navegador → “Adicionar à tela inicial”. O PWA exige conexão com a API: cada voto é confirmado no servidor antes de alterar o Elo no aparelho, mantendo o ranking individual e o agregado sincronizados. O service worker é registrado apenas em `http:` ou `https:` e nunca fornece uma versão jogável offline.
+
+Os rankings agregados de **Presidentes** e **Vices** usam pools separados no mesmo arquivo persistente da API; trocar de modo não mistura as estatísticas.
 
 ## Deploy no Dokploy
 

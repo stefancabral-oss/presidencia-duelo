@@ -117,10 +117,34 @@ test("duel progress bar and goal modal match the existing card theme", () => {
   assert.match(reduced, /transition:\s*none/);
 });
 
+test("combo banner and achievement toast match the gold card theme", () => {
+  assert.match(clean, /\.combo-banner\[hidden\]\s*\{[^}]*display:\s*none/);
+  assert.match(clean, /\.combo-label\.combo-pop\s*\{[^}]*animation:\s*combo-pop/);
+  assert.match(clean, /@keyframes combo-pop/);
+  assert.match(clean, /\.achievement-toast\s*\{[^}]*animation:\s*achievement-toast-in/);
+  assert.match(clean, /@keyframes achievement-toast-in/);
+  assert.match(clean, /\.achievement-chip\.unlocked\s*\{/);
+  const reduced = mediaBlocks(clean, "(prefers-reduced-motion: reduce)").join("\n");
+  assert.match(reduced, /\.combo-label\.combo-pop/);
+  assert.match(reduced, /\.achievement-toast/);
+  assert.match(reduced, /animation:\s*none/);
+});
+
 test("zebra badge stamps on the winner card and respects reduced motion", () => {
   assert.match(clean, /\.zebra-badge\s*\{[^}]*animation:\s*zebra-stamp/);
   assert.match(clean, /@keyframes zebra-stamp/);
   const reduced = mediaBlocks(clean, "(prefers-reduced-motion: reduce)").join("\n");
   assert.match(reduced, /\.zebra-badge/);
+  assert.match(reduced, /animation:\s*none/);
+});
+
+test("swipe interaction tracks drag, commits both directions, and respects reduced motion", () => {
+  assert.match(clean, /\.vs-row\s*\{[^}]*touch-action:\s*pan-y/);
+  assert.match(clean, /\.vs-row\.is-dragging\s*\{/);
+  assert.match(clean, /@keyframes swipe-commit-left/);
+  assert.match(clean, /@keyframes swipe-commit-right/);
+  assert.match(clean, /\.quick-controls-hint\[hidden\]\s*\{[^}]*display:\s*none/);
+  const reduced = mediaBlocks(clean, "(prefers-reduced-motion: reduce)").join("\n");
+  assert.match(reduced, /\.vs-row\.swipe-commit-left/);
   assert.match(reduced, /animation:\s*none/);
 });

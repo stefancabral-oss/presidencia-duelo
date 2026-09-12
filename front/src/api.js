@@ -21,17 +21,17 @@ export async function fetchHealth() {
   return res.json();
 }
 
-export async function fetchServerRanking() {
-  const res = await fetch(apiUrl("/api/ranking"));
+export async function fetchServerRanking(mode = "presidentes") {
+  const res = await fetch(apiUrl(`/api/ranking?mode=${encodeURIComponent(mode)}`));
   if (!res.ok) throw new Error(`ranking ${res.status}`);
   return res.json();
 }
 
-export async function postVote(winnerId, loserId) {
+export async function postVote(winnerId, loserId, mode = "presidentes") {
   const res = await fetch(apiUrl("/api/vote"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ winnerId, loserId }),
+    body: JSON.stringify({ winnerId, loserId, mode }),
   });
   if (!res.ok) throw new Error(`vote ${res.status}`);
   return res.json();

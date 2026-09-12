@@ -5,9 +5,16 @@ import { applyCardAriaLabel } from "./card-label.js";
 import { GITHUB_README_URL, GITHUB_REPO_URL, creditsPanelHtml } from "./credits.js";
 import { fillDuelCard } from "./duel-card.js";
 import { hpFillWidth } from "./hp-bar.js";
+import { bindHoloTilt } from "./holo.js";
 import { applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
 import { runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
+import {
+  hasSeenQuickControlsHint,
+  keyboardPickSide,
+  markQuickControlsHintSeen,
+  swipePickSide,
+} from "./quick-controls.js";
 import {
   buildPodiumPngFile,
   formatPodiumShareText,
@@ -17,6 +24,7 @@ import {
   SHARE_TITLE,
 } from "./podium.js";
 import { RANKING_SUBTITLE, rankMetaText, sortCandidatesByRank } from "./ranking.js";
+import { findLeaderId, rarityFor } from "./rarity.js";
 import { normalizePairCount, takeNextPair } from "./matchmaking.js";
 import { commitOnlineVote } from "./online-vote.js";
 import {
@@ -30,8 +38,31 @@ import {
   remainingText,
   shouldCelebrate,
 } from "./progress.js";
+import {
+  ACHIEVEMENT_IDS,
+  achievementTitle,
+  achievementToastText,
+  applyCombo,
+  comboLabel,
+  liveCombo,
+  migrateAchievements,
+  normalizeAchievements,
+  resetCombo,
+  unlockDueAchievements,
+  unlockTournamentCompleted,
+} from "./achievements.js";
 import { saveState, STORAGE_KEY, STORAGE_UNAVAILABLE_MESSAGE } from "./storage.js";
+import {
+  TOURNAMENT_STORAGE_KEY,
+  completedTournamentDuels,
+  createTournament,
+  currentTournamentMatch,
+  formatTournamentShareText,
+  isValidTournament,
+  tournamentPick,
+} from "./tournament.js";
 import { lastDuelFromParsed, restoreDuel, snapshotDuel, undoPair } from "./undo.js";
+import { MODES, VICE_STORAGE_KEY, candidateForMode } from "./vice-mode.js";
 
 const ELO_START = 1000;
 
@@ -51,21 +82,31 @@ function defaultState(candidates) {
     pairCount: {},
     progressGoal: INITIAL_GOAL,
     celebratedGoal: null,
+    achievements: [],
+    combo: 0,
+    lastVoteAt: null,
   };
 }
 
-function loadState(candidates) {
+function loadState(candidates, storageKey = STORAGE_KEY) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey);
     if (!raw) return defaultState(candidates);
     const parsed = JSON.parse(raw);
     const merged = mergeStats(defaultState(candidates), parsed);
+    const pairCount = normalizePairCount(parsed.pairCount);
     return {
       ...merged,
       lastPair: parsed.lastPair || null,
       lastDuel: lastDuelFromParsed(parsed),
       pairCount: normalizePairCount(parsed.pairCount),
       ...migrateProgress(parsed, merged.duels),
+      ...migrateAchievements(parsed, {
+        duels: merged.duels,
+        zebras: merged.zebras,
+        pairCount,
+        candidateIds: candidates.map((c) => c.id),
+      }),
     };
   } catch {
     return defaultState(candidates);
@@ -102,13 +143,22 @@ function renderShell(root, { requireApi = false } = {}) {
 
       <nav class="tabs" aria-label="Seções">
         <button type="button" class="tab active" id="tab-duel">Duelo</button>
+        <button type="button" class="tab" id="tab-tournament">Torneio</button>
         <button type="button" class="tab" id="tab-rank">Ranking</button>
         <button type="button" class="tab" id="tab-credits">Créditos</button>
       </nav>
 
       <section id="panel-duel" class="panel active" aria-label="Duelo">
+        <div class="mode-switch" aria-label="Categoria do duelo">
+          <span class="mode-label">Disputar:</span>
+          <button type="button" class="mode-btn active" id="mode-presidentes" aria-pressed="true">Presidentes</button>
+          <button type="button" class="mode-btn" id="mode-vices" aria-pressed="false">Vices</button>
+        </div>
+        <div class="combo-banner" id="combo-banner" hidden>
+          <span class="combo-label" id="combo-label"></span>
+        </div>
         <div class="duel-stats">
-          <span>Toque no candidato preferido</span>
+          <span id="duel-prompt">Toque no candidato preferido</span>
           <span>Duelos: <strong id="duel-count">0</strong></span>
         </div>
 
@@ -141,7 +191,12 @@ function renderShell(root, { requireApi = false } = {}) {
           </div>
         </div>
 
-        <div class="vs-row">
+        <aside class="quick-controls-hint" id="quick-controls-hint" hidden>
+          <span><strong>Dica:</strong> use ← → no computador ou deslize os cards no celular.</span>
+          <button type="button" id="dismiss-quick-controls">Entendi</button>
+        </aside>
+
+        <div class="vs-row" id="duel-cards">
           <button type="button" class="poke-card" id="card-a"></button>
           <div class="vs-badge" aria-hidden="true">VS</div>
           <button type="button" class="poke-card" id="card-b"></button>
@@ -154,10 +209,39 @@ function renderShell(root, { requireApi = false } = {}) {
         <p class="hint">Cards inspirados em cromos/Pokémon · fotos reais (Wikimedia) · ${requireApi ? "conexão obrigatória para preservar todos os votos" : "modo local disponível sem API"}</p>
       </section>
 
+      <section id="panel-tournament" class="panel" aria-label="Torneio">
+        <div class="tournament-toolbar">
+          <div>
+            <strong>Mata-mata presidencial</strong>
+            <div class="rank-sub">12 candidatos · 11 duelos · não altera o ranking Elo</div>
+          </div>
+          <button type="button" class="btn" id="restart-tournament">Novo torneio</button>
+        </div>
+        <div class="tournament-bracket" id="tournament-bracket" aria-label="Chave do torneio"></div>
+        <div class="tournament-stage" id="tournament-stage">
+          <p class="tournament-round" id="tournament-round"></p>
+          <div class="vs-row" id="tournament-duel">
+            <button type="button" class="poke-card" id="tournament-card-a"></button>
+            <div class="vs-badge" aria-hidden="true">VS</div>
+            <button type="button" class="poke-card" id="tournament-card-b"></button>
+          </div>
+          <div class="tournament-winner" id="tournament-winner" hidden>
+            <p class="tournament-kicker">Campeão do seu mata-mata</p>
+            <h2 id="tournament-winner-title"></h2>
+            <div class="tournament-winner-card" id="tournament-winner-card"></div>
+            <p class="podium-share-status" id="tournament-share-status" hidden></p>
+            <div class="podium-actions">
+              <button type="button" class="btn primary" id="tournament-share">Compartilhar</button>
+              <button type="button" class="btn" id="tournament-again">Jogar novamente</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="panel-rank" class="panel" aria-label="Ranking">
         <div class="ranking-toolbar">
           <div>
-            <strong>Ranking Elo local</strong>
+            <strong>Ranking Elo · <span id="rank-mode">Presidentes</span></strong>
             <div class="rank-sub">${RANKING_SUBTITLE}</div>
           </div>
           <div class="ranking-actions">
@@ -166,6 +250,10 @@ function renderShell(root, { requireApi = false } = {}) {
           </div>
         </div>
         <ol class="rank-list" id="rank-list"></ol>
+        <section class="achievements-panel" aria-label="Conquistas">
+          <h2 class="achievements-title">Conquistas</h2>
+          <ul class="achievements-list" id="achievements-list"></ul>
+        </section>
         <div id="server-rank-wrap" hidden>
           <h2 class="server-rank-title">Ranking agregado do servidor</h2>
           <p class="rank-sub">Soma dos votos enviados à API (compartilhado). O jogo local continua independente.</p>
@@ -183,6 +271,8 @@ function renderShell(root, { requireApi = false } = {}) {
         · <a href="${GITHUB_README_URL}">README</a>
         · <a href="${GITHUB_REPO_URL}">Repositório</a>
       </footer>
+
+      <div class="achievement-toasts" id="achievement-toasts" aria-live="polite"></div>
 
       <div class="podium-overlay" id="podium-overlay" hidden>
         <div class="podium-backdrop" id="podium-backdrop"></div>
@@ -202,6 +292,7 @@ function renderShell(root, { requireApi = false } = {}) {
   `;
 }
 
+function renderRankItems(candidates, byId, getStats, getRarity = () => null) {
 function renderConnectionRequired(root) {
   root.innerHTML = `
     <main class="app connection-required">
@@ -218,21 +309,20 @@ function renderConnectionRequired(root) {
   `;
   document.getElementById("retry-connection")?.addEventListener("click", () => location.reload());
 }
-
-function renderRankItems(candidates, byId, getStats) {
   const ranked = sortCandidatesByRank(candidates, getStats);
 
   return ranked
     .map((c, i) => {
       const { elo, wins, losses, wr, zebras = 0 } = getStats(c.id);
+      const rarity = getRarity(c.id);
       return `
-        <li class="rank-item">
+        <li class="rank-item"${rarity ? ` data-rarity="${rarity.id}"` : ""}>
           <div class="rank-pos">${i + 1}º</div>
           <img src="${escapeHtml(c.photo)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';" />
           <div class="rank-ph" style="display:none">${escapeHtml(c.initials)}</div>
           <div>
             <div class="rank-name">${escapeHtml(c.name)}</div>
-            <div class="rank-meta">${escapeHtml(rankMetaText({ party: c.party, vice: c.vice, wins, losses, zebras }))}</div>
+            <div class="rank-meta">${rarity ? `<span class="rarity-tag">${escapeHtml(rarity.label)}</span>` : ""}${escapeHtml(rankMetaText({ party: c.party, vice: c.vice, wins, losses, zebras }))}</div>
           </div>
           <div class="rank-score">${elo}<small>${wr}% vitórias</small></div>
         </li>`;
@@ -267,13 +357,23 @@ export async function initGame({ requireApi = false } = {}) {
   preloadPhotos(candidates);
   const els = {
     panelDuel: document.getElementById("panel-duel"),
+    panelTournament: document.getElementById("panel-tournament"),
     panelRank: document.getElementById("panel-rank"),
     panelCredits: document.getElementById("panel-credits"),
     tabDuel: document.getElementById("tab-duel"),
+    tabTournament: document.getElementById("tab-tournament"),
     tabRank: document.getElementById("tab-rank"),
     tabCredits: document.getElementById("tab-credits"),
     openCredits: document.getElementById("open-credits"),
+    duelPrompt: document.getElementById("duel-prompt"),
+    rankMode: document.getElementById("rank-mode"),
+    modePresidentes: document.getElementById("mode-presidentes"),
+    modeVices: document.getElementById("mode-vices"),
     duelCount: document.getElementById("duel-count"),
+    comboBanner: document.getElementById("combo-banner"),
+    comboLabel: document.getElementById("combo-label"),
+    achievementToasts: document.getElementById("achievement-toasts"),
+    achievementsList: document.getElementById("achievements-list"),
     progressText: document.getElementById("duel-progress-text"),
     progressBar: document.getElementById("duel-progress-bar"),
     progressFill: document.getElementById("duel-progress-fill"),
@@ -298,17 +398,94 @@ export async function initGame({ requireApi = false } = {}) {
     serverWrap: document.getElementById("server-rank-wrap"),
     serverList: document.getElementById("server-rank-list"),
     storageNotice: document.getElementById("storage-notice"),
+    tournamentBracket: document.getElementById("tournament-bracket"),
+    tournamentStage: document.getElementById("tournament-stage"),
+    tournamentRound: document.getElementById("tournament-round"),
+    tournamentDuel: document.getElementById("tournament-duel"),
+    tournamentCardA: document.getElementById("tournament-card-a"),
+    tournamentCardB: document.getElementById("tournament-card-b"),
+    tournamentWinner: document.getElementById("tournament-winner"),
+    tournamentWinnerTitle: document.getElementById("tournament-winner-title"),
+    tournamentWinnerCard: document.getElementById("tournament-winner-card"),
+    tournamentShare: document.getElementById("tournament-share"),
+    tournamentShareStatus: document.getElementById("tournament-share-status"),
+    tournamentAgain: document.getElementById("tournament-again"),
+    restartTournament: document.getElementById("restart-tournament"),
+    duelCards: document.getElementById("duel-cards"),
+    quickControlsHint: document.getElementById("quick-controls-hint"),
+    dismissQuickControls: document.getElementById("dismiss-quick-controls"),
   };
 
   function persist() {
-    if (saveState(state)) return;
+    const key = mode === "vices" ? VICE_STORAGE_KEY : STORAGE_KEY;
+    if (saveState(state, undefined, key)) return;
     if (els.storageNotice) els.storageNotice.hidden = false;
   }
 
-  let state = loadState(candidates);
+  const states = {
+    presidentes: loadState(candidates),
+    vices: loadState(candidates, VICE_STORAGE_KEY),
+  };
+  let mode = "presidentes";
+  let state = states[mode];
   let currentPair = null;
   let locked = false;
   let pickTimer = null;
+  let tournament = loadTournament();
+
+  function loadTournament() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(TOURNAMENT_STORAGE_KEY));
+      if (isValidTournament(parsed, candidates.map((candidate) => candidate.id))) return parsed;
+    } catch {
+      // Start a fresh bracket when storage is unavailable or stale.
+    }
+    return createTournament(candidates.map((candidate) => candidate.id));
+  }
+
+  function saveTournament() {
+    try {
+      localStorage.setItem(TOURNAMENT_STORAGE_KEY, JSON.stringify(tournament));
+    } catch {
+      // The tournament remains playable in memory.
+    }
+  }
+  let swipeStartX = null;
+  let swipePointerId = null;
+
+  function displayCandidates() {
+    return candidates.map((candidate) => candidateForMode(candidate, mode));
+  }
+
+  function displayCandidate(id) {
+    return candidateForMode(byId[id], mode);
+  }
+
+  function renderModeUi() {
+    const config = MODES[mode];
+    const isPresidentes = mode === "presidentes";
+    els.modePresidentes.classList.toggle("active", isPresidentes);
+    els.modePresidentes.setAttribute("aria-pressed", String(isPresidentes));
+    els.modeVices.classList.toggle("active", !isPresidentes);
+    els.modeVices.setAttribute("aria-pressed", String(!isPresidentes));
+    els.duelPrompt.textContent = `Toque no ${config.singular} preferido`;
+    els.rankMode.textContent = config.label;
+  }
+
+  function setMode(nextMode) {
+    if (!MODES[nextMode] || nextMode === mode) return;
+    cancelPickTimer();
+    locked = false;
+    mode = nextMode;
+    state = states[mode];
+    currentPair = null;
+    hideGoalMoment();
+    closePodium();
+    renderModeUi();
+    nextDuel();
+    renderRanking();
+    renderServerRanking();
+  }
 
   function cancelPickTimer() {
     if (pickTimer == null) return;
@@ -326,11 +503,11 @@ export async function initGame({ requireApi = false } = {}) {
       elo: state.ratings[id],
       wins: state.wins[id] || 0,
     }));
-    return byId[ranked[0]?.id]?.name || "";
+    return ranked[0] ? displayCandidate(ranked[0].id).name : "";
   }
 
   function localPodiumPlaces() {
-    return selectTopThree(candidates, (id) => ({
+    return selectTopThree(displayCandidates(), (id) => ({
       elo: state.ratings[id],
       wins: state.wins[id] || 0,
       losses: state.losses[id] || 0,
@@ -393,6 +570,59 @@ export async function initGame({ requireApi = false } = {}) {
     }
   }
 
+  function candidateIds() {
+    return candidates.map((c) => c.id);
+  }
+
+  function renderCombo(now = Date.now()) {
+    const n = liveCombo(state.combo, state.lastVoteAt, now);
+    const label = comboLabel(n);
+    if (!els.comboBanner || !els.comboLabel) return;
+    els.comboBanner.hidden = !label;
+    if (!label) {
+      els.comboLabel.textContent = "";
+      return;
+    }
+    if (els.comboLabel.textContent !== label) {
+      els.comboLabel.textContent = label;
+      els.comboLabel.classList.remove("combo-pop");
+      void els.comboLabel.offsetWidth;
+      els.comboLabel.classList.add("combo-pop");
+    }
+  }
+
+  function renderAchievements() {
+    if (!els.achievementsList) return;
+    const unlocked = new Set(normalizeAchievements(state.achievements));
+    els.achievementsList.innerHTML = ACHIEVEMENT_IDS.map((id) => {
+      const on = unlocked.has(id);
+      return `<li class="achievement-chip${on ? " unlocked" : ""}">${escapeHtml(achievementTitle(id))}</li>`;
+    }).join("");
+  }
+
+  function showAchievementToasts(ids) {
+    if (!els.achievementToasts || !ids?.length) return;
+    for (const id of ids) {
+      const text = achievementToastText(id);
+      if (!text) continue;
+      const toast = document.createElement("div");
+      toast.className = "achievement-toast";
+      toast.setAttribute("role", "status");
+      toast.textContent = text;
+      els.achievementToasts.appendChild(toast);
+      window.setTimeout(() => toast.remove(), 3200);
+    }
+  }
+
+  function applyUnlocks() {
+    const newly = unlockDueAchievements(state, { candidateIds: candidateIds() });
+    if (newly.length) {
+      renderAchievements();
+      showAchievementToasts(newly);
+    }
+    return newly;
+  }
+
   function hideGoalMoment() {
     if (els.goalModal) els.goalModal.hidden = true;
   }
@@ -419,6 +649,7 @@ export async function initGame({ requireApi = false } = {}) {
   function setTab(name) {
     const tabs = [
       ["duel", els.panelDuel, els.tabDuel],
+      ["tournament", els.panelTournament, els.tabTournament],
       ["rank", els.panelRank, els.tabRank],
       ["credits", els.panelCredits, els.tabCredits],
     ];
@@ -429,34 +660,131 @@ export async function initGame({ requireApi = false } = {}) {
     }
     if (name === "rank") {
       renderRanking();
+      renderAchievements();
       renderServerRanking();
     }
+    if (name === "tournament") renderTournament();
+  }
+
+  function tournamentCandidateName(id) {
+    return byId[id]?.name || "A definir";
+  }
+
+  function renderTournamentBracket() {
+    const columns = tournament.rounds.map((round, roundIndex) => {
+      const matches = round.matches.map((match, matchIndex) => {
+        const names = match.candidates.map((id) => {
+          const winner = match.winner === id ? " winner" : "";
+          return `<span class="bracket-candidate${winner}">${escapeHtml(tournamentCandidateName(id))}</span>`;
+        }).join("");
+        const active = roundIndex === tournament.roundIndex && !match.winner
+          && match === currentTournamentMatch(tournament) ? " active" : "";
+        return `<div class="bracket-match${active}" aria-label="Confronto ${matchIndex + 1}">${names}</div>`;
+      }).join("");
+      const byes = roundIndex === 0
+        ? `<div class="bracket-byes"><strong>Classificados direto</strong>${tournament.byes.map((id) => `<span>${escapeHtml(tournamentCandidateName(id))}</span>`).join("")}</div>`
+        : "";
+      return `<section class="bracket-round"><h3>${escapeHtml(round.name)}</h3>${matches}${byes}</section>`;
+    }).join("");
+    els.tournamentBracket.innerHTML = columns;
+  }
+
+  function renderTournamentCard(el, id) {
+    const candidate = byId[id];
+    el.dataset.id = id;
+    applyCardAriaLabel(el, candidate);
+    fillDuelCard(el, candidate, { elo: ELO_START, wr: 0, barWidth: 50 });
+  }
+
+  function renderTournament() {
+    renderTournamentBracket();
+    const match = currentTournamentMatch(tournament);
+    const played = completedTournamentDuels(tournament);
+    if (tournament.champion) {
+      const champion = byId[tournament.champion];
+      els.tournamentDuel.hidden = true;
+      els.tournamentRound.hidden = true;
+      els.tournamentWinner.hidden = false;
+      els.tournamentWinnerTitle.textContent = `Seu presidente é ${champion.name}`;
+      els.tournamentWinnerCard.innerHTML = `<img src="${escapeHtml(champion.photo)}" alt="Foto de ${escapeHtml(champion.name)}"><strong>${escapeHtml(champion.name)}</strong><span>${escapeHtml(champion.party)}</span>`;
+      return;
+    }
+    els.tournamentWinner.hidden = true;
+    els.tournamentDuel.hidden = false;
+    els.tournamentRound.hidden = false;
+    const round = tournament.rounds[tournament.roundIndex];
+    els.tournamentRound.textContent = `${round.name} · duelo ${played + 1} de 11`;
+    renderTournamentCard(els.tournamentCardA, match.candidates[0]);
+    renderTournamentCard(els.tournamentCardB, match.candidates[1]);
+  }
+
+  function pickTournamentCard(card) {
+    if (!tournamentPick(tournament, card.dataset.id)) return;
+    saveTournament();
+    if (tournament.champion && unlockTournamentCompleted(state)) {
+      persist();
+      renderAchievements();
+      showAchievementToasts(["completou-torneio"]);
+    }
+    renderTournament();
+  }
+
+  function restartTournament() {
+    tournament = createTournament(candidates.map((candidate) => candidate.id));
+    saveTournament();
+    if (els.tournamentShareStatus) els.tournamentShareStatus.hidden = true;
+    renderTournament();
+  }
+
+  async function shareTournamentWinner() {
+    const champion = byId[tournament.champion];
+    if (!champion) return;
+    const text = formatTournamentShareText(champion);
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: "Meu presidente — Presidência Duelo 2026", text });
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      els.tournamentShareStatus.textContent = "Resultado copiado. Cole no WhatsApp.";
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+      els.tournamentShareStatus.textContent = "Não deu para compartilhar agora.";
+    }
+    els.tournamentShareStatus.hidden = false;
   }
 
   function renderCard(el, id) {
-    const c = byId[id];
+    const c = displayCandidate(id);
     const elo = state.ratings[id];
     const wins = state.wins[id] || 0;
     const losses = state.losses[id] || 0;
     const wr = winRate(state, id);
     const barWidth = hpFillWidth(wins, losses, wr);
+    const leaderId = findLeaderId(candidates.map((candidate) => candidate.id), state);
+    const rarity = rarityFor(state, id, leaderId);
     el.dataset.id = id;
+    el.dataset.rarity = rarity.id;
     clearPickFeedback(el);
     applyCardAriaLabel(el, c);
-    fillDuelCard(el, c, { elo, wr, barWidth });
+    fillDuelCard(el, c, { elo, wr, barWidth, rarity, crowned: id === leaderId });
   }
 
   function nextDuel() {
     locked = false;
     pickTimer = null;
+    els.duelCards.classList.remove("swipe-commit-left", "swipe-commit-right", "is-dragging");
+    els.duelCards.style.removeProperty("--swipe-x");
     els.cardA.disabled = false;
     els.cardB.disabled = false;
     currentPair = takeNextPair(candidates, state);
+    applyUnlocks();
     persist();
     renderCard(els.cardA, currentPair[0]);
     renderCard(els.cardB, currentPair[1]);
     els.duelCount.textContent = String(state.duels);
     renderProgress();
+    renderCombo();
     syncUndoButton();
   }
 
@@ -464,11 +792,14 @@ export async function initGame({ requireApi = false } = {}) {
     const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
     state.lastDuel = snapshotDuel(state, winnerId, loserId, currentPair);
     const { winnerDelta, loserDelta, zebra } = applyElo(state, winnerId, loserId);
+    applyCombo(state);
+    applyUnlocks();
     persist();
     syncUndoButton();
     applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta, { zebra });
     els.duelCount.textContent = String(state.duels);
     renderProgress();
+    renderCombo();
     maybeShowGoalMoment();
   }
 
@@ -484,7 +815,7 @@ export async function initGame({ requireApi = false } = {}) {
       statusEl.textContent = "Registrando voto…";
       try {
         await commitOnlineVote(
-          () => postVote(winnerId, loserId),
+          () => postVote(winnerId, loserId, mode),
           () => commitLocalPick(winnerEl, winnerId, loserId),
         );
         statusEl.textContent = "API online — voto salvo no aparelho e no ranking agregado";
@@ -506,7 +837,7 @@ export async function initGame({ requireApi = false } = {}) {
       commitLocalPick(winnerEl, winnerId, loserId);
 
       if (apiOnline) {
-        postVote(winnerId, loserId).catch(() => {
+        postVote(winnerId, loserId, mode).catch(() => {
           apiOnline = false;
           statusEl.textContent = "Modo local — falha ao enviar voto; o ranking deste aparelho segue intacto";
           statusEl.classList.remove("online");
@@ -515,6 +846,58 @@ export async function initGame({ requireApi = false } = {}) {
       }
 
     }, nextDuel);
+  }
+
+  function canUseQuickControls() {
+    return els.panelDuel.classList.contains("active")
+      && els.goalModal.hidden
+      && els.podiumOverlay.hidden;
+  }
+
+  function pickSide(side) {
+    if (!canUseQuickControls()) return;
+    pick(side === "left" ? els.cardA : els.cardB);
+  }
+
+  function handleQuickControlKey(event) {
+    const side = keyboardPickSide(event);
+    if (!side || !canUseQuickControls()) return;
+    event.preventDefault();
+    pickSide(side);
+  }
+
+  function beginSwipe(event) {
+    if (event.pointerType === "mouse" || !canUseQuickControls() || locked) return;
+    swipeStartX = event.clientX;
+    swipePointerId = event.pointerId;
+    els.duelCards.classList.add("is-dragging");
+    els.duelCards.setPointerCapture?.(event.pointerId);
+  }
+
+  function moveSwipe(event) {
+    if (event.pointerId !== swipePointerId || swipeStartX == null) return;
+    const delta = Math.max(-110, Math.min(110, event.clientX - swipeStartX));
+    els.duelCards.style.setProperty("--swipe-x", `${delta}px`);
+    if (Math.abs(delta) > 8) event.preventDefault();
+  }
+
+  function finishSwipe(event) {
+    if (event.pointerId !== swipePointerId || swipeStartX == null) return;
+    const side = swipePickSide(swipeStartX, event.clientX);
+    swipeStartX = null;
+    swipePointerId = null;
+    els.duelCards.classList.remove("is-dragging");
+    els.duelCards.style.removeProperty("--swipe-x");
+    if (!side) return;
+    els.duelCards.classList.add(`swipe-commit-${side}`);
+    pickSide(side);
+  }
+
+  function cancelSwipe() {
+    swipeStartX = null;
+    swipePointerId = null;
+    els.duelCards.classList.remove("is-dragging");
+    els.duelCards.style.removeProperty("--swipe-x");
   }
 
   function undoLastDuel() {
@@ -527,6 +910,8 @@ export async function initGame({ requireApi = false } = {}) {
       currentPair = pair;
       state.lastPair = pair;
     }
+    // #17: undo resets combo only; milestones stay unlocked once earned.
+    resetCombo(state);
     persist();
     locked = false;
     hideGoalMoment();
@@ -538,17 +923,21 @@ export async function initGame({ requireApi = false } = {}) {
     }
     els.duelCount.textContent = String(state.duels);
     renderProgress();
+    renderCombo();
     syncUndoButton();
   }
 
   function renderRanking() {
-    els.rankList.innerHTML = renderRankItems(candidates, byId, (id) => ({
+    const visible = displayCandidates();
+    const visibleById = Object.fromEntries(visible.map((candidate) => [candidate.id, candidate]));
+    const leaderId = findLeaderId(candidates.map((candidate) => candidate.id), state);
+    els.rankList.innerHTML = renderRankItems(visible, visibleById, (id) => ({
       elo: state.ratings[id],
       wins: state.wins[id] || 0,
       losses: state.losses[id] || 0,
       wr: winRate(state, id),
       zebras: state.zebras?.[id] || 0,
-    }));
+    }), (id) => rarityFor(state, id, leaderId));
   }
 
   async function renderServerRanking() {
@@ -557,7 +946,7 @@ export async function initGame({ requireApi = false } = {}) {
       return;
     }
     try {
-      const data = await fetchServerRanking();
+      const data = await fetchServerRanking(mode);
       const rows = data.ranking || [];
       if (!rows.length) {
         els.serverWrap.hidden = true;
@@ -581,11 +970,20 @@ export async function initGame({ requireApi = false } = {}) {
   }
 
   els.tabDuel.addEventListener("click", () => setTab("duel"));
+  els.tabTournament.addEventListener("click", () => setTab("tournament"));
   els.tabRank.addEventListener("click", () => setTab("rank"));
   els.tabCredits.addEventListener("click", () => setTab("credits"));
   els.openCredits.addEventListener("click", () => setTab("credits"));
   els.cardA.addEventListener("click", () => pick(els.cardA));
   els.cardB.addEventListener("click", () => pick(els.cardB));
+  els.modePresidentes.addEventListener("click", () => setMode("presidentes"));
+  els.modeVices.addEventListener("click", () => setMode("vices"));
+  bindHoloTilt([els.cardA, els.cardB, els.tournamentCardA, els.tournamentCardB]);
+  document.addEventListener("keydown", handleQuickControlKey);
+  els.duelCards.addEventListener("pointerdown", beginSwipe);
+  els.duelCards.addEventListener("pointermove", moveSwipe);
+  els.duelCards.addEventListener("pointerup", finishSwipe);
+  els.duelCards.addEventListener("pointercancel", cancelSwipe);
   els.undoBtn.addEventListener("click", () => undoLastDuel());
   els.goalContinue.addEventListener("click", () => closeGoalMoment());
   els.goalDismiss.addEventListener("click", () => closeGoalMoment());
@@ -594,18 +992,37 @@ export async function initGame({ requireApi = false } = {}) {
   els.podiumShare.addEventListener("click", () => sharePodium());
   els.podiumClose.addEventListener("click", () => closePodium());
   els.podiumBackdrop.addEventListener("click", () => closePodium());
+  els.tournamentCardA.addEventListener("click", () => pickTournamentCard(els.tournamentCardA));
+  els.tournamentCardB.addEventListener("click", () => pickTournamentCard(els.tournamentCardB));
+  els.tournamentShare.addEventListener("click", () => shareTournamentWinner());
+  els.tournamentAgain.addEventListener("click", () => restartTournament());
+  els.restartTournament.addEventListener("click", () => {
+    if (completedTournamentDuels(tournament) > 0 && !confirm("Começar um novo torneio e apagar esta chave?")) return;
+    restartTournament();
+  });
+  if (!hasSeenQuickControlsHint()) els.quickControlsHint.hidden = false;
+  els.dismissQuickControls.addEventListener("click", () => {
+    els.quickControlsHint.hidden = true;
+    markQuickControlsHintSeen();
+  });
 
   els.resetBtn.addEventListener("click", () => {
     if (!confirm("Zerar ranking e duelos salvos neste aparelho?")) return;
     cancelPickTimer();
     hideGoalMoment();
     closePodium();
-    state = defaultState(candidates);
+    states[mode] = defaultState(candidates);
+    state = states[mode];
     persist();
     nextDuel();
     renderRanking();
+    renderAchievements();
+    renderCombo();
   });
 
+  renderModeUi();
+  renderAchievements();
+  renderCombo();
   nextDuel();
   maybeShowGoalMoment();
   return true;

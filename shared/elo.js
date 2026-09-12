@@ -9,7 +9,7 @@ export function applyElo(state, winnerId, loserId) {
   const ra = state.ratings[winnerId];
   const rb = state.ratings[loserId];
   const ea = expectedScore(ra, rb);
-  const eb = expectedScore(rb, ra);
+  const eb = 1 - ea;
   state.ratings[winnerId] = Math.round(ra + ELO_K * (1 - ea));
   state.ratings[loserId] = Math.round(rb + ELO_K * (0 - eb));
   state.wins[winnerId] += 1;

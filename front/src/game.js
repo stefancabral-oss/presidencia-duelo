@@ -30,6 +30,15 @@ import {
   shouldCelebrate,
 } from "./progress.js";
 import { saveState, STORAGE_KEY, STORAGE_UNAVAILABLE_MESSAGE } from "./storage.js";
+import {
+  TOURNAMENT_STORAGE_KEY,
+  completedTournamentDuels,
+  createTournament,
+  currentTournamentMatch,
+  formatTournamentShareText,
+  isValidTournament,
+  tournamentPick,
+} from "./tournament.js";
 import { lastDuelFromParsed, restoreDuel, snapshotDuel, undoPair } from "./undo.js";
 
 const ELO_START = 1000;
@@ -101,6 +110,7 @@ function renderShell(root) {
 
       <nav class="tabs" aria-label="Seções">
         <button type="button" class="tab active" id="tab-duel">Duelo</button>
+        <button type="button" class="tab" id="tab-tournament">Torneio</button>
         <button type="button" class="tab" id="tab-rank">Ranking</button>
         <button type="button" class="tab" id="tab-credits">Créditos</button>
       </nav>
@@ -151,6 +161,35 @@ function renderShell(root) {
         </div>
 
         <p class="hint">Cards inspirados em cromos/Pokémon · fotos reais (Wikimedia) · funciona offline após o cache</p>
+      </section>
+
+      <section id="panel-tournament" class="panel" aria-label="Torneio">
+        <div class="tournament-toolbar">
+          <div>
+            <strong>Mata-mata presidencial</strong>
+            <div class="rank-sub">12 candidatos · 11 duelos · não altera o ranking Elo</div>
+          </div>
+          <button type="button" class="btn" id="restart-tournament">Novo torneio</button>
+        </div>
+        <div class="tournament-bracket" id="tournament-bracket" aria-label="Chave do torneio"></div>
+        <div class="tournament-stage" id="tournament-stage">
+          <p class="tournament-round" id="tournament-round"></p>
+          <div class="vs-row" id="tournament-duel">
+            <button type="button" class="poke-card" id="tournament-card-a"></button>
+            <div class="vs-badge" aria-hidden="true">VS</div>
+            <button type="button" class="poke-card" id="tournament-card-b"></button>
+          </div>
+          <div class="tournament-winner" id="tournament-winner" hidden>
+            <p class="tournament-kicker">Campeão do seu mata-mata</p>
+            <h2 id="tournament-winner-title"></h2>
+            <div class="tournament-winner-card" id="tournament-winner-card"></div>
+            <p class="podium-share-status" id="tournament-share-status" hidden></p>
+            <div class="podium-actions">
+              <button type="button" class="btn primary" id="tournament-share">Compartilhar</button>
+              <button type="button" class="btn" id="tournament-again">Jogar novamente</button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="panel-rank" class="panel" aria-label="Ranking">
@@ -245,9 +284,11 @@ export async function initGame() {
   preloadPhotos(candidates);
   const els = {
     panelDuel: document.getElementById("panel-duel"),
+    panelTournament: document.getElementById("panel-tournament"),
     panelRank: document.getElementById("panel-rank"),
     panelCredits: document.getElementById("panel-credits"),
     tabDuel: document.getElementById("tab-duel"),
+    tabTournament: document.getElementById("tab-tournament"),
     tabRank: document.getElementById("tab-rank"),
     tabCredits: document.getElementById("tab-credits"),
     openCredits: document.getElementById("open-credits"),
@@ -276,6 +317,19 @@ export async function initGame() {
     serverWrap: document.getElementById("server-rank-wrap"),
     serverList: document.getElementById("server-rank-list"),
     storageNotice: document.getElementById("storage-notice"),
+    tournamentBracket: document.getElementById("tournament-bracket"),
+    tournamentStage: document.getElementById("tournament-stage"),
+    tournamentRound: document.getElementById("tournament-round"),
+    tournamentDuel: document.getElementById("tournament-duel"),
+    tournamentCardA: document.getElementById("tournament-card-a"),
+    tournamentCardB: document.getElementById("tournament-card-b"),
+    tournamentWinner: document.getElementById("tournament-winner"),
+    tournamentWinnerTitle: document.getElementById("tournament-winner-title"),
+    tournamentWinnerCard: document.getElementById("tournament-winner-card"),
+    tournamentShare: document.getElementById("tournament-share"),
+    tournamentShareStatus: document.getElementById("tournament-share-status"),
+    tournamentAgain: document.getElementById("tournament-again"),
+    restartTournament: document.getElementById("restart-tournament"),
   };
 
   function persist() {
@@ -287,6 +341,25 @@ export async function initGame() {
   let currentPair = null;
   let locked = false;
   let pickTimer = null;
+  let tournament = loadTournament();
+
+  function loadTournament() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(TOURNAMENT_STORAGE_KEY));
+      if (isValidTournament(parsed, candidates.map((candidate) => candidate.id))) return parsed;
+    } catch {
+      // Start a fresh bracket when storage is unavailable or stale.
+    }
+    return createTournament(candidates.map((candidate) => candidate.id));
+  }
+
+  function saveTournament() {
+    try {
+      localStorage.setItem(TOURNAMENT_STORAGE_KEY, JSON.stringify(tournament));
+    } catch {
+      // The tournament remains playable in memory.
+    }
+  }
 
   function cancelPickTimer() {
     if (pickTimer == null) return;
@@ -397,6 +470,7 @@ export async function initGame() {
   function setTab(name) {
     const tabs = [
       ["duel", els.panelDuel, els.tabDuel],
+      ["tournament", els.panelTournament, els.tabTournament],
       ["rank", els.panelRank, els.tabRank],
       ["credits", els.panelCredits, els.tabCredits],
     ];
@@ -409,6 +483,90 @@ export async function initGame() {
       renderRanking();
       renderServerRanking();
     }
+    if (name === "tournament") renderTournament();
+  }
+
+  function tournamentCandidateName(id) {
+    return byId[id]?.name || "A definir";
+  }
+
+  function renderTournamentBracket() {
+    const columns = tournament.rounds.map((round, roundIndex) => {
+      const matches = round.matches.map((match, matchIndex) => {
+        const names = match.candidates.map((id) => {
+          const winner = match.winner === id ? " winner" : "";
+          return `<span class="bracket-candidate${winner}">${escapeHtml(tournamentCandidateName(id))}</span>`;
+        }).join("");
+        const active = roundIndex === tournament.roundIndex && !match.winner
+          && match === currentTournamentMatch(tournament) ? " active" : "";
+        return `<div class="bracket-match${active}" aria-label="Confronto ${matchIndex + 1}">${names}</div>`;
+      }).join("");
+      const byes = roundIndex === 0
+        ? `<div class="bracket-byes"><strong>Classificados direto</strong>${tournament.byes.map((id) => `<span>${escapeHtml(tournamentCandidateName(id))}</span>`).join("")}</div>`
+        : "";
+      return `<section class="bracket-round"><h3>${escapeHtml(round.name)}</h3>${matches}${byes}</section>`;
+    }).join("");
+    els.tournamentBracket.innerHTML = columns;
+  }
+
+  function renderTournamentCard(el, id) {
+    const candidate = byId[id];
+    el.dataset.id = id;
+    applyCardAriaLabel(el, candidate);
+    fillDuelCard(el, candidate, { elo: ELO_START, wr: 0, barWidth: 50 });
+  }
+
+  function renderTournament() {
+    renderTournamentBracket();
+    const match = currentTournamentMatch(tournament);
+    const played = completedTournamentDuels(tournament);
+    if (tournament.champion) {
+      const champion = byId[tournament.champion];
+      els.tournamentDuel.hidden = true;
+      els.tournamentRound.hidden = true;
+      els.tournamentWinner.hidden = false;
+      els.tournamentWinnerTitle.textContent = `Seu presidente é ${champion.name}`;
+      els.tournamentWinnerCard.innerHTML = `<img src="${escapeHtml(champion.photo)}" alt="Foto de ${escapeHtml(champion.name)}"><strong>${escapeHtml(champion.name)}</strong><span>${escapeHtml(champion.party)}</span>`;
+      return;
+    }
+    els.tournamentWinner.hidden = true;
+    els.tournamentDuel.hidden = false;
+    els.tournamentRound.hidden = false;
+    const round = tournament.rounds[tournament.roundIndex];
+    els.tournamentRound.textContent = `${round.name} · duelo ${played + 1} de 11`;
+    renderTournamentCard(els.tournamentCardA, match.candidates[0]);
+    renderTournamentCard(els.tournamentCardB, match.candidates[1]);
+  }
+
+  function pickTournamentCard(card) {
+    if (!tournamentPick(tournament, card.dataset.id)) return;
+    saveTournament();
+    renderTournament();
+  }
+
+  function restartTournament() {
+    tournament = createTournament(candidates.map((candidate) => candidate.id));
+    saveTournament();
+    if (els.tournamentShareStatus) els.tournamentShareStatus.hidden = true;
+    renderTournament();
+  }
+
+  async function shareTournamentWinner() {
+    const champion = byId[tournament.champion];
+    if (!champion) return;
+    const text = formatTournamentShareText(champion);
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: "Meu presidente — Presidência Duelo 2026", text });
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      els.tournamentShareStatus.textContent = "Resultado copiado. Cole no WhatsApp.";
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+      els.tournamentShareStatus.textContent = "Não deu para compartilhar agora.";
+    }
+    els.tournamentShareStatus.hidden = false;
   }
 
   function renderCard(el, id) {
@@ -529,6 +687,7 @@ export async function initGame() {
   }
 
   els.tabDuel.addEventListener("click", () => setTab("duel"));
+  els.tabTournament.addEventListener("click", () => setTab("tournament"));
   els.tabRank.addEventListener("click", () => setTab("rank"));
   els.tabCredits.addEventListener("click", () => setTab("credits"));
   els.openCredits.addEventListener("click", () => setTab("credits"));
@@ -542,6 +701,14 @@ export async function initGame() {
   els.podiumShare.addEventListener("click", () => sharePodium());
   els.podiumClose.addEventListener("click", () => closePodium());
   els.podiumBackdrop.addEventListener("click", () => closePodium());
+  els.tournamentCardA.addEventListener("click", () => pickTournamentCard(els.tournamentCardA));
+  els.tournamentCardB.addEventListener("click", () => pickTournamentCard(els.tournamentCardB));
+  els.tournamentShare.addEventListener("click", () => shareTournamentWinner());
+  els.tournamentAgain.addEventListener("click", () => restartTournament());
+  els.restartTournament.addEventListener("click", () => {
+    if (completedTournamentDuels(tournament) > 0 && !confirm("Começar um novo torneio e apagar esta chave?")) return;
+    restartTournament();
+  });
 
   els.resetBtn.addEventListener("click", () => {
     if (!confirm("Zerar ranking e duelos salvos neste aparelho?")) return;

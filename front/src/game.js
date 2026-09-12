@@ -8,6 +8,14 @@ import { hpFillWidth } from "./hp-bar.js";
 import { applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
 import { runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
+import {
+  buildPodiumPngFile,
+  formatPodiumShareText,
+  podiumStandHtml,
+  selectTopThree,
+  shareOrCopyPodium,
+  SHARE_TITLE,
+} from "./podium.js";
 import { RANKING_SUBTITLE, rankMetaText, sortCandidatesByRank } from "./ranking.js";
 import { normalizePairCount, takeNextPair } from "./matchmaking.js";
 import {
@@ -118,7 +126,7 @@ function renderShell(root) {
           </div>
         </div>
 
-        <!-- Lightweight result moment only; shareable PNG / Web Share podium is deferred to issue #14. -->
+        <!-- Lightweight result moment. "Ver pódio" opens #14 without replacing Continue/Fechar. -->
         <div class="goal-modal" id="goal-modal" hidden>
           <div class="goal-modal-card" role="status" aria-labelledby="goal-modal-title">
             <h2 class="goal-modal-title" id="goal-modal-title">Meta atingida!</h2>
@@ -126,6 +134,7 @@ function renderShell(root) {
             <p class="goal-modal-leader" id="goal-modal-leader"></p>
             <div class="goal-modal-actions">
               <button type="button" class="btn primary" id="goal-continue">Nova meta: 60 duelos</button>
+              <button type="button" class="btn" id="goal-podium">Ver pódio</button>
               <button type="button" class="btn" id="goal-dismiss">Fechar</button>
             </div>
           </div>
@@ -150,7 +159,10 @@ function renderShell(root) {
             <strong>Ranking Elo local</strong>
             <div class="rank-sub">${RANKING_SUBTITLE}</div>
           </div>
-          <button type="button" class="btn danger" id="reset-ranking">Zerar ranking</button>
+          <div class="ranking-actions">
+            <button type="button" class="btn primary" id="open-podium">Ver pódio</button>
+            <button type="button" class="btn danger" id="reset-ranking">Zerar ranking</button>
+          </div>
         </div>
         <ol class="rank-list" id="rank-list"></ol>
         <div id="server-rank-wrap" hidden>
@@ -170,6 +182,21 @@ function renderShell(root) {
         · <a href="${GITHUB_README_URL}">README</a>
         · <a href="${GITHUB_REPO_URL}">Repositório</a>
       </footer>
+
+      <div class="podium-overlay" id="podium-overlay" hidden>
+        <div class="podium-backdrop" id="podium-backdrop"></div>
+        <div class="podium-dialog" role="dialog" aria-modal="true" aria-labelledby="podium-title">
+          <p class="podium-kicker">Presidência Duelo 2026</p>
+          <h2 class="podium-title" id="podium-title">Seu pódio</h2>
+          <p class="podium-disclaimer">Não é pesquisa oficial</p>
+          <ol class="podium-stand" id="podium-stand"></ol>
+          <p class="podium-share-status" id="podium-share-status" hidden></p>
+          <div class="podium-actions">
+            <button type="button" class="btn primary" id="podium-share">Compartilhar</button>
+            <button type="button" class="btn" id="podium-close">Fechar</button>
+          </div>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -232,7 +259,15 @@ export async function initGame() {
     goalLead: document.getElementById("goal-modal-lead"),
     goalLeader: document.getElementById("goal-modal-leader"),
     goalContinue: document.getElementById("goal-continue"),
+    goalPodium: document.getElementById("goal-podium"),
     goalDismiss: document.getElementById("goal-dismiss"),
+    openPodium: document.getElementById("open-podium"),
+    podiumOverlay: document.getElementById("podium-overlay"),
+    podiumBackdrop: document.getElementById("podium-backdrop"),
+    podiumStand: document.getElementById("podium-stand"),
+    podiumShare: document.getElementById("podium-share"),
+    podiumClose: document.getElementById("podium-close"),
+    podiumStatus: document.getElementById("podium-share-status"),
     cardA: document.getElementById("card-a"),
     cardB: document.getElementById("card-b"),
     undoBtn: document.getElementById("undo-duel"),
@@ -270,6 +305,58 @@ export async function initGame() {
       wins: state.wins[id] || 0,
     }));
     return byId[ranked[0]?.id]?.name || "";
+  }
+
+  function localPodiumPlaces() {
+    return selectTopThree(candidates, (id) => ({
+      elo: state.ratings[id],
+      wins: state.wins[id] || 0,
+      losses: state.losses[id] || 0,
+    }));
+  }
+
+  function setPodiumStatus(message) {
+    if (!els.podiumStatus) return;
+    if (!message) {
+      els.podiumStatus.hidden = true;
+      els.podiumStatus.textContent = "";
+      return;
+    }
+    els.podiumStatus.hidden = false;
+    els.podiumStatus.textContent = message;
+  }
+
+  function openPodium() {
+    if (els.podiumStand) els.podiumStand.innerHTML = podiumStandHtml(localPodiumPlaces());
+    setPodiumStatus("");
+    if (els.podiumOverlay) els.podiumOverlay.hidden = false;
+    els.podiumShare?.focus();
+  }
+
+  function closePodium() {
+    if (els.podiumOverlay) els.podiumOverlay.hidden = true;
+  }
+
+  async function sharePodium() {
+    const places = localPodiumPlaces();
+    const text = formatPodiumShareText(places);
+    setPodiumStatus("Gerando imagem…");
+    if (els.podiumShare) els.podiumShare.disabled = true;
+    try {
+      const file = await buildPodiumPngFile(places);
+      const result = await shareOrCopyPodium({ file, text, title: SHARE_TITLE });
+      if (result.method === "share" || result.method === "share-abort") {
+        setPodiumStatus("");
+      } else if (result.method === "copy") {
+        setPodiumStatus("Ranking copiado. Cole no WhatsApp.");
+      } else {
+        setPodiumStatus("Não deu para compartilhar agora.");
+      }
+    } catch {
+      setPodiumStatus("Não deu para compartilhar agora.");
+    } finally {
+      if (els.podiumShare) els.podiumShare.disabled = false;
+    }
   }
 
   function renderProgress() {
@@ -450,11 +537,17 @@ export async function initGame() {
   els.undoBtn.addEventListener("click", () => undoLastDuel());
   els.goalContinue.addEventListener("click", () => closeGoalMoment());
   els.goalDismiss.addEventListener("click", () => closeGoalMoment());
+  els.goalPodium.addEventListener("click", () => openPodium());
+  els.openPodium.addEventListener("click", () => openPodium());
+  els.podiumShare.addEventListener("click", () => sharePodium());
+  els.podiumClose.addEventListener("click", () => closePodium());
+  els.podiumBackdrop.addEventListener("click", () => closePodium());
 
   els.resetBtn.addEventListener("click", () => {
     if (!confirm("Zerar ranking e duelos salvos neste aparelho?")) return;
     cancelPickTimer();
     hideGoalMoment();
+    closePodium();
     state = defaultState(candidates);
     persist();
     nextDuel();

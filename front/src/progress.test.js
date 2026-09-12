@@ -133,7 +133,7 @@ test("saveState persists the current goal with the rest of ranking state", () =>
   assert.equal(parsed.duels, 18);
 });
 
-test("game wires progress to state.duels, undo, reset, and skips the #14 podium", () => {
+test("game wires progress to state.duels, undo, reset, and keeps Continue/Fechar", () => {
   assert.match(gameSrc, /id="duel-progress"/);
   assert.match(gameSrc, /id="goal-modal"/);
   assert.match(gameSrc, /remainingText\(state\.duels/);
@@ -144,6 +144,7 @@ test("game wires progress to state.duels, undo, reset, and skips the #14 podium"
   assert.match(gameSrc, /maybeShowGoalMoment\(\)/);
   assert.match(gameSrc, /hideGoalMoment\(\)/);
   assert.match(gameSrc, /progressGoal: INITIAL_GOAL/);
-  assert.match(gameSrc, /deferred to issue #14/);
-  assert.doesNotMatch(gameSrc, /navigator\.share|canvas|toDataURL|toBlob/);
+  assert.match(gameSrc, /id="goal-continue"/);
+  assert.match(gameSrc, /id="goal-dismiss"/);
+  assert.match(gameSrc, /id="goal-podium"/);
 });

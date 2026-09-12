@@ -1,0 +1,15 @@
+{
+  "name": "presidencia-duelo-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/sync-public.mjs",
+    "prebuild": "node scripts/sync-public.mjs",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5"
+  }
+}

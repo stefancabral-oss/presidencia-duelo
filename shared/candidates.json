@@ -1,0 +1,98 @@
+[
+  {
+    "id": "lula",
+    "name": "Luiz Inácio Lula da Silva",
+    "party": "PT",
+    "vice": "Geraldo Alckmin (PSB)",
+    "photo": "/candidates/lula.jpg",
+    "initials": "LS"
+  },
+  {
+    "id": "flavio-bolsonaro",
+    "name": "Flávio Bolsonaro",
+    "party": "PL",
+    "vice": "Alfredo Gaspar (PL)",
+    "photo": "/candidates/flavio-bolsonaro.jpg",
+    "initials": "FB"
+  },
+  {
+    "id": "caiado",
+    "name": "Ronaldo Caiado",
+    "party": "PSD",
+    "vice": "Gilberto Kassab (PSD)",
+    "photo": "/candidates/caiado.jpg",
+    "initials": "RC"
+  },
+  {
+    "id": "zema",
+    "name": "Romeu Zema",
+    "party": "Novo",
+    "vice": "Eduardo Girão (Novo)",
+    "photo": "/candidates/zema.jpg",
+    "initials": "RZ"
+  },
+  {
+    "id": "renan-santos",
+    "name": "Renan Santos",
+    "party": "Missão",
+    "vice": "Aroldo Medina (Missão)",
+    "photo": "/candidates/renan-santos.jpg",
+    "initials": "RS"
+  },
+  {
+    "id": "cury",
+    "name": "Augusto Cury",
+    "party": "Avante",
+    "vice": "Júlio Delgado (Avante)",
+    "photo": "/candidates/cury.jpg",
+    "initials": "AC"
+  },
+  {
+    "id": "rui-costa-pimenta",
+    "name": "Rui Costa Pimenta",
+    "party": "PCO",
+    "vice": "Antônio Carlos (PCO)",
+    "photo": "/candidates/rui-costa-pimenta.jpg",
+    "initials": "RP"
+  },
+  {
+    "id": "samara-martins",
+    "name": "Samara Martins",
+    "party": "UP",
+    "vice": "Raquel Brício (UP)",
+    "photo": "/candidates/samara-martins.jpg",
+    "initials": "SM"
+  },
+  {
+    "id": "hertz-dias",
+    "name": "Hertz Dias",
+    "party": "PSTU",
+    "vice": "Vanessa Portugal (PSTU)",
+    "photo": "/candidates/hertz-dias.jpg",
+    "initials": "HD"
+  },
+  {
+    "id": "edmilson-costa",
+    "name": "Edmilson Costa",
+    "party": "PCB",
+    "vice": "Cleusa Santos (PCB)",
+    "photo": "/candidates/edmilson-costa.jpg",
+    "initials": "EC"
+  },
+  {
+    "id": "wilson-grassi",
+    "name": "Wilson Grassi",
+    "party": "Democrata",
+    "vice": "Suêd Haidar (Democrata)",
+    "photo": "/candidates/wilson-grassi.jpg",
+    "initials": "WG"
+  },
+  {
+    "id": "clariana-barao",
+    "name": "Clariana Barão",
+    "party": "DC",
+    "vice": "Fabiana Torquato (DC)",
+    "photo": "/candidates/clariana-barao.jpg",
+    "initials": "CB"
+  }
+]

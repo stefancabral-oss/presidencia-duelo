@@ -30,14 +30,18 @@ app.get("/api/candidates", (_req, res) => {
   });
 });
 
-app.get("/api/ranking", (_req, res) => {
-  res.json(snapshot());
+app.get("/api/ranking", (req, res) => {
+  try {
+    res.json(snapshot(String(req.query.mode || "presidentes")));
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message || "erro interno" });
+  }
 });
 
 app.post("/api/vote", (req, res) => {
-  const { winnerId, loserId } = req.body || {};
+  const { winnerId, loserId, mode } = req.body || {};
   try {
-    res.json(vote(String(winnerId || ""), String(loserId || "")));
+    res.json(vote(String(winnerId || ""), String(loserId || ""), String(mode || "presidentes")));
   } catch (err) {
     res.status(err.status || 500).json({ error: err.message || "erro interno" });
   }

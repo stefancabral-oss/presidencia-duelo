@@ -89,7 +89,9 @@ npm run build --prefix app
 # pasta de publicação: app/dist
 ```
 
-No celular: abra o `app` no navegador → “Adicionar à tela inicial”. Offline, o SW serve o shell e as fotos já cacheadas. Votos anônimos seguem no `localStorage`; o `POST /api/vote` só ocorre se a API responder.
+No celular: abra o `app` no navegador → “Adicionar à tela inicial”. O PWA exige conexão com a API: cada voto é confirmado no servidor antes de alterar o Elo no aparelho, mantendo o ranking individual e o agregado sincronizados. O service worker é registrado apenas em `http:` ou `https:` e nunca fornece uma versão jogável offline.
+
+Os rankings agregados de **Presidentes** e **Vices** usam pools separados no mesmo arquivo persistente da API; trocar de modo não mistura as estatísticas.
 
 ## Deploy no Dokploy
 
@@ -98,24 +100,31 @@ No celular: abra o `app` no navegador → “Adicionar à tela inicial”. Offli
 1. Build: `cd front && npm ci && npm run build`
 2. **Publish directory:** `front/dist`
 3. SPA: fallback para `index.html`
-4. Opcional: variável `VITE_API_URL` no build, apontando para o serviço da API
+4. Variável `VITE_API_URL` no build, apontando para o serviço da API
 
-### API opcional
+### API obrigatória para o PWA
 
-1. Root do serviço: `back`
-2. Install: `npm ci`
-3. Start: `npm start` (ou `node src/server.js`)
-4. Porta: `3001` (ou `PORT`)
-5. Healthcheck: `GET /api/health`
-6. Persistência: monte um volume em `back/data` se quiser manter o Elo entre deploys
+Crie um serviço **Application** usando o repositório inteiro como contexto:
+
+1. Dockerfile: `back/Dockerfile`
+2. Porta: `3001`
+3. Healthcheck: `GET /api/health`
+4. Domínio sugerido: `api.seu-dominio.com`
+5. Volume persistente: `/repo/back/data` (obrigatório para manter o Elo agregado entre deploys)
 
 Se o front e a API ficarem no mesmo domínio, deixe `VITE_API_URL` vazio e encaminhe `/api` para o serviço Node.
 
-### App PWA (alternativa ao front)
+### App PWA online
 
-1. Build: `cd app && npm ci && npm run build`
-2. **Publish directory:** `app/dist`
-3. Mesmas regras de proxy `/api` que o front
+Crie outro serviço **Application**, também com o repositório inteiro como contexto:
+
+1. Dockerfile: `app/Dockerfile`
+2. Porta: `80`
+3. Build arg: `VITE_API_URL=https://api.seu-dominio.com`
+4. Aponte o domínio público do jogo para este serviço
+5. Ative HTTPS para permitir instalação e registro do service worker
+
+Depois do deploy, valide `/manifest.webmanifest`, `/sw.js` e `/api/health`. O PWA mostra “Conexão necessária” se a API não responder e não altera estatísticas locais nesse estado.
 
 ## Candidatos incluídos
 

@@ -26,6 +26,7 @@ import {
 import { RANKING_SUBTITLE, rankMetaText, sortCandidatesByRank } from "./ranking.js";
 import { findLeaderId, rarityFor } from "./rarity.js";
 import { normalizePairCount, takeNextPair } from "./matchmaking.js";
+import { commitOnlineVote } from "./online-vote.js";
 import {
   INITIAL_GOAL,
   acceptGoal,
@@ -120,7 +121,7 @@ function winRate(state, id) {
   return Math.round((100 * w) / t);
 }
 
-function renderShell(root) {
+function renderShell(root, { requireApi = false } = {}) {
   root.innerHTML = `
     <div class="app">
       <header>
@@ -205,7 +206,7 @@ function renderShell(root) {
           <button type="button" class="btn" id="undo-duel" disabled>Desfazer</button>
         </div>
 
-        <p class="hint">Cards inspirados em cromos/Pokémon · fotos reais (Wikimedia) · funciona offline após o cache</p>
+        <p class="hint">Cards inspirados em cromos/Pokémon · fotos reais (Wikimedia) · ${requireApi ? "conexão obrigatória para preservar todos os votos" : "modo local disponível sem API"}</p>
       </section>
 
       <section id="panel-tournament" class="panel" aria-label="Torneio">
@@ -292,6 +293,22 @@ function renderShell(root) {
 }
 
 function renderRankItems(candidates, byId, getStats, getRarity = () => null) {
+function renderConnectionRequired(root) {
+  root.innerHTML = `
+    <main class="app connection-required">
+      <div class="logo">
+        <div class="logo-badge" aria-hidden="true">PD</div>
+        <h1>Presidência Duelo</h1>
+      </div>
+      <section class="connection-required-card" role="alert">
+        <h2>Conexão necessária</h2>
+        <p>O jogo funciona somente online para registrar cada voto no ranking compartilhado sem perder suas estatísticas individuais.</p>
+        <button type="button" class="btn primary" id="retry-connection">Tentar novamente</button>
+      </section>
+    </main>
+  `;
+  document.getElementById("retry-connection")?.addEventListener("click", () => location.reload());
+}
   const ranked = sortCandidatesByRank(candidates, getStats);
 
   return ranked
@@ -313,9 +330,9 @@ function renderRankItems(candidates, byId, getStats, getRarity = () => null) {
     .join("");
 }
 
-export async function initGame() {
+export async function initGame({ requireApi = false } = {}) {
   const root = document.getElementById("app");
-  renderShell(root);
+  renderShell(root, { requireApi });
 
   const statusEl = document.getElementById("api-status");
   let candidates = FALLBACK_CANDIDATES;
@@ -328,6 +345,10 @@ export async function initGame() {
     statusEl.textContent = "API online — votos locais + ranking agregado";
     statusEl.classList.add("online");
   } catch {
+    if (requireApi) {
+      renderConnectionRequired(root);
+      return false;
+    }
     statusEl.textContent = "Modo local — API indisponível; ranking só neste aparelho (localStorage)";
     statusEl.classList.add("offline");
   }
@@ -754,6 +775,8 @@ export async function initGame() {
     pickTimer = null;
     els.duelCards.classList.remove("swipe-commit-left", "swipe-commit-right", "is-dragging");
     els.duelCards.style.removeProperty("--swipe-x");
+    els.cardA.disabled = false;
+    els.cardB.disabled = false;
     currentPair = takeNextPair(candidates, state);
     applyUnlocks();
     persist();
@@ -765,23 +788,56 @@ export async function initGame() {
     syncUndoButton();
   }
 
-  function pick(winnerEl) {
+  function commitLocalPick(winnerEl, winnerId, loserId) {
+    const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
+    state.lastDuel = snapshotDuel(state, winnerId, loserId, currentPair);
+    const { winnerDelta, loserDelta, zebra } = applyElo(state, winnerId, loserId);
+    applyCombo(state);
+    applyUnlocks();
+    persist();
+    syncUndoButton();
+    applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta, { zebra });
+    els.duelCount.textContent = String(state.duels);
+    renderProgress();
+    renderCombo();
+    maybeShowGoalMoment();
+  }
+
+  async function pick(winnerEl) {
     if (locked || !currentPair) return;
     locked = true;
+    const winnerId = winnerEl.dataset.id;
+    const loserId = currentPair[0] === winnerId ? currentPair[1] : currentPair[0];
+
+    if (requireApi) {
+      els.cardA.disabled = true;
+      els.cardB.disabled = true;
+      statusEl.textContent = "Registrando voto…";
+      try {
+        await commitOnlineVote(
+          () => postVote(winnerId, loserId, mode),
+          () => commitLocalPick(winnerEl, winnerId, loserId),
+        );
+        statusEl.textContent = "API online — voto salvo no aparelho e no ranking agregado";
+        statusEl.classList.remove("offline");
+        statusEl.classList.add("online");
+        pickTimer = setTimeout(nextDuel, 420);
+      } catch {
+        locked = false;
+        els.cardA.disabled = false;
+        els.cardB.disabled = false;
+        statusEl.textContent = "Sem conexão — voto não registrado. Tente novamente.";
+        statusEl.classList.remove("online");
+        statusEl.classList.add("offline");
+      }
+      return;
+    }
+
     pickTimer = runLockedPick(() => {
-      const winnerId = winnerEl.dataset.id;
-      const loserId = currentPair[0] === winnerId ? currentPair[1] : currentPair[0];
-      const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
+      commitLocalPick(winnerEl, winnerId, loserId);
 
-      state.lastDuel = snapshotDuel(state, winnerId, loserId, currentPair);
-      const { winnerDelta, loserDelta, zebra } = applyElo(state, winnerId, loserId);
-      applyCombo(state);
-      applyUnlocks();
-      persist();
-      syncUndoButton();
-
-      if (apiOnline && mode === "presidentes") {
-        postVote(winnerId, loserId).catch(() => {
+      if (apiOnline) {
+        postVote(winnerId, loserId, mode).catch(() => {
           apiOnline = false;
           statusEl.textContent = "Modo local — falha ao enviar voto; o ranking deste aparelho segue intacto";
           statusEl.classList.remove("online");
@@ -789,11 +845,6 @@ export async function initGame() {
         });
       }
 
-      applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta, { zebra });
-      els.duelCount.textContent = String(state.duels);
-      renderProgress();
-      renderCombo();
-      maybeShowGoalMoment();
     }, nextDuel);
   }
 
@@ -890,12 +941,12 @@ export async function initGame() {
   }
 
   async function renderServerRanking() {
-    if (!apiOnline || mode === "vices") {
+    if (!apiOnline) {
       els.serverWrap.hidden = true;
       return;
     }
     try {
-      const data = await fetchServerRanking();
+      const data = await fetchServerRanking(mode);
       const rows = data.ranking || [];
       if (!rows.length) {
         els.serverWrap.hidden = true;
@@ -974,4 +1025,5 @@ export async function initGame() {
   renderCombo();
   nextDuel();
   maybeShowGoalMoment();
+  return true;
 }

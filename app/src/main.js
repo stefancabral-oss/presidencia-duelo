@@ -3,4 +3,4 @@ import "../../front/src/styles.css";
 import { registerServiceWorker } from "./register-sw.js";
 
 registerServiceWorker();
-initGame();
+initGame({ requireApi: true });

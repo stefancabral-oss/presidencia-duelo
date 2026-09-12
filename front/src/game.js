@@ -29,6 +29,19 @@ import {
   remainingText,
   shouldCelebrate,
 } from "./progress.js";
+import {
+  ACHIEVEMENT_IDS,
+  achievementTitle,
+  achievementToastText,
+  applyCombo,
+  comboLabel,
+  liveCombo,
+  migrateAchievements,
+  normalizeAchievements,
+  resetCombo,
+  unlockDueAchievements,
+  unlockTournamentCompleted,
+} from "./achievements.js";
 import { saveState, STORAGE_KEY, STORAGE_UNAVAILABLE_MESSAGE } from "./storage.js";
 import {
   TOURNAMENT_STORAGE_KEY,
@@ -59,6 +72,9 @@ function defaultState(candidates) {
     pairCount: {},
     progressGoal: INITIAL_GOAL,
     celebratedGoal: null,
+    achievements: [],
+    combo: 0,
+    lastVoteAt: null,
   };
 }
 
@@ -68,12 +84,19 @@ function loadState(candidates) {
     if (!raw) return defaultState(candidates);
     const parsed = JSON.parse(raw);
     const merged = mergeStats(defaultState(candidates), parsed);
+    const pairCount = normalizePairCount(parsed.pairCount);
     return {
       ...merged,
       lastPair: parsed.lastPair || null,
       lastDuel: lastDuelFromParsed(parsed),
       pairCount: normalizePairCount(parsed.pairCount),
       ...migrateProgress(parsed, merged.duels),
+      ...migrateAchievements(parsed, {
+        duels: merged.duels,
+        zebras: merged.zebras,
+        pairCount,
+        candidateIds: candidates.map((c) => c.id),
+      }),
     };
   } catch {
     return defaultState(candidates);
@@ -116,6 +139,9 @@ function renderShell(root) {
       </nav>
 
       <section id="panel-duel" class="panel active" aria-label="Duelo">
+        <div class="combo-banner" id="combo-banner" hidden>
+          <span class="combo-label" id="combo-label"></span>
+        </div>
         <div class="duel-stats">
           <span>Toque no candidato preferido</span>
           <span>Duelos: <strong id="duel-count">0</strong></span>
@@ -204,6 +230,10 @@ function renderShell(root) {
           </div>
         </div>
         <ol class="rank-list" id="rank-list"></ol>
+        <section class="achievements-panel" aria-label="Conquistas">
+          <h2 class="achievements-title">Conquistas</h2>
+          <ul class="achievements-list" id="achievements-list"></ul>
+        </section>
         <div id="server-rank-wrap" hidden>
           <h2 class="server-rank-title">Ranking agregado do servidor</h2>
           <p class="rank-sub">Soma dos votos enviados à API (compartilhado). O jogo local continua independente.</p>
@@ -221,6 +251,8 @@ function renderShell(root) {
         · <a href="${GITHUB_README_URL}">README</a>
         · <a href="${GITHUB_REPO_URL}">Repositório</a>
       </footer>
+
+      <div class="achievement-toasts" id="achievement-toasts" aria-live="polite"></div>
 
       <div class="podium-overlay" id="podium-overlay" hidden>
         <div class="podium-backdrop" id="podium-backdrop"></div>
@@ -293,6 +325,10 @@ export async function initGame() {
     tabCredits: document.getElementById("tab-credits"),
     openCredits: document.getElementById("open-credits"),
     duelCount: document.getElementById("duel-count"),
+    comboBanner: document.getElementById("combo-banner"),
+    comboLabel: document.getElementById("combo-label"),
+    achievementToasts: document.getElementById("achievement-toasts"),
+    achievementsList: document.getElementById("achievements-list"),
     progressText: document.getElementById("duel-progress-text"),
     progressBar: document.getElementById("duel-progress-bar"),
     progressFill: document.getElementById("duel-progress-fill"),
@@ -444,6 +480,59 @@ export async function initGame() {
     }
   }
 
+  function candidateIds() {
+    return candidates.map((c) => c.id);
+  }
+
+  function renderCombo(now = Date.now()) {
+    const n = liveCombo(state.combo, state.lastVoteAt, now);
+    const label = comboLabel(n);
+    if (!els.comboBanner || !els.comboLabel) return;
+    els.comboBanner.hidden = !label;
+    if (!label) {
+      els.comboLabel.textContent = "";
+      return;
+    }
+    if (els.comboLabel.textContent !== label) {
+      els.comboLabel.textContent = label;
+      els.comboLabel.classList.remove("combo-pop");
+      void els.comboLabel.offsetWidth;
+      els.comboLabel.classList.add("combo-pop");
+    }
+  }
+
+  function renderAchievements() {
+    if (!els.achievementsList) return;
+    const unlocked = new Set(normalizeAchievements(state.achievements));
+    els.achievementsList.innerHTML = ACHIEVEMENT_IDS.map((id) => {
+      const on = unlocked.has(id);
+      return `<li class="achievement-chip${on ? " unlocked" : ""}">${escapeHtml(achievementTitle(id))}</li>`;
+    }).join("");
+  }
+
+  function showAchievementToasts(ids) {
+    if (!els.achievementToasts || !ids?.length) return;
+    for (const id of ids) {
+      const text = achievementToastText(id);
+      if (!text) continue;
+      const toast = document.createElement("div");
+      toast.className = "achievement-toast";
+      toast.setAttribute("role", "status");
+      toast.textContent = text;
+      els.achievementToasts.appendChild(toast);
+      window.setTimeout(() => toast.remove(), 3200);
+    }
+  }
+
+  function applyUnlocks() {
+    const newly = unlockDueAchievements(state, { candidateIds: candidateIds() });
+    if (newly.length) {
+      renderAchievements();
+      showAchievementToasts(newly);
+    }
+    return newly;
+  }
+
   function hideGoalMoment() {
     if (els.goalModal) els.goalModal.hidden = true;
   }
@@ -481,6 +570,7 @@ export async function initGame() {
     }
     if (name === "rank") {
       renderRanking();
+      renderAchievements();
       renderServerRanking();
     }
     if (name === "tournament") renderTournament();
@@ -541,6 +631,11 @@ export async function initGame() {
   function pickTournamentCard(card) {
     if (!tournamentPick(tournament, card.dataset.id)) return;
     saveTournament();
+    if (tournament.champion && unlockTournamentCompleted(state)) {
+      persist();
+      renderAchievements();
+      showAchievementToasts(["completou-torneio"]);
+    }
     renderTournament();
   }
 
@@ -586,11 +681,13 @@ export async function initGame() {
     locked = false;
     pickTimer = null;
     currentPair = takeNextPair(candidates, state);
+    applyUnlocks();
     persist();
     renderCard(els.cardA, currentPair[0]);
     renderCard(els.cardB, currentPair[1]);
     els.duelCount.textContent = String(state.duels);
     renderProgress();
+    renderCombo();
     syncUndoButton();
   }
 
@@ -604,6 +701,8 @@ export async function initGame() {
 
       state.lastDuel = snapshotDuel(state, winnerId, loserId, currentPair);
       const { winnerDelta, loserDelta, zebra } = applyElo(state, winnerId, loserId);
+      applyCombo(state);
+      applyUnlocks();
       persist();
       syncUndoButton();
 
@@ -619,6 +718,7 @@ export async function initGame() {
       applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta, { zebra });
       els.duelCount.textContent = String(state.duels);
       renderProgress();
+      renderCombo();
       maybeShowGoalMoment();
     }, nextDuel);
   }
@@ -633,6 +733,8 @@ export async function initGame() {
       currentPair = pair;
       state.lastPair = pair;
     }
+    // #17: undo resets combo only; milestones stay unlocked once earned.
+    resetCombo(state);
     persist();
     locked = false;
     hideGoalMoment();
@@ -644,6 +746,7 @@ export async function initGame() {
     }
     els.duelCount.textContent = String(state.duels);
     renderProgress();
+    renderCombo();
     syncUndoButton();
   }
 
@@ -719,8 +822,12 @@ export async function initGame() {
     persist();
     nextDuel();
     renderRanking();
+    renderAchievements();
+    renderCombo();
   });
 
+  renderAchievements();
+  renderCombo();
   nextDuel();
   maybeShowGoalMoment();
 }

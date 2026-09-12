@@ -145,6 +145,29 @@ h1 {
 .panel { display: none; }
 .panel.active { display: block; }
 
+.combo-banner {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 10px;
+}
+.combo-banner[hidden] {
+  display: none;
+}
+.combo-label {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  color: #1a1200;
+  background: linear-gradient(135deg, var(--gold), #f59e0b);
+  border: 2px solid #fff8;
+  box-shadow: 0 6px 18px rgba(246, 216, 96, .28);
+}
+.combo-label.combo-pop {
+  animation: combo-pop .35s cubic-bezier(.2, 1.4, .4, 1);
+}
+
 .duel-stats {
   display: flex;
   justify-content: space-between;
@@ -358,12 +381,23 @@ h1 {
   70% { opacity: 1; transform: translate(-50%, -12px) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -22px) scale(1); }
 }
+@keyframes combo-pop {
+  0% { transform: scale(.7); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+@keyframes achievement-toast-in {
+  0% { opacity: 0; transform: translateY(-16px) scale(.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .poke-card.picked-win,
   .poke-card.picked-lose,
   .elo-float,
-  .zebra-badge {
+  .zebra-badge,
+  .combo-label.combo-pop,
+  .achievement-toast {
     animation: none;
   }
   .elo-float {
@@ -682,6 +716,59 @@ h1 {
   color: var(--muted);
   font-weight: 600;
   font-size: .7rem;
+}
+
+.achievements-panel {
+  margin: 22px 0 0;
+}
+.achievements-title {
+  margin: 0 0 8px;
+  font-size: 1.05rem;
+}
+.achievements-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.achievement-chip {
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 800;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: var(--muted);
+}
+.achievement-chip.unlocked {
+  color: #1a1200;
+  background: linear-gradient(135deg, #f6d860, #f59e0b);
+  border-color: transparent;
+}
+
+.achievement-toasts {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: grid;
+  gap: 8px;
+  width: min(420px, calc(100% - 24px));
+  pointer-events: none;
+}
+.achievement-toast {
+  background: var(--card);
+  border: 2px solid var(--gold2);
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-align: center;
+  font-weight: 800;
+  color: var(--gold);
+  box-shadow: var(--shadow);
+  animation: achievement-toast-in .45s ease-out both;
 }
 
 .podium-overlay {

@@ -2,8 +2,9 @@ import FALLBACK_CANDIDATES from "../../shared/candidates.json";
 import { applyElo } from "../../shared/elo.js";
 import { fetchCandidates, fetchHealth, fetchServerRanking, postVote } from "./api.js";
 import { hpFillWidth } from "./hp-bar.js";
+import { runLockedPick } from "./pick.js";
+import { saveState, STORAGE_KEY, STORAGE_UNAVAILABLE_MESSAGE } from "./storage.js";
 
-const STORAGE_KEY = "presidencia-duelo-v1";
 const ELO_START = 1000;
 
 function escapeHtml(value) {
@@ -42,10 +43,6 @@ function loadState(candidates) {
   } catch {
     return defaultState(candidates);
   }
-}
-
-function saveState(state) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 function randomPair(candidates, state) {
@@ -88,6 +85,7 @@ function renderShell(root) {
         </div>
         <p class="subtitle">Escolha um card. Próximo duelo aleatório. Ranking Elo no seu aparelho.</p>
         <p class="api-status" id="api-status">Conectando à API…</p>
+        <p class="storage-notice" id="storage-notice" hidden>${STORAGE_UNAVAILABLE_MESSAGE}</p>
       </header>
 
       <aside class="disclaimer" role="note">
@@ -198,7 +196,13 @@ export async function initGame() {
     resetBtn: document.getElementById("reset-ranking"),
     serverWrap: document.getElementById("server-rank-wrap"),
     serverList: document.getElementById("server-rank-list"),
+    storageNotice: document.getElementById("storage-notice"),
   };
+
+  function persist() {
+    if (saveState(state)) return;
+    if (els.storageNotice) els.storageNotice.hidden = false;
+  }
 
   let state = loadState(candidates);
   let currentPair = null;
@@ -247,7 +251,7 @@ export async function initGame() {
     locked = false;
     currentPair = randomPair(candidates, state);
     state.lastPair = currentPair;
-    saveState(state);
+    persist();
     renderCard(els.cardA, currentPair[0]);
     renderCard(els.cardB, currentPair[1]);
     els.duelCount.textContent = String(state.duels);
@@ -256,27 +260,27 @@ export async function initGame() {
   function pick(winnerEl) {
     if (locked || !currentPair) return;
     locked = true;
-    const winnerId = winnerEl.dataset.id;
-    const loserId = currentPair[0] === winnerId ? currentPair[1] : currentPair[0];
-    const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
+    runLockedPick(() => {
+      const winnerId = winnerEl.dataset.id;
+      const loserId = currentPair[0] === winnerId ? currentPair[1] : currentPair[0];
+      const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
 
-    applyElo(state, winnerId, loserId);
-    saveState(state);
+      applyElo(state, winnerId, loserId);
+      persist();
 
-    if (apiOnline) {
-      postVote(winnerId, loserId).catch(() => {
-        apiOnline = false;
-        statusEl.textContent = "Modo local — falha ao enviar voto; o ranking deste aparelho segue intacto";
-        statusEl.classList.remove("online");
-        statusEl.classList.add("offline");
-      });
-    }
+      if (apiOnline) {
+        postVote(winnerId, loserId).catch(() => {
+          apiOnline = false;
+          statusEl.textContent = "Modo local — falha ao enviar voto; o ranking deste aparelho segue intacto";
+          statusEl.classList.remove("online");
+          statusEl.classList.add("offline");
+        });
+      }
 
-    winnerEl.classList.add("picked-win");
-    loserEl.classList.add("picked-lose");
-    els.duelCount.textContent = String(state.duels);
-
-    setTimeout(nextDuel, 420);
+      winnerEl.classList.add("picked-win");
+      loserEl.classList.add("picked-lose");
+      els.duelCount.textContent = String(state.duels);
+    }, nextDuel);
   }
 
   function renderRanking() {
@@ -336,7 +340,7 @@ export async function initGame() {
   els.resetBtn.addEventListener("click", () => {
     if (!confirm("Zerar ranking e duelos salvos neste aparelho?")) return;
     state = defaultState(candidates);
-    saveState(state);
+    persist();
     nextDuel();
     renderRanking();
   });

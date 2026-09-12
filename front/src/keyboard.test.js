@@ -14,3 +14,11 @@ test("duel cards are native buttons so Enter/Space already activate click", () =
 test("game does not attach redundant keydown handlers on the cards", () => {
   assert.doesNotMatch(src, /addEventListener\(\s*["']keydown["']/);
 });
+
+test("pick uses applyElo deltas and applyPickFeedback without extra key handlers", () => {
+  assert.match(src, /const \{ winnerDelta, loserDelta \} = applyElo\(state, winnerId, loserId\)/);
+  assert.match(src, /applyPickFeedback\(winnerEl, loserEl, winnerDelta, loserDelta\)/);
+  assert.match(src, /els\.cardA\.addEventListener\("click", \(\) => pick\(els\.cardA\)\)/);
+  assert.match(src, /els\.cardB\.addEventListener\("click", \(\) => pick\(els\.cardB\)\)/);
+  assert.doesNotMatch(src, /addEventListener\(\s*["']keydown["']/);
+});

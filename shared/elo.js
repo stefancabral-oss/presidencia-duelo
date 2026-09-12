@@ -5,16 +5,26 @@ export function expectedScore(ra, rb) {
   return 1 / (1 + 10 ** ((rb - ra) / 400));
 }
 
+/** Rounded Elo deltas from the same formula `applyElo` writes into `state.ratings`. */
+export function ratingDeltas(ra, rb) {
+  const ea = expectedScore(ra, rb);
+  const eb = 1 - ea;
+  return {
+    winnerDelta: Math.round(ra + ELO_K * (1 - ea)) - ra,
+    loserDelta: Math.round(rb + ELO_K * (0 - eb)) - rb,
+  };
+}
+
 export function applyElo(state, winnerId, loserId) {
   const ra = state.ratings[winnerId];
   const rb = state.ratings[loserId];
-  const ea = expectedScore(ra, rb);
-  const eb = 1 - ea;
-  state.ratings[winnerId] = Math.round(ra + ELO_K * (1 - ea));
-  state.ratings[loserId] = Math.round(rb + ELO_K * (0 - eb));
+  const deltas = ratingDeltas(ra, rb);
+  state.ratings[winnerId] = ra + deltas.winnerDelta;
+  state.ratings[loserId] = rb + deltas.loserDelta;
   state.wins[winnerId] += 1;
   state.losses[loserId] += 1;
   state.duels += 1;
+  return deltas;
 }
 
 export function emptyStats(candidateIds) {

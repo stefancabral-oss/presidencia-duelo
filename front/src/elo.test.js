@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { applyElo, emptyStats, expectedScore } from "../../shared/elo.js";
+import { applyElo, emptyStats, expectedScore, ratingDeltas } from "../../shared/elo.js";
 
 test("expected scores for a pair always sum to 1", () => {
   const pairs = [
@@ -34,4 +34,27 @@ test("applyElo matches the two-call expectedScore formula", () => {
   assert.equal(state.ratings.winner, Math.round(1200 + 32 * (1 - ea)));
   assert.equal(state.ratings.loser, Math.round(1000 + 32 * (0 - eb)));
   assert.equal(state.ratings.loser, Math.round(1000 + 32 * (0 - expectedScore(1000, 1200))));
+});
+
+test("ratingDeltas match the rating change applyElo writes", () => {
+  const pairs = [
+    [1000, 1000],
+    [1200, 1000],
+    [800, 1400],
+    [1016, 984],
+  ];
+  for (const [ra, rb] of pairs) {
+    const state = emptyStats(["winner", "loser"]);
+    state.ratings.winner = ra;
+    state.ratings.loser = rb;
+    const expected = ratingDeltas(ra, rb);
+    const returned = applyElo(state, "winner", "loser");
+    assert.deepEqual(returned, expected);
+    assert.equal(state.ratings.winner, ra + expected.winnerDelta);
+    assert.equal(state.ratings.loser, rb + expected.loserDelta);
+  }
+});
+
+test("equal ratings yield the classic +16 / -16 first-hit deltas", () => {
+  assert.deepEqual(ratingDeltas(1000, 1000), { winnerDelta: 16, loserDelta: -16 });
 });

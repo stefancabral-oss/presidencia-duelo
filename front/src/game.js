@@ -5,6 +5,7 @@ import { applyCardAriaLabel } from "./card-label.js";
 import { GITHUB_README_URL, GITHUB_REPO_URL, creditsPanelHtml } from "./credits.js";
 import { fillDuelCard } from "./duel-card.js";
 import { hpFillWidth } from "./hp-bar.js";
+import { applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
 import { runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
 import { RANKING_SUBTITLE, sortCandidatesByRank } from "./ranking.js";
@@ -245,7 +246,7 @@ export async function initGame() {
     const wr = winRate(state, id);
     const barWidth = hpFillWidth(wins, losses, wr);
     el.dataset.id = id;
-    el.classList.remove("picked-win", "picked-lose");
+    clearPickFeedback(el);
     applyCardAriaLabel(el, c);
     fillDuelCard(el, c, { elo, wr, barWidth });
   }
@@ -268,7 +269,7 @@ export async function initGame() {
       const loserId = currentPair[0] === winnerId ? currentPair[1] : currentPair[0];
       const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
 
-      applyElo(state, winnerId, loserId);
+      const { winnerDelta, loserDelta } = applyElo(state, winnerId, loserId);
       persist();
 
       if (apiOnline) {
@@ -280,8 +281,7 @@ export async function initGame() {
         });
       }
 
-      winnerEl.classList.add("picked-win");
-      loserEl.classList.add("picked-lose");
+      applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta);
       els.duelCount.textContent = String(state.duels);
     }, nextDuel);
   }

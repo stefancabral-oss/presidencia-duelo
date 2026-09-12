@@ -62,3 +62,25 @@ test("poke-card no longer shares one hover+focus-visible rule", () => {
   assert.doesNotMatch(clean, /\.poke-card:hover\s*,\s*\.poke-card:focus-visible/);
   assert.doesNotMatch(clean, /\.poke-card:focus-visible\s*,\s*\.poke-card:hover/);
 });
+
+test("picked-win flashes and picked-lose shakes", () => {
+  assert.match(clean, /\.poke-card\.picked-win\s*\{[^}]*animation:\s*pick-flash/);
+  assert.match(clean, /\.poke-card\.picked-lose\s*\{[^}]*animation:\s*pick-shake/);
+  assert.match(clean, /@keyframes pick-flash/);
+  assert.match(clean, /@keyframes pick-shake/);
+});
+
+test("elo-float uses win green and lose red", () => {
+  assert.match(clean, /\.elo-float\.win\s*\{\s*color:\s*var\(--win\)/);
+  assert.match(clean, /\.elo-float\.lose\s*\{\s*color:\s*var\(--danger\)/);
+  assert.match(clean, /@keyframes elo-float-pop/);
+});
+
+test("prefers-reduced-motion disables pick shake, flash, and float", () => {
+  const reduced = mediaBlocks(clean, "(prefers-reduced-motion: reduce)").join("\n");
+  assert.ok(reduced.length > 0, "expected @media (prefers-reduced-motion: reduce)");
+  assert.match(reduced, /\.poke-card\.picked-win/);
+  assert.match(reduced, /\.poke-card\.picked-lose/);
+  assert.match(reduced, /\.elo-float/);
+  assert.match(reduced, /animation:\s*none/);
+});

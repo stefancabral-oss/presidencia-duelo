@@ -97,6 +97,13 @@ h1 {
   border-color: transparent;
 }
 
+.storage-notice {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 600;
+}
+
 .disclaimer {
   margin: 12px auto 16px;
   max-width: 640px;

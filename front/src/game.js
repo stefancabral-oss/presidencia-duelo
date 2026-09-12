@@ -6,6 +6,7 @@ import { fillDuelCard } from "./duel-card.js";
 import { hpFillWidth } from "./hp-bar.js";
 import { runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
+import { RANKING_SUBTITLE, sortCandidatesByRank } from "./ranking.js";
 import { saveState, STORAGE_KEY, STORAGE_UNAVAILABLE_MESSAGE } from "./storage.js";
 
 const ELO_START = 1000;
@@ -122,7 +123,7 @@ function renderShell(root) {
         <div class="ranking-toolbar">
           <div>
             <strong>Ranking Elo local</strong>
-            <div class="rank-sub">Ordenado por Elo; taxa de vitórias como desempate visual. Sempre funciona no aparelho.</div>
+            <div class="rank-sub">${RANKING_SUBTITLE}</div>
           </div>
           <button type="button" class="btn danger" id="reset-ranking">Zerar ranking</button>
         </div>
@@ -143,11 +144,7 @@ function renderShell(root) {
 }
 
 function renderRankItems(candidates, byId, getStats) {
-  const ranked = candidates.slice().sort((a, b) => {
-    const ea = getStats(a.id).elo - getStats(b.id).elo;
-    if (ea !== 0) return -ea;
-    return getStats(b.id).wins - getStats(a.id).wins;
-  });
+  const ranked = sortCandidatesByRank(candidates, getStats);
 
   return ranked
     .map((c, i) => {

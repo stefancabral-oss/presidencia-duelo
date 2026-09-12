@@ -196,13 +196,24 @@ h1 {
   width: 100%;
   min-width: 0;
 }
-.poke-card:hover, .poke-card:focus-visible {
+.poke-card:focus-visible {
   transform: translateY(-4px) scale(1.01);
   border-color: var(--gold);
   box-shadow:
     inset 0 0 0 2px rgba(255,255,255,.18),
     0 0 0 2px #b8860b,
     0 16px 36px rgba(246, 216, 96, .22);
+}
+
+@media (hover: hover) {
+  .poke-card:hover {
+    transform: translateY(-4px) scale(1.01);
+    border-color: var(--gold);
+    box-shadow:
+      inset 0 0 0 2px rgba(255,255,255,.18),
+      0 0 0 2px #b8860b,
+      0 16px 36px rgba(246, 216, 96, .22);
+  }
 }
 .poke-card:active { transform: scale(.98); }
 .poke-card.picked-win {

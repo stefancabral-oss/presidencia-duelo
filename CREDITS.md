@@ -23,6 +23,13 @@ Nenhuma face foi gerada por IA. Arquivos locais em `candidates/`.
 - **Fotos reais (12/12):** Lula, Flávio Bolsonaro, Caiado, Zema, Renan Santos, Augusto Cury, Rui Costa Pimenta, Samara Martins, Hertz Dias, Edmilson Costa, Wilson Grassi, Clariana Barão.
 - **Placeholders por iniciais:** nenhum. O app ainda tem fallback de iniciais se alguma imagem falhar ao carregar.
 
+## Fotos dos vices
+
+Nenhuma foto de vice está incluída. No modo **Vices** cada card mostra as
+iniciais sobre uma cor gerada pelo próprio jogo. Ao adicionar a foto de um
+vice em `candidates/`, registre aqui a fonte, o autor e a licença, como nas
+fotos acima.
+
 ## Observações
 
 - Imagens foram redimensionadas localmente (~720px no maior lado) para uso web offline.

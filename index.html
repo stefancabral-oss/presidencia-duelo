@@ -29,9 +29,15 @@
       <button type="button" class="tab" id="tab-rank">Ranking</button>
     </nav>
 
+    <div class="mode-switch" role="group" aria-label="Tipo de duelo">
+      <span class="mode-label">Duelando:</span>
+      <button type="button" class="mode-btn active" id="mode-presidentes" aria-pressed="true">Presidentes</button>
+      <button type="button" class="mode-btn" id="mode-vices" aria-pressed="false">Vices</button>
+    </div>
+
     <section id="panel-duel" class="panel active" aria-label="Duelo">
       <div class="duel-stats">
-        <span>Toque no candidato preferido</span>
+        <span id="duel-prompt">Toque no presidente preferido</span>
         <span>Duelos: <strong id="duel-count">0</strong></span>
       </div>
 
@@ -41,13 +47,13 @@
         <button type="button" class="poke-card" id="card-b" aria-label="Candidato B"></button>
       </div>
 
-      <p class="hint">Cards inspirados em cromos/Pokémon · a raridade sobe com o Elo · funciona offline após baixar as fotos</p>
+      <p class="hint">Cards inspirados em cromos/Pokémon · a raridade sobe com o Elo · presidentes e vices têm rankings separados</p>
     </section>
 
     <section id="panel-rank" class="panel" aria-label="Ranking">
       <div class="ranking-toolbar">
         <div>
-          <strong>Ranking Elo</strong>
+          <strong>Ranking Elo · <span id="rank-mode">Presidentes</span></strong>
           <div style="color:var(--muted);font-size:.8rem;margin-top:2px">Ordenado por Elo; taxa de vitórias como desempate visual</div>
         </div>
         <button type="button" class="btn danger" id="reset-ranking">Zerar ranking</button>

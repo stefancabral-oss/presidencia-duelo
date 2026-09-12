@@ -21,10 +21,23 @@ python3 -m http.server 8080
 - UI em **português**, mobile-first
 - Cards com visual inspirado em cromos / Pokémon
 - 12 chapas (presidente + vice)
+- Dois modos: duelo de **presidentes** e duelo de **vices**, com rankings separados
 - Ranking **Elo** + taxa de vitórias
 - **Raridade de cromo** por Elo: Comum, Raro, Épico e Lendário
 - Efeito **holográfico** nos cards Épico e Lendário
 - Dados só no seu aparelho (botão para zerar)
+
+## Modos de duelo
+
+O seletor **Duelando: Presidentes / Vices** troca quem entra em campo. Cada
+modo tem seu próprio Elo, suas próprias vitórias e seu próprio contador de
+duelos, então votar num vice não mexe no ranking dos presidentes. O botão
+**Zerar ranking** limpa só o modo aberto no momento.
+
+Os vices ainda não têm foto: cada card usa as iniciais sobre uma cor própria,
+gerada a partir da posição na lista para que as doze fiquem bem distintas.
+Para dar rosto a um vice, basta colocar a imagem em `candidates/`, apontar o
+campo `photo` dele em `app.js` e registrar o crédito em `CREDITS.md`.
 
 ## Raridade dos cards
 

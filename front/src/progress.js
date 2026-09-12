@@ -1,8 +1,8 @@
 /**
  * Visible duel-count goal so the game has a finish line.
  *
- * Lightweight in-app celebration only. The shareable PNG / Web Share
- * podium (issue #14) is deferred and is intentionally not implemented here.
+ * Lightweight in-app celebration. The shareable podium (issue #14) is
+ * opened from a "Ver pódio" action without replacing Continue/Fechar.
  */
 
 export const GOAL_LADDER = [30, 60, 100];

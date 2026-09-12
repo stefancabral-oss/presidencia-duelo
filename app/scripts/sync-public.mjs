@@ -9,5 +9,6 @@ mkdirSync(join(appRoot, "public"), { recursive: true });
 cpSync(join(frontPublic, "candidates"), join(appRoot, "public/candidates"), { recursive: true });
 cpSync(join(frontPublic, "CREDITS.md"), join(appRoot, "public/CREDITS.md"));
 cpSync(join(frontPublic, "icons"), join(appRoot, "public/icons"), { recursive: true });
+cpSync(join(frontPublic, "og-cover.png"), join(appRoot, "public/og-cover.png"));
 
 console.log("app/public sincronizado a partir de front/public");

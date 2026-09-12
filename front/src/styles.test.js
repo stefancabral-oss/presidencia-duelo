@@ -98,6 +98,14 @@ test("Desfazer button uses the shared btn style and a disabled mute", () => {
   assert.match(clean, /cursor:\s*not-allowed/);
 });
 
+test("podium overlay uses the dark gold card theme and can hide", () => {
+  assert.match(clean, /\.podium-overlay\[hidden\]\s*\{[^}]*display:\s*none/);
+  assert.match(clean, /\.podium-dialog\s*\{/);
+  assert.match(clean, /\.podium-stand\s*\{/);
+  assert.match(clean, /\.podium-place-1\s*\{/);
+  assert.match(clean, /\.ranking-actions\s*\{/);
+});
+
 test("duel progress bar and goal modal match the existing card theme", () => {
   assert.match(clean, /\.duel-progress-bar\s*\{/);
   assert.match(clean, /\.duel-progress-fill\s*\{/);

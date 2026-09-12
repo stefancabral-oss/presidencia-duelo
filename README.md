@@ -78,7 +78,7 @@ npm run dev --prefix app
 # http://localhost:5174
 ```
 
-O script `predev`/`prebuild` copia `front/public/candidates`, ícones e `CREDITS.md` para `app/public/`.
+O script `predev`/`prebuild` copia `front/public/candidates`, ícones, `CREDITS.md` e `og-cover.png` para `app/public/`.
 
 ```bash
 npm run build --prefix app

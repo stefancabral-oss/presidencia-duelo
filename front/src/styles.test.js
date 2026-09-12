@@ -98,6 +98,17 @@ test("Desfazer button uses the shared btn style and a disabled mute", () => {
   assert.match(clean, /cursor:\s*not-allowed/);
 });
 
+test("duel progress bar and goal modal match the existing card theme", () => {
+  assert.match(clean, /\.duel-progress-bar\s*\{/);
+  assert.match(clean, /\.duel-progress-fill\s*\{/);
+  assert.match(clean, /\.goal-modal\s*\{/);
+  assert.match(clean, /\.goal-modal\[hidden\]\s*\{[^}]*display:\s*none/);
+  assert.match(clean, /\.btn\.primary\s*\{/);
+  const reduced = mediaBlocks(clean, "(prefers-reduced-motion: reduce)").join("\n");
+  assert.match(reduced, /\.duel-progress-fill/);
+  assert.match(reduced, /transition:\s*none/);
+});
+
 test("zebra badge stamps on the winner card and respects reduced motion", () => {
   assert.match(clean, /\.zebra-badge\s*\{[^}]*animation:\s*zebra-stamp/);
   assert.match(clean, /@keyframes zebra-stamp/);

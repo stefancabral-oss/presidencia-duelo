@@ -10,6 +10,17 @@ import { runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
 import { RANKING_SUBTITLE, rankMetaText, sortCandidatesByRank } from "./ranking.js";
 import { normalizePairCount, takeNextPair } from "./matchmaking.js";
+import {
+  INITIAL_GOAL,
+  acceptGoal,
+  celebrationLead,
+  continueLabel,
+  leaderLine,
+  migrateProgress,
+  progressPercent,
+  remainingText,
+  shouldCelebrate,
+} from "./progress.js";
 import { saveState, STORAGE_KEY, STORAGE_UNAVAILABLE_MESSAGE } from "./storage.js";
 import { lastDuelFromParsed, restoreDuel, snapshotDuel, undoPair } from "./undo.js";
 
@@ -24,7 +35,14 @@ function escapeHtml(value) {
 }
 
 function defaultState(candidates) {
-  return { ...emptyStats(candidates.map((c) => c.id)), lastPair: null, lastDuel: null, pairCount: {} };
+  return {
+    ...emptyStats(candidates.map((c) => c.id)),
+    lastPair: null,
+    lastDuel: null,
+    pairCount: {},
+    progressGoal: INITIAL_GOAL,
+    celebratedGoal: null,
+  };
 }
 
 function loadState(candidates) {
@@ -32,11 +50,13 @@ function loadState(candidates) {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultState(candidates);
     const parsed = JSON.parse(raw);
+    const merged = mergeStats(defaultState(candidates), parsed);
     return {
-      ...mergeStats(defaultState(candidates), parsed),
+      ...merged,
       lastPair: parsed.lastPair || null,
       lastDuel: lastDuelFromParsed(parsed),
       pairCount: normalizePairCount(parsed.pairCount),
+      ...migrateProgress(parsed, merged.duels),
     };
   } catch {
     return defaultState(candidates);
@@ -81,6 +101,34 @@ function renderShell(root) {
         <div class="duel-stats">
           <span>Toque no candidato preferido</span>
           <span>Duelos: <strong id="duel-count">0</strong></span>
+        </div>
+
+        <div class="duel-progress" id="duel-progress">
+          <p class="duel-progress-text" id="duel-progress-text"></p>
+          <div
+            class="duel-progress-bar"
+            id="duel-progress-bar"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="${INITIAL_GOAL}"
+            aria-valuenow="0"
+            aria-labelledby="duel-progress-text"
+          >
+            <div class="duel-progress-fill" id="duel-progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- Lightweight result moment only; shareable PNG / Web Share podium is deferred to issue #14. -->
+        <div class="goal-modal" id="goal-modal" hidden>
+          <div class="goal-modal-card" role="status" aria-labelledby="goal-modal-title">
+            <h2 class="goal-modal-title" id="goal-modal-title">Meta atingida!</h2>
+            <p class="goal-modal-lead" id="goal-modal-lead"></p>
+            <p class="goal-modal-leader" id="goal-modal-leader"></p>
+            <div class="goal-modal-actions">
+              <button type="button" class="btn primary" id="goal-continue">Nova meta: 60 duelos</button>
+              <button type="button" class="btn" id="goal-dismiss">Fechar</button>
+            </div>
+          </div>
         </div>
 
         <div class="vs-row">
@@ -177,6 +225,14 @@ export async function initGame() {
     tabCredits: document.getElementById("tab-credits"),
     openCredits: document.getElementById("open-credits"),
     duelCount: document.getElementById("duel-count"),
+    progressText: document.getElementById("duel-progress-text"),
+    progressBar: document.getElementById("duel-progress-bar"),
+    progressFill: document.getElementById("duel-progress-fill"),
+    goalModal: document.getElementById("goal-modal"),
+    goalLead: document.getElementById("goal-modal-lead"),
+    goalLeader: document.getElementById("goal-modal-leader"),
+    goalContinue: document.getElementById("goal-continue"),
+    goalDismiss: document.getElementById("goal-dismiss"),
     cardA: document.getElementById("card-a"),
     cardB: document.getElementById("card-b"),
     undoBtn: document.getElementById("undo-duel"),
@@ -206,6 +262,49 @@ export async function initGame() {
   function syncUndoButton() {
     if (!els.undoBtn) return;
     els.undoBtn.disabled = !state.lastDuel;
+  }
+
+  function currentLeaderName() {
+    const ranked = sortCandidatesByRank(candidates, (id) => ({
+      elo: state.ratings[id],
+      wins: state.wins[id] || 0,
+    }));
+    return byId[ranked[0]?.id]?.name || "";
+  }
+
+  function renderProgress() {
+    const played = state.duels;
+    const goal = state.progressGoal;
+    const shown = Math.min(played, goal);
+    if (els.progressText) els.progressText.textContent = remainingText(state.duels, goal);
+    if (els.progressFill) els.progressFill.style.width = `${progressPercent(state.duels, goal)}%`;
+    if (els.progressBar) {
+      els.progressBar.setAttribute("aria-valuenow", String(shown));
+      els.progressBar.setAttribute("aria-valuemax", String(goal));
+    }
+  }
+
+  function hideGoalMoment() {
+    if (els.goalModal) els.goalModal.hidden = true;
+  }
+
+  function closeGoalMoment() {
+    if (!els.goalModal || els.goalModal.hidden) return;
+    acceptGoal(state);
+    hideGoalMoment();
+    persist();
+    renderProgress();
+  }
+
+  function maybeShowGoalMoment() {
+    if (!els.goalModal || !shouldCelebrate(state.duels, state.progressGoal, state.celebratedGoal)) {
+      return;
+    }
+    if (els.goalLead) els.goalLead.textContent = celebrationLead(state.progressGoal);
+    if (els.goalLeader) els.goalLeader.textContent = leaderLine(currentLeaderName());
+    if (els.goalContinue) els.goalContinue.textContent = continueLabel(state.progressGoal);
+    els.goalModal.hidden = false;
+    els.goalContinue?.focus();
   }
 
   function setTab(name) {
@@ -246,6 +345,7 @@ export async function initGame() {
     renderCard(els.cardA, currentPair[0]);
     renderCard(els.cardB, currentPair[1]);
     els.duelCount.textContent = String(state.duels);
+    renderProgress();
     syncUndoButton();
   }
 
@@ -273,6 +373,8 @@ export async function initGame() {
 
       applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta, { zebra });
       els.duelCount.textContent = String(state.duels);
+      renderProgress();
+      maybeShowGoalMoment();
     }, nextDuel);
   }
 
@@ -288,6 +390,7 @@ export async function initGame() {
     }
     persist();
     locked = false;
+    hideGoalMoment();
     clearPickFeedback(els.cardA);
     clearPickFeedback(els.cardB);
     if (currentPair) {
@@ -295,6 +398,7 @@ export async function initGame() {
       renderCard(els.cardB, currentPair[1]);
     }
     els.duelCount.textContent = String(state.duels);
+    renderProgress();
     syncUndoButton();
   }
 
@@ -344,10 +448,13 @@ export async function initGame() {
   els.cardA.addEventListener("click", () => pick(els.cardA));
   els.cardB.addEventListener("click", () => pick(els.cardB));
   els.undoBtn.addEventListener("click", () => undoLastDuel());
+  els.goalContinue.addEventListener("click", () => closeGoalMoment());
+  els.goalDismiss.addEventListener("click", () => closeGoalMoment());
 
   els.resetBtn.addEventListener("click", () => {
     if (!confirm("Zerar ranking e duelos salvos neste aparelho?")) return;
     cancelPickTimer();
+    hideGoalMoment();
     state = defaultState(candidates);
     persist();
     nextDuel();
@@ -355,4 +462,5 @@ export async function initGame() {
   });
 
   nextDuel();
+  maybeShowGoalMoment();
 }

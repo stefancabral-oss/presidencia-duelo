@@ -9,6 +9,12 @@ import { applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
 import { runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
 import {
+  hasSeenQuickControlsHint,
+  keyboardPickSide,
+  markQuickControlsHintSeen,
+  swipePickSide,
+} from "./quick-controls.js";
+import {
   buildPodiumPngFile,
   formatPodiumShareText,
   podiumStandHtml,
@@ -176,7 +182,12 @@ function renderShell(root) {
           </div>
         </div>
 
-        <div class="vs-row">
+        <aside class="quick-controls-hint" id="quick-controls-hint" hidden>
+          <span><strong>Dica:</strong> use ← → no computador ou deslize os cards no celular.</span>
+          <button type="button" id="dismiss-quick-controls">Entendi</button>
+        </aside>
+
+        <div class="vs-row" id="duel-cards">
           <button type="button" class="poke-card" id="card-a"></button>
           <div class="vs-badge" aria-hidden="true">VS</div>
           <button type="button" class="poke-card" id="card-b"></button>
@@ -366,6 +377,9 @@ export async function initGame() {
     tournamentShareStatus: document.getElementById("tournament-share-status"),
     tournamentAgain: document.getElementById("tournament-again"),
     restartTournament: document.getElementById("restart-tournament"),
+    duelCards: document.getElementById("duel-cards"),
+    quickControlsHint: document.getElementById("quick-controls-hint"),
+    dismissQuickControls: document.getElementById("dismiss-quick-controls"),
   };
 
   function persist() {
@@ -396,6 +410,8 @@ export async function initGame() {
       // The tournament remains playable in memory.
     }
   }
+  let swipeStartX = null;
+  let swipePointerId = null;
 
   function cancelPickTimer() {
     if (pickTimer == null) return;
@@ -680,6 +696,8 @@ export async function initGame() {
   function nextDuel() {
     locked = false;
     pickTimer = null;
+    els.duelCards.classList.remove("swipe-commit-left", "swipe-commit-right", "is-dragging");
+    els.duelCards.style.removeProperty("--swipe-x");
     currentPair = takeNextPair(candidates, state);
     applyUnlocks();
     persist();
@@ -721,6 +739,58 @@ export async function initGame() {
       renderCombo();
       maybeShowGoalMoment();
     }, nextDuel);
+  }
+
+  function canUseQuickControls() {
+    return els.panelDuel.classList.contains("active")
+      && els.goalModal.hidden
+      && els.podiumOverlay.hidden;
+  }
+
+  function pickSide(side) {
+    if (!canUseQuickControls()) return;
+    pick(side === "left" ? els.cardA : els.cardB);
+  }
+
+  function handleQuickControlKey(event) {
+    const side = keyboardPickSide(event);
+    if (!side || !canUseQuickControls()) return;
+    event.preventDefault();
+    pickSide(side);
+  }
+
+  function beginSwipe(event) {
+    if (event.pointerType === "mouse" || !canUseQuickControls() || locked) return;
+    swipeStartX = event.clientX;
+    swipePointerId = event.pointerId;
+    els.duelCards.classList.add("is-dragging");
+    els.duelCards.setPointerCapture?.(event.pointerId);
+  }
+
+  function moveSwipe(event) {
+    if (event.pointerId !== swipePointerId || swipeStartX == null) return;
+    const delta = Math.max(-110, Math.min(110, event.clientX - swipeStartX));
+    els.duelCards.style.setProperty("--swipe-x", `${delta}px`);
+    if (Math.abs(delta) > 8) event.preventDefault();
+  }
+
+  function finishSwipe(event) {
+    if (event.pointerId !== swipePointerId || swipeStartX == null) return;
+    const side = swipePickSide(swipeStartX, event.clientX);
+    swipeStartX = null;
+    swipePointerId = null;
+    els.duelCards.classList.remove("is-dragging");
+    els.duelCards.style.removeProperty("--swipe-x");
+    if (!side) return;
+    els.duelCards.classList.add(`swipe-commit-${side}`);
+    pickSide(side);
+  }
+
+  function cancelSwipe() {
+    swipeStartX = null;
+    swipePointerId = null;
+    els.duelCards.classList.remove("is-dragging");
+    els.duelCards.style.removeProperty("--swipe-x");
   }
 
   function undoLastDuel() {
@@ -796,6 +866,11 @@ export async function initGame() {
   els.openCredits.addEventListener("click", () => setTab("credits"));
   els.cardA.addEventListener("click", () => pick(els.cardA));
   els.cardB.addEventListener("click", () => pick(els.cardB));
+  document.addEventListener("keydown", handleQuickControlKey);
+  els.duelCards.addEventListener("pointerdown", beginSwipe);
+  els.duelCards.addEventListener("pointermove", moveSwipe);
+  els.duelCards.addEventListener("pointerup", finishSwipe);
+  els.duelCards.addEventListener("pointercancel", cancelSwipe);
   els.undoBtn.addEventListener("click", () => undoLastDuel());
   els.goalContinue.addEventListener("click", () => closeGoalMoment());
   els.goalDismiss.addEventListener("click", () => closeGoalMoment());
@@ -811,6 +886,11 @@ export async function initGame() {
   els.restartTournament.addEventListener("click", () => {
     if (completedTournamentDuels(tournament) > 0 && !confirm("Começar um novo torneio e apagar esta chave?")) return;
     restartTournament();
+  });
+  if (!hasSeenQuickControlsHint()) els.quickControlsHint.hidden = false;
+  els.dismissQuickControls.addEventListener("click", () => {
+    els.quickControlsHint.hidden = true;
+    markQuickControlsHintSeen();
   });
 
   els.resetBtn.addEventListener("click", () => {

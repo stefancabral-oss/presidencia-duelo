@@ -137,3 +137,14 @@ test("zebra badge stamps on the winner card and respects reduced motion", () => 
   assert.match(reduced, /\.zebra-badge/);
   assert.match(reduced, /animation:\s*none/);
 });
+
+test("swipe interaction tracks drag, commits both directions, and respects reduced motion", () => {
+  assert.match(clean, /\.vs-row\s*\{[^}]*touch-action:\s*pan-y/);
+  assert.match(clean, /\.vs-row\.is-dragging\s*\{/);
+  assert.match(clean, /@keyframes swipe-commit-left/);
+  assert.match(clean, /@keyframes swipe-commit-right/);
+  assert.match(clean, /\.quick-controls-hint\[hidden\]\s*\{[^}]*display:\s*none/);
+  const reduced = mediaBlocks(clean, "(prefers-reduced-motion: reduce)").join("\n");
+  assert.match(reduced, /\.vs-row\.swipe-commit-left/);
+  assert.match(reduced, /animation:\s*none/);
+});

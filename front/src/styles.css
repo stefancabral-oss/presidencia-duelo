@@ -250,12 +250,12 @@ h1 {
 .zebra-badge {
   position: absolute;
   top: 10px;
-  right: 8px;
+  left: 10px;
   z-index: 5;
-  padding: 5px 9px;
+  padding: 6px 10px;
   border-radius: 8px;
   font-weight: 900;
-  font-size: clamp(.68rem, 2.6vw, .82rem);
+  font-size: clamp(.72rem, 2.8vw, .9rem);
   letter-spacing: .1em;
   line-height: 1;
   color: #1a1200;
@@ -269,7 +269,7 @@ h1 {
 @keyframes zebra-stamp {
   0% { opacity: 0; transform: scale(1.55) rotate(-14deg); }
   55% { opacity: 1; transform: scale(.94) rotate(4deg); }
-  100% { opacity: 1; transform: scale(1) rotate(-6deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-8deg); }
 }
 
 @keyframes pick-flash {

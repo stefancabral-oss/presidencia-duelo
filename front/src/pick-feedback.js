@@ -36,14 +36,15 @@ export function showEloFloat(el, delta, kind) {
 }
 
 export function showZebraBadge(el) {
-  el.querySelector?.(".zebra-badge")?.remove();
-  const doc = el.ownerDocument;
+  const host = el.querySelector?.(".art-frame") || el;
+  host.querySelector?.(".zebra-badge")?.remove();
+  const doc = el.ownerDocument || host.ownerDocument;
   if (!doc?.createElement) return null;
   const node = doc.createElement("span");
   node.className = "zebra-badge";
   node.setAttribute("aria-hidden", "true");
   node.textContent = ZEBRA_BADGE_TEXT;
-  el.appendChild(node);
+  host.appendChild(node);
   return node;
 }
 

@@ -253,6 +253,7 @@ h1 {
   object-fit: cover;
   object-position: center top;
   display: block;
+  background: #0a0f1a;
 }
 .art-frame .placeholder {
   width: 100%;

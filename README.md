@@ -42,10 +42,10 @@ npm run dev --prefix back
 |---|---|---|
 | `GET` | `/api/health` | Saúde do serviço |
 | `GET` | `/api/candidates` | 12 candidatos (`id`, `name`, `party`, `vice`, `photo`, `initials`) |
-| `GET` | `/api/ranking` | Ranking Elo agregado (arquivo JSON em `back/data/elo.json`) |
+| `GET` | `/api/ranking` | Ranking Elo agregado armazenado no PostgreSQL |
 | `POST` | `/api/vote` | Corpo `{ "winnerId", "loserId" }` — atualiza o Elo do servidor |
 
-CORS está aberto para o front local. Sem banco: o agregado fica em memória + `back/data/elo.json` (não versionado).
+CORS está aberto para o front local. A API exige `DATABASE_URL` e grava o ranking e cada voto no PostgreSQL usando uma transação. No primeiro início, se o banco estiver vazio, `back/data/elo.json` é importado automaticamente uma única vez para preservar o agregado anterior.
 
 ### 2. Front web (`front`)
 
@@ -91,7 +91,7 @@ npm run build --prefix app
 
 No celular: abra o `app` no navegador → “Adicionar à tela inicial”. O PWA exige conexão com a API: cada voto é confirmado no servidor antes de alterar o Elo no aparelho, mantendo o ranking individual e o agregado sincronizados. O service worker é registrado apenas em `http:` ou `https:` e nunca fornece uma versão jogável offline.
 
-Os rankings agregados de **Presidentes** e **Vices** usam pools separados no mesmo arquivo persistente da API; trocar de modo não mistura as estatísticas.
+Os rankings agregados de **Presidentes** e **Vices** usam pools separados no PostgreSQL; trocar de modo não mistura as estatísticas.
 
 ## Deploy no Dokploy
 
@@ -110,7 +110,10 @@ Crie um serviço **Application** usando o repositório inteiro como contexto:
 2. Porta: `3001`
 3. Healthcheck: `GET /api/health`
 4. Domínio sugerido: `api.seu-dominio.com`
-5. Volume persistente: `/repo/back/data` (obrigatório para manter o Elo agregado entre deploys)
+5. Variável de execução: `DATABASE_URL`, usando a URL interna de um PostgreSQL
+6. Mantenha o volume legado em `/repo/back/data` no primeiro deploy para importar o `elo.json`; depois da importação ele deixa de ser necessário
+
+Configure backups periódicos para o PostgreSQL antes de abrir o jogo ao público.
 
 Se o front e a API ficarem no mesmo domínio, deixe `VITE_API_URL` vazio e encaminhe `/api` para o serviço Node.
 
@@ -144,8 +147,8 @@ Depois do deploy, valide `/manifest.webmanifest`, `/sw.js` e `/api/health`. O PW
 ## Privacidade
 
 - Jogo anônimo: ranking local em `localStorage` (`presidencia-duelo-v1`), mesmo sem API.
-- Com API: cada escolha também incrementa o Elo agregado do servidor (sem login, sem cookie de identidade).
-- Zerar ranking no UI limpa só o aparelho, não o arquivo do servidor.
+- Com API: cada escolha também incrementa o Elo agregado e registra o voto no PostgreSQL (sem login, sem cookie de identidade).
+- Zerar ranking no UI limpa só o aparelho, não o banco do servidor.
 
 ## Licença
 

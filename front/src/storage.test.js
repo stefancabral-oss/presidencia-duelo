@@ -26,3 +26,19 @@ test("saveState swallows setItem throws and continues in memory", () => {
 test("saveState does not throw when localStorage is missing", () => {
   assert.equal(saveState({ duels: 0 }, undefined), false);
 });
+
+test("saveState does not throw when the localStorage getter throws", () => {
+  const original = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    get() {
+      throw new Error("SecurityError");
+    },
+  });
+  try {
+    assert.equal(saveState({ duels: 0 }), false);
+  } finally {
+    if (original) Object.defineProperty(globalThis, "localStorage", original);
+    else delete globalThis.localStorage;
+  }
+});

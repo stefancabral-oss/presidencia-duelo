@@ -2,8 +2,10 @@ import FALLBACK_CANDIDATES from "../../shared/candidates.json";
 import { applyElo } from "../../shared/elo.js";
 import { fetchCandidates, fetchHealth, fetchServerRanking, postVote } from "./api.js";
 import { applyCardAriaLabel } from "./card-label.js";
+import { fillDuelCard } from "./duel-card.js";
 import { hpFillWidth } from "./hp-bar.js";
 import { runLockedPick } from "./pick.js";
+import { preloadPhotos } from "./photos.js";
 import { saveState, STORAGE_KEY, STORAGE_UNAVAILABLE_MESSAGE } from "./storage.js";
 
 const ELO_START = 1000;
@@ -185,6 +187,7 @@ export async function initGame() {
   }
 
   const byId = Object.fromEntries(candidates.map((c) => [c.id, c]));
+  preloadPhotos(candidates);
   const els = {
     panelDuel: document.getElementById("panel-duel"),
     panelRank: document.getElementById("panel-rank"),
@@ -231,22 +234,7 @@ export async function initGame() {
     el.dataset.id = id;
     el.classList.remove("picked-win", "picked-lose");
     applyCardAriaLabel(el, c);
-    el.innerHTML = `
-      <div class="card-top">
-        <div class="card-name">${escapeHtml(c.name)}</div>
-        <div class="party-chip">${escapeHtml(c.party)}</div>
-      </div>
-      <div class="art-frame">
-        <img src="${escapeHtml(c.photo)}" alt="Foto de ${escapeHtml(c.name)}" loading="lazy"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='grid';" />
-        <div class="placeholder" style="display:none">${escapeHtml(c.initials)}</div>
-      </div>
-      <div class="card-bottom">
-        <div class="vice">Vice: <strong>${escapeHtml(c.vice)}</strong></div>
-        <div class="hp-bar" aria-hidden="true"><div class="hp-fill" style="width:${barWidth}%"></div></div>
-        <div class="elo-mini">Elo ${elo} · ${wr}% vitórias</div>
-      </div>
-    `;
+    fillDuelCard(el, c, { elo, wr, barWidth });
   }
 
   function nextDuel() {

@@ -247,6 +247,31 @@ h1 {
 .elo-float.win { color: var(--win); }
 .elo-float.lose { color: var(--danger); }
 
+.zebra-badge {
+  position: absolute;
+  top: 10px;
+  right: 8px;
+  z-index: 5;
+  padding: 5px 9px;
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: clamp(.68rem, 2.6vw, .82rem);
+  letter-spacing: .1em;
+  line-height: 1;
+  color: #1a1200;
+  background: linear-gradient(135deg, #ffe27a, var(--gold));
+  border: 2px solid #111;
+  box-shadow: 0 4px 14px rgba(0,0,0,.45);
+  pointer-events: none;
+  animation: zebra-stamp .42s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+
+@keyframes zebra-stamp {
+  0% { opacity: 0; transform: scale(1.55) rotate(-14deg); }
+  55% { opacity: 1; transform: scale(.94) rotate(4deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-6deg); }
+}
+
 @keyframes pick-flash {
   0% { box-shadow: 0 0 0 4px rgba(110,231,168,.85), 0 0 36px rgba(110,231,168,.75), var(--shadow); }
   100% { box-shadow: 0 0 0 3px rgba(110,231,168,.45), 0 0 28px rgba(110,231,168,.5), var(--shadow); }
@@ -268,12 +293,17 @@ h1 {
 @media (prefers-reduced-motion: reduce) {
   .poke-card.picked-win,
   .poke-card.picked-lose,
-  .elo-float {
+  .elo-float,
+  .zebra-badge {
     animation: none;
   }
   .elo-float {
     opacity: 1;
     transform: translate(-50%, 0);
+  }
+  .zebra-badge {
+    opacity: 1;
+    transform: none;
   }
 }
 

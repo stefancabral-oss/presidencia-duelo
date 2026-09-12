@@ -5,8 +5,10 @@ import {
   clearPickFeedback,
   formatEloDelta,
   showEloFloat,
+  showZebraBadge,
   tryVibrate,
   VIBRATE_MS,
+  ZEBRA_BADGE_TEXT,
 } from "./pick-feedback.js";
 
 function mockClassList() {
@@ -49,8 +51,8 @@ function mockCard() {
       },
     },
     querySelector(sel) {
-      if (sel === ".elo-float") return children[0] ?? null;
-      return null;
+      const cls = sel.startsWith(".") ? sel.slice(1) : sel;
+      return children.find((child) => String(child.className).split(/\s+/).includes(cls)) ?? null;
     },
     appendChild(node) {
       children.push(node);
@@ -128,4 +130,40 @@ test("clearPickFeedback removes hit classes and the float", () => {
   clearPickFeedback(el);
   assert.equal(el.classList.contains("picked-win"), false);
   assert.equal(el.children[0], undefined);
+});
+
+test("showZebraBadge stamps ZEBRA! and replaces a previous badge", () => {
+  const el = mockCard();
+  showZebraBadge(el);
+  showZebraBadge(el);
+  assert.equal(el.children.length, 1);
+  assert.equal(el.children[0].textContent, ZEBRA_BADGE_TEXT);
+  assert.equal(el.children[0].className, "zebra-badge");
+  assert.equal(el.children[0].attrs["aria-hidden"], "true");
+});
+
+test("applyPickFeedback stamps ZEBRA! on the winner only when zebra is true", () => {
+  const winner = mockCard();
+  const loser = mockCard();
+  applyPickFeedback(winner, loser, 20, -20, { zebra: true, navigator: { vibrate() {} } });
+  const badge = winner.children.find((child) => child.className === "zebra-badge");
+  assert.equal(badge.textContent, "ZEBRA!");
+  assert.equal(
+    loser.children.find((child) => child.className === "zebra-badge"),
+    undefined,
+  );
+
+  const evenWinner = mockCard();
+  applyPickFeedback(evenWinner, mockCard(), 16, -16, { zebra: false, navigator: { vibrate() {} } });
+  assert.equal(
+    evenWinner.children.find((child) => child.className === "zebra-badge"),
+    undefined,
+  );
+});
+
+test("clearPickFeedback also removes the zebra badge", () => {
+  const el = mockCard();
+  applyPickFeedback(el, mockCard(), 20, -20, { zebra: true, navigator: { vibrate() {} } });
+  clearPickFeedback(el);
+  assert.equal(el.children.length, 0);
 });

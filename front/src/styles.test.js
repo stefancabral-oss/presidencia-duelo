@@ -90,3 +90,11 @@ test("prefers-reduced-motion disables pick shake, flash, and float", () => {
   assert.match(reduced, /\.elo-float/);
   assert.match(reduced, /animation:\s*none/);
 });
+
+test("zebra badge stamps on the winner card and respects reduced motion", () => {
+  assert.match(clean, /\.zebra-badge\s*\{[^}]*animation:\s*zebra-stamp/);
+  assert.match(clean, /@keyframes zebra-stamp/);
+  const reduced = mediaBlocks(clean, "(prefers-reduced-motion: reduce)").join("\n");
+  assert.match(reduced, /\.zebra-badge/);
+  assert.match(reduced, /animation:\s*none/);
+});

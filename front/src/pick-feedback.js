@@ -4,6 +4,7 @@
  */
 
 export const VIBRATE_MS = 30;
+export const ZEBRA_BADGE_TEXT = "ZEBRA!";
 
 export function formatEloDelta(delta) {
   const n = Math.round(Number(delta));
@@ -34,9 +35,22 @@ export function showEloFloat(el, delta, kind) {
   return node;
 }
 
+export function showZebraBadge(el) {
+  el.querySelector?.(".zebra-badge")?.remove();
+  const doc = el.ownerDocument;
+  if (!doc?.createElement) return null;
+  const node = doc.createElement("span");
+  node.className = "zebra-badge";
+  node.setAttribute("aria-hidden", "true");
+  node.textContent = ZEBRA_BADGE_TEXT;
+  el.appendChild(node);
+  return node;
+}
+
 export function clearPickFeedback(el) {
   el.classList.remove("picked-win", "picked-lose");
   el.querySelector?.(".elo-float")?.remove();
+  el.querySelector?.(".zebra-badge")?.remove();
 }
 
 export function applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta, options = {}) {
@@ -44,5 +58,6 @@ export function applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta, op
   loserEl.classList.add("picked-lose");
   showEloFloat(winnerEl, winnerDelta, "win");
   showEloFloat(loserEl, loserDelta, "lose");
+  if (options.zebra) showZebraBadge(winnerEl);
   tryVibrate(VIBRATE_MS, options.navigator);
 }

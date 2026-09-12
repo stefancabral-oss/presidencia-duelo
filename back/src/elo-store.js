@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { applyElo, emptyStats } from "../../shared/elo.js";
+import { applyElo, emptyStats, mergeStats } from "../../shared/elo.js";
 import { CANDIDATES, CANDIDATE_IDS } from "./candidates.js";
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -14,13 +14,7 @@ function blank() {
 function load() {
   try {
     const parsed = JSON.parse(readFileSync(DATA_PATH, "utf8"));
-    const base = blank();
-    return {
-      ratings: { ...base.ratings, ...(parsed.ratings || {}) },
-      wins: { ...base.wins, ...(parsed.wins || {}) },
-      losses: { ...base.losses, ...(parsed.losses || {}) },
-      duels: parsed.duels || 0,
-    };
+    return mergeStats(blank(), parsed);
   } catch {
     return blank();
   }
@@ -62,6 +56,7 @@ export function snapshot() {
     elo: state.ratings[c.id],
     wins: state.wins[c.id] || 0,
     losses: state.losses[c.id] || 0,
+    zebras: state.zebras?.[c.id] || 0,
     winRate: winRate(c.id),
   })).sort((a, b) => b.elo - a.elo || b.wins - a.wins);
 

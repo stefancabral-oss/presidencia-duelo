@@ -3,18 +3,13 @@ import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 
 const cssUrl = new URL("./design-system.css", import.meta.url);
+const statesUrl = new URL("./design-system-states.css", import.meta.url);
 const playgroundUrl = new URL("./design-system-playground.js", import.meta.url);
 
-async function css() {
-  return readFile(cssUrl, "utf8");
-}
-
-async function playground() {
-  return readFile(playgroundUrl, "utf8");
-}
+const read = (url) => readFile(url, "utf8");
 
 test("design system exposes the approved light, malachite, gold and chroma tokens", async () => {
-  const source = await css();
+  const source = await read(cssUrl);
   for (const token of [
     "--pm-bg: #faf8f3",
     "--pm-porcelain: #f7f3e8",
@@ -23,11 +18,11 @@ test("design system exposes the approved light, malachite, gold and chroma token
     "--pm-chroma-cyan: #00c9d8",
     "--pm-chroma-violet: #8b5cf6",
     "--pm-chroma-magenta: #e657a6",
-  ]) assert.match(source, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+  ]) assert.equal(source.includes(token), true, `${token} ausente`);
 });
 
 test("button families and accessible focus states are part of the contract", async () => {
-  const source = await css();
+  const source = await read(cssUrl);
   for (const selector of [
     ".pm-button--primary",
     ".pm-button--secondary",
@@ -38,24 +33,26 @@ test("button families and accessible focus states are part of the contract", asy
     ".pm-segment-button",
     ".pm-nav-button",
     ".pm-tile-button",
-  ]) assert.match(source, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  assert.match(source, /:focus-visible/);
-  assert.match(source, /prefers-reduced-motion/);
+  ]) assert.equal(source.includes(selector), true, `${selector} ausente`);
+  assert.equal(source.includes(":focus-visible"), true);
+  assert.equal(source.includes("prefers-reduced-motion"), true);
 });
 
 test("card anatomy keeps TCG ratio and distinct Chroma tiers", async () => {
-  const source = await css();
+  const source = await read(cssUrl);
+  const states = await read(statesUrl);
   assert.match(source, /aspect-ratio:\s*5\s*\/\s*7/);
-  assert.match(source, /\.pm-card__media/);
-  assert.match(source, /\.pm-card__description/);
-  assert.match(source, /data-rarity="chroma-suprema"/);
-  assert.match(source, /data-rarity="chroma-comemorativa"/);
+  assert.equal(source.includes(".pm-card__media"), true);
+  assert.equal(source.includes(".pm-card__description"), true);
+  assert.equal(states.includes('data-rarity="chroma-suprema"'), true);
+  assert.equal(states.includes('data-rarity="chroma-comemorativa"'), true);
+  assert.equal(states.includes("prefers-reduced-motion"), true);
 });
 
 test("playground shows regular, Chroma, Suprema and Comemorativa before duel integration", async () => {
-  const source = await playground();
+  const source = await read(playgroundUrl);
   for (const rarity of ["basica", "chroma-ilustrada", "chroma-suprema", "chroma-comemorativa"]) {
-    assert.match(source, new RegExp(`rarity: "${rarity}"`));
+    assert.equal(source.includes(`rarity: "${rarity}"`), true, `${rarity} ausente`);
   }
-  assert.match(source, /pg-duel-preview/);
+  assert.equal(source.includes("pg-duel-preview"), true);
 });

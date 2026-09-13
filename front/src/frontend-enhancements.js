@@ -123,12 +123,12 @@ function enhanceButtons() {
     button.classList.add("pm-button");
     if (button.classList.contains("primary") || button.classList.contains("home-play")) {
       button.classList.add("pm-button--primary");
+    } else if (button.classList.contains("danger") || ["reset-btn", "reset-confirm", "reset-ranking"].includes(button.id)) {
+      button.classList.add("pm-button--danger");
     } else if (button.classList.contains("skip-duel") || button.classList.contains("card-info")) {
       button.classList.add("pm-button--ghost", "pm-button--compact");
     } else if (button.classList.contains("rank-direction")) {
       button.classList.add("pm-button--icon");
-    } else if (button.id === "reset-btn" || button.id === "reset-confirm") {
-      button.classList.add("pm-button--danger");
     } else {
       button.classList.add("pm-button--secondary");
     }

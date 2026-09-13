@@ -82,11 +82,11 @@ export function isSamePair(left, right) {
   );
 }
 
-export function candidatePairs(ids) {
+export function candidatePairs(ids, pairAllowed = () => true) {
   const pairs = [];
   for (let i = 0; i < ids.length; i++) {
     for (let j = i + 1; j < ids.length; j++) {
-      pairs.push([ids[i], ids[j]]);
+      if (pairAllowed(ids[i], ids[j])) pairs.push([ids[i], ids[j]]);
     }
   }
   return pairs;
@@ -159,14 +159,15 @@ function ratingOf(ratings, id) {
  * Weighted pair draw: rarity × Elo proximity, minus `lastPair`,
  * with a coverage filter sized to the active catalog.
  */
-export function pickPair(candidates, state, rng = Math.random) {
+export function pickPair(candidates, state, rng = Math.random, pairAllowed = () => true) {
   const ids = candidates.map((c) => c.id);
   if (ids.length < 2) return [ids[0] || "", ids[0] || ""];
 
   const pairCount = state.pairCount || {};
   const ratings = state.ratings || {};
   const coverageDuels = coverageDuelLimit(ids.length);
-  let pairs = excludeLastPair(candidatePairs(ids), state.lastPair);
+  let pairs = excludeLastPair(candidatePairs(ids, pairAllowed), state.lastPair);
+  if (!pairs.length) return [ids[0] || "", ids[0] || ""];
 
   const shown = shownPairTotal(pairCount);
   if (shown < coverageDuels) {
@@ -182,8 +183,8 @@ export function pickPair(candidates, state, rng = Math.random) {
 }
 
 /** Pick, record the appearance, and set `lastPair` — same steps as `nextDuel`. */
-export function takeNextPair(candidates, state, rng = Math.random) {
-  const pair = pickPair(candidates, state, rng);
+export function takeNextPair(candidates, state, rng = Math.random, pairAllowed = () => true) {
+  const pair = pickPair(candidates, state, rng, pairAllowed);
   state.pairCount = recordPair(state.pairCount, pair);
   state.lastPair = pair;
   return pair;

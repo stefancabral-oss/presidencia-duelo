@@ -5,17 +5,20 @@ const baseUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173";
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const browserType = browserName === "webkit" ? webkit : chromium;
 const browser = await browserType.launch({ headless: true });
-const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
-const errors = [];
-page.on("pageerror", (error) => errors.push(error.message));
-page.on("console", (msg) => {
-  if (msg.type() !== "error") return;
-  const text = msg.text();
-  if (/Failed to load resource:.*500/.test(text)) return;
-  errors.push(text);
-});
 
-try {
+function trackErrors(page) {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (msg) => {
+    if (msg.type() !== "error") return;
+    const text = msg.text();
+    if (/Failed to load resource:.*(?:429|500)/.test(text)) return;
+    errors.push(text);
+  });
+  return errors;
+}
+
+async function exerciseMainUi(page) {
   await page.goto(baseUrl, { waitUntil: "networkidle" });
   await page.waitForSelector("#tab-duel");
 
@@ -31,7 +34,10 @@ try {
   await assertTab("#tab-rank", "#panel-rank");
   await assertTab("#tab-credits", "#panel-credits");
   await assertTab("#tab-home", "#panel-home");
-  await assertTab("#tab-duel", "#panel-duel");
+
+  await page.locator("#home-play").click();
+  await page.waitForTimeout(80);
+  assert.equal(await page.locator("#panel-duel").evaluate((el) => el.classList.contains("active")), true, `${browserName}: Jogar agora não abriu Duelo`);
 
   const topicButtons = page.locator("#panel-duel .topic-btn");
   if (await topicButtons.count() > 1) {
@@ -70,10 +76,46 @@ try {
   await page.waitForSelector("#chroma-grid");
   assert.equal(await page.locator(".chroma-filter").count(), 5, `${browserName}: Galeria Chroma não expôs todos os filtros`);
   assert.match(await page.locator("h1").textContent(), /Galeria Chroma/);
+}
 
-  await page.goto(baseUrl, { waitUntil: "networkidle" });
-  await page.waitForSelector("#tab-duel");
-  assert.deepEqual(errors, [], `${browserName}: erros no browser: ${errors.join(" | ")}`);
+try {
+  const cleanPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const cleanErrors = trackErrors(cleanPage);
+  await exerciseMainUi(cleanPage);
+  assert.deepEqual(cleanErrors, [], `${browserName}: erros no browser limpo: ${cleanErrors.join(" | ")}`);
+  await cleanPage.close();
+
+  // Reproduz um usuário recorrente vindo de versões anteriores: muitos duelos,
+  // campos incompletos/legados e torneio persistido inválido. O bootstrap deve
+  // migrar ou descartar o dado ruim sem deixar a Home desenhada e os botões mortos.
+  const legacyPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const legacyErrors = trackErrors(legacyPage);
+  await legacyPage.addInitScript(() => {
+    localStorage.setItem("presidencia-duelo-v1", JSON.stringify({
+      duels: 841,
+      ratings: {},
+      wins: {},
+      losses: {},
+      zebras: {},
+      lastPair: ["legacy-a", "legacy-b"],
+      pairCount: { "legacy-a|legacy-b": 37 },
+      progressGoal: 30,
+      celebratedGoal: 30,
+      achievements: ["primeiro-duelo"],
+      combo: 2,
+      lastVoteAt: Date.now() - 86400000,
+    }));
+    localStorage.setItem("presidencia-duelo-topic-v1", "politica");
+    localStorage.setItem("presidencia-duelo-tournament-v1-politica", JSON.stringify({ version: 0, broken: true }));
+  });
+  await legacyPage.goto(baseUrl, { waitUntil: "networkidle" });
+  await legacyPage.waitForSelector("#tab-chromas", { timeout: 5000 });
+  assert.equal(await legacyPage.locator(".tabs").evaluate((el) => el.classList.contains("pm-nav-v2")), true, `${browserName}: bootstrap legado não instalou navegação v2`);
+  await legacyPage.locator("#home-play").click();
+  await legacyPage.waitForTimeout(80);
+  assert.equal(await legacyPage.locator("#panel-duel").evaluate((el) => el.classList.contains("active")), true, `${browserName}: estado legado deixou Jogar agora sem resposta`);
+  assert.deepEqual(legacyErrors, [], `${browserName}: erros com estado legado: ${legacyErrors.join(" | ")}`);
+  await legacyPage.close();
 } finally {
   await browser.close();
 }

@@ -1,3 +1,5 @@
+import { rarityForElo } from "./rarity.js";
+
 /**
  * Duel-card photo + text. Built once, then updated in place so the <img>
  * is not recreated (and never uses loading="lazy", which delays visible photos).
@@ -31,6 +33,9 @@ export function fillDuelCard(el, candidate, { elo, wr, barWidth }) {
   if (!hasDuelPhoto(el)) {
     el.innerHTML = DUEL_CARD_SKELETON;
   }
+
+  const rarity = rarityForElo(elo);
+  if (el.dataset) el.dataset.rarity = rarity.id;
 
   el.querySelector(".card-name").textContent = candidate.name;
   el.querySelector(".party-chip").textContent = candidate.party;

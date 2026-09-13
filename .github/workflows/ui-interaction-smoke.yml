@@ -1,0 +1,51 @@
+name: UI Interaction Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'front/**'
+      - 'app/**'
+      - '.github/workflows/ui-interaction-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install front
+        run: npm ci --prefix front
+
+      - name: Install Playwright
+        run: npm install --no-save playwright@1.55.0 --prefix front
+
+      - name: Install Chromium
+        run: npx --prefix front playwright install --with-deps chromium
+
+      - name: Build front
+        run: npm run build --prefix front
+
+      - name: Start preview
+        run: |
+          npm run preview --prefix front -- --host 127.0.0.1 --port 4173 > /tmp/polimatch-vite.log 2>&1 &
+          echo $! > /tmp/polimatch-vite.pid
+
+      - name: Wait for preview
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/polimatch-vite.log
+          exit 1
+
+      - name: Run browser interaction smoke
+        run: node front/e2e/interaction-smoke.mjs

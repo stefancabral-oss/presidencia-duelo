@@ -11,6 +11,8 @@ test("connectionRequiredHtml exposes an alert and retry action", () => {
   assert.match(html, /Conexão necessária/);
   assert.match(html, /id="retry-connection"/);
   assert.match(html, /somente online/);
+  assert.match(html, />PM</);
+  assert.match(html, />PoliMatch</);
 });
 
 test("renderConnectionRequired replaces the shell and wires retry", () => {

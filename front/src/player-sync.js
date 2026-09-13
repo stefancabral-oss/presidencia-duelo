@@ -42,28 +42,46 @@ export async function initializePlayerSync({
   fetchRemoteState,
   replaceRemoteState,
   onRecoveryKey,
+  recoverInvalidStoredKey = false,
 }) {
   let key = recoveryKey;
   let created = false;
-  if (!key) {
+
+  async function createPlayerKey() {
     ({ recoveryKey: key } = await createRemotePlayer());
     created = true;
     onRecoveryKey?.(key);
   }
 
-  const versions = {};
-  for (const mode of Object.keys(states)) {
-    let remote = await fetchRemoteState(key, mode);
-    if (remote.version === 0 && remote.state.duels === 0 && states[mode].duels > 0) {
-      remote = await replaceRemoteState(
-        key,
-        mode,
-        remote.version,
-        rankingStateForServer(states[mode]),
-      );
+  async function synchronize() {
+    const versions = {};
+    for (const mode of Object.keys(states)) {
+      let remote = await fetchRemoteState(key, mode);
+      if (remote.version === 0 && remote.state.duels === 0 && states[mode].duels > 0) {
+        remote = await replaceRemoteState(
+          key,
+          mode,
+          remote.version,
+          rankingStateForServer(states[mode]),
+        );
+      }
+      applyServerPlayerState(states[mode], remote.state);
+      versions[mode] = remote.version;
     }
-    applyServerPlayerState(states[mode], remote.state);
-    versions[mode] = remote.version;
+    return versions;
   }
+
+  if (!key) await createPlayerKey();
+
+  let versions;
+  try {
+    versions = await synchronize();
+  } catch (error) {
+    const staleStoredKey = recoverInvalidStoredKey && Boolean(recoveryKey) && error?.status === 401;
+    if (!staleStoredKey) throw error;
+    await createPlayerKey();
+    versions = await synchronize();
+  }
+
   return { recoveryKey: key, versions, created };
 }

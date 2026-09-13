@@ -44,6 +44,16 @@ export function normalizeVoteId(value, createId = randomUUID) {
   return voteId;
 }
 
+export function normalizeRequiredUuid(value, fieldName) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (!UUID_PATTERN.test(normalized)) {
+    const error = new Error(`${fieldName} inválido`);
+    error.status = 400;
+    throw error;
+  }
+  return normalized;
+}
+
 export function assertSameVote(existing, { voteId, winnerId, loserId, mode }) {
   if (
     existing.mode !== mode
@@ -98,14 +108,83 @@ export function snapshotFromRows(mode, duels, rows) {
   return { mode, duels: Number(duels) || 0, ranking };
 }
 
+export function replayRanking(baselineRows, baselineDuels, votes) {
+  const rows = new Map(CANDIDATES.map((candidate) => [candidate.id, {
+    candidate_id: candidate.id,
+    rating: 1000,
+    wins: 0,
+    losses: 0,
+    zebras: 0,
+  }]));
+
+  for (const baseline of baselineRows) {
+    if (!rows.has(baseline.candidate_id)) continue;
+    rows.set(baseline.candidate_id, {
+      candidate_id: baseline.candidate_id,
+      rating: Number(baseline.rating) || 1000,
+      wins: Number(baseline.wins) || 0,
+      losses: Number(baseline.losses) || 0,
+      zebras: Number(baseline.zebras) || 0,
+    });
+  }
+
+  let duels = Number(baselineDuels) || 0;
+  for (const vote of votes) {
+    const winner = rows.get(vote.winner_id);
+    const loser = rows.get(vote.loser_id);
+    if (!winner || !loser || winner === loser) {
+      throw new Error(`voto ${vote.id || vote.vote_id || "desconhecido"} não pode ser recomposto`);
+    }
+    const zebra = isZebra(winner.rating, loser.rating);
+    const deltas = ratingDeltas(winner.rating, loser.rating);
+    winner.rating += deltas.winnerDelta;
+    winner.wins += 1;
+    winner.zebras += zebra ? 1 : 0;
+    loser.rating += deltas.loserDelta;
+    loser.losses += 1;
+    duels += 1;
+  }
+
+  return { duels, rows: [...rows.values()] };
+}
+
+export function deriveRankingBaseline(currentRows, currentDuels, votesNewestFirst) {
+  const rows = new Map(currentRows.map((row) => [row.candidate_id, {
+    candidate_id: row.candidate_id,
+    rating: Number(row.rating),
+    wins: Number(row.wins),
+    losses: Number(row.losses),
+    zebras: Number(row.zebras),
+  }]));
+  let duels = Number(currentDuels);
+
+  for (const vote of votesNewestFirst) {
+    const winner = rows.get(vote.winner_id);
+    const loser = rows.get(vote.loser_id);
+    if (!winner || !loser) throw new Error(`voto ${vote.id} não pode formar o ponto-base`);
+    winner.rating = Number(vote.winner_rating_before);
+    winner.wins -= 1;
+    winner.zebras -= vote.zebra ? 1 : 0;
+    loser.rating = Number(vote.loser_rating_before);
+    loser.losses -= 1;
+    duels -= 1;
+  }
+
+  if (
+    duels < 0
+    || [...rows.values()].some((row) => row.wins < 0 || row.losses < 0 || row.zebras < 0)
+  ) {
+    throw new Error("histórico de votos incompatível com o ranking materializado");
+  }
+  return { duels, rows: [...rows.values()] };
+}
+
 async function selectSnapshot(queryable, mode) {
-  const [poolResult, statsResult] = await Promise.all([
-    queryable.query("SELECT duels FROM ranking_pools WHERE mode = $1", [mode]),
-    queryable.query(
-      "SELECT candidate_id, rating, wins, losses, zebras FROM ranking_stats WHERE mode = $1",
-      [mode],
-    ),
-  ]);
+  const poolResult = await queryable.query("SELECT duels FROM ranking_pools WHERE mode = $1", [mode]);
+  const statsResult = await queryable.query(
+    "SELECT candidate_id, rating, wins, losses, zebras FROM ranking_stats WHERE mode = $1",
+    [mode],
+  );
   return snapshotFromRows(mode, poolResult.rows[0]?.duels, statsResult.rows);
 }
 
@@ -146,6 +225,48 @@ async function createSchema(client) {
 
     ALTER TABLE votes ADD COLUMN IF NOT EXISTS vote_id uuid;
     CREATE UNIQUE INDEX IF NOT EXISTS votes_vote_id_uidx ON votes (vote_id) WHERE vote_id IS NOT NULL;
+
+    CREATE TABLE IF NOT EXISTS ranking_baseline_pools (
+      mode text PRIMARY KEY CHECK (mode IN ('presidentes', 'vices')),
+      duels bigint NOT NULL CHECK (duels >= 0),
+      captured_through_vote_id bigint NOT NULL CHECK (captured_through_vote_id >= 0),
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS ranking_baseline_stats (
+      mode text NOT NULL REFERENCES ranking_baseline_pools(mode) ON DELETE RESTRICT,
+      candidate_id text NOT NULL,
+      rating integer NOT NULL,
+      wins bigint NOT NULL CHECK (wins >= 0),
+      losses bigint NOT NULL CHECK (losses >= 0),
+      zebras bigint NOT NULL CHECK (zebras >= 0),
+      PRIMARY KEY (mode, candidate_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS vote_reversals (
+      id bigserial PRIMARY KEY,
+      reversal_id uuid NOT NULL UNIQUE,
+      vote_row_id bigint NOT NULL UNIQUE REFERENCES votes(id) ON DELETE RESTRICT,
+      reason text NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
+
+    CREATE OR REPLACE FUNCTION reject_audit_event_mutation()
+    RETURNS trigger AS $$
+    BEGIN
+      RAISE EXCEPTION 'eventos de auditoria são imutáveis';
+    END;
+    $$ LANGUAGE plpgsql;
+
+    DROP TRIGGER IF EXISTS votes_are_immutable ON votes;
+    CREATE TRIGGER votes_are_immutable
+      BEFORE UPDATE OR DELETE ON votes
+      FOR EACH ROW EXECUTE FUNCTION reject_audit_event_mutation();
+
+    DROP TRIGGER IF EXISTS vote_reversals_are_immutable ON vote_reversals;
+    CREATE TRIGGER vote_reversals_are_immutable
+      BEFORE UPDATE OR DELETE ON vote_reversals
+      FOR EACH ROW EXECUTE FUNCTION reject_audit_event_mutation();
 
     CREATE TABLE IF NOT EXISTS app_metadata (
       key text PRIMARY KEY,
@@ -228,6 +349,104 @@ async function migrateLegacyJson(client) {
   return result;
 }
 
+async function ensureRankingBaseline(client) {
+  await client.query("SELECT pg_advisory_xact_lock(hashtext('polimatch-ranking-baseline'))");
+  const existing = await client.query("SELECT mode FROM ranking_baseline_pools LIMIT 1");
+  if (existing.rowCount) return;
+
+  const interleavedLegacyVote = await client.query(`
+    SELECT EXISTS (
+      SELECT 1
+      FROM votes AS legacy
+      WHERE legacy.vote_id IS NULL
+        AND legacy.id > (SELECT MIN(id) FROM votes WHERE vote_id IS NOT NULL)
+    ) AS found
+  `);
+  if (interleavedLegacyVote.rows[0]?.found) {
+    throw new Error("votos sem voteId aparecem depois do início da trilha auditável");
+  }
+
+  for (const mode of MODES) {
+    const poolResult = await client.query("SELECT duels FROM ranking_pools WHERE mode = $1", [mode]);
+    const statsResult = await client.query(
+      "SELECT candidate_id, rating, wins, losses, zebras FROM ranking_stats WHERE mode = $1",
+      [mode],
+    );
+    const auditableVotes = await client.query(
+      `SELECT id, winner_id, loser_id, winner_rating_before, loser_rating_before, zebra
+       FROM votes
+       WHERE mode = $1 AND vote_id IS NOT NULL
+       ORDER BY id DESC`,
+      [mode],
+    );
+    const legacyHighWater = await client.query(
+      "SELECT COALESCE(MAX(id), 0) AS id FROM votes WHERE mode = $1 AND vote_id IS NULL",
+      [mode],
+    );
+    const baseline = deriveRankingBaseline(
+      statsResult.rows,
+      poolResult.rows[0]?.duels,
+      auditableVotes.rows,
+    );
+    await client.query(
+      `INSERT INTO ranking_baseline_pools (mode, duels, captured_through_vote_id)
+       VALUES ($1, $2, $3)`,
+      [mode, baseline.duels, legacyHighWater.rows[0].id],
+    );
+    for (const row of baseline.rows) {
+      await client.query(
+        `INSERT INTO ranking_baseline_stats
+           (mode, candidate_id, rating, wins, losses, zebras)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [mode, row.candidate_id, row.rating, row.wins, row.losses, row.zebras],
+      );
+    }
+  }
+}
+
+async function rebuildRanking(client, mode) {
+  const baselinePool = await client.query(
+    `SELECT duels, captured_through_vote_id
+     FROM ranking_baseline_pools
+     WHERE mode = $1`,
+    [mode],
+  );
+  const baselineStats = await client.query(
+    `SELECT candidate_id, rating, wins, losses, zebras
+     FROM ranking_baseline_stats
+     WHERE mode = $1`,
+    [mode],
+  );
+  const activeVotes = await client.query(
+    `SELECT votes.id, votes.vote_id, votes.winner_id, votes.loser_id
+     FROM votes
+     JOIN ranking_baseline_pools AS baseline ON baseline.mode = votes.mode
+     LEFT JOIN vote_reversals AS reversals ON reversals.vote_row_id = votes.id
+     WHERE votes.mode = $1
+       AND votes.id > baseline.captured_through_vote_id
+       AND reversals.id IS NULL
+     ORDER BY votes.id ASC`,
+    [mode],
+  );
+  if (!baselinePool.rowCount) throw new Error("ponto-base do ranking não inicializado");
+
+  const rebuilt = replayRanking(
+    baselineStats.rows,
+    baselinePool.rows[0].duels,
+    activeVotes.rows,
+  );
+  for (const row of rebuilt.rows) {
+    await client.query(
+      `UPDATE ranking_stats
+       SET rating = $3, wins = $4, losses = $5, zebras = $6
+       WHERE mode = $1 AND candidate_id = $2`,
+      [mode, row.candidate_id, row.rating, row.wins, row.losses, row.zebras],
+    );
+  }
+  await client.query("UPDATE ranking_pools SET duels = $2 WHERE mode = $1", [mode, rebuilt.duels]);
+  return rebuilt;
+}
+
 export function createPostgresStore(connectionString = process.env.DATABASE_URL) {
   if (!connectionString) throw new Error("DATABASE_URL é obrigatória");
   const pool = new Pool({ connectionString, max: Number(process.env.PG_POOL_MAX) || 10 });
@@ -239,6 +458,7 @@ export function createPostgresStore(connectionString = process.env.DATABASE_URL)
         await client.query("BEGIN");
         await createSchema(client);
         const migration = await migrateLegacyJson(client);
+        await ensureRankingBaseline(client);
         await client.query("COMMIT");
         return migration;
       } catch (error) {
@@ -327,6 +547,79 @@ export function createPostgresStore(connectionString = process.env.DATABASE_URL)
         const result = await selectSnapshot(client, mode);
         await client.query("COMMIT");
         return { ...result, vote: { id: voteId, status: "created" } };
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
+
+    async reverseVote(requestedVoteId, requestedReversalId, reason = "correção administrativa") {
+      const voteId = normalizeRequiredUuid(requestedVoteId, "voteId");
+      const reversalId = normalizeVoteId(requestedReversalId);
+      const normalizedReason = String(reason || "").trim();
+      if (!normalizedReason) {
+        const error = new Error("motivo da reversão é obrigatório");
+        error.status = 400;
+        throw error;
+      }
+
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`reverse:${voteId}`]);
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`reversal:${reversalId}`]);
+
+        const reversalCollision = await client.query(
+          `SELECT reversals.vote_row_id, votes.vote_id
+           FROM vote_reversals AS reversals
+           JOIN votes ON votes.id = reversals.vote_row_id
+           WHERE reversals.reversal_id = $1`,
+          [reversalId],
+        );
+        if (reversalCollision.rowCount && reversalCollision.rows[0].vote_id !== voteId) {
+          const error = new Error(`reversalId ${reversalId} já usado em outro voto`);
+          error.status = 409;
+          throw error;
+        }
+
+        const original = await client.query(
+          `SELECT votes.id, votes.mode, reversals.reversal_id
+           FROM votes
+           LEFT JOIN vote_reversals AS reversals ON reversals.vote_row_id = votes.id
+           WHERE votes.vote_id = $1`,
+          [voteId],
+        );
+        if (!original.rowCount) {
+          const error = new Error("voto não encontrado");
+          error.status = 404;
+          throw error;
+        }
+
+        const vote = original.rows[0];
+        if (vote.reversal_id) {
+          const result = await selectSnapshot(client, vote.mode);
+          await client.query("COMMIT");
+          return {
+            ...result,
+            reversal: { id: vote.reversal_id, voteId, status: "alreadyReversed" },
+          };
+        }
+
+        await client.query("SELECT duels FROM ranking_pools WHERE mode = $1 FOR UPDATE", [vote.mode]);
+        await client.query(
+          `INSERT INTO vote_reversals (reversal_id, vote_row_id, reason)
+           VALUES ($1, $2, $3)`,
+          [reversalId, vote.id, normalizedReason],
+        );
+        await rebuildRanking(client, vote.mode);
+        const result = await selectSnapshot(client, vote.mode);
+        await client.query("COMMIT");
+        return {
+          ...result,
+          reversal: { id: reversalId, voteId, status: "created" },
+        };
       } catch (error) {
         await client.query("ROLLBACK");
         throw error;

@@ -59,6 +59,8 @@ npm run dev --prefix back
 
 CORS está aberto para o front local. A API exige `DATABASE_URL` e grava o ranking e cada voto no PostgreSQL usando uma transação. No primeiro início, se o banco estiver vazio, `back/data/elo.json` é importado automaticamente uma única vez para preservar o agregado anterior.
 
+Votos com `voteId` formam uma trilha imutável. O backend também dispõe do serviço interno `store.reverseVote(voteId, reversalId, reason)`: ele registra uma reversão sem apagar o voto original e recompõe o Elo, em ordem, a partir do último ponto-base legado. Esse serviço não possui rota HTTP pública; uma futura ferramenta administrativa deve adicionar autenticação e autorização antes de expô-lo.
+
 ### 2. Front web (`front`)
 
 ```bash

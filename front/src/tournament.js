@@ -75,7 +75,7 @@ export function completedTournamentDuels(tournament) {
 
 export function formatTournamentShareText(candidate) {
   const affiliation = candidate.party ? ` (${candidate.party})` : "";
-  return `Meu vencedor é ${candidate.name}${affiliation} — Presidência Duelo 2026\nNão é pesquisa oficial.`;
+  return `Meu vencedor é ${candidate.name}${affiliation} — PoliMatch\nNão é pesquisa oficial.`;
 }
 
 function sameIds(actual, expected) {

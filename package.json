@@ -2,7 +2,7 @@
   "name": "presidencia-duelo",
   "private": true,
   "type": "module",
-  "description": "Monorepo Presidência Duelo 2026 — front (Vite), back (Express) e app (PWA)",
+  "description": "Monorepo PoliMatch — front (Vite), back (Express) e app (PWA)",
   "scripts": {
     "dev:front": "npm run dev --prefix front",
     "dev:back": "npm run dev --prefix back",

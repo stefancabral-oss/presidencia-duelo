@@ -2,8 +2,8 @@ export function connectionRequiredHtml() {
   return `
     <main class="app connection-required">
       <div class="logo">
-        <div class="logo-badge" aria-hidden="true">PD</div>
-        <h1>Presidência Duelo</h1>
+        <div class="logo-badge" aria-hidden="true">PM</div>
+        <h1>PoliMatch</h1>
       </div>
       <section class="connection-required-card" role="alert">
         <h2>Conexão necessária</h2>

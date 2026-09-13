@@ -1,6 +1,6 @@
-# Presidência Duelo 2026
+# PoliMatch
 
-Monorepo do jogo web casual estilo **Facemash**: duas pessoas da vida pública brasileira lado a lado; você escolhe uma; surge o próximo par aleatório; o ranking Elo fica no `localStorage` e, se a API estiver no ar, também num agregado no servidor.
+Monorepo do **PoliMatch**, jogo web casual com duas pessoas da vida pública brasileira lado a lado: você escolhe uma, surge o próximo par aleatório e o ranking Elo é preservado no navegador e no servidor.
 
 Além do duelo contínuo, a aba **Torneio** sorteia 12 pessoas do catálogo para um mata-mata: oito disputam a primeira rodada e quatro avançam direto, seguindo por quartas, semifinais e final. São 11 escolhas até o resultado, que pode ser compartilhado. O torneio é salvo separadamente e não altera o Elo local nem o agregado da API.
 

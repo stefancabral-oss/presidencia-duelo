@@ -82,7 +82,7 @@ test("formatPodiumShareText is the ranking-text fallback for WhatsApp", () => {
   assert.equal(
     text,
     [
-      "Meu pódio — Presidência Duelo 2026",
+      "Meu pódio — PoliMatch",
       "Não é pesquisa oficial",
       "",
       "1º Luiz Inácio Lula da Silva — Elo 1180",
@@ -91,9 +91,9 @@ test("formatPodiumShareText is the ranking-text fallback for WhatsApp", () => {
     ].join("\n"),
   );
   assert.match(text, /não é pesquisa/i);
-  assert.equal(GAME_NAME, "Presidência Duelo 2026");
+  assert.equal(GAME_NAME, "PoliMatch");
   assert.equal(PODIUM_DISCLAIMER, "Não é pesquisa oficial");
-  assert.equal(SHARE_TITLE, "Meu pódio — Presidência Duelo 2026");
+  assert.equal(SHARE_TITLE, "Meu pódio — PoliMatch");
 });
 
 test("formatPodiumShareText handles an empty podium", () => {
@@ -326,7 +326,7 @@ test("paintPodiumScene writes game name, disclaimer, and top names", () => {
     images: [null, null],
   });
   const joined = texts.join("\n");
-  assert.match(joined, /Presidência Duelo 2026/);
+  assert.match(joined, /PoliMatch/);
   assert.match(joined, /Seu pódio/);
   assert.match(joined, /não é pesquisa/i);
   assert.match(joined, /Lula/);

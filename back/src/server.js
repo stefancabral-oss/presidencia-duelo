@@ -27,7 +27,7 @@ app.get("/api/health", async (_req, res) => {
     await store.health();
     res.json({
       ok: true,
-      service: "presidencia-duelo-api",
+      service: "polimatch-api",
       database: "postgresql",
       candidates: CANDIDATES.length,
     });
@@ -115,7 +115,7 @@ const migration = await store.init();
 console.log("PostgreSQL inicializado", migration);
 
 const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Presidência Duelo API em http://localhost:${PORT}`);
+  console.log(`PoliMatch API em http://localhost:${PORT}`);
 });
 
 async function shutdown(signal) {

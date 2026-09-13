@@ -12,6 +12,10 @@ on:
 jobs:
   browser-smoke:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,8 +31,8 @@ jobs:
       - name: Install Playwright
         run: npm install --no-save playwright@1.55.0 --prefix front
 
-      - name: Install Chromium
-        run: npx --prefix front playwright install --with-deps chromium
+      - name: Install browser
+        run: npx --prefix front playwright install --with-deps ${{ matrix.browser }}
 
       - name: Build front
         run: npm run build --prefix front
@@ -48,4 +52,6 @@ jobs:
           exit 1
 
       - name: Run browser interaction smoke
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
         run: node front/e2e/interaction-smoke.mjs

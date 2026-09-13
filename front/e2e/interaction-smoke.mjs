@@ -49,7 +49,7 @@ try {
   await page.locator("#info-card-a").click();
   await page.waitForTimeout(80);
   assert.equal(await page.locator("#person-profile-dialog").evaluate((el) => el.open), true);
-  await page.locator("#person-profile-close").click();
+  await page.locator("[data-profile-close]").click();
 
   const hiddenBlocking = await page.locator(".podium-overlay[hidden], .reset-overlay[hidden]").evaluateAll((els) => els.some((el) => {
     const style = getComputedStyle(el);

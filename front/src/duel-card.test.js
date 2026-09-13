@@ -26,6 +26,9 @@ function createCardEl() {
   const fields = {
     ".card-name": { textContent: "" },
     ".party-chip": { textContent: "" },
+    ".pm-card__rarity": { textContent: "", title: "" },
+    ".pm-card__role": { textContent: "" },
+    ".pm-card__description": { textContent: "" },
     ".vice strong": { textContent: "" },
     ".vice": { firstChild: { textContent: "Vice: " } },
     ".elo-mini": { textContent: "" },
@@ -35,9 +38,12 @@ function createCardEl() {
   };
   let html = "";
   let writes = 0;
+  const classes = new Set();
   return {
     img,
     fields,
+    dataset: {},
+    classList: { add: (...items) => items.forEach((item) => classes.add(item)), contains: (item) => classes.has(item) },
     get innerHTMLWrites() {
       return writes;
     },
@@ -69,25 +75,29 @@ const zema = {
   vice: "Eduardo Girão (Novo)",
   photo: "/candidates/zema.jpg",
   initials: "RZ",
+  role: "Governador de Minas Gerais",
+  summary: "Empresário e político brasileiro.",
 };
 
-test("duel card skeleton has an eager img, not loading=lazy", () => {
+test("duel card skeleton follows the TCG anatomy and keeps eager image loading", () => {
+  assert.match(DUEL_CARD_SKELETON, /pm-card__media/);
+  assert.match(DUEL_CARD_SKELETON, /pm-card__body/);
+  assert.match(DUEL_CARD_SKELETON, /pm-card__role/);
+  assert.match(DUEL_CARD_SKELETON, /pm-card__description/);
   assert.match(DUEL_CARD_SKELETON, /<img\b/);
   assert.doesNotMatch(DUEL_CARD_SKELETON, /loading\s*=\s*["']lazy["']/);
 });
 
-test("duel card skeleton omits rarity and holographic decorations", () => {
-  assert.doesNotMatch(DUEL_CARD_SKELETON, /rarity-chip/);
-  assert.doesNotMatch(DUEL_CARD_SKELETON, /class=["']holo["']/);
-});
-
-test("fillDuelCard builds the card once, then only swaps src and text", () => {
+test("fillDuelCard builds once, applies rarity and swaps content in place", () => {
   const el = createCardEl();
   assert.equal(hasDuelPhoto(el), false);
 
   fillDuelCard(el, lula, { elo: 1000, wr: 0, barWidth: 55 });
   assert.equal(el.innerHTMLWrites, 1);
   assert.equal(el.innerHTML, DUEL_CARD_SKELETON);
+  assert.equal(el.classList.contains("pm-card"), true);
+  assert.equal(el.dataset.rarity, "basica");
+  assert.equal(el.fields[".pm-card__rarity"].textContent, "●");
   assert.equal(el.fields[".card-name"].textContent, lula.name);
   assert.equal(el.fields[".party-chip"].textContent, lula.party);
   assert.equal(el.fields[".vice strong"].textContent, lula.vice);
@@ -98,17 +108,17 @@ test("fillDuelCard builds the card once, then only swaps src and text", () => {
   assert.equal(el.img.alt, "Foto de Luiz Inácio Lula da Silva");
   assert.equal(el.img.getAttribute("loading"), undefined);
 
-  fillDuelCard(el, zema, { elo: 1016, wr: 50, barWidth: 50 });
+  fillDuelCard(el, zema, { elo: 1121, wr: 50, barWidth: 50 });
   assert.equal(el.innerHTMLWrites, 1);
+  assert.equal(el.dataset.rarity, "chroma-ilustrada");
+  assert.equal(el.fields[".pm-card__rarity"].textContent, "★");
   assert.equal(el.img.src, "/candidates/zema.jpg");
-  assert.equal(el.img.alt, "Foto de Romeu Zema");
   assert.equal(el.fields[".card-name"].textContent, zema.name);
-  assert.equal(el.fields[".elo-mini"].textContent, "Elo 1016 · 50% vitórias");
-  assert.equal(el.fields[".placeholder"].textContent, "RZ");
-  assert.equal(el.fields[".placeholder"].style.display, "none");
+  assert.equal(el.fields[".pm-card__role"].textContent, zema.role);
+  assert.equal(el.fields[".pm-card__description"].textContent, zema.summary);
 });
 
-test("fillDuelCard renders vice placeholders without a broken image", () => {
+test("fillDuelCard renders image fallback without breaking metadata", () => {
   const el = createCardEl();
   fillDuelCard(el, {
     ...lula,

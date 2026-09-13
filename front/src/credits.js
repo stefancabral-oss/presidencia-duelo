@@ -21,7 +21,7 @@ export function creditsPanelHtml() {
           <div class="credit-name">${escapeHtml(row.name)}</div>
           <div class="credit-meta">
             ${escapeHtml(row.license)} — ${escapeHtml(row.author)}
-            · <a href="${escapeHtml(row.commons)}" rel="noopener noreferrer">Wikimedia</a>
+            · <a href="${escapeHtml(row.commons)}" rel="noopener noreferrer">${escapeHtml(row.sourceLabel || "Wikimedia")}</a>
           </div>
         </li>`;
   }).join("");
@@ -40,7 +40,7 @@ export function creditsPanelHtml() {
         <ul class="credits-list">${items}
         </ul>
         <p class="credits-notes">
-          Fotos reais em 310 dos 387 perfis. Os 77 restantes usam iniciais até receberem imagem verificada e crédito.
+          Fotos reais em 383 dos 387 perfis. Quatro perfis sem retrato público verificável continuam usando iniciais para evitar associações erradas.
           Este projeto não é afiliado a partidos, TSE, Wikimedia ou às pessoas listadas.
         </p>`;
 }

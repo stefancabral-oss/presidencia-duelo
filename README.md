@@ -11,14 +11,14 @@ O catálogo de duelo contém os **387 nomes aprovados** e perfis básicos. Chrom
 ```
 /
   README.md                 # este guia
-  CREDITS.md                # atribuição das fotos (Wikimedia)
+  CREDITS.md                # atribuição das fotos e fontes públicas
   shared/                   # catálogo aprovado de pessoas + Elo compartilhado
   front/                    # UI web (Vite + vanilla JS)
   back/                     # API (Node + Express)
   app/                      # PWA (wrapper do mesmo jogo + manifest/SW)
 ```
 
-O catálogo inclui 310 perfis com fotos licenciadas: 12 arquivos locais e 298 imagens servidas diretamente pelo Wikimedia Commons. Os 77 perfis ainda sem referência publicável usam iniciais. Nenhuma face foi gerada por IA.
+O catálogo inclui 383 perfis com fotos de fontes públicas e crédito registrado: 85 arquivos locais e 298 imagens servidas diretamente pelo Wikimedia Commons. Quatro perfis sem retrato público verificável continuam usando iniciais para evitar associação com homônimos. Nenhuma face foi gerada por IA.
 
 ## Requisitos
 

@@ -6,6 +6,7 @@ import {
   currentTournamentMatch,
   formatTournamentShareText,
   isValidTournament,
+  loadOrCreateTournament,
   tournamentPick,
 } from "./tournament.js";
 
@@ -50,4 +51,51 @@ test("persisted tournament validation rejects duplicate and unknown candidates",
   assert.equal(isValidTournament(tournament, ids), true);
   tournament.entrants[0] = tournament.entrants[1];
   assert.equal(isValidTournament(tournament, ids), false);
+});
+
+test("persisted tournament validation rejects incoherent byes, rounds, and champion", () => {
+  const valid = createTournament(ids, () => 0.999999);
+  const withNoByes = structuredClone(valid);
+  withNoByes.byes = [];
+  assert.equal(isValidTournament(withNoByes, ids), false);
+
+  const duplicatedBye = structuredClone(valid);
+  duplicatedBye.byes[1] = duplicatedBye.byes[0];
+  assert.equal(isValidTournament(duplicatedBye, ids), false);
+
+  const incoherentMatch = structuredClone(valid);
+  incoherentMatch.rounds[0].matches[0].candidates.reverse();
+  assert.equal(isValidTournament(incoherentMatch, ids), false);
+
+  const skippedMatch = structuredClone(valid);
+  skippedMatch.rounds[0].matches[1].winner = skippedMatch.rounds[0].matches[1].candidates[0];
+  assert.equal(isValidTournament(skippedMatch, ids), false);
+
+  const prematureChampion = structuredClone(valid);
+  prematureChampion.champion = prematureChampion.entrants[0];
+  assert.equal(isValidTournament(prematureChampion, ids), false);
+});
+
+test("valid saved state resumes at the exact next match", () => {
+  const tournament = createTournament(ids, () => 0.999999);
+  tournamentPick(tournament, currentTournamentMatch(tournament).candidates[1]);
+  tournamentPick(tournament, currentTournamentMatch(tournament).candidates[0]);
+  const expected = currentTournamentMatch(tournament).candidates;
+  const loaded = loadOrCreateTournament(JSON.stringify(tournament), ids, () => 0);
+  assert.equal(loaded.recovered, false);
+  assert.deepEqual(currentTournamentMatch(loaded.tournament).candidates, expected);
+  assert.equal(completedTournamentDuels(loaded.tournament), 2);
+});
+
+test("invalid or incompatible saved state is replaced with a playable 11-duel bracket", () => {
+  for (const serialized of ["{broken", JSON.stringify({ version: 0 }), JSON.stringify({ version: 2 })]) {
+    const loaded = loadOrCreateTournament(serialized, ids, () => 0.999999);
+    assert.equal(loaded.recovered, true);
+    assert.ok(currentTournamentMatch(loaded.tournament));
+    while (!loaded.tournament.champion) {
+      const match = currentTournamentMatch(loaded.tournament);
+      tournamentPick(loaded.tournament, match.candidates[0]);
+    }
+    assert.equal(completedTournamentDuels(loaded.tournament), 11);
+  }
 });

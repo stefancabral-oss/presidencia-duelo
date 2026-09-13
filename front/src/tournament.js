@@ -78,21 +78,77 @@ export function formatTournamentShareText(candidate) {
   return `Meu vencedor é ${candidate.name}${affiliation} — Presidência Duelo 2026\nNão é pesquisa oficial.`;
 }
 
+function sameIds(actual, expected) {
+  return Array.isArray(actual)
+    && actual.length === expected.length
+    && actual.every((id, index) => id === expected[index]);
+}
+
+function validRound(round, expectedEntrants, expectedName, requireComplete) {
+  if (!round || round.name !== expectedName || !Array.isArray(round.matches)) return false;
+  const expectedMatches = pairEntrants(expectedEntrants);
+  if (round.matches.length !== expectedMatches.length) return false;
+
+  let foundIncomplete = false;
+  for (let index = 0; index < round.matches.length; index += 1) {
+    const match = round.matches[index];
+    if (!match || !sameIds(match.candidates, expectedMatches[index].candidates)) return false;
+    if (match.winner == null) {
+      foundIncomplete = true;
+    } else {
+      if (foundIncomplete || !match.candidates.includes(match.winner)) return false;
+    }
+  }
+  return !requireComplete || round.matches.every((match) => match.winner != null);
+}
+
 export function isValidTournament(tournament, candidateIds) {
-  if (!tournament || tournament.version !== 1 || !Array.isArray(tournament.entrants)) return false;
+  if (!tournament || tournament.version !== 1 || !Array.isArray(tournament.entrants)
+    || !Array.isArray(candidateIds)) return false;
   const allowed = new Set(candidateIds);
   const entrants = new Set(tournament.entrants);
   if (tournament.entrants.length !== TOURNAMENT_SIZE || entrants.size !== TOURNAMENT_SIZE) return false;
   if (!tournament.entrants.every((id) => allowed.has(id))) return false;
   if (!Array.isArray(tournament.byes) || !Array.isArray(tournament.rounds)) return false;
-  if (!Number.isInteger(tournament.roundIndex) || !tournament.rounds[tournament.roundIndex]) return false;
-  const matchesAreValid = tournament.rounds.every((round) =>
-    Array.isArray(round.matches) && round.matches.every((match) =>
-      Array.isArray(match.candidates)
-      && match.candidates.length === 2
-      && match.candidates.every((id) => entrants.has(id))
-      && (match.winner == null || match.candidates.includes(match.winner)),
-    ),
-  );
-  return matchesAreValid && (tournament.champion == null || entrants.has(tournament.champion));
+  if (!sameIds(tournament.byes, tournament.entrants.slice(8))) return false;
+  if (!Number.isInteger(tournament.roundIndex) || tournament.roundIndex < 0
+    || tournament.roundIndex >= ROUND_NAMES.length
+    || tournament.rounds.length !== tournament.roundIndex + 1) return false;
+
+  let expectedEntrants = tournament.entrants.slice(0, 8);
+  for (let roundIndex = 0; roundIndex <= tournament.roundIndex; roundIndex += 1) {
+    const round = tournament.rounds[roundIndex];
+    const isPriorRound = roundIndex < tournament.roundIndex;
+    if (!validRound(round, expectedEntrants, ROUND_NAMES[roundIndex], isPriorRound)) return false;
+
+    const winners = round.matches.map((match) => match.winner);
+    if (isPriorRound) {
+      expectedEntrants = roundIndex === 0
+        ? tournament.byes.flatMap((bye, index) => [bye, winners[index]])
+        : winners;
+    }
+  }
+
+  const currentRound = tournament.rounds[tournament.roundIndex];
+  const currentComplete = currentRound.matches.every((match) => match.winner != null);
+  const isFinal = tournament.roundIndex === ROUND_NAMES.length - 1;
+  if (isFinal && currentComplete) {
+    return tournament.champion === currentRound.matches[0].winner;
+  }
+  return !currentComplete && tournament.champion == null;
+}
+
+export function loadOrCreateTournament(serialized, candidateIds, random = Math.random) {
+  if (serialized == null || serialized === "") {
+    return { tournament: createTournament(candidateIds, random), recovered: false };
+  }
+  try {
+    const parsed = typeof serialized === "string" ? JSON.parse(serialized) : serialized;
+    if (isValidTournament(parsed, candidateIds)) {
+      return { tournament: parsed, recovered: false };
+    }
+  } catch {
+    // Invalid persisted data is replaced with a playable bracket below.
+  }
+  return { tournament: createTournament(candidateIds, random), recovered: true };
 }

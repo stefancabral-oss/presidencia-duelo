@@ -1,8 +1,12 @@
+import { POLIMATCH_FEEDBACK_EVENT } from "./game-feedback.js";
+
 const SOUND_KEY = "polimatch-sound-enabled-v1";
 
 let ctx = null;
 let enabled = true;
 let installed = false;
+let lastKind = "";
+let lastAt = 0;
 
 function storedEnabled() {
   try {
@@ -49,6 +53,10 @@ function haptic(pattern) {
 
 export function emitPoliMatchFeedback(kind) {
   if (!enabled) return;
+  const now = Date.now();
+  if ((kind === lastKind && now - lastAt < 120) || (kind === "tap" && now - lastAt < 70)) return;
+  lastKind = kind;
+  lastAt = now;
   switch (kind) {
     case "tap":
       tone({ frequency: 330, endFrequency: 360, duration: .035, gain: .018 });
@@ -93,6 +101,28 @@ export function emitPoliMatchFeedback(kind) {
     case "overtake":
       tone({ frequency: 380, endFrequency: 720, duration: .1, gain: .025 });
       break;
+    case "zebra":
+      tone({ frequency: 240, endFrequency: 760, duration: .13, gain: .025, type: "triangle" });
+      haptic([12, 18, 20]);
+      break;
+    case "top-10":
+      tone({ frequency: 500, endFrequency: 700, duration: .09, gain: .023 });
+      break;
+    case "top-3":
+      tone({ frequency: 560, endFrequency: 840, duration: .11, gain: .025 });
+      tone({ frequency: 980, duration: .08, gain: .014, delay: .08 });
+      break;
+    case "leader":
+      tone({ frequency: 620, endFrequency: 1040, duration: .15, gain: .026 });
+      tone({ frequency: 1240, duration: .12, gain: .016, delay: .1 });
+      haptic([10, 18, 10, 18, 18]);
+      break;
+    case "modal-open":
+      tone({ frequency: 360, endFrequency: 460, duration: .055, gain: .016 });
+      break;
+    case "modal-close":
+      tone({ frequency: 420, endFrequency: 330, duration: .045, gain: .014 });
+      break;
   }
 }
 
@@ -123,10 +153,6 @@ function observeFeedbackStates() {
     for (const mutation of mutations) {
       const el = mutation.target;
       if (!(el instanceof Element)) continue;
-      if (mutation.attributeName === "class") {
-        if (el.classList.contains("picked-win")) emitPoliMatchFeedback("success");
-        if (el.classList.contains("picked-pending")) emitPoliMatchFeedback("select");
-      }
       if (mutation.attributeName === "hidden" && el.id === "combo-banner" && !el.hidden) {
         emitPoliMatchFeedback("combo");
       }
@@ -158,6 +184,7 @@ export function installInteractionSound() {
   createToggle();
   bindControls();
   observeFeedbackStates();
+  document.addEventListener(POLIMATCH_FEEDBACK_EVENT, (event) => emitPoliMatchFeedback(event.detail?.kind));
 }
 
 export function isSoundEnabled() { return enabled; }

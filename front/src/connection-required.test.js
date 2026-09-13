@@ -46,4 +46,6 @@ test("the online initialization path imports the recoverable renderer", () => {
   assert.match(gameSrc, /import \{ renderConnectionRequired \} from "\.\/connection-required\.js"/);
   assert.match(gameSrc, /if \(requireApi\) \{\s*renderConnectionRequired\(root\);\s*return false;/);
   assert.doesNotMatch(gameSrc, /function renderConnectionRequired/);
+  assert.match(gameSrc, /if \(requireApi && !playerReady\) \{[\s\S]*renderConnectionRequired\(root\);[\s\S]*return false;/);
+  assert.doesNotMatch(gameSrc, /renderPlayerRecovery\([^)]*\);\s*setTab\("rank"\)/);
 });

@@ -1,5 +1,7 @@
-import FALLBACK_CANDIDATES from "../../shared/candidates.json";
+import RAW_FALLBACK_CANDIDATES from "../../shared/candidates.json";
+import PERSON_PROFILES from "../../shared/person-profiles.json" with { type: "json" };
 import { applyElo, emptyStats, mergeStats } from "../../shared/elo.js";
+import { enrichCandidateEditorial } from "../../shared/editorial.js";
 import {
   fetchCandidates,
   fetchHealth,
@@ -94,6 +96,7 @@ import { createTournamentPickLock } from "./tournament-pick-lock.js";
 import { MODES, VICE_STORAGE_KEY, candidateForMode } from "./vice-mode.js";
 import { createVoteId } from "./vote-id.js";
 import { captureVoteSession, isCurrentVoteSession } from "./vote-session.js";
+import { dispatchPoliMatchFeedback, rankingFeedbackKind } from "./game-feedback.js";
 import {
   TOPIC_IDS,
   candidatesForTopic,
@@ -103,6 +106,10 @@ import {
 
 const ELO_START = 1000;
 const TOPIC_STORAGE_KEY = "presidencia-duelo-topic-v1";
+const FALLBACK_PROFILE_BY_ID = new Map(PERSON_PROFILES.map((profile) => [profile.id, profile]));
+const FALLBACK_CANDIDATES = RAW_FALLBACK_CANDIDATES.map((candidate) => (
+  enrichCandidateEditorial(candidate, FALLBACK_PROFILE_BY_ID.get(candidate.id))
+));
 
 function escapeHtml(value) {
   return String(value)
@@ -609,6 +616,13 @@ export async function initGame({ requireApi = false } = {}) {
       playerReady = false;
     }
   }
+  if (requireApi && !playerReady) {
+    // Never leave the fully drawn game interactive-looking when the anonymous
+    // player could not be synchronized. In that state a vote cannot be safely
+    // attributed, so the only honest UI is the recoverable online gate.
+    renderConnectionRequired(root);
+    return false;
+  }
   let mode = "presidentes";
   let state = states[mode];
   let topicId = loadTopic();
@@ -655,12 +669,14 @@ export async function initGame({ requireApi = false } = {}) {
   function openResetDialog() {
     els.resetStatus.textContent = "";
     els.resetOverlay.hidden = false;
+    dispatchPoliMatchFeedback("modal-open");
     els.resetCancel.focus();
   }
 
   function closeResetDialog() {
     if (els.resetConfirm.disabled) return;
     els.resetOverlay.hidden = true;
+    dispatchPoliMatchFeedback("modal-close");
     els.resetBtn.focus();
   }
 
@@ -873,11 +889,15 @@ export async function initGame({ requireApi = false } = {}) {
     if (els.podiumStand) els.podiumStand.innerHTML = podiumStandHtml(localPodiumPlaces());
     setPodiumStatus("");
     if (els.podiumOverlay) els.podiumOverlay.hidden = false;
+    dispatchPoliMatchFeedback("modal-open");
     els.podiumShare?.focus();
   }
 
   function closePodium() {
-    if (els.podiumOverlay) els.podiumOverlay.hidden = true;
+    if (els.podiumOverlay && !els.podiumOverlay.hidden) {
+      els.podiumOverlay.hidden = true;
+      dispatchPoliMatchFeedback("modal-close");
+    }
   }
 
   async function sharePodium() {
@@ -897,6 +917,7 @@ export async function initGame({ requireApi = false } = {}) {
       }
     } catch {
       setPodiumStatus("Não deu para compartilhar agora.");
+      dispatchPoliMatchFeedback("error");
     } finally {
       if (els.podiumShare) els.podiumShare.disabled = false;
     }
@@ -1038,6 +1059,7 @@ export async function initGame({ requireApi = false } = {}) {
       topic: topicById(topicId),
       trigger: button,
     });
+    dispatchPoliMatchFeedback("modal-open");
   }
 
   function renderTournamentBracket() {
@@ -1118,6 +1140,7 @@ export async function initGame({ requireApi = false } = {}) {
           renderAchievements();
           showAchievementToasts(["completou-torneio"]);
         }
+        dispatchPoliMatchFeedback("success");
         return true;
       },
       feedback: () => {
@@ -1207,6 +1230,10 @@ export async function initGame({ requireApi = false } = {}) {
   function commitLocalPick(session, serverPlayer = null, { saved = false } = {}) {
     const { state: targetState, pair, winnerEl, winnerId, loserId } = session;
     const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
+    const rankedBefore = sortCandidatesByRank(topicCandidates(), (id) => ({
+      elo: targetState.ratings[id], wins: targetState.wins[id] || 0,
+    }));
+    const beforePosition = rankedBefore.findIndex(({ id }) => id === winnerId) + 1;
     let result;
     if (serverPlayer) {
       const winnerBefore = targetState.ratings[winnerId];
@@ -1224,6 +1251,10 @@ export async function initGame({ requireApi = false } = {}) {
     }
     const { winnerDelta, loserDelta, zebra } = result;
     const combo = applyCombo(targetState);
+    const rankedAfter = sortCandidatesByRank(topicCandidates(), (id) => ({
+      elo: targetState.ratings[id], wins: targetState.wins[id] || 0,
+    }));
+    const afterPosition = rankedAfter.findIndex(({ id }) => id === winnerId) + 1;
     applyUnlocks();
     persist();
     applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta, { zebra, combo, saved });
@@ -1232,13 +1263,19 @@ export async function initGame({ requireApi = false } = {}) {
     renderCombo(Date.now(), { suppress: true });
     advanceOnboarding();
     maybeShowGoalMoment();
+    dispatchPoliMatchFeedback(rankingFeedbackKind({
+      before: beforePosition,
+      after: afterPosition,
+      total: rankedAfter.length,
+      zebra,
+      combo,
+    }));
   }
 
   async function pick(winnerEl) {
     if (locked || !currentPair) return;
     if (requireApi && !playerReady) {
-      renderPlayerRecovery("Informe uma chave válida para preservar seu ranking pessoal.");
-      setTab("rank");
+      renderConnectionRequired(root);
       return;
     }
     locked = true;
@@ -1287,6 +1324,7 @@ export async function initGame({ requireApi = false } = {}) {
           clearPickFeedback(els.cardA);
           clearPickFeedback(els.cardB);
           setNetworkStatus(statusEl, NETWORK_STATES.UNKNOWN);
+          dispatchPoliMatchFeedback("error");
           return;
         }
         locked = false;
@@ -1295,6 +1333,7 @@ export async function initGame({ requireApi = false } = {}) {
         clearPickFeedback(els.cardA);
         clearPickFeedback(els.cardB);
         setNetworkStatus(statusEl, NETWORK_STATES.FAILED);
+        dispatchPoliMatchFeedback("error");
       }
       return;
     }
@@ -1427,7 +1466,6 @@ export async function initGame({ requireApi = false } = {}) {
     }
   }
 
-  els.tabDuel.addEventListener("click", () => setTab("duel"));
   els.tabHome.addEventListener("click", () => setTab("home"));
   els.tabDuel.addEventListener("click", () => setTab("duel"));
   els.tabTournament.addEventListener("click", () => setTab("tournament"));
@@ -1485,7 +1523,10 @@ export async function initGame({ requireApi = false } = {}) {
   els.personProfileDialog.addEventListener("click", (event) => {
     if (event.target === els.personProfileDialog) els.personProfileDialog.close();
   });
-  els.personProfileDialog.addEventListener("close", () => restorePersonProfileFocus(els.personProfileDialog));
+  els.personProfileDialog.addEventListener("close", () => {
+    restorePersonProfileFocus(els.personProfileDialog);
+    dispatchPoliMatchFeedback("modal-close");
+  });
   els.tournamentShare.addEventListener("click", () => shareTournamentWinner());
   els.tournamentAgain.addEventListener("click", () => restartTournament());
   els.restartTournament.addEventListener("click", () => {

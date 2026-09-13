@@ -2,7 +2,9 @@ import CANDIDATES from "../../shared/candidates.json";
 import PERSON_PROFILES from "../../shared/person-profiles.json" with { type: "json" };
 import { fetchServerRanking } from "./api.js";
 import { rarityForElo } from "./rarity.js";
+import { editorialSummary } from "../../shared/editorial.js";
 import "./chroma-gallery.css";
+import "./collection.css";
 
 const candidateById = new Map(CANDIDATES.map((candidate) => [candidate.id, candidate]));
 const profileById = new Map(PERSON_PROFILES.map((profile) => [profile.id, profile]));
@@ -11,6 +13,8 @@ const root = document.getElementById("chroma-app");
 let items = [];
 let filtered = [];
 let activeFilter = "all";
+let activeSearch = "";
+let activeSort = "rating";
 let activeIndex = -1;
 
 function escapeHtml(value) {
@@ -39,7 +43,6 @@ function normalizeRanking(data) {
       const candidate = candidateById.get(row.id);
       if (!candidate) return null;
       const rarity = rarityForElo(row.elo);
-      if (rarity.family !== "Chroma") return null;
       return {
         candidate,
         profile: profileById.get(row.id) || null,
@@ -58,7 +61,7 @@ function cardHtml(item, index) {
   const role = profile?.role || "Perfil em atualização";
   const meta = [profile?.party || candidate.party, `Elo ${rating}`].filter(Boolean).join(" · ");
   return `
-    <button class="chroma-card" type="button" data-index="${index}" data-rarity="${escapeHtml(rarity.id)}" aria-label="Abrir histórico de ${escapeHtml(candidate.name)}">
+    <button class="chroma-card" type="button" data-index="${index}" data-rarity="${escapeHtml(rarity.id)}" data-family="${rarity.family === "Chroma" ? "chroma" : "regular"}" aria-label="Abrir histórico de ${escapeHtml(candidate.name)}">
       <div class="chroma-card-media">
         ${candidate.photo ? `<img src="${escapeHtml(candidate.photo)}" alt="Foto de ${escapeHtml(candidate.name)}" />` : ""}
         <span class="chroma-card-shine" aria-hidden="true"></span>
@@ -94,7 +97,7 @@ function sourceHtml(source) {
 function detailHtml(item) {
   const { candidate, profile, rarity, rating, wins, losses } = item;
   const timeline = timelineItems(profile);
-  const summary = profile?.currentMoment || "Histórico em atualização. As informações disponíveis ainda são insuficientes para montar uma linha do tempo mais completa.";
+  const summary = editorialSummary(profile);
   return `
     <div class="history-layout">
       <aside class="history-aside">
@@ -112,6 +115,10 @@ function detailHtml(item) {
         <div class="history-section">
           <h3>Quem é</h3>
           <p class="history-summary">${escapeHtml(summary)}</p>
+        </div>
+        <div class="history-section">
+          <h3>Momento atual</h3>
+          <p class="history-summary">${escapeHtml(profile?.currentMoment || "Conteúdo em atualização.")}</p>
         </div>
         <div class="history-section">
           <h3>Atuação</h3>
@@ -143,12 +150,26 @@ function detailHtml(item) {
 function renderGrid() {
   const grid = document.querySelector("#chroma-grid");
   const count = document.querySelector("#chroma-count");
-  filtered = activeFilter === "all" ? items : items.filter((item) => item.rarity.id === activeFilter);
+  const query = activeSearch.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("pt-BR");
+  filtered = items.filter((item) => {
+    const isChroma = item.rarity.family === "Chroma";
+    const familyMatches = activeFilter === "all"
+      || (activeFilter === "chroma" && isChroma)
+      || (activeFilter === "regular" && !isChroma)
+      || item.rarity.id === activeFilter;
+    const haystack = `${item.candidate.name} ${item.profile?.role || ""} ${item.profile?.party || item.candidate.party || ""}`
+      .normalize("NFD").replace(/\p{Diacritic}/gu, "").toLocaleLowerCase("pt-BR");
+    return familyMatches && (!query || haystack.includes(query));
+  }).sort((a, b) => {
+    if (activeSort === "name") return a.candidate.name.localeCompare(b.candidate.name, "pt-BR");
+    if (activeSort === "rarity") return b.rarity.min - a.rarity.min || b.rating - a.rating;
+    return b.rating - a.rating || a.candidate.name.localeCompare(b.candidate.name, "pt-BR");
+  });
   if (count) count.textContent = `${filtered.length} ${filtered.length === 1 ? "Chroma" : "Chromas"}`;
   if (!grid) return;
   grid.innerHTML = filtered.length
     ? filtered.map(cardHtml).join("")
-    : '<div class="chroma-empty">Nenhuma Chroma disponível neste filtro no ranking atual.</div>';
+    : '<div class="chroma-empty">Nenhuma carta disponível com estes filtros.</div>';
   grid.querySelectorAll(".chroma-card").forEach((button) => button.addEventListener("click", () => openHistory(Number(button.dataset.index))));
 }
 
@@ -159,6 +180,14 @@ function bindFilters() {
       document.querySelectorAll(".chroma-filter").forEach((item) => item.classList.toggle("is-active", item === button));
       renderGrid();
     });
+  });
+  document.querySelector("#chroma-search")?.addEventListener("input", (event) => {
+    activeSearch = event.currentTarget.value;
+    renderGrid();
+  });
+  document.querySelector("#chroma-sort")?.addEventListener("change", (event) => {
+    activeSort = event.currentTarget.value;
+    renderGrid();
   });
 }
 
@@ -184,18 +213,24 @@ function shellHtml() {
       <section class="chroma-hero">
         <div>
           <span class="chroma-kicker">Coleção</span>
-          <h1>Galeria Chroma</h1>
-          <p>Todas as Chromas atualmente disponíveis pelo ranking agregado. Toque em qualquer carta para abrir o histórico e as fontes daquela pessoa.</p>
+          <h1>Minha coleção</h1>
+          <p>Explore cards regulares e Chromas definidos pelo ranking agregado. Toque em qualquer carta para abrir o histórico e as fontes daquela pessoa.</p>
         </div>
         <div class="chroma-count" id="chroma-count">Carregando…</div>
       </section>
-      <nav class="chroma-toolbar" aria-label="Filtrar Chromas">
+      <nav class="chroma-toolbar" aria-label="Filtrar coleção">
         <button class="chroma-filter is-active" type="button" data-filter="all">Todas</button>
+        <button class="chroma-filter" type="button" data-filter="chroma">Chromas</button>
+        <button class="chroma-filter" type="button" data-filter="regular">Regulares</button>
         <button class="chroma-filter" type="button" data-filter="chroma-ilustrada">Ilustradas</button>
         <button class="chroma-filter" type="button" data-filter="chroma-especial">Especiais</button>
         <button class="chroma-filter" type="button" data-filter="chroma-suprema">Supremas</button>
         <button class="chroma-filter" type="button" data-filter="chroma-comemorativa">Comemorativas</button>
       </nav>
+      <div class="chroma-discovery">
+        <label>Buscar pessoa<input id="chroma-search" type="search" autocomplete="off" placeholder="Nome, atuação ou partido"></label>
+        <label>Ordenar<select id="chroma-sort"><option value="rating">Maior Elo</option><option value="name">Nome</option><option value="rarity">Raridade</option></select></label>
+      </div>
       <section class="chroma-grid" id="chroma-grid" aria-live="polite">
         <div class="chroma-empty">Carregando ranking…</div>
       </section>
@@ -213,7 +248,7 @@ async function init() {
     items = normalizeRanking(ranking);
     renderGrid();
   } catch {
-    document.querySelector("#chroma-grid").innerHTML = '<div class="chroma-empty">Não foi possível carregar o ranking agora. A Galeria Chroma depende do ranking agregado para definir quais cartas estão disponíveis.</div>';
+    document.querySelector("#chroma-grid").innerHTML = '<div class="chroma-empty">Não foi possível carregar o ranking agora. A coleção funciona somente online para manter as cartas alinhadas ao ranking agregado.</div>';
     document.querySelector("#chroma-count").textContent = "Indisponível";
   }
 }

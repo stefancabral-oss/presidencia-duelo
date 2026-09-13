@@ -16,14 +16,21 @@ import "../../front/src/chroma-entry.css";
 import "../../front/src/ranking-v2.css";
 import "../../front/src/tournament-v2.css";
 import { registerServiceWorker } from "./register-sw.js";
+import { renderConnectionRequired } from "../../front/src/connection-required.js";
 
 installTournamentRestartGuard();
 registerServiceWorker();
-initGame().then(() => {
-  installDuelV2Layout();
-  installRankingV2();
-  installTournamentV2();
-  installFrontendEnhancements();
-  installChromaEntry();
-  installInteractionSound();
-});
+initGame({ requireApi: true })
+  .then((ready) => {
+    if (!ready) return;
+    installDuelV2Layout();
+    installRankingV2();
+    installTournamentV2();
+    installFrontendEnhancements();
+    installChromaEntry();
+    installInteractionSound();
+  })
+  .catch((error) => {
+    console.error("Falha ao inicializar o PoliMatch", error);
+    renderConnectionRequired(document.getElementById("app"));
+  });

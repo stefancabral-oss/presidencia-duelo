@@ -114,7 +114,7 @@ O ranking agregado de **Pessoas** continua usando no PostgreSQL a chave históri
 
 ## Deploy no Dokploy
 
-### Front estático (principal)
+### Front estático (ambiente de desenvolvimento)
 
 1. Build: `cd front && npm ci && npm run build`
 2. **Publish directory:** `front/dist`
@@ -136,7 +136,7 @@ Configure backups periódicos para o PostgreSQL antes de abrir o jogo ao públic
 
 Se o front e a API ficarem no mesmo domínio, deixe `VITE_API_URL` vazio e encaminhe `/api` para o serviço Node.
 
-### App PWA online
+### App PWA online (serviço público principal)
 
 Crie outro serviço **Application**, também com o repositório inteiro como contexto:
 
@@ -145,6 +145,11 @@ Crie outro serviço **Application**, também com o repositório inteiro como con
 3. Build arg: `VITE_API_URL=https://api.seu-dominio.com`
 4. Aponte o domínio público do jogo para este serviço
 5. Ative HTTPS para permitir instalação e registro do service worker
+
+O domínio público `polimatch.com.br` deve apontar para este serviço `app`, não
+para o build de `front`. O `front` aceita fallback local para desenvolvimento;
+o `app` bloqueia o jogo quando API ou sincronização individual não estão
+disponíveis, evitando votos e estatísticas perdidos.
 
 Depois do deploy, valide `/manifest.webmanifest`, `/sw.js` e `/api/health`. O PWA mostra “Conexão necessária” se a API não responder e não altera estatísticas locais nesse estado.
 

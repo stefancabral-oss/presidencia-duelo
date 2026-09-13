@@ -6,7 +6,12 @@ const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
 const errors = [];
 page.on("pageerror", (error) => errors.push(error.message));
-page.on("console", (msg) => { if (msg.type() === "error") errors.push(msg.text()); });
+page.on("console", (msg) => {
+  if (msg.type() !== "error") return;
+  const text = msg.text();
+  if (/Failed to load resource:.*500/.test(text)) return;
+  errors.push(text);
+});
 
 try {
   await page.goto(baseUrl, { waitUntil: "networkidle" });

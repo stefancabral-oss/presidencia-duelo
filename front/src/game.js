@@ -34,6 +34,7 @@ import {
 } from "./podium.js";
 import { RANKING_SUBTITLE, rankMetaText, sortCandidatesByRank } from "./ranking.js";
 import { findLeaderId, rarityFor } from "./rarity.js";
+import { commitPersonalReset } from "./ranking-reset.js";
 import { normalizePairCount, takeNextPair } from "./matchmaking.js";
 import { NETWORK_STATES, setNetworkStatus } from "./network-status.js";
 import { commitOnlineVote } from "./online-vote.js";
@@ -305,7 +306,7 @@ function renderShell(root, { requireApi = false } = {}) {
           </div>
           <div class="ranking-actions">
             <button type="button" class="btn primary" id="open-podium">Ver pódio</button>
-            <button type="button" class="btn danger" id="reset-ranking">Zerar ranking</button>
+            <button type="button" class="btn danger" id="reset-ranking">Zerar meu ranking</button>
           </div>
         </div>
         <ol class="rank-list" id="rank-list"></ol>
@@ -362,6 +363,20 @@ function renderShell(root, { requireApi = false } = {}) {
             <button type="button" class="btn" id="podium-close">Fechar</button>
           </div>
         </div>
+      </div>
+
+      <div class="reset-overlay" id="reset-overlay" hidden>
+        <button type="button" class="reset-backdrop" id="reset-backdrop" aria-label="Cancelar"></button>
+        <section class="reset-dialog" role="dialog" aria-modal="true" aria-labelledby="reset-title" aria-describedby="reset-description">
+          <h2 id="reset-title">Zerar seu ranking?</h2>
+          <p id="reset-description">Seu Elo, vitórias, derrotas, zebras, progresso e conquistas serão zerados neste aparelho e na sua identidade anônima.</p>
+          <p><strong>O ranking geral de todos não será alterado.</strong></p>
+          <p class="reset-status" id="reset-status" role="status" aria-live="polite"></p>
+          <div class="podium-actions">
+            <button type="button" class="btn" id="reset-cancel">Cancelar</button>
+            <button type="button" class="btn danger" id="reset-confirm">Sim, zerar meu ranking</button>
+          </div>
+        </section>
       </div>
     </div>
   `;
@@ -473,6 +488,11 @@ export async function initGame({ requireApi = false } = {}) {
     undoBtn: document.getElementById("undo-duel"),
     rankList: document.getElementById("rank-list"),
     resetBtn: document.getElementById("reset-ranking"),
+    resetOverlay: document.getElementById("reset-overlay"),
+    resetBackdrop: document.getElementById("reset-backdrop"),
+    resetCancel: document.getElementById("reset-cancel"),
+    resetConfirm: document.getElementById("reset-confirm"),
+    resetStatus: document.getElementById("reset-status"),
     playerKey: document.getElementById("player-key"),
     copyPlayerKey: document.getElementById("copy-player-key"),
     recoverPlayerForm: document.getElementById("recover-player-form"),
@@ -555,6 +575,65 @@ export async function initGame({ requireApi = false } = {}) {
     els.playerRecoveryStatus.textContent = message || (playerSyncError
       ? "Não foi possível sincronizar. Informe sua chave novamente; nenhum dado remoto foi sobrescrito."
       : "Ranking pessoal sincronizado com o servidor.");
+  }
+
+  function openResetDialog() {
+    els.resetStatus.textContent = "";
+    els.resetOverlay.hidden = false;
+    els.resetCancel.focus();
+  }
+
+  function closeResetDialog() {
+    if (els.resetConfirm.disabled) return;
+    els.resetOverlay.hidden = true;
+    els.resetBtn.focus();
+  }
+
+  async function resetPersonalRanking() {
+    cancelPickTimer();
+    duelGeneration += 1;
+    locked = true;
+    els.cardA.disabled = true;
+    els.cardB.disabled = true;
+    els.resetConfirm.disabled = true;
+    els.resetCancel.disabled = true;
+    els.resetStatus.textContent = "Zerando seu ranking…";
+    const cleared = defaultState(candidates);
+    try {
+      await commitPersonalReset({
+        clearedState: cleared,
+        resetRemote: requireApi
+          ? (next) => replacePlayerState(recoveryKey, mode, playerVersions[mode], next)
+          : null,
+        applyLocal: (next, remote) => {
+          if (remote) playerVersions[mode] = remote.version;
+          states[mode] = next;
+          state = next;
+          persist();
+        },
+      });
+      hideGoalMoment();
+      closePodium();
+      nextDuel();
+      renderRanking();
+      renderAchievements();
+      renderCombo();
+      els.resetStatus.textContent = "Seu ranking foi zerado. O ranking geral não foi alterado.";
+      window.setTimeout(() => {
+        els.resetOverlay.hidden = true;
+        els.resetBtn.focus();
+      }, 1100);
+    } catch (error) {
+      locked = false;
+      els.cardA.disabled = false;
+      els.cardB.disabled = false;
+      els.resetStatus.textContent = error.status === 409
+        ? "Há um voto mais recente no servidor. Sincronize sua chave e tente novamente."
+        : "Não foi possível zerar agora. Nenhum dado foi apagado.";
+    } finally {
+      els.resetConfirm.disabled = false;
+      els.resetCancel.disabled = false;
+    }
   }
 
   async function recoverPlayer(recoveredKey) {
@@ -1285,20 +1364,10 @@ export async function initGame({ requireApi = false } = {}) {
     }
   });
 
-  els.resetBtn.addEventListener("click", () => {
-    if (!confirm("Zerar ranking e duelos salvos neste aparelho?")) return;
-    cancelPickTimer();
-    hideGoalMoment();
-    closePodium();
-    states[mode] = defaultState(candidates);
-    state = states[mode];
-    persist();
-    nextDuel();
-    if (requireApi && apiOnline) setNetworkStatus(statusEl, NETWORK_STATES.ONLINE);
-    renderRanking();
-    renderAchievements();
-    renderCombo();
-  });
+  els.resetBtn.addEventListener("click", openResetDialog);
+  els.resetCancel.addEventListener("click", closeResetDialog);
+  els.resetBackdrop.addEventListener("click", closeResetDialog);
+  els.resetConfirm.addEventListener("click", resetPersonalRanking);
 
   renderModeUi();
   renderTopicUi();

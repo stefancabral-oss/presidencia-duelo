@@ -72,6 +72,7 @@ import {
   unlockTournamentCompleted,
 } from "./achievements.js";
 import { saveState, STORAGE_KEY, STORAGE_UNAVAILABLE_MESSAGE } from "./storage.js";
+import { skipUnknownDuel } from "./skip-duel.js";
 import {
   TOURNAMENT_STORAGE_KEY,
   completedTournamentDuels,
@@ -264,9 +265,18 @@ function renderShell(root, { requireApi = false } = {}) {
 
         <div class="vs-row" id="duel-cards">
           <button type="button" class="poke-card" id="card-a"></button>
-          <div class="vs-badge" aria-hidden="true">VS</div>
+          <div class="duel-center">
+            <div class="vs-badge" aria-hidden="true">VS</div>
+            <button
+              type="button"
+              class="skip-duel"
+              id="skip-duel"
+              aria-label="Não conheço estas pessoas; pular este duelo"
+            >Pular</button>
+          </div>
           <button type="button" class="poke-card" id="card-b"></button>
         </div>
+        <span class="visually-hidden" id="skip-duel-status" aria-live="polite"></span>
 
         <div class="duel-actions">
           <button type="button" class="btn" id="undo-duel" disabled>Desfazer</button>
@@ -496,6 +506,8 @@ export async function initGame({ requireApi = false } = {}) {
     podiumStatus: document.getElementById("podium-share-status"),
     cardA: document.getElementById("card-a"),
     cardB: document.getElementById("card-b"),
+    skipDuel: document.getElementById("skip-duel"),
+    skipDuelStatus: document.getElementById("skip-duel-status"),
     undoBtn: document.getElementById("undo-duel"),
     rankList: document.getElementById("rank-list"),
     resetBtn: document.getElementById("reset-ranking"),
@@ -1133,6 +1145,17 @@ export async function initGame({ requireApi = false } = {}) {
     syncUndoButton();
   }
 
+  function skipCurrentDuel() {
+    skipUnknownDuel({
+      locked,
+      pair: currentPair,
+      nextPair: nextDuel,
+      announce: () => {
+        els.skipDuelStatus.textContent = "Duelo pulado. Um novo par foi exibido.";
+      },
+    });
+  }
+
   function commitLocalPick(session, serverPlayer = null, { saved = false } = {}) {
     const { state: targetState, pair, winnerEl, winnerId, loserId } = session;
     const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
@@ -1373,6 +1396,7 @@ export async function initGame({ requireApi = false } = {}) {
   els.openCredits.addEventListener("click", () => setTab("credits"));
   els.cardA.addEventListener("click", () => pick(els.cardA));
   els.cardB.addEventListener("click", () => pick(els.cardB));
+  els.skipDuel.addEventListener("click", skipCurrentDuel);
   els.modePresidentes.addEventListener("click", () => setMode("presidentes"));
   els.modeVices.addEventListener("click", () => setMode("vices"));
   for (const button of els.topicButtons) {

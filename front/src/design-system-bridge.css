@@ -1,0 +1,210 @@
+/* ICM 02 migration bridge.
+   Keeps the new components visually authoritative while legacy CSS is still loaded.
+   Remove this file during #99 after legacy rules are retired. */
+
+html, body { background: var(--pm-bg); color: var(--pm-ink); }
+
+.app {
+  background: transparent;
+  color: var(--pm-ink);
+}
+
+header,
+.panel,
+.topic-picker,
+.mode-switch,
+.duel-progress,
+.goal-modal-card,
+.tournament-stage,
+.ranking-toolbar {
+  color: var(--pm-ink);
+}
+
+button.poke-card.pm-card {
+  appearance: none;
+  padding: 0;
+  border: 2px solid var(--pm-card-accent);
+  border-radius: 19px;
+  background: var(--pm-surface);
+  color: var(--pm-ink);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--pm-shadow-card), 0 0 22px var(--pm-card-glow);
+  transform: none;
+}
+button.poke-card.pm-card:hover,
+button.poke-card.pm-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--pm-card-accent);
+  outline: none;
+  box-shadow: var(--pm-shadow-card), 0 0 28px var(--pm-card-glow), var(--pm-focus);
+}
+button.poke-card.pm-card:active { transform: scale(.985); }
+button.poke-card.pm-card:disabled { opacity: .58; cursor: wait; }
+
+button.poke-card.pm-card.picked-pending {
+  border-color: var(--pm-malachite-700);
+  box-shadow: var(--pm-shadow-card), 0 0 0 3px rgba(18,98,71,.16);
+}
+button.poke-card.pm-card.picked-win {
+  border-color: var(--pm-success);
+  box-shadow: var(--pm-shadow-card), 0 0 0 3px rgba(20,122,82,.18), 0 0 28px rgba(20,122,82,.18);
+}
+button.poke-card.pm-card.picked-lose {
+  border-color: #c9cec9;
+}
+button.poke-card.pm-card.picked-lose > :not(.pick-result) {
+  opacity: .72;
+  filter: saturate(.75);
+}
+
+button.poke-card.pm-card .art-frame.pm-card__media {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  aspect-ratio: auto;
+  box-shadow: none;
+}
+button.poke-card.pm-card .card-top.pm-card__body {
+  margin: 0;
+  display: flex;
+  align-items: stretch;
+}
+button.poke-card.pm-card .party-chip.pm-card__meta {
+  display: block;
+  margin: auto 0 0;
+  padding: 5px 0 0;
+  border: 0;
+  border-top: 1px solid rgba(16,33,26,.12);
+  border-radius: 0;
+  background: none;
+  color: var(--pm-muted);
+  letter-spacing: .02em;
+  text-transform: none;
+}
+button.poke-card.pm-card .card-legacy-metrics[hidden] { display: none !important; }
+
+/* Duelo: duas cartas verticais continuam protagonistas e o centro perde peso. */
+#panel-duel .vs-row,
+#tournament-duel.vs-row {
+  width: min(100%, 760px);
+  margin-inline: auto;
+  grid-template-columns: minmax(0, 1fr) 38px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+#panel-duel .duel-card-shell,
+#tournament-duel .duel-card-shell {
+  min-width: 0;
+  gap: 6px;
+}
+#panel-duel .duel-center {
+  gap: 3px;
+}
+#panel-duel .vs-badge,
+#tournament-duel .vs-badge {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255,255,255,.55);
+  background: var(--pm-malachite-900);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(5,36,26,.18);
+  font-size: .72rem;
+}
+#panel-duel .skip-duel {
+  min-width: 0;
+  min-height: 30px;
+  padding-inline: 5px;
+  border: 0;
+  background: transparent;
+  color: var(--pm-muted);
+  box-shadow: none;
+  font-size: .62rem;
+}
+#panel-duel .card-info.pm-button,
+#tournament-duel .card-info.pm-button {
+  width: auto;
+  min-height: 30px;
+  margin-top: 0;
+  padding: 5px 10px;
+  justify-self: center;
+  border: 0;
+  background: transparent;
+  color: var(--pm-malachite-800);
+  box-shadow: none;
+  text-decoration: none;
+  font-size: .68rem;
+}
+
+.topic-btn.pm-topic-chip {
+  border: 1px solid var(--pm-border);
+  background: var(--pm-surface);
+  color: var(--pm-ink);
+  box-shadow: none;
+}
+.topic-btn.pm-topic-chip.active,
+.topic-btn.pm-topic-chip[aria-pressed="true"] {
+  background: var(--pm-malachite-900);
+  color: #fff;
+  border-color: var(--pm-malachite-900);
+}
+
+.tab.pm-nav-button {
+  border: 0;
+  background: transparent;
+  color: var(--pm-muted);
+  box-shadow: none;
+}
+.tab.pm-nav-button.active,
+.tab.pm-nav-button[aria-current="page"] {
+  background: var(--pm-malachite-900);
+  color: #fff;
+}
+
+.mode-btn.pm-segment-button {
+  box-shadow: none;
+}
+
+.home-play.pm-button { width: min(100%, 360px); margin-inline: auto; }
+.home-shortcut.pm-tile-button { color: var(--pm-ink); background: var(--pm-surface); border-color: var(--pm-border); }
+.home-shortcut.pm-tile-button small { color: var(--pm-muted); }
+
+/* Compacta elementos de status antigos sem apagar a informação. */
+#panel-duel .duel-stats {
+  color: var(--pm-muted);
+  font-size: .76rem;
+  margin-bottom: 4px;
+}
+#panel-duel .duel-progress {
+  margin-bottom: 9px;
+}
+#panel-duel .duel-progress-text {
+  color: var(--pm-muted);
+  font-size: .72rem;
+}
+#panel-duel .duel-progress-bar {
+  height: 5px;
+  border: 0;
+  background: #e6e3da;
+}
+#panel-duel .duel-progress-fill {
+  background: linear-gradient(90deg, var(--pm-malachite-700), var(--pm-gold-500));
+}
+
+@media (max-width: 620px) {
+  button.poke-card.pm-card { border-radius: 15px; }
+  #panel-duel .vs-row,
+  #tournament-duel.vs-row {
+    grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+    gap: 4px;
+  }
+  #panel-duel .vs-badge,
+  #tournament-duel .vs-badge {
+    width: 28px;
+    height: 28px;
+    font-size: .6rem;
+  }
+  #panel-duel .skip-duel { font-size: .56rem; }
+  #panel-duel .card-info.pm-button,
+  #tournament-duel .card-info.pm-button { font-size: .62rem; padding-inline: 5px; }
+}

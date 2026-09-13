@@ -55,11 +55,16 @@ npm run dev --prefix back
 | `GET` | `/api/health` | Saúde do serviço |
 | `GET` | `/api/candidates` | 360 pessoas (`personId`, `id`, `name`, `party`, `vice`, `photo`, `initials`, `topics`, `politicalSide`) |
 | `GET` | `/api/ranking` | Ranking Elo agregado armazenado no PostgreSQL |
-| `POST` | `/api/vote` | Corpo `{ "voteId", "winnerId", "loserId", "mode" }` — aplica o voto uma única vez por `voteId` |
+| `POST` | `/api/vote` | Corpo `{ "voteId", "winnerId", "loserId", "mode", "playerVersion" }`; com chave Bearer, atualiza também o ranking individual |
+| `POST` | `/api/player` | Cria uma identidade anônima e devolve sua chave de recuperação uma única vez |
+| `GET` | `/api/player/state` | Recupera o ranking individual; requer `Authorization: Bearer <chave>` |
+| `PUT` | `/api/player/state` | Migra um ranking local usando controle otimista de `version` |
 
 CORS está aberto para o front local. A API exige `DATABASE_URL` e grava o ranking e cada voto no PostgreSQL usando uma transação. No primeiro início, se o banco estiver vazio, `back/data/elo.json` é importado automaticamente uma única vez para preservar o agregado anterior.
 
 Votos com `voteId` formam uma trilha imutável. O backend também dispõe do serviço interno `store.reverseVote(voteId, reversalId, reason)`: ele registra uma reversão sem apagar o voto original e recompõe o Elo, em ordem, a partir do último ponto-base legado. Esse serviço não possui rota HTTP pública; uma futura ferramenta administrativa deve adicionar autenticação e autorização antes de expô-lo.
+
+O app instalado cria uma identidade anônima com uma chave aleatória de 256 bits. O PostgreSQL guarda somente o SHA-256 da chave e associa a identidade aos novos votos; o ranking agregado não depende nem revela o ranking individual. A migração de um ranking local para uma identidade remota ainda vazia usa `version` otimista, e qualquer navegador atrasado recebe `409 PLAYER_VERSION_CONFLICT` em vez de sobrescrever o estado mais recente.
 
 ### 2. Front web (`front`)
 
@@ -160,8 +165,11 @@ Depois do deploy, valide `/manifest.webmanifest`, `/sw.js` e `/api/health`. O PW
 
 ## Privacidade
 
-- Jogo anônimo: ranking local em `localStorage` (`presidencia-duelo-v1`), mesmo sem API.
-- Com API: cada escolha também incrementa o Elo agregado e registra o voto no PostgreSQL (sem login, sem cookie de identidade).
+- Jogo anônimo: não pede nome, e-mail ou conta. A chave de recuperação funciona como uma senha e fica no `localStorage` deste navegador.
+- Com API: cada escolha atualiza, na mesma transação, o ranking agregado e o ranking individual anônimo no PostgreSQL.
+- Recuperação: em **Ranking → Seu ranking em qualquer aparelho**, copie a chave ou informe uma chave existente. Quem tiver essa chave pode ler e continuar esse ranking; não a publique.
+- Armazenamento: o servidor guarda o hash da chave, o estado Elo individual e a data do último acesso. Nesta versão, a identidade não expira automaticamente.
+- Conflitos: uma versão antiga nunca substitui silenciosamente a mais nova; o app pede nova sincronização.
 - Zerar ranking no UI limpa só o aparelho, não o banco do servidor.
 
 ## Licença

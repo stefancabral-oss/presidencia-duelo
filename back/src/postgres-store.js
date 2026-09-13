@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
-import { randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
-import { emptyStats, isZebra, mergeStats, ratingDeltas } from "../../shared/elo.js";
+import { applyElo, emptyStats, isZebra, mergeStats, ratingDeltas } from "../../shared/elo.js";
 import { CANDIDATES, CANDIDATE_IDS } from "./candidates.js";
 
 const { Pool } = pg;
@@ -11,6 +11,7 @@ const root = dirname(fileURLToPath(import.meta.url));
 const LEGACY_DATA_PATH = process.env.ELO_FILE || join(root, "../data/elo.json");
 const MODES = new Set(["presidentes", "vices"]);
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const RECOVERY_KEY_PATTERN = /^pm1_[A-Za-z0-9_-]{43}$/;
 
 function blank() {
   return emptyStats(CANDIDATES.map((candidate) => candidate.id));
@@ -51,6 +52,62 @@ export function normalizeRequiredUuid(value, fieldName) {
     error.status = 400;
     throw error;
   }
+  return normalized;
+}
+
+export function createRecoveryKey(random = randomBytes) {
+  return `pm1_${random(32).toString("base64url")}`;
+}
+
+export function recoveryKeyHash(value) {
+  const recoveryKey = String(value || "").trim();
+  if (!RECOVERY_KEY_PATTERN.test(recoveryKey)) {
+    const error = new Error("chave de recuperação inválida");
+    error.status = 401;
+    throw error;
+  }
+  return createHash("sha256").update(recoveryKey).digest("hex");
+}
+
+export function normalizePlayerState(value) {
+  const source = value && typeof value === "object" ? value : {};
+  const normalized = blank();
+  for (const candidate of CANDIDATES) {
+    const id = candidate.id;
+    const rating = Number(source.ratings?.[id] ?? normalized.ratings[id]);
+    const wins = Number(source.wins?.[id] ?? 0);
+    const losses = Number(source.losses?.[id] ?? 0);
+    const zebras = Number(source.zebras?.[id] ?? 0);
+    if (
+      !Number.isInteger(rating)
+      || !Number.isInteger(wins) || wins < 0
+      || !Number.isInteger(losses) || losses < 0
+      || !Number.isInteger(zebras) || zebras < 0
+      || zebras > wins
+    ) {
+      const error = new Error("estado individual inválido");
+      error.status = 400;
+      throw error;
+    }
+    normalized.ratings[id] = rating;
+    normalized.wins[id] = wins;
+    normalized.losses[id] = losses;
+    normalized.zebras[id] = zebras;
+  }
+  const duels = Number(source.duels ?? 0);
+  if (!Number.isInteger(duels) || duels < 0) {
+    const error = new Error("estado individual inválido");
+    error.status = 400;
+    throw error;
+  }
+  const totalWins = Object.values(normalized.wins).reduce((total, count) => total + count, 0);
+  const totalLosses = Object.values(normalized.losses).reduce((total, count) => total + count, 0);
+  if (totalWins !== duels || totalLosses !== duels) {
+    const error = new Error("estado individual inconsistente");
+    error.status = 400;
+    throw error;
+  }
+  normalized.duels = duels;
   return normalized;
 }
 
@@ -188,6 +245,55 @@ async function selectSnapshot(queryable, mode) {
   return snapshotFromRows(mode, poolResult.rows[0]?.duels, statsResult.rows);
 }
 
+function playerStateResult(mode, row) {
+  return {
+    mode,
+    version: Number(row.version),
+    state: normalizePlayerState(row.state),
+  };
+}
+
+async function findPlayer(queryable, recoveryKey) {
+  const hash = recoveryKeyHash(recoveryKey);
+  const result = await queryable.query(
+    "SELECT id FROM anonymous_players WHERE recovery_hash = $1",
+    [hash],
+  );
+  if (!result.rowCount) {
+    const error = new Error("chave de recuperação não encontrada");
+    error.status = 401;
+    throw error;
+  }
+  return result.rows[0];
+}
+
+async function selectPlayerState(queryable, playerId, mode, lock = false) {
+  const result = await queryable.query(
+    `SELECT version, state
+     FROM player_states
+     WHERE player_id = $1 AND mode = $2${lock ? " FOR UPDATE" : ""}`,
+    [playerId, mode],
+  );
+  if (!result.rowCount) throw new Error("estado individual não inicializado");
+  return playerStateResult(mode, result.rows[0]);
+}
+
+function validateExpectedVersion(value, current) {
+  const expected = Number(value);
+  if (!Number.isInteger(expected) || expected < 0) {
+    const error = new Error("versão individual inválida");
+    error.status = 400;
+    throw error;
+  }
+  if (expected !== current) {
+    const error = new Error("estado individual mais recente disponível no servidor");
+    error.status = 409;
+    error.code = "PLAYER_VERSION_CONFLICT";
+    error.currentVersion = current;
+    throw error;
+  }
+}
+
 async function createSchema(client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS ranking_pools (
@@ -205,9 +311,26 @@ async function createSchema(client) {
       PRIMARY KEY (mode, candidate_id)
     );
 
+    CREATE TABLE IF NOT EXISTS anonymous_players (
+      id uuid PRIMARY KEY,
+      recovery_hash char(64) NOT NULL UNIQUE,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      last_seen_at timestamptz NOT NULL DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS player_states (
+      player_id uuid NOT NULL REFERENCES anonymous_players(id) ON DELETE CASCADE,
+      mode text NOT NULL CHECK (mode IN ('presidentes', 'vices')),
+      version bigint NOT NULL DEFAULT 0 CHECK (version >= 0),
+      state jsonb NOT NULL,
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (player_id, mode)
+    );
+
     CREATE TABLE IF NOT EXISTS votes (
       id bigserial PRIMARY KEY,
       vote_id uuid,
+      player_id uuid REFERENCES anonymous_players(id) ON DELETE RESTRICT,
       mode text NOT NULL REFERENCES ranking_pools(mode),
       winner_id text NOT NULL,
       loser_id text NOT NULL,
@@ -224,6 +347,7 @@ async function createSchema(client) {
     CREATE INDEX IF NOT EXISTS votes_mode_created_at_idx ON votes (mode, created_at DESC);
 
     ALTER TABLE votes ADD COLUMN IF NOT EXISTS vote_id uuid;
+    ALTER TABLE votes ADD COLUMN IF NOT EXISTS player_id uuid REFERENCES anonymous_players(id) ON DELETE RESTRICT;
     CREATE UNIQUE INDEX IF NOT EXISTS votes_vote_id_uidx ON votes (vote_id) WHERE vote_id IS NOT NULL;
 
     CREATE TABLE IF NOT EXISTS ranking_baseline_pools (
@@ -473,28 +597,103 @@ export function createPostgresStore(connectionString = process.env.DATABASE_URL)
       await pool.query("SELECT 1");
     },
 
+    async createPlayer() {
+      const recoveryKey = createRecoveryKey();
+      const playerId = randomUUID();
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query(
+          "INSERT INTO anonymous_players (id, recovery_hash) VALUES ($1, $2)",
+          [playerId, recoveryKeyHash(recoveryKey)],
+        );
+        for (const mode of MODES) {
+          await client.query(
+            `INSERT INTO player_states (player_id, mode, state)
+             VALUES ($1, $2, $3::jsonb)`,
+            [playerId, mode, JSON.stringify(blank())],
+          );
+        }
+        await client.query("COMMIT");
+        return { recoveryKey };
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
+
+    async playerState(recoveryKey, mode = "presidentes") {
+      validateMode(mode);
+      const player = await findPlayer(pool, recoveryKey);
+      await pool.query("UPDATE anonymous_players SET last_seen_at = now() WHERE id = $1", [player.id]);
+      return selectPlayerState(pool, player.id, mode);
+    },
+
+    async replacePlayerState(recoveryKey, mode, expectedVersion, requestedState) {
+      validateMode(mode);
+      const normalized = normalizePlayerState(requestedState);
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const player = await findPlayer(client, recoveryKey);
+        const current = await selectPlayerState(client, player.id, mode, true);
+        try {
+          validateExpectedVersion(expectedVersion, current.version);
+        } catch (error) {
+          if (error.status === 409) error.current = current;
+          throw error;
+        }
+        const updated = await client.query(
+          `UPDATE player_states
+           SET state = $3::jsonb, version = version + 1, updated_at = now()
+           WHERE player_id = $1 AND mode = $2
+           RETURNING version, state`,
+          [player.id, mode, JSON.stringify(normalized)],
+        );
+        await client.query("UPDATE anonymous_players SET last_seen_at = now() WHERE id = $1", [player.id]);
+        await client.query("COMMIT");
+        return playerStateResult(mode, updated.rows[0]);
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
+
     async snapshot(mode = "presidentes") {
       validateMode(mode);
       return selectSnapshot(pool, mode);
     },
 
-    async vote(winnerId, loserId, mode = "presidentes", requestedVoteId) {
+    async vote(winnerId, loserId, mode = "presidentes", requestedVoteId, playerContext = {}) {
       validateMode(mode);
       validateVote(winnerId, loserId);
       const voteId = normalizeVoteId(requestedVoteId);
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
+        const player = playerContext.recoveryKey
+          ? await findPlayer(client, playerContext.recoveryKey)
+          : null;
         await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [voteId]);
         const previous = await client.query(
-          "SELECT mode, winner_id, loser_id FROM votes WHERE vote_id = $1",
+          "SELECT mode, winner_id, loser_id, player_id FROM votes WHERE vote_id = $1",
           [voteId],
         );
         if (previous.rowCount) {
           assertSameVote(previous.rows[0], { voteId, winnerId, loserId, mode });
+          if ((previous.rows[0].player_id || null) !== (player?.id || null)) {
+            const error = new Error(`voteId ${voteId} já usado por outra identidade`);
+            error.status = 409;
+            throw error;
+          }
           const result = await selectSnapshot(client, mode);
+          const personal = player ? await selectPlayerState(client, player.id, mode) : null;
           await client.query("COMMIT");
-          return { ...result, vote: { id: voteId, status: "alreadyProcessed" } };
+          return { ...result, vote: { id: voteId, status: "alreadyProcessed" }, player: personal };
         }
 
         await client.query("SELECT duels FROM ranking_pools WHERE mode = $1 FOR UPDATE", [mode]);
@@ -510,6 +709,28 @@ export function createPostgresStore(connectionString = process.env.DATABASE_URL)
         const loserRating = ratings.get(loserId);
         if (!Number.isFinite(winnerRating) || !Number.isFinite(loserRating)) {
           throw new Error("ranking não inicializado");
+        }
+
+        let personal = null;
+        if (player) {
+          const current = await selectPlayerState(client, player.id, mode, true);
+          try {
+            validateExpectedVersion(playerContext.version, current.version);
+          } catch (error) {
+            if (error.status === 409) error.current = current;
+            throw error;
+          }
+          const nextState = normalizePlayerState(current.state);
+          applyElo(nextState, winnerId, loserId);
+          const updated = await client.query(
+            `UPDATE player_states
+             SET state = $3::jsonb, version = version + 1, updated_at = now()
+             WHERE player_id = $1 AND mode = $2
+             RETURNING version, state`,
+            [player.id, mode, JSON.stringify(nextState)],
+          );
+          personal = playerStateResult(mode, updated.rows[0]);
+          await client.query("UPDATE anonymous_players SET last_seen_at = now() WHERE id = $1", [player.id]);
         }
 
         const deltas = ratingDeltas(winnerRating, loserRating);
@@ -529,11 +750,12 @@ export function createPostgresStore(connectionString = process.env.DATABASE_URL)
         await client.query("UPDATE ranking_pools SET duels = duels + 1 WHERE mode = $1", [mode]);
         await client.query(
           `INSERT INTO votes (
-             vote_id, mode, winner_id, loser_id, winner_rating_before, loser_rating_before,
+             vote_id, player_id, mode, winner_id, loser_id, winner_rating_before, loser_rating_before,
              winner_delta, loser_delta, zebra
-           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
           [
             voteId,
+            player?.id || null,
             mode,
             winnerId,
             loserId,
@@ -546,7 +768,7 @@ export function createPostgresStore(connectionString = process.env.DATABASE_URL)
         );
         const result = await selectSnapshot(client, mode);
         await client.query("COMMIT");
-        return { ...result, vote: { id: voteId, status: "created" } };
+        return { ...result, vote: { id: voteId, status: "created" }, player: personal };
       } catch (error) {
         await client.query("ROLLBACK");
         throw error;

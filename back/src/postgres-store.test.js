@@ -3,10 +3,13 @@ import { test } from "node:test";
 import { readFileSync } from "node:fs";
 import {
   assertSameVote,
+  createRecoveryKey,
   deriveRankingBaseline,
   normalizeVoteId,
   normalizeRequiredUuid,
   normalizeLegacyPools,
+  normalizePlayerState,
+  recoveryKeyHash,
   replayRanking,
   snapshotFromRows,
   validateMode,
@@ -14,6 +17,7 @@ import {
 } from "./postgres-store.js";
 
 const storeSource = readFileSync(new URL("./postgres-store.js", import.meta.url), "utf8");
+const serverSource = readFileSync(new URL("./server.js", import.meta.url), "utf8");
 
 test("vote IDs are normalized and legacy clients receive a generated ID", () => {
   const id = "9EC92A08-C726-4C39-9FFF-1E18048B1DC5";
@@ -32,6 +36,31 @@ test("required audit IDs never generate a replacement for a missing original", (
     () => normalizeRequiredUuid(undefined, "voteId"),
     (error) => error.status === 400 && error.message === "voteId inválido",
   );
+});
+
+test("anonymous recovery keys have 256 random bits and are stored as hashes", () => {
+  const key = createRecoveryKey(() => Buffer.alloc(32, 7));
+  assert.match(key, /^pm1_[A-Za-z0-9_-]{43}$/);
+  assert.equal(recoveryKeyHash(key).length, 64);
+  assert.doesNotMatch(recoveryKeyHash(key), new RegExp(key));
+  assert.throws(() => recoveryKeyHash("player-123"), (error) => error.status === 401);
+});
+
+test("individual state is canonicalized and rejects invalid counters", () => {
+  const state = normalizePlayerState({
+    ratings: { zema: 1016 },
+    wins: { zema: 1 },
+    losses: { "pessoa-133": 1 },
+    zebras: {},
+    duels: 1,
+    ignored: "not persisted",
+  });
+  assert.equal(state.ratings.zema, 1016);
+  assert.equal(state.wins.zema, 1);
+  assert.equal(state.duels, 1);
+  assert.equal("ignored" in state, false);
+  assert.throws(() => normalizePlayerState({ wins: { zema: -1 } }), /estado individual inválido/);
+  assert.throws(() => normalizePlayerState({ wins: { zema: 1 }, duels: 1 }), /inconsistente/);
 });
 
 test("reusing a vote ID with different content is rejected", () => {
@@ -116,8 +145,20 @@ test("vote reversals are append-only, unique, transactional, and not publicly ro
   assert.match(storeSource, /vote_row_id bigint NOT NULL UNIQUE/);
   assert.match(storeSource, /vote_reversals_are_immutable/);
   assert.match(storeSource, /async reverseVote[\s\S]*BEGIN[\s\S]*INSERT INTO vote_reversals[\s\S]*rebuildRanking[\s\S]*COMMIT/);
-  const serverSource = readFileSync(new URL("./server.js", import.meta.url), "utf8");
   assert.doesNotMatch(serverSource, /api\/.*revers/i);
+});
+
+test("individual state uses hashed recovery credentials and optimistic versions", () => {
+  assert.match(storeSource, /CREATE TABLE IF NOT EXISTS anonymous_players/);
+  assert.match(storeSource, /recovery_hash char\(64\) NOT NULL UNIQUE/);
+  assert.match(storeSource, /CREATE TABLE IF NOT EXISTS player_states/);
+  assert.match(storeSource, /version = version \+ 1/);
+  assert.match(storeSource, /PLAYER_VERSION_CONFLICT/);
+  assert.match(storeSource, /player_id uuid REFERENCES anonymous_players/);
+  assert.match(serverSource, /app\.post\("\/api\/player"/);
+  assert.match(serverSource, /app\.get\("\/api\/player\/state"/);
+  assert.match(serverSource, /app\.put\("\/api\/player\/state"/);
+  assert.match(serverSource, /Authorization|authorization/);
 });
 
 test("legacy single-pool state is migrated as presidents without losing stats", () => {

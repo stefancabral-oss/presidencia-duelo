@@ -178,12 +178,14 @@ function renderShell(root, { requireApi = false } = {}) {
         <p class="storage-notice" id="storage-notice" hidden>${STORAGE_UNAVAILABLE_MESSAGE}</p>
       </header>
 
-      <aside class="disclaimer" role="note">
-        <strong>Aviso:</strong> isto <em>não</em> é uma pesquisa eleitoral oficial, nem reflete intenção de voto real.
-        É um jogo casual (estilo Facemash) com ranking salvo no seu navegador (<code>localStorage</code>).
-        Se a API estiver no ar, os votos também entram num ranking agregado no servidor.
-        Pessoas listadas para fins recreativos; informações complementares serão adicionadas com fontes.
-      </aside>
+      <details class="disclaimer">
+        <summary><strong>Aviso:</strong> jogo casual; não é pesquisa eleitoral.</summary>
+        <div class="disclaimer-details" role="note">
+          Não reflete intenção de voto real. O ranking pessoal é salvo no seu navegador
+          (<code>localStorage</code>) e, com a API no ar, os votos também entram no ranking agregado.
+          Pessoas listadas para fins recreativos; informações complementares serão adicionadas com fontes.
+        </div>
+      </details>
 
       <nav class="tabs" aria-label="Seções">
         <button type="button" class="tab active" id="tab-duel">Duelo</button>

@@ -604,6 +604,7 @@ export async function initGame({ requireApi = false } = {}) {
           recoveryKey = createdKey;
           saveRecoveryKey(createdKey);
         },
+        recoverInvalidStoredKey: true,
       });
       recoveryKey = synced.recoveryKey;
       Object.assign(playerVersions, synced.versions);

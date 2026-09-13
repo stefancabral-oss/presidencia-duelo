@@ -67,6 +67,54 @@ test("recovering a key restores server ranking without dropping local achievemen
   assert.deepEqual(local.achievements, ["kept-local"]);
 });
 
+test("a stale stored key is replaced and local mobile stats are seeded into the new player", async () => {
+  const states = { presidentes: state(4), vices: state(2) };
+  const savedKeys = [];
+  const seeded = [];
+  const unauthorized = Object.assign(new Error("unknown player"), { status: 401 });
+  const result = await initializePlayerSync({
+    states,
+    recoveryKey: "pm1_stale",
+    recoverInvalidStoredKey: true,
+    createRemotePlayer: async () => ({ recoveryKey: "pm1_replacement" }),
+    fetchRemoteState: async (key, mode) => {
+      if (key === "pm1_stale") throw unauthorized;
+      return { mode, version: 0, state: state(0) };
+    },
+    replaceRemoteState: async (key, mode, version, value) => {
+      seeded.push({ key, mode, version, value });
+      return { mode, version: 1, state: value };
+    },
+    onRecoveryKey: key => savedKeys.push(key),
+  });
+
+  assert.equal(result.recoveryKey, "pm1_replacement");
+  assert.equal(result.created, true);
+  assert.deepEqual(savedKeys, ["pm1_replacement"]);
+  assert.deepEqual(seeded.map(({ mode, value }) => [mode, value.duels]), [
+    ["presidentes", 4],
+    ["vices", 2],
+  ]);
+  assert.equal(states.presidentes.duels, 4);
+  assert.equal(states.vices.duels, 2);
+});
+
+test("an invalid manually entered recovery key is never silently replaced", async () => {
+  const unauthorized = Object.assign(new Error("unknown player"), { status: 401 });
+  let creates = 0;
+  await assert.rejects(initializePlayerSync({
+    states: { presidentes: state(2) },
+    recoveryKey: "pm1_manual_typo",
+    createRemotePlayer: async () => {
+      creates += 1;
+      return { recoveryKey: "unused" };
+    },
+    fetchRemoteState: async () => { throw unauthorized; },
+    replaceRemoteState: async () => { throw new Error("must not replace"); },
+  }), error => error.status === 401);
+  assert.equal(creates, 0);
+});
+
 test("a version conflict rejects initialization instead of overwriting newer data", async () => {
   const conflict = Object.assign(new Error("conflict"), { status: 409 });
   await assert.rejects(initializePlayerSync({

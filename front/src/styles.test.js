@@ -63,6 +63,14 @@ test("poke-card no longer shares one hover+focus-visible rule", () => {
   assert.doesNotMatch(clean, /\.poke-card:focus-visible\s*,\s*\.poke-card:hover/);
 });
 
+test("rarity styling is confined to ranking items", () => {
+  assert.doesNotMatch(clean, /\.poke-card\[data-rarity/);
+  assert.doesNotMatch(clean, /\.rarity-chip/);
+  assert.doesNotMatch(clean, /\.art-frame\s+\.holo/);
+  assert.match(clean, /\.rank-item\[data-rarity\]/);
+  assert.match(clean, /\.rarity-tag/);
+});
+
 test("picked-win flashes and picked-lose shakes", () => {
   assert.match(clean, /\.poke-card\.picked-win\s*\{[^}]*animation:\s*pick-flash/);
   assert.match(clean, /\.poke-card\.picked-lose\s*\{[^}]*animation:\s*pick-shake/);
@@ -89,13 +97,6 @@ test("prefers-reduced-motion disables pick shake, flash, and float", () => {
   assert.match(reduced, /\.poke-card\.picked-lose/);
   assert.match(reduced, /\.elo-float/);
   assert.match(reduced, /animation:\s*none/);
-});
-
-test("Desfazer button uses the shared btn style and a disabled mute", () => {
-  assert.match(clean, /\.duel-actions\s*\{/);
-  assert.match(clean, /\.btn:disabled/);
-  assert.match(clean, /\.btn:disabled:hover/);
-  assert.match(clean, /cursor:\s*not-allowed/);
 });
 
 test("podium overlay uses the dark gold card theme and can hide", () => {

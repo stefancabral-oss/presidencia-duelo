@@ -133,7 +133,7 @@ test("saveState persists the current goal with the rest of ranking state", () =>
   assert.equal(parsed.duels, 18);
 });
 
-test("game wires progress to state.duels, undo, reset, and keeps Continue/Fechar", () => {
+test("game wires progress to state.duels, reset, and keeps Continue/Fechar", () => {
   assert.match(gameSrc, /id="duel-progress"/);
   assert.match(gameSrc, /id="goal-modal"/);
   assert.match(gameSrc, /remainingText\(state\.duels/);

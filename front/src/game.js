@@ -68,6 +68,7 @@ import {
   tournamentPick,
 } from "./tournament.js";
 import { MODES, VICE_STORAGE_KEY, candidateForMode } from "./vice-mode.js";
+import { createVoteId } from "./vote-id.js";
 import {
   TOPICS,
   TOPIC_IDS,
@@ -872,12 +873,13 @@ export async function initGame({ requireApi = false } = {}) {
     const loserId = currentPair[0] === winnerId ? currentPair[1] : currentPair[0];
 
     if (requireApi) {
+      const voteId = createVoteId();
       els.cardA.disabled = true;
       els.cardB.disabled = true;
       setNetworkStatus(statusEl, NETWORK_STATES.REGISTERING);
       try {
         await commitOnlineVote(
-          () => postVote(winnerId, loserId, mode),
+          () => postVote(winnerId, loserId, mode, { voteId }),
           () => commitLocalPick(winnerEl, winnerId, loserId),
         );
         setNetworkStatus(statusEl, NETWORK_STATES.SAVED);
@@ -899,7 +901,7 @@ export async function initGame({ requireApi = false } = {}) {
       commitLocalPick(winnerEl, winnerId, loserId);
 
       if (apiOnline) {
-        postVote(winnerId, loserId, mode).catch(() => {
+        postVote(winnerId, loserId, mode, { voteId: createVoteId() }).catch(() => {
           apiOnline = false;
           setNetworkStatus(statusEl, NETWORK_STATES.LOCAL);
         });

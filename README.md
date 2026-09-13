@@ -55,7 +55,7 @@ npm run dev --prefix back
 | `GET` | `/api/health` | Saúde do serviço |
 | `GET` | `/api/candidates` | 360 pessoas (`personId`, `id`, `name`, `party`, `vice`, `photo`, `initials`, `topics`, `politicalSide`) |
 | `GET` | `/api/ranking` | Ranking Elo agregado armazenado no PostgreSQL |
-| `POST` | `/api/vote` | Corpo `{ "winnerId", "loserId" }` — atualiza o Elo do servidor |
+| `POST` | `/api/vote` | Corpo `{ "voteId", "winnerId", "loserId", "mode" }` — aplica o voto uma única vez por `voteId` |
 
 CORS está aberto para o front local. A API exige `DATABASE_URL` e grava o ranking e cada voto no PostgreSQL usando uma transação. No primeiro início, se o banco estiver vazio, `back/data/elo.json` é importado automaticamente uma única vez para preservar o agregado anterior.
 

@@ -83,10 +83,11 @@ export async function fetchServerRanking(mode = "presidentes", options) {
 }
 
 export async function postVote(winnerId, loserId, mode = "presidentes", options = {}) {
+  const { voteId, ...requestOptions } = options;
   return requestJson("/api/vote", {
-    ...options,
+    ...requestOptions,
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ winnerId, loserId, mode }),
+    body: JSON.stringify({ voteId, winnerId, loserId, mode }),
   });
 }

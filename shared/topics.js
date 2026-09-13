@@ -327,7 +327,7 @@ export function topicIdsForCandidate(candidate) {
   const topicIds = [TOPIC_IDS.POLITICS];
   if (JUSTICE_NAMES.has(candidate?.name)) topicIds.push(TOPIC_IDS.JUSTICE);
   if (politicalSideFor(candidate)) topicIds.push(TOPIC_IDS.SIDES);
-  if (candidate?.party) topicIds.push(TOPIC_IDS.RACE_2026);
+  if (candidate?.corrida2026 === true) topicIds.push(TOPIC_IDS.RACE_2026);
   if (TRENDING_NAMES.has(candidate?.name)) topicIds.push(TOPIC_IDS.TRENDING);
   return topicIds;
 }

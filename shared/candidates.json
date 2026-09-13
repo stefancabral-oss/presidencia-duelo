@@ -353,6 +353,7 @@
   {
     "personId": 47,
     "id": "cury",
+    "corrida2026": true,
     "name": "Augusto Cury",
     "party": "Avante",
     "vice": "Júlio Delgado (Avante)",
@@ -641,6 +642,7 @@
   {
     "personId": 83,
     "id": "clariana-barao",
+    "corrida2026": true,
     "name": "Clariana Barão",
     "party": "DC",
     "vice": "Fabiana Torquato (DC)",
@@ -839,6 +841,7 @@
   {
     "personId": 109,
     "id": "edmilson-costa",
+    "corrida2026": true,
     "name": "Edmilson Costa",
     "party": "PCB",
     "vice": "Cleusa Santos (PCB)",
@@ -1109,6 +1112,7 @@
   {
     "personId": 143,
     "id": "flavio-bolsonaro",
+    "corrida2026": true,
     "name": "Flávio Bolsonaro",
     "party": "PL",
     "vice": "Alfredo Gaspar (PL)",
@@ -1343,6 +1347,7 @@
   {
     "personId": 170,
     "id": "hertz-dias",
+    "corrida2026": true,
     "name": "Hertz Dias",
     "party": "PSTU",
     "vice": "Vanessa Portugal (PSTU)",
@@ -1883,6 +1888,7 @@
   {
     "personId": 232,
     "id": "lula",
+    "corrida2026": true,
     "name": "Luiz Inácio Lula da Silva",
     "party": "PT",
     "vice": "Geraldo Alckmin (PSB)",
@@ -2567,6 +2573,7 @@
   {
     "personId": 310,
     "id": "renan-santos",
+    "corrida2026": true,
     "name": "Renan Santos",
     "party": "Missão",
     "vice": "Aroldo Medina (Missão)",
@@ -2765,6 +2772,7 @@
   {
     "personId": 333,
     "id": "zema",
+    "corrida2026": true,
     "name": "Romeu Zema",
     "party": "Novo",
     "vice": "Eduardo Girão (Novo)",
@@ -2774,6 +2782,7 @@
   {
     "personId": 334,
     "id": "caiado",
+    "corrida2026": true,
     "name": "Ronaldo Caiado",
     "party": "PSD",
     "vice": "Gilberto Kassab (PSD)",
@@ -2801,6 +2810,7 @@
   {
     "personId": 337,
     "id": "rui-costa-pimenta",
+    "corrida2026": true,
     "name": "Rui Costa Pimenta",
     "party": "PCO",
     "vice": "Antônio Carlos (PCO)",
@@ -2819,6 +2829,7 @@
   {
     "personId": 339,
     "id": "samara-martins",
+    "corrida2026": true,
     "name": "Samara Martins",
     "party": "UP",
     "vice": "Raquel Brício (UP)",
@@ -3215,6 +3226,7 @@
   {
     "personId": 385,
     "id": "wilson-grassi",
+    "corrida2026": true,
     "name": "Wilson Grassi",
     "party": "Democrata",
     "vice": "Suêd Haidar (Democrata)",

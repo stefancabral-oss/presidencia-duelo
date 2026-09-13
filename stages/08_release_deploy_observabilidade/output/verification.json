@@ -1,0 +1,1 @@
+{"stage":"ICM 08","status":"deployed","release":"082c80eca21ebd3a9af7c4ea55261034c7c8705b","services":{"api":"healthy","pwa":"healthy","database":"postgresql"},"production_checks":["360-profiles","chromium","webkit","vote-persisted","idempotent-retry"],"known_failures":[]}

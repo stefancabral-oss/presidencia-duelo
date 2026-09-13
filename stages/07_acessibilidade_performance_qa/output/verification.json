@@ -1,0 +1,1 @@
+{"stage":"ICM 07","status":"passed","unit":{"front":229,"api":16,"pwa":4},"e2e":["chromium","webkit","legacy-state","api-gate","synced-vote"],"known_failures":[]}

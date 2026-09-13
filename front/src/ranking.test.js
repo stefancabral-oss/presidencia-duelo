@@ -5,9 +5,11 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
   RANKING_SUBTITLE,
+  RANK_SORT_CRITERIA,
   compareRankStats,
   formatZebraCount,
   rankMetaText,
+  rankSortSummary,
   sortCandidatesByRank,
 } from "./ranking.js";
 
@@ -67,8 +69,9 @@ test("rankMetaText appends zebra count only when the candidate has at least one"
   );
 });
 
-test("ranking subtitle stays Elo/wins sort copy and does not mention zebras", () => {
-  assert.match(RANKING_SUBTITLE, /ordenado por elo/i);
+test("default ranking subtitle stays Elo/wins sort copy", () => {
+  assert.match(RANKING_SUBTITLE, /elo/i);
+  assert.match(RANKING_SUBTITLE, /maior para o menor/i);
   assert.doesNotMatch(RANKING_SUBTITLE, /zebra/i);
 });
 
@@ -98,4 +101,46 @@ test("sortCandidatesByRank orders by Elo then wins", () => {
     ranked.map((row) => row.id),
     ["c", "b", "a", "d"],
   );
+});
+
+test("interactive criteria and directions produce deterministic orders", () => {
+  const candidates = [
+    { id: "ana", name: "Ana" },
+    { id: "bia", name: "Bia" },
+    { id: "caio", name: "Caio" },
+    { id: "davi", name: "Davi" },
+  ];
+  const stats = {
+    ana: { elo: 1000, wins: 4, losses: 9, zebras: 1 },
+    bia: { elo: 1100, wins: 2, losses: 0, zebras: 3 },
+    caio: { elo: 1050, wins: 7, losses: 20, zebras: 0 },
+    davi: { elo: 1100, wins: 2, losses: 99, zebras: 3 },
+  };
+  const idsFor = (criterion, direction = "desc") => sortCandidatesByRank(
+    candidates,
+    (id) => stats[id],
+    { criterion, direction },
+  ).map((candidate) => candidate.id);
+
+  assert.deepEqual(idsFor(RANK_SORT_CRITERIA.ELO), ["bia", "davi", "caio", "ana"]);
+  assert.deepEqual(idsFor(RANK_SORT_CRITERIA.WINS), ["caio", "ana", "bia", "davi"]);
+  assert.deepEqual(idsFor(RANK_SORT_CRITERIA.ZEBRAS), ["bia", "davi", "ana", "caio"]);
+  assert.deepEqual(idsFor(RANK_SORT_CRITERIA.WINS, "asc"), ["bia", "davi", "ana", "caio"]);
+});
+
+test("defeats remain display-only and summaries expose active direction", () => {
+  assert.equal(
+    compareRankStats(
+      { elo: 1000, wins: 4, losses: 0 },
+      { elo: 1000, wins: 4, losses: 999 },
+      { criterion: RANK_SORT_CRITERIA.WINS },
+    ),
+    0,
+  );
+  assert.match(rankSortSummary({ criterion: "zebras", direction: "asc" }), /Zebras, do menor para o maior/);
+  assert.match(gameSrc, /data-rank-sort="elo"/);
+  assert.match(gameSrc, /data-rank-sort="wins"/);
+  assert.match(gameSrc, /data-rank-sort="zebras"/);
+  assert.match(gameSrc, /renderRankItems\(visible, visibleById,[\s\S]*rankSort\)/);
+  assert.match(gameSrc, /renderRankItems\(visible, byId,[\s\S]*rankSort\)/);
 });

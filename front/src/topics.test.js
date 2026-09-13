@@ -69,10 +69,12 @@ test("Direita x Esquerda only accepts cross-side pairs", () => {
   assert.equal(allowed(lula.id, boulos.id), false);
 });
 
-test("game renders a persistent selector and filters its active duel pool", () => {
+test("game renders the shared selector in all playable sections and filters its active pool", () => {
   const gameSource = readFileSync(join(root, "game.js"), "utf8");
-  assert.match(gameSource, /id="topic-list"/);
+  assert.equal((gameSource.match(/topicSelectorHtml\(/g) || []).length, 3);
+  assert.match(gameSource, /topicPickers: \[\.\.\.document\.querySelectorAll\("\[data-topic-selector\]"\)\]/);
   assert.match(gameSource, /setTopic\(button\.dataset\.topic\)/);
   assert.match(gameSource, /takeNextPair\(active, state, Math\.random, pairAllowedForTopic\(topicId, byId\)\)/);
   assert.match(gameSource, /presidencia-duelo-topic-v1/);
+  assert.match(gameSource, /panelTournament\.classList\.contains\("active"\)\) renderTournament\(\)/);
 });

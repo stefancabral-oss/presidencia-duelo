@@ -43,3 +43,17 @@ test("rejected picks unlock immediately", () => {
   assert.equal(lock.locked, false);
   assert.deepEqual(pair.map((card) => card.disabled), [false, false]);
 });
+
+test("reset cancels a pending render before a topic switch", () => {
+  const cancelled = [];
+  const pair = cards();
+  const lock = createTournamentPickLock({
+    schedule: () => 42,
+    cancel: (timer) => cancelled.push(timer),
+  });
+  lock.run({ cards: pair, commit: () => true, render: () => {} });
+  lock.reset(pair);
+  assert.deepEqual(cancelled, [42]);
+  assert.equal(lock.locked, false);
+  assert.deepEqual(pair.map((card) => card.disabled), [false, false]);
+});

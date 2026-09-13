@@ -1,0 +1,15 @@
+program: polimatch-frontend-rebuild
+version: 1
+stages: 9
+issue_title_prefix: ICM
+branch_prefix: icm
+human_gate_required: true
+required_outputs:
+  - output/HANDOFF.md
+  - output/verification.json
+rules:
+  one_primary_issue_per_stage: true
+  explicit_dependencies: true
+  no_self_approval: true
+  sso_real_deferred: true
+  production_deploy_only_after_release_stage: true

@@ -16,6 +16,7 @@ import { fillDuelCard } from "./duel-card.js";
 import { hpFillWidth } from "./hp-bar.js";
 import { bindHoloTilt } from "./holo.js";
 import { applyPendingPickFeedback, applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
+import { openPersonProfile, restorePersonProfileFocus } from "./person-profile.js";
 import { PICK_FEEDBACK_MS, runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
 import {
@@ -254,7 +255,10 @@ function renderShell(root, { requireApi = false } = {}) {
         </aside>
 
         <div class="vs-row" id="duel-cards">
-          <button type="button" class="poke-card" id="card-a"></button>
+          <div class="duel-card-shell">
+            <button type="button" class="poke-card" id="card-a"></button>
+            <button type="button" class="card-info" id="info-card-a">Ver ficha</button>
+          </div>
           <div class="duel-center">
             <div class="vs-badge" aria-hidden="true">VS</div>
             <button
@@ -264,7 +268,10 @@ function renderShell(root, { requireApi = false } = {}) {
               aria-label="Não conheço estas pessoas; pular este duelo"
             >Pular</button>
           </div>
-          <button type="button" class="poke-card" id="card-b"></button>
+          <div class="duel-card-shell">
+            <button type="button" class="poke-card" id="card-b"></button>
+            <button type="button" class="card-info" id="info-card-b">Ver ficha</button>
+          </div>
         </div>
         <span class="visually-hidden" id="skip-duel-status" aria-live="polite"></span>
 
@@ -288,9 +295,15 @@ function renderShell(root, { requireApi = false } = {}) {
         <div class="tournament-stage" id="tournament-stage">
           <p class="tournament-round" id="tournament-round"></p>
           <div class="vs-row" id="tournament-duel">
-            <button type="button" class="poke-card" id="tournament-card-a"></button>
+            <div class="duel-card-shell">
+              <button type="button" class="poke-card" id="tournament-card-a"></button>
+              <button type="button" class="card-info" id="info-tournament-card-a">Ver ficha</button>
+            </div>
             <div class="vs-badge" aria-hidden="true">VS</div>
-            <button type="button" class="poke-card" id="tournament-card-b"></button>
+            <div class="duel-card-shell">
+              <button type="button" class="poke-card" id="tournament-card-b"></button>
+              <button type="button" class="card-info" id="info-tournament-card-b">Ver ficha</button>
+            </div>
           </div>
           <div class="tournament-winner" id="tournament-winner" hidden>
             <p class="tournament-kicker">Vencedor do seu mata-mata</p>
@@ -370,6 +383,17 @@ function renderShell(root, { requireApi = false } = {}) {
       </footer>
 
       <div class="achievement-toasts" id="achievement-toasts" aria-live="polite"></div>
+
+      <dialog class="person-profile-dialog" id="person-profile-dialog" aria-labelledby="person-profile-title">
+        <div class="person-profile-heading">
+          <div>
+            <p class="podium-kicker">Ficha da pessoa</p>
+            <h2 id="person-profile-title"></h2>
+          </div>
+          <button type="button" class="profile-close" data-profile-close aria-label="Fechar ficha">×</button>
+        </div>
+        <div id="person-profile-body"></div>
+      </dialog>
 
       <div class="podium-overlay" id="podium-overlay" hidden>
         <div class="podium-backdrop" id="podium-backdrop"></div>
@@ -510,6 +534,8 @@ export async function initGame({ requireApi = false } = {}) {
     podiumStatus: document.getElementById("podium-share-status"),
     cardA: document.getElementById("card-a"),
     cardB: document.getElementById("card-b"),
+    infoCardA: document.getElementById("info-card-a"),
+    infoCardB: document.getElementById("info-card-b"),
     skipDuel: document.getElementById("skip-duel"),
     skipDuelStatus: document.getElementById("skip-duel-status"),
     undoBtn: document.getElementById("undo-duel"),
@@ -534,6 +560,8 @@ export async function initGame({ requireApi = false } = {}) {
     tournamentDuel: document.getElementById("tournament-duel"),
     tournamentCardA: document.getElementById("tournament-card-a"),
     tournamentCardB: document.getElementById("tournament-card-b"),
+    infoTournamentCardA: document.getElementById("info-tournament-card-a"),
+    infoTournamentCardB: document.getElementById("info-tournament-card-b"),
     tournamentWinner: document.getElementById("tournament-winner"),
     tournamentWinnerTitle: document.getElementById("tournament-winner-title"),
     tournamentWinnerCard: document.getElementById("tournament-winner-card"),
@@ -546,6 +574,10 @@ export async function initGame({ requireApi = false } = {}) {
     quickControlsHint: document.getElementById("quick-controls-hint"),
     quickControlsText: document.getElementById("quick-controls-text"),
     dismissQuickControls: document.getElementById("dismiss-quick-controls"),
+    personProfileDialog: document.getElementById("person-profile-dialog"),
+    personProfileTitle: document.getElementById("person-profile-title"),
+    personProfileBody: document.getElementById("person-profile-body"),
+    personProfileClose: document.querySelector("[data-profile-close]"),
   };
 
   function persist() {
@@ -1003,6 +1035,25 @@ export async function initGame({ requireApi = false } = {}) {
     return byId[id]?.name || "A definir";
   }
 
+  function updateInfoButton(button, candidate) {
+    if (!button || !candidate) return;
+    button.dataset.id = candidate.id;
+    button.setAttribute("aria-label", `Ver ficha de ${candidate.name}`);
+  }
+
+  function showProfile(button) {
+    const candidate = byId[button?.dataset.id];
+    if (!candidate) return;
+    openPersonProfile({
+      dialog: els.personProfileDialog,
+      title: els.personProfileTitle,
+      body: els.personProfileBody,
+      candidate,
+      topic: topicById(topicId),
+      trigger: button,
+    });
+  }
+
   function renderTournamentBracket() {
     const columns = tournament.rounds.map((round, roundIndex) => {
       const matches = round.matches.map((match, matchIndex) => {
@@ -1027,6 +1078,10 @@ export async function initGame({ requireApi = false } = {}) {
     el.dataset.id = id;
     applyCardAriaLabel(el, candidate);
     fillDuelCard(el, candidate, { elo: ELO_START, wr: 0, barWidth: 50 });
+    updateInfoButton(
+      el === els.tournamentCardA ? els.infoTournamentCardA : els.infoTournamentCardB,
+      candidate,
+    );
   }
 
   function renderTournament() {
@@ -1132,6 +1187,7 @@ export async function initGame({ requireApi = false } = {}) {
     clearPickFeedback(el);
     applyCardAriaLabel(el, c);
     fillDuelCard(el, c, { elo, wr, barWidth, rarity, crowned: id === leaderId });
+    updateInfoButton(el === els.cardA ? els.infoCardA : els.infoCardB, byId[id]);
   }
 
   function nextDuel() {
@@ -1288,6 +1344,7 @@ export async function initGame({ requireApi = false } = {}) {
   }
 
   function handleQuickControlKey(event) {
+    if (els.personProfileDialog.open) return;
     const side = keyboardPickSide(event);
     if (!side || !canUseQuickControls()) return;
     event.preventDefault();
@@ -1423,6 +1480,8 @@ export async function initGame({ requireApi = false } = {}) {
   els.openCredits.addEventListener("click", () => setTab("credits"));
   els.cardA.addEventListener("click", () => pick(els.cardA));
   els.cardB.addEventListener("click", () => pick(els.cardB));
+  els.infoCardA.addEventListener("click", () => showProfile(els.infoCardA));
+  els.infoCardB.addEventListener("click", () => showProfile(els.infoCardB));
   els.skipDuel.addEventListener("click", skipCurrentDuel);
   for (const button of els.rankSortButtons) {
     button.addEventListener("click", () => {
@@ -1455,6 +1514,13 @@ export async function initGame({ requireApi = false } = {}) {
   els.podiumBackdrop.addEventListener("click", () => closePodium());
   els.tournamentCardA.addEventListener("click", () => pickTournamentCard(els.tournamentCardA));
   els.tournamentCardB.addEventListener("click", () => pickTournamentCard(els.tournamentCardB));
+  els.infoTournamentCardA.addEventListener("click", () => showProfile(els.infoTournamentCardA));
+  els.infoTournamentCardB.addEventListener("click", () => showProfile(els.infoTournamentCardB));
+  els.personProfileClose.addEventListener("click", () => els.personProfileDialog.close());
+  els.personProfileDialog.addEventListener("click", (event) => {
+    if (event.target === els.personProfileDialog) els.personProfileDialog.close();
+  });
+  els.personProfileDialog.addEventListener("close", () => restorePersonProfileFocus(els.personProfileDialog));
   els.tournamentShare.addEventListener("click", () => shareTournamentWinner());
   els.tournamentAgain.addEventListener("click", () => restartTournament());
   els.restartTournament.addEventListener("click", () => {

@@ -397,6 +397,33 @@ h1 {
   outline: none;
 }
 
+.duel-card-shell {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.card-info {
+  justify-self: center;
+  min-height: 34px;
+  padding: 5px 12px;
+  border: 1px solid rgba(246, 216, 96, .45);
+  border-radius: 999px;
+  background: rgba(18, 26, 43, .94);
+  color: #ffe9a8;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.card-info:hover,
+.card-info:focus-visible {
+  border-color: var(--gold);
+  color: #fff;
+  outline: 2px solid rgba(246, 216, 96, .35);
+  outline-offset: 2px;
+}
+
 .poke-card {
   position: relative;
   background: linear-gradient(160deg, #2b3550, #151c2c 60%, #0f1420);
@@ -1015,6 +1042,62 @@ h1 {
 }
 .reset-dialog h2 { margin-top: 0; }
 .reset-status { min-height: 1.3em; color: var(--muted); }
+.person-profile-dialog {
+  width: min(calc(100% - 24px), 560px);
+  max-height: min(88vh, 760px);
+  overflow: auto;
+  padding: 20px;
+  border: 2px solid var(--gold2);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.person-profile-dialog::backdrop { background: rgba(5, 8, 16, .8); }
+.person-profile-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.person-profile-heading h2 { margin: 0; }
+.profile-close {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  border: 1px solid #475569;
+  border-radius: 50%;
+  background: rgba(3, 8, 20, .72);
+  color: var(--text);
+  font: inherit;
+  font-size: 1.35rem;
+  cursor: pointer;
+}
+.profile-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.profile-facts {
+  margin: 18px 0;
+  display: grid;
+  gap: 8px;
+}
+.profile-facts div {
+  display: grid;
+  grid-template-columns: minmax(110px, .65fr) 1fr;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, .1);
+}
+.profile-facts dt { color: var(--muted); font-size: .78rem; font-weight: 800; }
+.profile-facts dd { margin: 0; font-weight: 700; }
+.profile-moment,
+.profile-sources { margin-top: 18px; }
+.profile-moment h3,
+.profile-sources h3 { margin: 0 0 8px; color: var(--gold); font-size: 1rem; }
+.profile-moment p { margin: 0; line-height: 1.55; }
+.profile-sources ul { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+.profile-sources a { color: #9be7df; font-weight: 700; }
+.profile-sources span { display: block; margin-top: 2px; color: var(--muted); font-size: .74rem; }
+.profile-unavailable { color: var(--muted); font-style: italic; }
+.profile-updated { margin: 18px 0 0; color: var(--muted); font-size: .74rem; }
 .podium-kicker {
   margin: 0 0 4px;
   color: var(--gold);
@@ -1379,12 +1462,16 @@ footer a { color: var(--gold); }
   .vs-row { grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); gap: 4px; }
   .vs-badge { width: 28px; height: 28px; border-width: 2px; font-size: .65rem; }
   .poke-card { padding: 6px; border-width: 2px; }
+  .duel-card-shell { gap: 6px; }
+  .card-info { min-height: 32px; padding: 4px 10px; }
   .card-name { font-size: .72rem; }
   .party-chip { font-size: .62rem; padding: 3px 6px; }
   .vice, .elo-mini { font-size: .65rem; }
   .hint { font-size: .72rem; }
   .quick-controls-hint { justify-content: space-between; }
   .player-key-row { align-items: stretch; flex-direction: column; }
+  .person-profile-dialog { padding: 16px; }
+  .profile-facts div { grid-template-columns: 1fr; gap: 3px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
@@ -9,6 +10,7 @@ const { Pool } = pg;
 const root = dirname(fileURLToPath(import.meta.url));
 const LEGACY_DATA_PATH = process.env.ELO_FILE || join(root, "../data/elo.json");
 const MODES = new Set(["presidentes", "vices"]);
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function blank() {
   return emptyStats(CANDIDATES.map((candidate) => candidate.id));
@@ -27,6 +29,29 @@ export function validateVote(winnerId, loserId) {
   if (!CANDIDATE_IDS.has(winnerId) || !CANDIDATE_IDS.has(loserId) || winnerId === loserId) {
     const error = new Error("voto inválido");
     error.status = 400;
+    throw error;
+  }
+}
+
+export function normalizeVoteId(value, createId = randomUUID) {
+  if (value == null || value === "") return createId();
+  const voteId = String(value).trim().toLowerCase();
+  if (!UUID_PATTERN.test(voteId)) {
+    const error = new Error("voteId inválido");
+    error.status = 400;
+    throw error;
+  }
+  return voteId;
+}
+
+export function assertSameVote(existing, { voteId, winnerId, loserId, mode }) {
+  if (
+    existing.mode !== mode
+    || existing.winner_id !== winnerId
+    || existing.loser_id !== loserId
+  ) {
+    const error = new Error(`voteId ${voteId} já usado com outro voto`);
+    error.status = 409;
     throw error;
   }
 }
@@ -103,6 +128,7 @@ async function createSchema(client) {
 
     CREATE TABLE IF NOT EXISTS votes (
       id bigserial PRIMARY KEY,
+      vote_id uuid,
       mode text NOT NULL REFERENCES ranking_pools(mode),
       winner_id text NOT NULL,
       loser_id text NOT NULL,
@@ -117,6 +143,9 @@ async function createSchema(client) {
 
     CREATE INDEX IF NOT EXISTS votes_created_at_idx ON votes (created_at DESC);
     CREATE INDEX IF NOT EXISTS votes_mode_created_at_idx ON votes (mode, created_at DESC);
+
+    ALTER TABLE votes ADD COLUMN IF NOT EXISTS vote_id uuid;
+    CREATE UNIQUE INDEX IF NOT EXISTS votes_vote_id_uidx ON votes (vote_id) WHERE vote_id IS NOT NULL;
 
     CREATE TABLE IF NOT EXISTS app_metadata (
       key text PRIMARY KEY,
@@ -229,12 +258,25 @@ export function createPostgresStore(connectionString = process.env.DATABASE_URL)
       return selectSnapshot(pool, mode);
     },
 
-    async vote(winnerId, loserId, mode = "presidentes") {
+    async vote(winnerId, loserId, mode = "presidentes", requestedVoteId) {
       validateMode(mode);
       validateVote(winnerId, loserId);
+      const voteId = normalizeVoteId(requestedVoteId);
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [voteId]);
+        const previous = await client.query(
+          "SELECT mode, winner_id, loser_id FROM votes WHERE vote_id = $1",
+          [voteId],
+        );
+        if (previous.rowCount) {
+          assertSameVote(previous.rows[0], { voteId, winnerId, loserId, mode });
+          const result = await selectSnapshot(client, mode);
+          await client.query("COMMIT");
+          return { ...result, vote: { id: voteId, status: "alreadyProcessed" } };
+        }
+
         await client.query("SELECT duels FROM ranking_pools WHERE mode = $1 FOR UPDATE", [mode]);
         const locked = await client.query(
           `SELECT candidate_id, rating
@@ -267,10 +309,11 @@ export function createPostgresStore(connectionString = process.env.DATABASE_URL)
         await client.query("UPDATE ranking_pools SET duels = duels + 1 WHERE mode = $1", [mode]);
         await client.query(
           `INSERT INTO votes (
-             mode, winner_id, loser_id, winner_rating_before, loser_rating_before,
+             vote_id, mode, winner_id, loser_id, winner_rating_before, loser_rating_before,
              winner_delta, loser_delta, zebra
-           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
           [
+            voteId,
             mode,
             winnerId,
             loserId,
@@ -283,7 +326,7 @@ export function createPostgresStore(connectionString = process.env.DATABASE_URL)
         );
         const result = await selectSnapshot(client, mode);
         await client.query("COMMIT");
-        return result;
+        return { ...result, vote: { id: voteId, status: "created" } };
       } catch (error) {
         await client.query("ROLLBACK");
         throw error;

@@ -35,6 +35,7 @@ test("requestJson aborts reads after the configured timeout", async () => {
 
 test("a transport failure while posting leaves vote confirmation unknown", async () => {
   const error = await postVote("a", "b", "presidentes", {
+    voteId: "9ec92a08-c726-4c39-9fff-1e18048b1dc5",
     fetchImpl: async () => { throw new TypeError("network down"); },
     timeoutMs: 50,
   }).catch((caught) => caught);
@@ -45,12 +46,31 @@ test("a transport failure while posting leaves vote confirmation unknown", async
 
 test("an HTTP rejection is a confirmed failure that may be retried", async () => {
   const error = await postVote("a", "b", "presidentes", {
+    voteId: "9ec92a08-c726-4c39-9fff-1e18048b1dc5",
     fetchImpl: async () => jsonResponse({}, { ok: false, status: 422 }),
     timeoutMs: 50,
   }).catch((caught) => caught);
 
   assert.equal(error.kind, "http");
   assert.equal(isUnknownVoteConfirmation(error), false);
+});
+
+test("postVote includes the idempotency key in its request body", async () => {
+  let sent;
+  await postVote("a", "b", "presidentes", {
+    voteId: "9ec92a08-c726-4c39-9fff-1e18048b1dc5",
+    fetchImpl: async (_url, request) => {
+      sent = JSON.parse(request.body);
+      return jsonResponse({ ok: true });
+    },
+  });
+
+  assert.deepEqual(sent, {
+    voteId: "9ec92a08-c726-4c39-9fff-1e18048b1dc5",
+    winnerId: "a",
+    loserId: "b",
+    mode: "presidentes",
+  });
 });
 
 test("candidate validation still rejects an empty response", async () => {

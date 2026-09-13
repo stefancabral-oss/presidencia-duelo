@@ -49,13 +49,14 @@ app.get("/api/ranking", async (req, res) => {
 });
 
 app.post("/api/vote", async (req, res) => {
-  const { winnerId, loserId, mode } = req.body || {};
+  const { voteId, winnerId, loserId, mode } = req.body || {};
   try {
     res.json(
       await store.vote(
         String(winnerId || ""),
         String(loserId || ""),
         String(mode || "presidentes"),
+        voteId,
       ),
     );
   } catch (err) {

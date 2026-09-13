@@ -74,24 +74,39 @@ function bindSsoDialog() {
   trigger.addEventListener("click", () => dialog.showModal?.());
 }
 
+function navIcon(name) {
+  const paths = {
+    home: '<path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3Z"/>',
+    duel: '<path d="m5 4 5 5-6 6-2-2 6-6Zm14 0-5 5 6 6 2-2-6-6ZM8 16l-3 3m11-3 3 3"/>',
+    tournament: '<path d="M7 3h10v3c0 3-2 5-5 5S7 9 7 6Zm-3 1h3v2c0 2-1 4-3 4Zm16 0h-3v2c0 2 1 4 3 4ZM10 11v4h4v-4m-6 8h8"/>',
+    rank: '<path d="M5 20V11h4v9Zm5 0V4h4v16Zm5 0v-7h4v7Z"/>',
+    credits: '<path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-11v6m0-9h.01"/>',
+  };
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">${paths[name] || paths.home}</svg>`;
+}
+
 function enhanceNavigation() {
   const nav = document.querySelector(".tabs");
   if (!nav) return;
+  nav.classList.add("pm-nav-v2");
   nav.setAttribute("aria-label", "Navegação principal do PoliMatch");
   const icons = {
-    "tab-home": "⌂",
-    "tab-duel": "⚔",
-    "tab-tournament": "♜",
-    "tab-rank": "▥",
-    "tab-credits": "◇",
+    "tab-home": "home",
+    "tab-duel": "duel",
+    "tab-tournament": "tournament",
+    "tab-rank": "rank",
+    "tab-credits": "credits",
   };
   for (const button of nav.querySelectorAll(".tab")) {
-    if (button.querySelector(".tab-icon")) continue;
-    const icon = document.createElement("span");
-    icon.className = "tab-icon";
-    icon.setAttribute("aria-hidden", "true");
-    icon.textContent = icons[button.id] || "•";
-    button.prepend(icon);
+    button.classList.add("pm-nav-v2__item");
+    let icon = button.querySelector(".tab-icon");
+    if (!icon) {
+      icon = document.createElement("span");
+      icon.className = "tab-icon pm-nav-v2__icon";
+      icon.setAttribute("aria-hidden", "true");
+      button.prepend(icon);
+    }
+    icon.innerHTML = navIcon(icons[button.id] || "home");
   }
 }
 
@@ -101,7 +116,7 @@ function enhanceDuelPrompt() {
 }
 
 export function installFrontendEnhancements() {
-  ensureMeta("theme-color", "#061a14");
+  ensureMeta("theme-color", "#faf8f3");
   ensureMeta("application-name", "PoliMatch");
   ensureMeta("robots", "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1");
   ensureMeta("og:site_name", "PoliMatch", true);

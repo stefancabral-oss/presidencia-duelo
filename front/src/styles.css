@@ -197,6 +197,7 @@ h1 {
 
 .panel { display: none; }
 .panel.active { display: block; }
+.panel:not(.active) { display: none; }
 
 .home-hub { max-width: 760px; margin: 0 auto; }
 .home-hero {

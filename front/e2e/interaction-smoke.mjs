@@ -20,6 +20,44 @@ function trackErrors(page) {
   return errors;
 }
 
+// Layout: só o painel ativo pode estar visível, ele precisa começar na
+// primeira tela, a página não pode rolar na horizontal e a navegação
+// principal precisa continuar visível. Classes "active" não bastam: a
+// cascata CSS já deixou painéis empilhados em produção.
+async function assertPanelLayout(page, panel) {
+  const id = panel.replace("#", "");
+  const layout = await page.evaluate((panelId) => {
+    const visible = [...document.querySelectorAll(".panel")]
+      .filter((el) => getComputedStyle(el).display !== "none")
+      .map((el) => el.id);
+    const rect = document.getElementById(panelId).getBoundingClientRect();
+    const nav = document.querySelector(".tabs")?.getBoundingClientRect();
+    return {
+      visible,
+      panelTop: Math.round(rect.top),
+      viewportHeight: window.innerHeight,
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+      navInView: Boolean(nav) && nav.top >= 0 && nav.bottom <= window.innerHeight,
+    };
+  }, id);
+  assert.deepEqual(layout.visible, [id], `${browserName}: painéis visíveis além de ${panel}: ${layout.visible.join(", ")}`);
+  assert.ok(layout.panelTop < layout.viewportHeight, `${browserName}: ${panel} começa fora da primeira tela (${layout.panelTop}px)`);
+  assert.ok(layout.scrollWidth <= layout.clientWidth, `${browserName}: overflow horizontal em ${panel} (${layout.scrollWidth}px em ${layout.clientWidth}px)`);
+  assert.ok(layout.navInView, `${browserName}: navegação principal fora da tela em ${panel}`);
+}
+
+async function assertNavPersists(page) {
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForTimeout(80);
+  const navInView = await page.evaluate(() => {
+    const rect = document.querySelector(".tabs").getBoundingClientRect();
+    return rect.top >= 0 && rect.bottom <= window.innerHeight;
+  });
+  assert.equal(navInView, true, `${browserName}: navegação some ao rolar`);
+  await page.evaluate(() => window.scrollTo(0, 0));
+}
+
 async function exerciseMainUi(page) {
   await page.goto(baseUrl, { waitUntil: "networkidle" });
   await page.waitForSelector("#tab-duel");
@@ -29,17 +67,20 @@ async function exerciseMainUi(page) {
     await page.waitForTimeout(80);
     const active = await page.locator(panel).evaluate((el) => el.classList.contains("active"));
     assert.equal(active, true, `${browserName}: ${button} não ativou ${panel}`);
+    await assertPanelLayout(page, panel);
   }
 
   await assertTab("#tab-duel", "#panel-duel");
   await assertTab("#tab-tournament", "#panel-tournament");
   await assertTab("#tab-rank", "#panel-rank");
+  await assertNavPersists(page);
   await assertTab("#tab-credits", "#panel-credits");
   await assertTab("#tab-home", "#panel-home");
 
   await page.locator("#home-play").click();
   await page.waitForTimeout(80);
   assert.equal(await page.locator("#panel-duel").evaluate((el) => el.classList.contains("active")), true, `${browserName}: Jogar agora não abriu Duelo`);
+  await assertPanelLayout(page, "#panel-duel");
 
   const topicButtons = page.locator("#panel-duel .topic-btn");
   if (await topicButtons.count() > 1) {
@@ -125,6 +166,7 @@ try {
   await legacyPage.locator("#home-play").click();
   await legacyPage.waitForTimeout(80);
   assert.equal(await legacyPage.locator("#panel-duel").evaluate((el) => el.classList.contains("active")), true, `${browserName}: estado legado deixou Jogar agora sem resposta`);
+  await assertPanelLayout(legacyPage, "#panel-duel");
   assert.deepEqual(legacyErrors, [], `${browserName}: erros com estado legado: ${legacyErrors.join(" | ")}`);
   await legacyPage.close();
 } finally {

@@ -16,7 +16,7 @@
 
 ## Bugs conhecidos
 
-- Nenhum bug bloqueante conhecido nesta release.
+- Corrigido no hotfix `hotfix/layout-panels-overflow-nav-gzip` (13/09, pós-release): as regras `.pm-home-v2`, `.pm-ranking-v2` e `.pm-tournament-v2 {display:grid}` venciam `.panel{display:none}` e deixavam Início, Torneio e Ranking sempre visíveis (empilhados); a coluna implícita dos painéis em grid crescia até o min-content do seletor de assunto (overflow horizontal de 747 px em 390 px); a navegação principal usava `position:sticky; bottom` num elemento que nasce no topo e sumia ao rolar; o nginx do PWA servia JS/CSS sem gzip e sem `Cache-Control`. O smoke e2e passou a verificar `display` computado, `scrollWidth` e navegação visível, além da classe `active`.
 - Fotos remotas podem acionar fallback quando o provedor limita requisições.
 
 ## Backlog pós-v1

@@ -63,12 +63,16 @@ test("individual state is canonicalized and accepts unattributed legacy duels", 
   assert.equal(legacy.duels, 841);
   assert.equal(Object.values(legacy.wins).reduce((sum, count) => sum + count, 0), 0);
   assert.throws(() => normalizePlayerState({ wins: { zema: -1 } }), /estado individual inválido/);
-  assert.throws(() => normalizePlayerState({ wins: { zema: 1 }, duels: 1 }), /inconsistente/);
-  assert.throws(() => normalizePlayerState({
+  const partial = normalizePlayerState({
     wins: { zema: 2 },
-    losses: { "pessoa-133": 2 },
+    losses: { "pessoa-133": 1 },
+    zebras: { zema: 2 },
     duels: 1,
-  }), /inconsistente/);
+  });
+  assert.equal(partial.duels, 2);
+  assert.equal(partial.wins.zema, 2);
+  assert.equal(partial.losses["pessoa-133"], 1);
+  assert.equal(partial.zebras.zema, 2);
 });
 
 test("reusing a vote ID with different content is rejected", () => {

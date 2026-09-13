@@ -16,10 +16,15 @@ import "../../front/src/chroma-entry.css";
 import "../../front/src/ranking-v2.css";
 import "../../front/src/tournament-v2.css";
 import { registerServiceWorker } from "./register-sw.js";
-import { renderConnectionRequired } from "../../front/src/connection-required.js";
+import {
+  connectionDiagnosticCode,
+  renderConnectionRequired,
+} from "../../front/src/connection-required.js";
+import { resetGlobalVoteDataOnce } from "../../front/src/global-vote-reset.js";
 
 installTournamentRestartGuard();
 registerServiceWorker();
+resetGlobalVoteDataOnce();
 initGame({ requireApi: true })
   .then((ready) => {
     if (!ready) return;
@@ -32,5 +37,7 @@ initGame({ requireApi: true })
   })
   .catch((error) => {
     console.error("Falha ao inicializar o PoliMatch", error);
-    renderConnectionRequired(document.getElementById("app"));
+    renderConnectionRequired(document.getElementById("app"), {
+      code: connectionDiagnosticCode("app", error),
+    });
   });

@@ -11,10 +11,10 @@ import {
   replacePlayerState,
 } from "./api.js";
 import { applyCardAriaLabel } from "./card-label.js";
+import { renderConnectionRequired } from "./connection-required.js";
 import { GITHUB_README_URL, GITHUB_REPO_URL, bindCreditsSearch, creditsPanelHtml } from "./credits.js";
 import { fillDuelCard } from "./duel-card.js";
 import { hpFillWidth } from "./hp-bar.js";
-import { bindHoloTilt } from "./holo.js";
 import { applyPendingPickFeedback, applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
 import { openPersonProfile, restorePersonProfileFocus } from "./person-profile.js";
 import { PICK_FEEDBACK_MS, runLockedPick } from "./pick.js";
@@ -74,7 +74,6 @@ import {
   liveCombo,
   migrateAchievements,
   normalizeAchievements,
-  resetCombo,
   unlockDueAchievements,
   unlockTournamentCompleted,
 } from "./achievements.js";
@@ -91,7 +90,6 @@ import {
   tournamentPick,
 } from "./tournament.js";
 import { createTournamentPickLock } from "./tournament-pick-lock.js";
-import { lastDuelFromParsed, restoreDuel, snapshotDuel, undoPair } from "./undo.js";
 import { MODES, VICE_STORAGE_KEY, candidateForMode } from "./vice-mode.js";
 import { createVoteId } from "./vote-id.js";
 import { captureVoteSession, isCurrentVoteSession } from "./vote-session.js";
@@ -117,7 +115,6 @@ function defaultState(candidates) {
   return {
     ...emptyStats(candidates.map((c) => c.id)),
     lastPair: null,
-    lastDuel: null,
     pairCount: {},
     progressGoal: INITIAL_GOAL,
     celebratedGoal: null,
@@ -137,7 +134,6 @@ function loadState(candidates, storageKey = STORAGE_KEY) {
     return {
       ...merged,
       lastPair: parsed.lastPair || null,
-      lastDuel: lastDuelFromParsed(parsed),
       pairCount: normalizePairCount(parsed.pairCount),
       ...migrateProgress(parsed, merged.duels),
       ...migrateAchievements(parsed, {
@@ -274,10 +270,6 @@ function renderShell(root, { requireApi = false } = {}) {
           </div>
         </div>
         <span class="visually-hidden" id="skip-duel-status" aria-live="polite"></span>
-
-        <div class="duel-actions">
-          <button type="button" class="btn" id="undo-duel" disabled>Desfazer</button>
-        </div>
 
         <p class="hint">Perfis básicos no duelo · chromas terão uma área separada · ${requireApi ? "conexão obrigatória para preservar todos os votos" : "modo local disponível sem API"}</p>
       </section>
@@ -428,22 +420,6 @@ function renderShell(root, { requireApi = false } = {}) {
 }
 
 function renderRankItems(candidates, byId, getStats, getRarity = () => null, sort = {}) {
-function renderConnectionRequired(root) {
-  root.innerHTML = `
-    <main class="app connection-required">
-      <div class="logo">
-        <div class="logo-badge" aria-hidden="true">PM</div>
-        <h1>PoliMatch</h1>
-      </div>
-      <section class="connection-required-card" role="alert">
-        <h2>Conexão necessária</h2>
-        <p>O jogo funciona somente online para registrar cada voto no ranking compartilhado sem perder suas estatísticas individuais.</p>
-        <button type="button" class="btn primary" id="retry-connection">Tentar novamente</button>
-      </section>
-    </main>
-  `;
-  document.getElementById("retry-connection")?.addEventListener("click", () => location.reload());
-}
   const ranked = sortCandidatesByRank(candidates, getStats, sort);
 
   return ranked
@@ -541,7 +517,6 @@ export async function initGame({ requireApi = false } = {}) {
     infoCardB: document.getElementById("info-card-b"),
     skipDuel: document.getElementById("skip-duel"),
     skipDuelStatus: document.getElementById("skip-duel-status"),
-    undoBtn: document.getElementById("undo-duel"),
     rankList: document.getElementById("rank-list"),
     resetBtn: document.getElementById("reset-ranking"),
     resetOverlay: document.getElementById("reset-overlay"),
@@ -852,13 +827,6 @@ export async function initGame({ requireApi = false } = {}) {
     if (pickTimer == null) return;
     clearTimeout(pickTimer);
     pickTimer = null;
-  }
-
-  function syncUndoButton() {
-    if (!els.undoBtn) return;
-    const pair = undoPair(state.lastDuel);
-    const activeIds = new Set(topicCandidates().map((candidate) => candidate.id));
-    els.undoBtn.disabled = !pair || !pair.every((id) => activeIds.has(id));
   }
 
   function currentLeaderName() {
@@ -1183,13 +1151,11 @@ export async function initGame({ requireApi = false } = {}) {
     const losses = state.losses[id] || 0;
     const wr = winRate(state, id);
     const barWidth = hpFillWidth(wins, losses, wr);
-    const leaderId = findLeaderId(topicCandidates().map((candidate) => candidate.id), state);
-    const rarity = rarityFor(state, id, leaderId);
     el.dataset.id = id;
-    el.dataset.rarity = rarity.id;
+    el.removeAttribute("data-rarity");
     clearPickFeedback(el);
     applyCardAriaLabel(el, c);
-    fillDuelCard(el, c, { elo, wr, barWidth, rarity, crowned: id === leaderId });
+    fillDuelCard(el, c, { elo, wr, barWidth });
     updateInfoButton(el === els.cardA ? els.infoCardA : els.infoCardB, byId[id]);
   }
 
@@ -1210,7 +1176,6 @@ export async function initGame({ requireApi = false } = {}) {
     els.duelCount.textContent = String(state.duels);
     renderProgress();
     renderCombo();
-    syncUndoButton();
   }
 
   function skipCurrentDuel() {
@@ -1227,7 +1192,6 @@ export async function initGame({ requireApi = false } = {}) {
   function commitLocalPick(session, serverPlayer = null, { saved = false } = {}) {
     const { state: targetState, pair, winnerEl, winnerId, loserId } = session;
     const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
-    targetState.lastDuel = snapshotDuel(targetState, winnerId, loserId, pair);
     let result;
     if (serverPlayer) {
       const winnerBefore = targetState.ratings[winnerId];
@@ -1247,7 +1211,6 @@ export async function initGame({ requireApi = false } = {}) {
     const combo = applyCombo(targetState);
     applyUnlocks();
     persist();
-    syncUndoButton();
     applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta, { zebra, combo, saved });
     els.duelCount.textContent = String(state.duels);
     renderProgress();
@@ -1388,33 +1351,6 @@ export async function initGame({ requireApi = false } = {}) {
     els.duelCards.style.removeProperty("--swipe-x");
   }
 
-  function undoLastDuel() {
-    const snap = state.lastDuel;
-    if (!restoreDuel(state, snap)) return;
-    cancelPickTimer();
-    const pair = undoPair(snap);
-    state.lastDuel = null;
-    if (pair && byId[pair[0]] && byId[pair[1]]) {
-      currentPair = pair;
-      state.lastPair = pair;
-    }
-    // #17: undo resets combo only; milestones stay unlocked once earned.
-    resetCombo(state);
-    persist();
-    locked = false;
-    hideGoalMoment();
-    clearPickFeedback(els.cardA);
-    clearPickFeedback(els.cardB);
-    if (currentPair) {
-      renderCard(els.cardA, currentPair[0]);
-      renderCard(els.cardB, currentPair[1]);
-    }
-    els.duelCount.textContent = String(state.duels);
-    renderProgress();
-    renderCombo();
-    syncUndoButton();
-  }
-
   function renderRanking() {
     const visible = displayCandidates();
     const visibleById = Object.fromEntries(visible.map((candidate) => [candidate.id, candidate]));
@@ -1502,13 +1438,11 @@ export async function initGame({ requireApi = false } = {}) {
   for (const button of els.topicButtons) {
     button.addEventListener("click", () => setTopic(button.dataset.topic));
   }
-  bindHoloTilt([els.cardA, els.cardB, els.tournamentCardA, els.tournamentCardB]);
   document.addEventListener("keydown", handleQuickControlKey);
   els.duelCards.addEventListener("pointerdown", beginSwipe);
   els.duelCards.addEventListener("pointermove", moveSwipe);
   els.duelCards.addEventListener("pointerup", finishSwipe);
   els.duelCards.addEventListener("pointercancel", cancelSwipe);
-  els.undoBtn.addEventListener("click", () => undoLastDuel());
   els.goalContinue.addEventListener("click", () => closeGoalMoment());
   els.goalDismiss.addEventListener("click", () => closeGoalMoment());
   els.goalPodium.addEventListener("click", () => openPodium());

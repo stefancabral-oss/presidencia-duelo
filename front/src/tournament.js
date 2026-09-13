@@ -1,5 +1,6 @@
 export const TOURNAMENT_SIZE = 12;
 export const TOURNAMENT_STORAGE_KEY = "presidencia-duelo-tournament-v1";
+export const POLIMATCH_URL = "https://polimatch.com.br/";
 
 const ROUND_NAMES = ["Primeira rodada", "Quartas de final", "Semifinais", "Final"];
 
@@ -73,9 +74,14 @@ export function completedTournamentDuels(tournament) {
   ) || 0;
 }
 
-export function formatTournamentShareText(candidate) {
+export function formatTournamentShareText(candidate, { url = POLIMATCH_URL } = {}) {
   const affiliation = candidate.party ? ` (${candidate.party})` : "";
-  return `Meu vencedor é ${candidate.name}${affiliation} — PoliMatch\nNão é pesquisa oficial.`;
+  return [
+    "Meu vencedor — PoliMatch",
+    `Meu vencedor é ${candidate.name}${affiliation}.`,
+    "Não é pesquisa oficial.",
+    `Jogue também: ${url}`,
+  ].join("\n");
 }
 
 function sameIds(actual, expected) {

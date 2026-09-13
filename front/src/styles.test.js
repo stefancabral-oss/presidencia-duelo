@@ -99,13 +99,6 @@ test("prefers-reduced-motion disables pick shake, flash, and float", () => {
   assert.match(reduced, /animation:\s*none/);
 });
 
-test("Desfazer button uses the shared btn style and a disabled mute", () => {
-  assert.match(clean, /\.duel-actions\s*\{/);
-  assert.match(clean, /\.btn:disabled/);
-  assert.match(clean, /\.btn:disabled:hover/);
-  assert.match(clean, /cursor:\s*not-allowed/);
-});
-
 test("podium overlay uses the dark gold card theme and can hide", () => {
   assert.match(clean, /\.podium-overlay\[hidden\]\s*\{[^}]*display:\s*none/);
   assert.match(clean, /\.podium-dialog\s*\{/);

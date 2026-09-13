@@ -586,12 +586,6 @@ h1 {
   font-weight: 700;
 }
 
-.duel-actions {
-  display: flex;
-  justify-content: center;
-  margin-top: 12px;
-}
-
 .hint {
   text-align: center;
   color: var(--muted);

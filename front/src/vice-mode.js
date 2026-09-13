@@ -1,6 +1,6 @@
 export const VICE_STORAGE_KEY = "presidencia-duelo-vices-v1";
 export const MODES = {
-  presidentes: { label: "Presidentes", singular: "candidato", mate: "Vice" },
+  presidentes: { label: "Pessoas", singular: "pessoa", mate: "Vice" },
   vices: { label: "Vices", singular: "vice", mate: "Presidente" },
 };
 

@@ -1,6 +1,6 @@
 /**
  * Photo attribution shown in the in-app Créditos tab.
- * Kept here (not as a .md href) so file:// and offline still work.
+ * Kept here (not as a .md href) so attribution remains visible in the app.
  */
 export const GITHUB_REPO_URL = "https://github.com/stefancabral-oss/presidencia-duelo";
 export const GITHUB_README_URL = `${GITHUB_REPO_URL}/blob/main/README.md`;
@@ -112,13 +112,13 @@ export function creditsPanelHtml() {
           </div>
         </div>
         <p class="credits-intro">
-          Todas as fotos vêm de fontes públicas (principalmente Wikimedia Commons).
-          Licenças CC exigem atribuição; esta tela cumpre esse papel mesmo offline.
+          Todos os perfis que já possuem foto usam fontes públicas (principalmente Wikimedia Commons).
+          Licenças CC exigem atribuição; esta tela cumpre esse papel dentro do app.
         </p>
         <ul class="credits-list">${items}
         </ul>
         <p class="credits-notes">
-          Fotos reais em 12/12 candidatos. Iniciais só aparecem se alguma imagem falhar ao carregar.
-          Pablo Marçal não está na lista. Este projeto não é afiliado a partidos, TSE, Wikimedia ou candidatos.
+          Fotos reais em 12 dos 387 perfis. Os demais usam iniciais até receberem imagem verificada e crédito.
+          Este projeto não é afiliado a partidos, TSE, Wikimedia ou às pessoas listadas.
         </p>`;
 }

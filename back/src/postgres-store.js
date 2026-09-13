@@ -56,6 +56,7 @@ export function snapshotFromRows(mode, duels, rows) {
     const wins = Number(row.wins) || 0;
     const losses = Number(row.losses) || 0;
     return {
+      personId: candidate.personId,
       id: candidate.id,
       name: candidate.name,
       party: candidate.party,

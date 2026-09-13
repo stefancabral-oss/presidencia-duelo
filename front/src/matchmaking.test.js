@@ -8,6 +8,7 @@ import { saveState, STORAGE_KEY } from "./storage.js";
 import {
   COVERAGE_DUELS,
   candidatePairs,
+  coverageDuelLimit,
   coveragePool,
   eloGapWeight,
   excludeLastPair,
@@ -166,6 +167,13 @@ test("coveragePool forces two unseen names when remaining shows are tight", () =
   const pool = coveragePool(pairs, ["c", "d"], 1);
   assert.equal(pool.length, 1);
   assert.ok(isSamePair(pool[0], ["c", "d"]));
+});
+
+test("coverage window scales to catalogs larger than the original roster", () => {
+  assert.equal(coverageDuelLimit(12), 12);
+  assert.equal(coverageDuelLimit(24), 12);
+  assert.equal(coverageDuelLimit(25), 13);
+  assert.equal(coverageDuelLimit(387), 194);
 });
 
 test("first 12 shown pairs cover all 12 candidates", () => {

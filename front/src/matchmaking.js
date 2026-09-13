@@ -1,6 +1,6 @@
 import { ELO_START } from "../../shared/elo.js";
 
-/** First N shown pairs must cover every candidate (12 presidential names). */
+/** Minimum opening coverage window retained for the original 12-name roster. */
 export const COVERAGE_DUELS = 12;
 /** Elo gap in `1 / (1 + |Δelo| / scale)` — closer ratings get a higher weight. */
 export const ELO_GAP_SCALE = 100;
@@ -92,6 +92,12 @@ export function candidatePairs(ids) {
   return pairs;
 }
 
+/** Large catalogs need enough duels to show every person at least once. */
+export function coverageDuelLimit(candidateCount) {
+  const count = Math.max(0, Math.trunc(Number(candidateCount) || 0));
+  return Math.max(COVERAGE_DUELS, Math.ceil(count / 2));
+}
+
 /** Drop `lastPair` unless it is the only pair (two-candidate roster). */
 export function excludeLastPair(pairs, lastPair) {
   if (!lastPair) return pairs;
@@ -151,7 +157,7 @@ function ratingOf(ratings, id) {
 
 /**
  * Weighted pair draw: rarity × Elo proximity, minus `lastPair`,
- * with a coverage filter for the first 12 shown duels.
+ * with a coverage filter sized to the active catalog.
  */
 export function pickPair(candidates, state, rng = Math.random) {
   const ids = candidates.map((c) => c.id);
@@ -159,12 +165,13 @@ export function pickPair(candidates, state, rng = Math.random) {
 
   const pairCount = state.pairCount || {};
   const ratings = state.ratings || {};
+  const coverageDuels = coverageDuelLimit(ids.length);
   let pairs = excludeLastPair(candidatePairs(ids), state.lastPair);
 
   const shown = shownPairTotal(pairCount);
-  if (shown < COVERAGE_DUELS) {
+  if (shown < coverageDuels) {
     const unseen = unseenCandidateIds(ids, pairCount);
-    pairs = coveragePool(pairs, unseen, COVERAGE_DUELS - shown);
+    pairs = coveragePool(pairs, unseen, coverageDuels - shown);
   }
 
   const weights = pairs.map(([a, b]) =>

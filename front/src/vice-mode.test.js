@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { candidateForMode, parseVice, VICE_STORAGE_KEY } from "./vice-mode.js";
+import { candidateForMode, MODES, parseVice, VICE_STORAGE_KEY } from "./vice-mode.js";
 
 const candidate = {
   id: "lula",
@@ -23,4 +23,9 @@ test("vice mode swaps the person while preserving the chapa id", () => {
   assert.equal(vice.mateLabel, "Presidente");
   assert.equal(vice.photo, null);
   assert.match(VICE_STORAGE_KEY, /vices/);
+});
+
+test("the active legacy pool is presented as people", () => {
+  assert.equal(MODES.presidentes.label, "Pessoas");
+  assert.equal(MODES.presidentes.singular, "pessoa");
 });

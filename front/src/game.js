@@ -138,7 +138,7 @@ function renderShell(root, { requireApi = false } = {}) {
         <strong>Aviso:</strong> isto <em>não</em> é uma pesquisa eleitoral oficial, nem reflete intenção de voto real.
         É um jogo casual (estilo Facemash) com ranking salvo no seu navegador (<code>localStorage</code>).
         Se a API estiver no ar, os votos também entram num ranking agregado no servidor.
-        Candidaturas e vices listados para fins recreativos; verifique fontes oficiais do TSE.
+        Pessoas listadas para fins recreativos; informações complementares serão adicionadas com fontes.
       </aside>
 
       <nav class="tabs" aria-label="Seções">
@@ -151,14 +151,14 @@ function renderShell(root, { requireApi = false } = {}) {
       <section id="panel-duel" class="panel active" aria-label="Duelo">
         <div class="mode-switch" aria-label="Categoria do duelo">
           <span class="mode-label">Disputar:</span>
-          <button type="button" class="mode-btn active" id="mode-presidentes" aria-pressed="true">Presidentes</button>
-          <button type="button" class="mode-btn" id="mode-vices" aria-pressed="false">Vices</button>
+          <button type="button" class="mode-btn active" id="mode-presidentes" aria-pressed="true">Pessoas</button>
+          <button type="button" class="mode-btn" id="mode-vices" aria-pressed="false" hidden disabled>Vices</button>
         </div>
         <div class="combo-banner" id="combo-banner" hidden>
           <span class="combo-label" id="combo-label"></span>
         </div>
         <div class="duel-stats">
-          <span id="duel-prompt">Toque no candidato preferido</span>
+          <span id="duel-prompt">Toque na pessoa preferida</span>
           <span>Duelos: <strong id="duel-count">0</strong></span>
         </div>
 
@@ -206,14 +206,14 @@ function renderShell(root, { requireApi = false } = {}) {
           <button type="button" class="btn" id="undo-duel" disabled>Desfazer</button>
         </div>
 
-        <p class="hint">Cards inspirados em cromos/Pokémon · fotos reais (Wikimedia) · ${requireApi ? "conexão obrigatória para preservar todos os votos" : "modo local disponível sem API"}</p>
+        <p class="hint">Perfis básicos no duelo · chromas terão uma área separada · ${requireApi ? "conexão obrigatória para preservar todos os votos" : "modo local disponível sem API"}</p>
       </section>
 
       <section id="panel-tournament" class="panel" aria-label="Torneio">
         <div class="tournament-toolbar">
           <div>
-            <strong>Mata-mata presidencial</strong>
-            <div class="rank-sub">12 candidatos · 11 duelos · não altera o ranking Elo</div>
+            <strong>Mata-mata de pessoas</strong>
+            <div class="rank-sub">12 pessoas sorteadas do catálogo · 11 duelos · não altera o ranking Elo</div>
           </div>
           <button type="button" class="btn" id="restart-tournament">Novo torneio</button>
         </div>
@@ -226,7 +226,7 @@ function renderShell(root, { requireApi = false } = {}) {
             <button type="button" class="poke-card" id="tournament-card-b"></button>
           </div>
           <div class="tournament-winner" id="tournament-winner" hidden>
-            <p class="tournament-kicker">Campeão do seu mata-mata</p>
+            <p class="tournament-kicker">Vencedor do seu mata-mata</p>
             <h2 id="tournament-winner-title"></h2>
             <div class="tournament-winner-card" id="tournament-winner-card"></div>
             <p class="podium-share-status" id="tournament-share-status" hidden></p>
@@ -241,7 +241,7 @@ function renderShell(root, { requireApi = false } = {}) {
       <section id="panel-rank" class="panel" aria-label="Ranking">
         <div class="ranking-toolbar">
           <div>
-            <strong>Ranking Elo · <span id="rank-mode">Presidentes</span></strong>
+            <strong>Ranking Elo · <span id="rank-mode">Pessoas</span></strong>
             <div class="rank-sub">${RANKING_SUBTITLE}</div>
           </div>
           <div class="ranking-actions">
@@ -318,8 +318,8 @@ function renderConnectionRequired(root) {
       return `
         <li class="rank-item"${rarity ? ` data-rarity="${rarity.id}"` : ""}>
           <div class="rank-pos">${i + 1}º</div>
-          <img src="${escapeHtml(c.photo)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';" />
-          <div class="rank-ph" style="display:none">${escapeHtml(c.initials)}</div>
+          ${c.photo ? `<img src="${escapeHtml(c.photo)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';" />` : '<img alt="" style="display:none" />'}
+          <div class="rank-ph"${c.photo ? ' style="display:none"' : ""}>${escapeHtml(c.initials)}</div>
           <div>
             <div class="rank-name">${escapeHtml(c.name)}</div>
             <div class="rank-meta">${rarity ? `<span class="rarity-tag">${escapeHtml(rarity.label)}</span>` : ""}${escapeHtml(rankMetaText({ party: c.party, vice: c.vice, wins, losses, zebras }))}</div>
@@ -705,8 +705,12 @@ export async function initGame({ requireApi = false } = {}) {
       els.tournamentDuel.hidden = true;
       els.tournamentRound.hidden = true;
       els.tournamentWinner.hidden = false;
-      els.tournamentWinnerTitle.textContent = `Seu presidente é ${champion.name}`;
-      els.tournamentWinnerCard.innerHTML = `<img src="${escapeHtml(champion.photo)}" alt="Foto de ${escapeHtml(champion.name)}"><strong>${escapeHtml(champion.name)}</strong><span>${escapeHtml(champion.party)}</span>`;
+      els.tournamentWinnerTitle.textContent = `Seu vencedor é ${champion.name}`;
+      const winnerArt = champion.photo
+        ? `<img src="${escapeHtml(champion.photo)}" alt="Foto de ${escapeHtml(champion.name)}">`
+        : `<div class="tournament-winner-placeholder" aria-hidden="true">${escapeHtml(champion.initials)}</div>`;
+      const winnerParty = champion.party ? `<span>${escapeHtml(champion.party)}</span>` : "";
+      els.tournamentWinnerCard.innerHTML = `${winnerArt}<strong>${escapeHtml(champion.name)}</strong>${winnerParty}`;
       return;
     }
     els.tournamentWinner.hidden = true;

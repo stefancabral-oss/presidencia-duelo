@@ -16,12 +16,16 @@ export function formatZebraCount(count) {
   return n === 1 ? "1 zebra" : `${n} zebras`;
 }
 
-/** Ranking row subtitle: party, vice, W/L, and zebra count when there is at least one. */
+/** Ranking row subtitle: available profile details, W/L, and zebra count. */
 export function rankMetaText({ party, vice, wins, losses, zebras = 0 }) {
   const record = `${wins}V / ${losses}D`;
   const n = Math.max(0, Math.trunc(Number(zebras) || 0));
-  if (n <= 0) return `${party} · vice ${vice} · ${record}`;
-  return `${party} · vice ${vice} · ${record} · ${formatZebraCount(n)}`;
+  const details = [];
+  if (party) details.push(party);
+  if (vice) details.push(`vice ${vice}`);
+  details.push(record);
+  if (n > 0) details.push(formatZebraCount(n));
+  return details.join(" · ");
 }
 
 export function compareRankStats(a, b) {

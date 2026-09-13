@@ -40,8 +40,9 @@ test("a pick outside the active match is ignored", () => {
 
 test("winner share text includes candidate and disclaimer", () => {
   const text = formatTournamentShareText({ name: "Candidata Teste", party: "ABC" });
-  assert.match(text, /Meu presidente é Candidata Teste \(ABC\)/);
+  assert.match(text, /Meu vencedor é Candidata Teste \(ABC\)/);
   assert.match(text, /Não é pesquisa oficial/);
+  assert.doesNotMatch(formatTournamentShareText({ name: "Pessoa Básica", party: "" }), /\(\)/);
 });
 
 test("persisted tournament validation rejects duplicate and unknown candidates", () => {

@@ -61,6 +61,10 @@ test("rankMetaText appends zebra count only when the candidate has at least one"
     rankMetaText({ party: "PL", vice: "Gaspar", wins: 5, losses: 2, zebras: 3 }),
     "PL · vice Gaspar · 5V / 2D · 3 zebras",
   );
+  assert.equal(
+    rankMetaText({ party: "", vice: "", wins: 1, losses: 2, zebras: 0 }),
+    "1V / 2D",
+  );
 });
 
 test("ranking subtitle stays Elo/wins sort copy and does not mention zebras", () => {

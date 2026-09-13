@@ -522,6 +522,11 @@ h1 {
   color: #041018;
   border: 1px solid #fff6;
 }
+.party-chip:empty,
+.vice:has(strong:empty),
+.mode-btn[hidden] {
+  display: none;
+}
 
 .art-frame {
   position: relative;
@@ -712,6 +717,16 @@ h1 {
   object-fit: cover;
   object-position: center top;
   border-radius: 11px;
+}
+.tournament-winner-placeholder {
+  aspect-ratio: 3 / 4;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: #c7d2fe;
+  background: linear-gradient(160deg, #334155, #1e293b);
+  font-size: 3rem;
+  font-weight: 900;
 }
 .tournament-winner-card strong,
 .tournament-winner-card span {

@@ -1,11 +1,11 @@
 /**
- * Warm the browser cache for every candidate photo so later duel swaps
- * do not refetch and flash a blank <img>.
+ * Warm a small set of local photos. Large/remote catalogs must load on demand
+ * so opening the app does not fire hundreds of image requests at once.
  */
-export function preloadPhotos(candidates, createImage = () => new Image()) {
+export function preloadPhotos(candidates, createImage = () => new Image(), limit = 12) {
   const images = [];
-  for (const candidate of candidates) {
-    if (!candidate?.photo) continue;
+  const localPhotos = candidates.filter((candidate) => candidate?.photo?.startsWith("/"));
+  for (const candidate of localPhotos.slice(0, Math.max(0, limit))) {
     const img = createImage();
     img.src = candidate.photo;
     images.push(img);

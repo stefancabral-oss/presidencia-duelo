@@ -7,7 +7,7 @@ const candidates = [
   { id: "zema", photo: "/candidates/zema.jpg" },
 ];
 
-test("preloadPhotos assigns every candidate photo to a new Image", () => {
+test("preloadPhotos assigns local candidate photos to new Image objects", () => {
   const created = [];
   const images = preloadPhotos(candidates, () => {
     const img = { src: "" };
@@ -33,4 +33,15 @@ test("preloadPhotos skips entries without a photo URL", () => {
 
   assert.equal(images.length, 1);
   assert.equal(created[0].src, "/y.jpg");
+});
+
+test("preloadPhotos leaves remote catalogs on demand and caps local preloads", () => {
+  const list = [
+    { id: "remote", photo: "https://commons.wikimedia.org/photo.jpg" },
+    { id: "a", photo: "/a.jpg" },
+    { id: "b", photo: "/b.jpg" },
+  ];
+  const images = preloadPhotos(list, () => ({ src: "" }), 1);
+  assert.equal(images.length, 1);
+  assert.equal(images[0].src, "/a.jpg");
 });

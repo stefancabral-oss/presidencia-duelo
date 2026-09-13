@@ -33,6 +33,18 @@ test("existing profiles keep their IDs and curated metadata", () => {
   assert.equal(basic.id, "pessoa-135");
   assert.equal(basic.party, "");
   assert.equal(basic.vice, "");
-  assert.equal(basic.photo, null);
+  assert.match(basic.photo, /^https:\/\/commons\.wikimedia\.org\/wiki\/Special:Redirect\/file\//);
   assert.equal(basic.initials, "FN");
+});
+
+test("every licensed profile reference is shown as a photo", () => {
+  const photographed = catalog.filter((person) => person.photo);
+  assert.equal(photographed.length, 286);
+  for (const person of photographed) {
+    assert.ok(
+      person.photo.startsWith("/candidates/") ||
+        person.photo.startsWith("https://commons.wikimedia.org/wiki/Special:Redirect/file/"),
+      `origem de foto inesperada para ${person.name}`,
+    );
+  }
 });

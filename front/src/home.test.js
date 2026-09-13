@@ -7,9 +7,10 @@ const gameSource = fs.readFileSync(new URL("./game.js", import.meta.url), "utf8"
 
 test("home is the default panel and presents the primary duel action", () => {
   const html = homePanelHtml();
-  assert.match(html, /id="panel-home" class="panel active home-hub"/);
-  assert.match(html, /id="home-play">Começar duelo/);
-  assert.match(html, /Entretenimento · não é pesquisa oficial/);
+  assert.match(html, /id="panel-home" class="panel active pm-home-v2"/);
+  assert.match(html, /id="home-play"/);
+  assert.match(html, /Jogar agora/);
+  assert.match(html, /Jogo casual · não é pesquisa eleitoral/);
 });
 
 test("home exposes the requested one-tap destinations", () => {

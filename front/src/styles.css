@@ -104,6 +104,16 @@ h1 {
   background: #9a3412;
   border-color: transparent;
 }
+.api-status.pending {
+  color: #dbeafe;
+  background: #1e3a5f;
+  border-color: #3b82f6;
+}
+.api-status.unknown {
+  color: #1c1917;
+  background: #fbbf24;
+  border-color: transparent;
+}
 
 .storage-notice {
   margin: 8px 0 0;

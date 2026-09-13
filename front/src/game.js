@@ -1,6 +1,12 @@
 import FALLBACK_CANDIDATES from "../../shared/candidates.json";
 import { applyElo, emptyStats, mergeStats } from "../../shared/elo.js";
-import { fetchCandidates, fetchHealth, fetchServerRanking, postVote } from "./api.js";
+import {
+  fetchCandidates,
+  fetchHealth,
+  fetchServerRanking,
+  isUnknownVoteConfirmation,
+  postVote,
+} from "./api.js";
 import { applyCardAriaLabel } from "./card-label.js";
 import { renderConnectionRequired } from "./connection-required.js";
 import { GITHUB_README_URL, GITHUB_REPO_URL, creditsPanelHtml } from "./credits.js";
@@ -26,6 +32,7 @@ import {
 import { RANKING_SUBTITLE, rankMetaText, sortCandidatesByRank } from "./ranking.js";
 import { findLeaderId, rarityFor } from "./rarity.js";
 import { normalizePairCount, takeNextPair } from "./matchmaking.js";
+import { NETWORK_STATES, setNetworkStatus } from "./network-status.js";
 import { commitOnlineVote } from "./online-vote.js";
 import {
   INITIAL_GOAL,
@@ -150,7 +157,7 @@ function renderShell(root, { requireApi = false } = {}) {
           <h1>Presidência Duelo</h1>
         </div>
         <p class="subtitle">Escolha um card. Próximo duelo aleatório. Ranking Elo no seu aparelho.</p>
-        <p class="api-status" id="api-status">Conectando à API…</p>
+        <p class="api-status pending" id="api-status" role="status" aria-live="polite">Conectando à API…</p>
         <p class="storage-notice" id="storage-notice" hidden>${STORAGE_UNAVAILABLE_MESSAGE}</p>
       </header>
 
@@ -359,15 +366,13 @@ export async function initGame({ requireApi = false } = {}) {
     const [list] = await Promise.all([fetchCandidates(), fetchHealth()]);
     candidates = list;
     apiOnline = true;
-    statusEl.textContent = "API online — votos locais + ranking agregado";
-    statusEl.classList.add("online");
+    setNetworkStatus(statusEl, NETWORK_STATES.ONLINE);
   } catch {
     if (requireApi) {
       renderConnectionRequired(root);
       return false;
     }
-    statusEl.textContent = "Modo local — API indisponível; ranking só neste aparelho (localStorage)";
-    statusEl.classList.add("offline");
+    setNetworkStatus(statusEl, NETWORK_STATES.LOCAL);
   }
 
   const byId = Object.fromEntries(candidates.map((c) => [c.id, c]));
@@ -869,23 +874,23 @@ export async function initGame({ requireApi = false } = {}) {
     if (requireApi) {
       els.cardA.disabled = true;
       els.cardB.disabled = true;
-      statusEl.textContent = "Registrando voto…";
+      setNetworkStatus(statusEl, NETWORK_STATES.REGISTERING);
       try {
         await commitOnlineVote(
           () => postVote(winnerId, loserId, mode),
           () => commitLocalPick(winnerEl, winnerId, loserId),
         );
-        statusEl.textContent = "API online — voto salvo no aparelho e no ranking agregado";
-        statusEl.classList.remove("offline");
-        statusEl.classList.add("online");
+        setNetworkStatus(statusEl, NETWORK_STATES.SAVED);
         pickTimer = setTimeout(nextDuel, 420);
-      } catch {
+      } catch (error) {
+        if (isUnknownVoteConfirmation(error)) {
+          setNetworkStatus(statusEl, NETWORK_STATES.UNKNOWN);
+          return;
+        }
         locked = false;
         els.cardA.disabled = false;
         els.cardB.disabled = false;
-        statusEl.textContent = "Sem conexão — voto não registrado. Tente novamente.";
-        statusEl.classList.remove("online");
-        statusEl.classList.add("offline");
+        setNetworkStatus(statusEl, NETWORK_STATES.FAILED);
       }
       return;
     }
@@ -896,9 +901,7 @@ export async function initGame({ requireApi = false } = {}) {
       if (apiOnline) {
         postVote(winnerId, loserId, mode).catch(() => {
           apiOnline = false;
-          statusEl.textContent = "Modo local — falha ao enviar voto; o ranking deste aparelho segue intacto";
-          statusEl.classList.remove("online");
-          statusEl.classList.add("offline");
+          setNetworkStatus(statusEl, NETWORK_STATES.LOCAL);
         });
       }
 

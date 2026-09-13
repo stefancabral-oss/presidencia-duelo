@@ -2,6 +2,7 @@ import FALLBACK_CANDIDATES from "../../shared/candidates.json";
 import { applyElo, emptyStats, mergeStats } from "../../shared/elo.js";
 import { fetchCandidates, fetchHealth, fetchServerRanking, postVote } from "./api.js";
 import { applyCardAriaLabel } from "./card-label.js";
+import { renderConnectionRequired } from "./connection-required.js";
 import { GITHUB_README_URL, GITHUB_REPO_URL, creditsPanelHtml } from "./credits.js";
 import { fillDuelCard } from "./duel-card.js";
 import { hpFillWidth } from "./hp-bar.js";
@@ -325,22 +326,6 @@ function renderShell(root, { requireApi = false } = {}) {
 }
 
 function renderRankItems(candidates, byId, getStats, getRarity = () => null) {
-function renderConnectionRequired(root) {
-  root.innerHTML = `
-    <main class="app connection-required">
-      <div class="logo">
-        <div class="logo-badge" aria-hidden="true">PD</div>
-        <h1>Presidência Duelo</h1>
-      </div>
-      <section class="connection-required-card" role="alert">
-        <h2>Conexão necessária</h2>
-        <p>O jogo funciona somente online para registrar cada voto no ranking compartilhado sem perder suas estatísticas individuais.</p>
-        <button type="button" class="btn primary" id="retry-connection">Tentar novamente</button>
-      </section>
-    </main>
-  `;
-  document.getElementById("retry-connection")?.addEventListener("click", () => location.reload());
-}
   const ranked = sortCandidatesByRank(candidates, getStats);
 
   return ranked

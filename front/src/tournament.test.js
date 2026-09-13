@@ -10,6 +10,7 @@ import {
   formatTournamentShareText,
   isValidTournament,
   loadOrCreateTournament,
+  POLIMATCH_URL,
   tournamentPick,
 } from "./tournament.js";
 
@@ -43,11 +44,21 @@ test("a pick outside the active match is ignored", () => {
   assert.equal(completedTournamentDuels(tournament), 0);
 });
 
-test("winner share text includes candidate and disclaimer", () => {
+test("winner share text includes title, candidate, disclaimer and PoliMatch link", () => {
   const text = formatTournamentShareText({ name: "Candidata Teste", party: "ABC" });
+  assert.match(text, /^Meu vencedor — PoliMatch/m);
   assert.match(text, /Meu vencedor é Candidata Teste \(ABC\)/);
   assert.match(text, /Não é pesquisa oficial/);
+  assert.match(text, new RegExp(POLIMATCH_URL.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.doesNotMatch(formatTournamentShareText({ name: "Pessoa Básica", party: "" }), /\(\)/);
+});
+
+test("share text accepts an explicit canonical URL", () => {
+  const text = formatTournamentShareText(
+    { name: "Pessoa", party: "XYZ" },
+    { url: "https://example.test/jogar" },
+  );
+  assert.match(text, /Jogue também: https:\/\/example\.test\/jogar/);
 });
 
 test("persisted tournament validation rejects duplicate and unknown candidates", () => {

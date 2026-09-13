@@ -5,4 +5,6 @@ import { registerServiceWorker } from "./register-sw.js";
 
 installTournamentRestartGuard();
 registerServiceWorker();
-initGame({ requireApi: true });
+// Temporary compatibility mode: keep aggregate API voting available while
+// avoiding a hard dependency on player-sync endpoints during rollout.
+initGame();

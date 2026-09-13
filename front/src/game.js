@@ -13,6 +13,7 @@ import {
 import { applyCardAriaLabel } from "./card-label.js";
 import { renderConnectionRequired } from "./connection-required.js";
 import { GITHUB_README_URL, GITHUB_REPO_URL, bindCreditsSearch, creditsPanelHtml } from "./credits.js";
+import { homePanelHtml } from "./home.js";
 import { fillDuelCard } from "./duel-card.js";
 import { hpFillWidth } from "./hp-bar.js";
 import { applyPendingPickFeedback, applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
@@ -195,13 +196,16 @@ function renderShell(root, { requireApi = false } = {}) {
       </details>
 
       <nav class="tabs" aria-label="Seções">
-        <button type="button" class="tab active" id="tab-duel">Duelo</button>
+        <button type="button" class="tab active" id="tab-home">Início</button>
+        <button type="button" class="tab" id="tab-duel">Duelo</button>
         <button type="button" class="tab" id="tab-tournament">Torneio</button>
         <button type="button" class="tab" id="tab-rank">Ranking</button>
         <button type="button" class="tab" id="tab-credits">Créditos</button>
       </nav>
 
-      <section id="panel-duel" class="panel active" aria-label="Duelo">
+      ${homePanelHtml()}
+
+      <section id="panel-duel" class="panel" aria-label="Duelo">
         ${topicSelectorHtml("Escolha o assunto")}
         <div class="mode-switch" aria-label="Categoria do duelo">
           <span class="mode-label">Disputar:</span>
@@ -336,7 +340,7 @@ function renderShell(root, { requireApi = false } = {}) {
           <button type="button" class="rank-direction" id="rank-sort-direction" aria-label="Ordem: maior para o menor">↓ Maior primeiro</button>
         </div>
         <ol class="rank-list" id="rank-list"></ol>
-        <section class="achievements-panel" aria-label="Conquistas">
+        <section class="achievements-panel" id="achievements-panel" tabindex="-1" aria-label="Conquistas">
           <h2 class="achievements-title">Conquistas</h2>
           <ul class="achievements-list" id="achievements-list"></ul>
         </section>
@@ -465,6 +469,7 @@ export async function initGame({ requireApi = false } = {}) {
   const byId = Object.fromEntries(candidates.map((c) => [c.id, c]));
   preloadPhotos(candidates);
   const els = {
+    panelHome: document.getElementById("panel-home"),
     panelDuel: document.getElementById("panel-duel"),
     panelTournament: document.getElementById("panel-tournament"),
     panelRank: document.getElementById("panel-rank"),
@@ -472,10 +477,18 @@ export async function initGame({ requireApi = false } = {}) {
     creditsSearch: document.getElementById("credits-search"),
     creditsCount: document.getElementById("credits-count"),
     creditsGroups: document.getElementById("credits-groups"),
+    tabHome: document.getElementById("tab-home"),
     tabDuel: document.getElementById("tab-duel"),
     tabTournament: document.getElementById("tab-tournament"),
     tabRank: document.getElementById("tab-rank"),
     tabCredits: document.getElementById("tab-credits"),
+    homePlay: document.getElementById("home-play"),
+    homeTournament: document.getElementById("home-tournament"),
+    homeRanking: document.getElementById("home-ranking"),
+    homePodium: document.getElementById("home-podium"),
+    homeAchievements: document.getElementById("home-achievements"),
+    homeCredits: document.getElementById("home-credits"),
+    achievementsPanel: document.getElementById("achievements-panel"),
     openCredits: document.getElementById("open-credits"),
     duelPrompt: document.getElementById("duel-prompt"),
     rankMode: document.getElementById("rank-mode"),
@@ -984,6 +997,7 @@ export async function initGame({ requireApi = false } = {}) {
       if (requireApi && apiOnline) setNetworkStatus(statusEl, NETWORK_STATES.ONLINE);
     }
     const tabs = [
+      ["home", els.panelHome, els.tabHome],
       ["duel", els.panelDuel, els.tabDuel],
       ["tournament", els.panelTournament, els.tabTournament],
       ["rank", els.panelRank, els.tabRank],
@@ -993,6 +1007,7 @@ export async function initGame({ requireApi = false } = {}) {
       const on = id === name;
       panel.classList.toggle("active", on);
       tab.classList.toggle("active", on);
+      tab.setAttribute("aria-current", on ? "page" : "false");
     }
     if (name === "rank") {
       renderRanking();
@@ -1413,10 +1428,22 @@ export async function initGame({ requireApi = false } = {}) {
   }
 
   els.tabDuel.addEventListener("click", () => setTab("duel"));
+  els.tabHome.addEventListener("click", () => setTab("home"));
+  els.tabDuel.addEventListener("click", () => setTab("duel"));
   els.tabTournament.addEventListener("click", () => setTab("tournament"));
   els.tabRank.addEventListener("click", () => setTab("rank"));
   els.tabCredits.addEventListener("click", () => setTab("credits"));
   els.openCredits.addEventListener("click", () => setTab("credits"));
+  els.homePlay.addEventListener("click", () => setTab("duel"));
+  els.homeTournament.addEventListener("click", () => setTab("tournament"));
+  els.homeRanking.addEventListener("click", () => setTab("rank"));
+  els.homePodium.addEventListener("click", () => openPodium());
+  els.homeAchievements.addEventListener("click", () => {
+    setTab("rank");
+    els.achievementsPanel.focus();
+    els.achievementsPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  els.homeCredits.addEventListener("click", () => setTab("credits"));
   bindCreditsSearch({ input: els.creditsSearch, count: els.creditsCount, groups: els.creditsGroups });
   els.cardA.addEventListener("click", () => pick(els.cardA));
   els.cardB.addEventListener("click", () => pick(els.cardB));

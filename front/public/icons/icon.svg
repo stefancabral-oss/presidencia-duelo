@@ -7,5 +7,5 @@
     </linearGradient>
   </defs>
   <circle cx="256" cy="256" r="178" fill="url(#g)"/>
-  <text x="256" y="300" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="168" font-weight="800" fill="#1a1200">PD</text>
+  <text x="256" y="300" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="168" font-weight="800" fill="#1a1200">PM</text>
 </svg>

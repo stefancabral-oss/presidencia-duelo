@@ -10,12 +10,12 @@
 
 import { sortCandidatesByRank } from "./ranking.js";
 
-export const GAME_NAME = "Presidência Duelo 2026";
+export const GAME_NAME = "PoliMatch";
 export const PODIUM_DISCLAIMER = "Não é pesquisa oficial";
-export const SHARE_TITLE = "Meu pódio — Presidência Duelo 2026";
+export const SHARE_TITLE = "Meu pódio — PoliMatch";
 export const PODIUM_PNG_WIDTH = 1080;
 export const PODIUM_PNG_HEIGHT = 1350;
-export const PODIUM_FILE_NAME = "podio-presidencia-duelo.png";
+export const PODIUM_FILE_NAME = "podio-polimatch.png";
 
 const PLACE_LABELS = ["1º", "2º", "3º"];
 

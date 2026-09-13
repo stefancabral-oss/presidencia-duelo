@@ -181,8 +181,8 @@ function renderShell(root, { requireApi = false } = {}) {
     <div class="app">
       <header>
         <div class="logo">
-          <div class="logo-badge" aria-hidden="true">PD</div>
-          <h1>Presidência Duelo</h1>
+          <div class="logo-badge" aria-hidden="true">PM</div>
+          <h1>PoliMatch</h1>
         </div>
         <p class="subtitle">Escolha um card. Próximo duelo aleatório. Ranking Elo no seu aparelho.</p>
         <p class="api-status pending" id="api-status" role="status" aria-live="polite">Conectando à API…</p>
@@ -398,7 +398,7 @@ function renderShell(root, { requireApi = false } = {}) {
       <div class="podium-overlay" id="podium-overlay" hidden>
         <div class="podium-backdrop" id="podium-backdrop"></div>
         <div class="podium-dialog" role="dialog" aria-modal="true" aria-labelledby="podium-title">
-          <p class="podium-kicker">Presidência Duelo 2026</p>
+          <p class="podium-kicker">PoliMatch</p>
           <h2 class="podium-title" id="podium-title">Seu pódio</h2>
           <p class="podium-disclaimer">Não é pesquisa oficial</p>
           <ol class="podium-stand" id="podium-stand"></ol>
@@ -432,8 +432,8 @@ function renderConnectionRequired(root) {
   root.innerHTML = `
     <main class="app connection-required">
       <div class="logo">
-        <div class="logo-badge" aria-hidden="true">PD</div>
-        <h1>Presidência Duelo</h1>
+        <div class="logo-badge" aria-hidden="true">PM</div>
+        <h1>PoliMatch</h1>
       </div>
       <section class="connection-required-card" role="alert">
         <h2>Conexão necessária</h2>
@@ -1164,7 +1164,7 @@ export async function initGame({ requireApi = false } = {}) {
     const text = formatTournamentShareText(champion);
     try {
       if (typeof navigator.share === "function") {
-        await navigator.share({ title: "Meu presidente — Presidência Duelo 2026", text });
+        await navigator.share({ title: "Meu vencedor — PoliMatch", text });
         return;
       }
       await navigator.clipboard.writeText(text);

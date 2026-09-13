@@ -1,7 +1,7 @@
 {
-  "name": "Presidência Duelo 2026",
-  "short_name": "Duelo 2026",
-  "description": "Jogo casual estilo Facemash com candidatos à Presidência do Brasil em 2026. Não é pesquisa oficial.",
+  "name": "PoliMatch",
+  "short_name": "PoliMatch",
+  "description": "Duelos casuais com pessoas da vida pública brasileira. Não é pesquisa oficial.",
   "id": ".",
   "start_url": ".",
   "scope": ".",

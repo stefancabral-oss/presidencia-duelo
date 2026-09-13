@@ -431,7 +431,6 @@ function renderShell(root, { requireApi = false } = {}) {
   `;
 }
 
-function renderRankItems(candidates, byId, getStats, getRarity = () => null, sort = {}) {
 function renderConnectionRequired(root) {
   root.innerHTML = `
     <main class="app connection-required">
@@ -448,6 +447,8 @@ function renderConnectionRequired(root) {
   `;
   document.getElementById("retry-connection")?.addEventListener("click", () => location.reload());
 }
+
+function renderRankItems(candidates, byId, getStats, getRarity = () => null, sort = {}) {
   const ranked = sortCandidatesByRank(candidates, getStats, sort);
 
   return ranked

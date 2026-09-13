@@ -1,7 +1,7 @@
 # Créditos das fotos
 
-Todas as imagens abaixo foram baixadas de fontes públicas (principalmente **Wikimedia Commons**).
-Nenhuma face foi gerada por IA. Arquivos locais em `front/public/candidates/` (o PWA em `app/` copia as mesmas fotos no build).
+As imagens vêm de fontes públicas, principalmente do **Wikimedia Commons**, páginas institucionais, perfis públicos e veículos de imprensa.
+Nenhuma face foi gerada por IA. Os 69 arquivos locais ficam em `front/public/candidates/`; outras 291 imagens com atribuição verificada são carregadas do Commons. A fonte individual das 360 fotos aparece na aba **Créditos** do app.
 
 | Candidato | Arquivo | Fonte Commons | Autor / crédito | Licença |
 |---|---|---|---|---|
@@ -20,12 +20,12 @@ Nenhuma face foi gerada por IA. Arquivos locais em `front/public/candidates/` (o
 
 ## Status das fotos
 
-- **Fotos reais (12/12):** Lula, Flávio Bolsonaro, Caiado, Zema, Renan Santos, Augusto Cury, Rui Costa Pimenta, Samara Martins, Hertz Dias, Edmilson Costa, Wilson Grassi, Clariana Barão.
-- **Placeholders por iniciais:** nenhum. O app ainda tem fallback de iniciais se alguma imagem falhar ao carregar.
-- Pablo Marçal **não** está na lista.
+- **Fotos reais (360/360):** 69 locais e 291 carregadas diretamente do Wikimedia Commons.
+- **Placeholders por iniciais:** nenhum.
+- Nenhuma foto foi inventada ou gerada para completar o catálogo.
 
 ## Observações
 
-- Imagens foram redimensionadas localmente (~720px no maior lado) para uso web.
+- As imagens remotas usam thumbnails de até 900 px fornecidos pelo Wikimedia Commons.
 - Licenças CC exigem atribuição; este arquivo cumpre esse papel.
-- Este projeto **não** é afiliado a partidos, TSE, Wikimedia ou candidatos.
+- Este projeto **não** é afiliado a partidos, TSE, Wikimedia ou às pessoas listadas.

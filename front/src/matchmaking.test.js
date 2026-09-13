@@ -8,6 +8,7 @@ import { saveState, STORAGE_KEY } from "./storage.js";
 import {
   COVERAGE_DUELS,
   candidatePairs,
+  coverageDuelLimit,
   coveragePool,
   eloGapWeight,
   excludeLastPair,
@@ -102,6 +103,22 @@ test("excludeLastPair keeps the only pair when the roster has two names", () => 
   assert.deepEqual(excludeLastPair([["a", "b"]], ["a", "b"]), [["a", "b"]]);
 });
 
+test("pair predicates can constrain every generated duel", () => {
+  const side = { a: "left", b: "left", c: "right", d: "right" };
+  const allowed = (a, b) => side[a] !== side[b];
+  assert.deepEqual(candidatePairs(["a", "b", "c", "d"], allowed), [
+    ["a", "c"],
+    ["a", "d"],
+    ["b", "c"],
+    ["b", "d"],
+  ]);
+  const state = pairState(["a", "b", "c", "d"]);
+  for (let i = 0; i < 40; i += 1) {
+    const pair = pickPair(ids("a", "b", "c", "d"), state, lcg(i + 1), allowed);
+    assert.notEqual(side[pair[0]], side[pair[1]]);
+  }
+});
+
 test("pickPair never returns lastPair when another pair exists", () => {
   const candidates = ids("a", "b", "c");
   const state = pairState(["a", "b", "c"], { lastPair: ["a", "b"] });
@@ -166,6 +183,13 @@ test("coveragePool forces two unseen names when remaining shows are tight", () =
   const pool = coveragePool(pairs, ["c", "d"], 1);
   assert.equal(pool.length, 1);
   assert.ok(isSamePair(pool[0], ["c", "d"]));
+});
+
+test("coverage window scales to catalogs larger than the original roster", () => {
+  assert.equal(coverageDuelLimit(12), 12);
+  assert.equal(coverageDuelLimit(24), 12);
+  assert.equal(coverageDuelLimit(25), 13);
+  assert.equal(coverageDuelLimit(387), 194);
 });
 
 test("first 12 shown pairs cover all 12 candidates", () => {
@@ -234,7 +258,7 @@ test("saveState persists pairCount with the rest of ranking state", () => {
 test("game loads pairCount, records each show, and no longer samples uniformly", () => {
   assert.match(gameSrc, /pairCount: \{\}/);
   assert.match(gameSrc, /pairCount: normalizePairCount\(parsed\.pairCount\)/);
-  assert.match(gameSrc, /takeNextPair\(candidates, state\)/);
+  assert.match(gameSrc, /takeNextPair\(active, state, Math\.random, pairAllowedForTopic\(topicId, byId\)\)/);
   assert.doesNotMatch(gameSrc, /Math\.random\(\) \* ids\.length/);
   assert.doesNotMatch(gameSrc, /function randomPair/);
 });

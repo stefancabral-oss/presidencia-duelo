@@ -1,22 +1,34 @@
 # Presidência Duelo 2026
 
-Monorepo do jogo web casual estilo **Facemash**: dois candidatos à Presidência do Brasil (2026) lado a lado; você escolhe um; surge o próximo par aleatório; o ranking Elo fica no `localStorage` e, se a API estiver no ar, também num agregado no servidor.
+Monorepo do jogo web casual estilo **Facemash**: duas pessoas da vida pública brasileira lado a lado; você escolhe uma; surge o próximo par aleatório; o ranking Elo fica no `localStorage` e, se a API estiver no ar, também num agregado no servidor.
 
-Além do duelo contínuo, a aba **Torneio** oferece um mata-mata conclusivo com os 12 candidatos: oito disputam a primeira rodada e quatro avançam direto, seguindo por quartas, semifinais e final. São 11 escolhas até a tela “Seu presidente é X”, com compartilhamento do resultado. O torneio é salvo separadamente e não altera o Elo local nem o agregado da API.
+Além do duelo contínuo, a aba **Torneio** sorteia 12 pessoas do catálogo para um mata-mata: oito disputam a primeira rodada e quatro avançam direto, seguindo por quartas, semifinais e final. São 11 escolhas até o resultado, que pode ser compartilhado. O torneio é salvo separadamente e não altera o Elo local nem o agregado da API.
+
+O catálogo de duelo contém os **360 nomes aprovados** e perfis básicos. Chromas, versões históricas e suas artes serão modeladas em outra área do app; não fazem parte deste arquivo nem alteram o ranking atual.
+
+Os duelos podem ser filtrados por cinco assuntos. Uma mesma pessoa pode aparecer em mais de um deles:
+
+- **Política em Jogo:** catálogo completo, com 360 pessoas;
+- **Justiça & Escândalos:** 74 nomes ligados a tribunais, investigações ou casos nacionais;
+- **Direita x Esquerda:** 126 nomes; no duelo principal, cada confronto combina lados opostos;
+- **Corrida 2026:** as 12 chapas presidenciais cadastradas;
+- **Em Alta:** 62 nomes em evidência no debate político atual.
+
+O filtro não cria cadastros duplicados nem zera estatísticas: IDs, votos e Elo continuam compartilhados no mesmo histórico global. A seleção do último assunto fica salva apenas como preferência de interface.
 
 > **Não é pesquisa oficial.** Não mede intenção de voto real. É só entretenimento.
 
 ```
 /
   README.md                 # este guia
-  CREDITS.md                # atribuição das fotos (Wikimedia)
-  shared/                   # lista dos 12 candidatos + Elo compartilhado
+  CREDITS.md                # atribuição das fotos e fontes públicas
+  shared/                   # catálogo aprovado de pessoas + Elo compartilhado
   front/                    # UI web (Vite + vanilla JS)
   back/                     # API (Node + Express)
   app/                      # PWA (wrapper do mesmo jogo + manifest/SW)
 ```
 
-Pablo Marçal **não** está na lista. Fotos reais em `front/public/candidates/` — nenhuma face gerada por IA.
+Os 360 perfis do catálogo têm fotos de fontes públicas e crédito registrado: 69 arquivos locais e 291 imagens servidas diretamente pelo Wikimedia Commons. Nenhuma face foi gerada por IA.
 
 ## Requisitos
 
@@ -41,7 +53,7 @@ npm run dev --prefix back
 | Método | Rota | Descrição |
 |---|---|---|
 | `GET` | `/api/health` | Saúde do serviço |
-| `GET` | `/api/candidates` | 12 candidatos (`id`, `name`, `party`, `vice`, `photo`, `initials`) |
+| `GET` | `/api/candidates` | 360 pessoas (`personId`, `id`, `name`, `party`, `vice`, `photo`, `initials`, `topics`, `politicalSide`) |
 | `GET` | `/api/ranking` | Ranking Elo agregado armazenado no PostgreSQL |
 | `POST` | `/api/vote` | Corpo `{ "winnerId", "loserId" }` — atualiza o Elo do servidor |
 
@@ -91,7 +103,7 @@ npm run build --prefix app
 
 No celular: abra o `app` no navegador → “Adicionar à tela inicial”. O PWA exige conexão com a API: cada voto é confirmado no servidor antes de alterar o Elo no aparelho, mantendo o ranking individual e o agregado sincronizados. O service worker é registrado apenas em `http:` ou `https:` e nunca fornece uma versão jogável offline.
 
-Os rankings agregados de **Presidentes** e **Vices** usam pools separados no PostgreSQL; trocar de modo não mistura as estatísticas.
+O ranking agregado de **Pessoas** continua usando no PostgreSQL a chave histórica `presidentes`, preservando os votos já existentes. O pool legado de vices permanece compatível no backend, mas fica oculto nesta primeira versão do catálogo ampliado.
 
 ## Deploy no Dokploy
 

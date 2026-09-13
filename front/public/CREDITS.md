@@ -1,7 +1,7 @@
 # Créditos das fotos
 
-Todas as imagens abaixo foram baixadas de fontes públicas (principalmente **Wikimedia Commons**).
-Nenhuma face foi gerada por IA. Arquivos locais em `/candidates/`.
+As imagens vêm de fontes públicas: **Wikimedia Commons**, páginas institucionais, perfis públicos e veículos de imprensa.
+Nenhuma face foi gerada por IA. Há 383 retratos verificados no catálogo; quatro perfis continuam usando iniciais porque não foi encontrado um retrato público identificável.
 
 Atribuição completa: veja `CREDITS.md` na raiz do repositório [presidencia-duelo](https://github.com/stefancabral-oss/presidencia-duelo).
 

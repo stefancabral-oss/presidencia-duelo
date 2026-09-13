@@ -62,8 +62,16 @@ import {
 } from "./tournament.js";
 import { lastDuelFromParsed, restoreDuel, snapshotDuel, undoPair } from "./undo.js";
 import { MODES, VICE_STORAGE_KEY, candidateForMode } from "./vice-mode.js";
+import {
+  TOPICS,
+  TOPIC_IDS,
+  candidatesForTopic,
+  pairAllowedForTopic,
+  topicById,
+} from "../../shared/topics.js";
 
 const ELO_START = 1000;
+const TOPIC_STORAGE_KEY = "presidencia-duelo-topic-v1";
 
 function escapeHtml(value) {
   return String(value)
@@ -112,6 +120,22 @@ function loadState(candidates, storageKey = STORAGE_KEY) {
   }
 }
 
+function loadTopic() {
+  try {
+    return topicById(localStorage.getItem(TOPIC_STORAGE_KEY)).id;
+  } catch {
+    return TOPIC_IDS.POLITICS;
+  }
+}
+
+function saveTopic(topicId) {
+  try {
+    localStorage.setItem(TOPIC_STORAGE_KEY, topicId);
+  } catch {
+    // Topic selection still works in memory when storage is unavailable.
+  }
+}
+
 function winRate(state, id) {
   const w = state.wins[id] || 0;
   const l = state.losses[id] || 0;
@@ -137,7 +161,7 @@ function renderShell(root, { requireApi = false } = {}) {
         <strong>Aviso:</strong> isto <em>não</em> é uma pesquisa eleitoral oficial, nem reflete intenção de voto real.
         É um jogo casual (estilo Facemash) com ranking salvo no seu navegador (<code>localStorage</code>).
         Se a API estiver no ar, os votos também entram num ranking agregado no servidor.
-        Candidaturas e vices listados para fins recreativos; verifique fontes oficiais do TSE.
+        Pessoas listadas para fins recreativos; informações complementares serão adicionadas com fontes.
       </aside>
 
       <nav class="tabs" aria-label="Seções">
@@ -148,16 +172,33 @@ function renderShell(root, { requireApi = false } = {}) {
       </nav>
 
       <section id="panel-duel" class="panel active" aria-label="Duelo">
+        <section class="topic-picker" aria-labelledby="topic-picker-title">
+          <div class="topic-picker-heading">
+            <strong id="topic-picker-title">Escolha o assunto</strong>
+            <span id="topic-count">360 pessoas</span>
+          </div>
+          <div class="topic-list" id="topic-list" role="group" aria-label="Tópico do duelo">
+            ${TOPICS.map((topic, index) => `
+              <button
+                type="button"
+                class="topic-btn${index === 0 ? " active" : ""}"
+                data-topic="${topic.id}"
+                aria-pressed="${index === 0 ? "true" : "false"}"
+              ><span aria-hidden="true">${topic.icon}</span>${escapeHtml(topic.label)}</button>
+            `).join("")}
+          </div>
+          <p class="topic-description" id="topic-description">${escapeHtml(TOPICS[0].description)}</p>
+        </section>
         <div class="mode-switch" aria-label="Categoria do duelo">
           <span class="mode-label">Disputar:</span>
-          <button type="button" class="mode-btn active" id="mode-presidentes" aria-pressed="true">Presidentes</button>
-          <button type="button" class="mode-btn" id="mode-vices" aria-pressed="false">Vices</button>
+          <button type="button" class="mode-btn active" id="mode-presidentes" aria-pressed="true">Pessoas</button>
+          <button type="button" class="mode-btn" id="mode-vices" aria-pressed="false" hidden disabled>Vices</button>
         </div>
         <div class="combo-banner" id="combo-banner" hidden>
           <span class="combo-label" id="combo-label"></span>
         </div>
         <div class="duel-stats">
-          <span id="duel-prompt">Toque no candidato preferido</span>
+          <span id="duel-prompt">Toque na pessoa preferida</span>
           <span>Duelos: <strong id="duel-count">0</strong></span>
         </div>
 
@@ -205,14 +246,14 @@ function renderShell(root, { requireApi = false } = {}) {
           <button type="button" class="btn" id="undo-duel" disabled>Desfazer</button>
         </div>
 
-        <p class="hint">Cards inspirados em cromos/Pokémon · fotos reais (Wikimedia) · ${requireApi ? "conexão obrigatória para preservar todos os votos" : "modo local disponível sem API"}</p>
+        <p class="hint">Perfis básicos no duelo · chromas terão uma área separada · ${requireApi ? "conexão obrigatória para preservar todos os votos" : "modo local disponível sem API"}</p>
       </section>
 
       <section id="panel-tournament" class="panel" aria-label="Torneio">
         <div class="tournament-toolbar">
           <div>
-            <strong>Mata-mata presidencial</strong>
-            <div class="rank-sub">12 candidatos · 11 duelos · não altera o ranking Elo</div>
+            <strong>Mata-mata · <span id="tournament-topic">Política em Jogo</span></strong>
+            <div class="rank-sub">12 pessoas sorteadas do tópico · 11 duelos · não altera o ranking Elo</div>
           </div>
           <button type="button" class="btn" id="restart-tournament">Novo torneio</button>
         </div>
@@ -225,7 +266,7 @@ function renderShell(root, { requireApi = false } = {}) {
             <button type="button" class="poke-card" id="tournament-card-b"></button>
           </div>
           <div class="tournament-winner" id="tournament-winner" hidden>
-            <p class="tournament-kicker">Campeão do seu mata-mata</p>
+            <p class="tournament-kicker">Vencedor do seu mata-mata</p>
             <h2 id="tournament-winner-title"></h2>
             <div class="tournament-winner-card" id="tournament-winner-card"></div>
             <p class="podium-share-status" id="tournament-share-status" hidden></p>
@@ -240,7 +281,7 @@ function renderShell(root, { requireApi = false } = {}) {
       <section id="panel-rank" class="panel" aria-label="Ranking">
         <div class="ranking-toolbar">
           <div>
-            <strong>Ranking Elo · <span id="rank-mode">Presidentes</span></strong>
+            <strong>Ranking Elo · <span id="rank-mode">Pessoas</span> · <span id="rank-topic">Política em Jogo</span></strong>
             <div class="rank-sub">${RANKING_SUBTITLE}</div>
           </div>
           <div class="ranking-actions">
@@ -317,8 +358,8 @@ function renderConnectionRequired(root) {
       return `
         <li class="rank-item"${rarity ? ` data-rarity="${rarity.id}"` : ""}>
           <div class="rank-pos">${i + 1}º</div>
-          <img src="${escapeHtml(c.photo)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';" />
-          <div class="rank-ph" style="display:none">${escapeHtml(c.initials)}</div>
+          ${c.photo ? `<img src="${escapeHtml(c.photo)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';" />` : '<img alt="" style="display:none" />'}
+          <div class="rank-ph"${c.photo ? ' style="display:none"' : ""}>${escapeHtml(c.initials)}</div>
           <div>
             <div class="rank-name">${escapeHtml(c.name)}</div>
             <div class="rank-meta">${rarity ? `<span class="rarity-tag">${escapeHtml(rarity.label)}</span>` : ""}${escapeHtml(rankMetaText({ party: c.party, vice: c.vice, wins, losses, zebras }))}</div>
@@ -368,6 +409,11 @@ export async function initGame({ requireApi = false } = {}) {
     rankMode: document.getElementById("rank-mode"),
     modePresidentes: document.getElementById("mode-presidentes"),
     modeVices: document.getElementById("mode-vices"),
+    topicButtons: [...document.querySelectorAll("[data-topic]")],
+    topicCount: document.getElementById("topic-count"),
+    topicDescription: document.getElementById("topic-description"),
+    rankTopic: document.getElementById("rank-topic"),
+    tournamentTopic: document.getElementById("tournament-topic"),
     duelCount: document.getElementById("duel-count"),
     comboBanner: document.getElementById("combo-banner"),
     comboLabel: document.getElementById("combo-label"),
@@ -427,24 +473,26 @@ export async function initGame({ requireApi = false } = {}) {
   };
   let mode = "presidentes";
   let state = states[mode];
+  let topicId = loadTopic();
   let currentPair = null;
   let locked = false;
   let pickTimer = null;
   let tournament = loadTournament();
 
   function loadTournament() {
+    const ids = topicCandidates().map((candidate) => candidate.id);
     try {
-      const parsed = JSON.parse(localStorage.getItem(TOURNAMENT_STORAGE_KEY));
-      if (isValidTournament(parsed, candidates.map((candidate) => candidate.id))) return parsed;
+      const parsed = JSON.parse(localStorage.getItem(tournamentStorageKey()));
+      if (isValidTournament(parsed, ids)) return parsed;
     } catch {
       // Start a fresh bracket when storage is unavailable or stale.
     }
-    return createTournament(candidates.map((candidate) => candidate.id));
+    return createTournament(ids);
   }
 
   function saveTournament() {
     try {
-      localStorage.setItem(TOURNAMENT_STORAGE_KEY, JSON.stringify(tournament));
+      localStorage.setItem(tournamentStorageKey(), JSON.stringify(tournament));
     } catch {
       // The tournament remains playable in memory.
     }
@@ -452,8 +500,16 @@ export async function initGame({ requireApi = false } = {}) {
   let swipeStartX = null;
   let swipePointerId = null;
 
+  function tournamentStorageKey() {
+    return `${TOURNAMENT_STORAGE_KEY}-${topicId}`;
+  }
+
+  function topicCandidates() {
+    return candidatesForTopic(candidates, topicId);
+  }
+
   function displayCandidates() {
-    return candidates.map((candidate) => candidateForMode(candidate, mode));
+    return topicCandidates().map((candidate) => candidateForMode(candidate, mode));
   }
 
   function displayCandidate(id) {
@@ -467,8 +523,39 @@ export async function initGame({ requireApi = false } = {}) {
     els.modePresidentes.setAttribute("aria-pressed", String(isPresidentes));
     els.modeVices.classList.toggle("active", !isPresidentes);
     els.modeVices.setAttribute("aria-pressed", String(!isPresidentes));
-    els.duelPrompt.textContent = `Toque no ${config.singular} preferido`;
+    els.duelPrompt.textContent = config.prompt;
     els.rankMode.textContent = config.label;
+  }
+
+  function renderTopicUi() {
+    const topic = topicById(topicId);
+    const count = topicCandidates().length;
+    for (const button of els.topicButtons) {
+      const active = button.dataset.topic === topicId;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    }
+    els.topicCount.textContent = `${count} ${count === 1 ? "pessoa" : "pessoas"}`;
+    els.topicDescription.textContent = topic.description;
+    els.rankTopic.textContent = topic.label;
+    els.tournamentTopic.textContent = topic.label;
+  }
+
+  function setTopic(nextTopicId) {
+    const nextTopic = topicById(nextTopicId);
+    if (nextTopic.id === topicId) return;
+    cancelPickTimer();
+    locked = false;
+    topicId = nextTopic.id;
+    saveTopic(topicId);
+    currentPair = null;
+    tournament = loadTournament();
+    hideGoalMoment();
+    closePodium();
+    renderTopicUi();
+    nextDuel();
+    renderRanking();
+    renderServerRanking();
   }
 
   function setMode(nextMode) {
@@ -494,11 +581,13 @@ export async function initGame({ requireApi = false } = {}) {
 
   function syncUndoButton() {
     if (!els.undoBtn) return;
-    els.undoBtn.disabled = !state.lastDuel;
+    const pair = undoPair(state.lastDuel);
+    const activeIds = new Set(topicCandidates().map((candidate) => candidate.id));
+    els.undoBtn.disabled = !pair || !pair.every((id) => activeIds.has(id));
   }
 
   function currentLeaderName() {
-    const ranked = sortCandidatesByRank(candidates, (id) => ({
+    const ranked = sortCandidatesByRank(topicCandidates(), (id) => ({
       elo: state.ratings[id],
       wins: state.wins[id] || 0,
     }));
@@ -704,8 +793,12 @@ export async function initGame({ requireApi = false } = {}) {
       els.tournamentDuel.hidden = true;
       els.tournamentRound.hidden = true;
       els.tournamentWinner.hidden = false;
-      els.tournamentWinnerTitle.textContent = `Seu presidente é ${champion.name}`;
-      els.tournamentWinnerCard.innerHTML = `<img src="${escapeHtml(champion.photo)}" alt="Foto de ${escapeHtml(champion.name)}"><strong>${escapeHtml(champion.name)}</strong><span>${escapeHtml(champion.party)}</span>`;
+      els.tournamentWinnerTitle.textContent = `Seu vencedor é ${champion.name}`;
+      const winnerArt = champion.photo
+        ? `<img src="${escapeHtml(champion.photo)}" alt="Foto de ${escapeHtml(champion.name)}">`
+        : `<div class="tournament-winner-placeholder" aria-hidden="true">${escapeHtml(champion.initials)}</div>`;
+      const winnerParty = champion.party ? `<span>${escapeHtml(champion.party)}</span>` : "";
+      els.tournamentWinnerCard.innerHTML = `${winnerArt}<strong>${escapeHtml(champion.name)}</strong>${winnerParty}`;
       return;
     }
     els.tournamentWinner.hidden = true;
@@ -729,7 +822,7 @@ export async function initGame({ requireApi = false } = {}) {
   }
 
   function restartTournament() {
-    tournament = createTournament(candidates.map((candidate) => candidate.id));
+    tournament = createTournament(topicCandidates().map((candidate) => candidate.id));
     saveTournament();
     if (els.tournamentShareStatus) els.tournamentShareStatus.hidden = true;
     renderTournament();
@@ -774,7 +867,8 @@ export async function initGame({ requireApi = false } = {}) {
     els.duelCards.style.removeProperty("--swipe-x");
     els.cardA.disabled = false;
     els.cardB.disabled = false;
-    currentPair = takeNextPair(candidates, state);
+    const active = topicCandidates();
+    currentPair = takeNextPair(active, state, Math.random, pairAllowedForTopic(topicId, byId));
     applyUnlocks();
     persist();
     renderCard(els.cardA, currentPair[0]);
@@ -927,7 +1021,7 @@ export async function initGame({ requireApi = false } = {}) {
   function renderRanking() {
     const visible = displayCandidates();
     const visibleById = Object.fromEntries(visible.map((candidate) => [candidate.id, candidate]));
-    const leaderId = findLeaderId(candidates.map((candidate) => candidate.id), state);
+    const leaderId = findLeaderId(topicCandidates().map((candidate) => candidate.id), state);
     els.rankList.innerHTML = renderRankItems(visible, visibleById, (id) => ({
       elo: state.ratings[id],
       wins: state.wins[id] || 0,
@@ -950,7 +1044,8 @@ export async function initGame({ requireApi = false } = {}) {
         return;
       }
       const stats = Object.fromEntries(rows.map((r) => [r.id, r]));
-      els.serverList.innerHTML = renderRankItems(candidates, byId, (id) => {
+      const visible = topicCandidates();
+      els.serverList.innerHTML = renderRankItems(visible, byId, (id) => {
         const row = stats[id] || { elo: ELO_START, wins: 0, losses: 0, winRate: 0, zebras: 0 };
         return {
           elo: row.elo,
@@ -975,6 +1070,9 @@ export async function initGame({ requireApi = false } = {}) {
   els.cardB.addEventListener("click", () => pick(els.cardB));
   els.modePresidentes.addEventListener("click", () => setMode("presidentes"));
   els.modeVices.addEventListener("click", () => setMode("vices"));
+  for (const button of els.topicButtons) {
+    button.addEventListener("click", () => setTopic(button.dataset.topic));
+  }
   document.addEventListener("keydown", handleQuickControlKey);
   els.duelCards.addEventListener("pointerdown", beginSwipe);
   els.duelCards.addEventListener("pointermove", moveSwipe);
@@ -1017,6 +1115,7 @@ export async function initGame({ requireApi = false } = {}) {
   });
 
   renderModeUi();
+  renderTopicUi();
   renderAchievements();
   renderCombo();
   nextDuel();

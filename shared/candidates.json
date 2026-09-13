@@ -1,45 +1,357 @@
 [
   {
-    "id": "lula",
-    "name": "Luiz Inácio Lula da Silva",
-    "party": "PT",
-    "vice": "Geraldo Alckmin (PSB)",
-    "photo": "/candidates/lula.jpg",
-    "initials": "LS"
+    "personId": 1,
+    "id": "pessoa-1",
+    "name": "Acelino Popó Freitas",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-1.jpg",
+    "initials": "AF"
   },
   {
-    "id": "flavio-bolsonaro",
-    "name": "Flávio Bolsonaro",
-    "party": "PL",
-    "vice": "Alfredo Gaspar (PL)",
-    "photo": "/candidates/flavio-bolsonaro.jpg",
-    "initials": "FB"
+    "personId": 2,
+    "id": "pessoa-2",
+    "name": "ACM Neto",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/ACM%20Neto.jpg?width=900",
+    "initials": "AN"
   },
   {
-    "id": "caiado",
-    "name": "Ronaldo Caiado",
-    "party": "PSD",
-    "vice": "Gilberto Kassab (PSD)",
-    "photo": "/candidates/caiado.jpg",
-    "initials": "RC"
+    "personId": 3,
+    "id": "pessoa-3",
+    "name": "Adriana Ventura",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-3.jpg",
+    "initials": "AV"
   },
   {
-    "id": "zema",
-    "name": "Romeu Zema",
-    "party": "Novo",
-    "vice": "Eduardo Girão (Novo)",
-    "photo": "/candidates/zema.jpg",
-    "initials": "RZ"
+    "personId": 5,
+    "id": "pessoa-5",
+    "name": "Aldo Rebelo",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Aldo%20Rebelo%20(16654292721)%20(cropped).jpg?width=900",
+    "initials": "AR"
   },
   {
-    "id": "renan-santos",
-    "name": "Renan Santos",
-    "party": "Missão",
-    "vice": "Aroldo Medina (Missão)",
-    "photo": "/candidates/renan-santos.jpg",
-    "initials": "RS"
+    "personId": 6,
+    "id": "pessoa-6",
+    "name": "Alessandro Antônio Stefanutto",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/CPMI%20-%20INSS%20-%20Comiss%C3%A3o%20Parlamentar%20Mista%20de%20Inqu%C3%A9rito%20do%20INSS%20-%202025%20-%2054853000456.jpg?width=900",
+    "initials": "AS"
   },
   {
+    "personId": 7,
+    "id": "pessoa-7",
+    "name": "Alessandro Molon",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Alessandro%20Molon%20em%20julho%20de%202018%20(recorte).jpg?width=900",
+    "initials": "AM"
+  },
+  {
+    "personId": 8,
+    "id": "pessoa-8",
+    "name": "Alessandro Vieira",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Senador%20Alessandro%20Vieira.jpg?width=900",
+    "initials": "AV"
+  },
+  {
+    "personId": 9,
+    "id": "pessoa-9",
+    "name": "Alex Manente",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-9.jpg",
+    "initials": "AM"
+  },
+  {
+    "personId": 10,
+    "id": "pessoa-10",
+    "name": "Alexandre de Moraes",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/07.09.2024%20-%20Desfile%20de%207%20de%20Setembro%20(53978379274)%20Alexandre%20de%20Moraes%203x4%20portrait%20crop.jpg?width=900",
+    "initials": "AM"
+  },
+  {
+    "personId": 11,
+    "id": "pessoa-11",
+    "name": "Alexandre Garcia",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-11.jpg",
+    "initials": "AG"
+  },
+  {
+    "personId": 12,
+    "id": "pessoa-12",
+    "name": "Alexandre Padilha",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/01.01.2023%20-%20Posse%20de%20Alexandre%20Padilha%2C%20Ministro%20de%20Estado%20de%20Rela%C3%A7%C3%B5es%20Institucionais%20(52625761867)%20(cropped).jpg?width=900",
+    "initials": "AP"
+  },
+  {
+    "personId": 13,
+    "id": "pessoa-13",
+    "name": "Alexandre Silveira",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/F%C3%B3rum%20Mobilidade%20Urbana%2C%20na%20ALMG.jpg?width=900",
+    "initials": "AS"
+  },
+  {
+    "personId": 14,
+    "id": "pessoa-14",
+    "name": "Alfredo Gaspar",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Alfredo-225x300.jpg?width=900",
+    "initials": "AG"
+  },
+  {
+    "personId": 15,
+    "id": "pessoa-15",
+    "name": "Almir Garnier Santos",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2021-03-31%20Encontro%20com%20os%20novos%20comandantes%20das%20For%C3%A7as%20Armadas%20-%2051086752341%20(cropped3).jpg?width=900",
+    "initials": "AS"
+  },
+  {
+    "personId": 16,
+    "id": "pessoa-16",
+    "name": "Álvaro Damião",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2024%20ALVARO%20DAMIAO%20CANDIDATO%20VICE-PREFEITO%20MG%20BELO%20HORIZONTE%20TSE%20(130001975611).jpg?width=900",
+    "initials": "ÁD"
+  },
+  {
+    "personId": 17,
+    "id": "pessoa-17",
+    "name": "Amilcare Dallevo Júnior",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/25-11-2014%20Vice-presidente%20Michel%20Temer%20prestigia%20a%20celebra%C3%A7%C3%A3o%20de%2015%20anos%20da%20Rede%20TV.%20(15692561280)%20-%20cropped.jpg?width=900",
+    "initials": "AJ"
+  },
+  {
+    "personId": 18,
+    "id": "pessoa-18",
+    "name": "Amom Mandel",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Amom%20Mandel%20Lins%20Filho%20(cropped).jpg?width=900",
+    "initials": "AM"
+  },
+  {
+    "personId": 19,
+    "id": "pessoa-19",
+    "name": "Ana Campopiano",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-19.jpg",
+    "initials": "AC"
+  },
+  {
+    "personId": 21,
+    "id": "pessoa-21",
+    "name": "Ana Karina Bortoni",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-21.jpg",
+    "initials": "AB"
+  },
+  {
+    "personId": 22,
+    "id": "pessoa-22",
+    "name": "Anderson Torres",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Anderson%20Torres.jpg?width=900",
+    "initials": "AT"
+  },
+  {
+    "personId": 23,
+    "id": "pessoa-23",
+    "name": "André de Paula",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/01.01.2023%20-%20Posse%20de%20Andr%C3%A9%20de%20Paula%2C%20Ministro%20de%20Estado%20da%20Pesca%20e%20Aquicultura%20(52625774842)%20(cropped).jpg?width=900",
+    "initials": "AP"
+  },
+  {
+    "personId": 24,
+    "id": "pessoa-24",
+    "name": "André Esteves",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Andr%C3%A9%20Esteves%20Entrevista%202.jpg?width=900",
+    "initials": "AE"
+  },
+  {
+    "personId": 25,
+    "id": "pessoa-25",
+    "name": "André Fernandes",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-25.jpg",
+    "initials": "AF"
+  },
+  {
+    "personId": 26,
+    "id": "pessoa-26",
+    "name": "André Fufuca",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-26.jpg",
+    "initials": "AF"
+  },
+  {
+    "personId": 27,
+    "id": "pessoa-27",
+    "name": "André Janones",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/AndreJanones1.jpg?width=900",
+    "initials": "AJ"
+  },
+  {
+    "personId": 28,
+    "id": "pessoa-28",
+    "name": "André Mendonça",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ministro%20Andr%C3%A9%20Mendon%C3%A7a%20em%20outubro%20de%202025%20(3x4).jpg?width=900",
+    "initials": "AM"
+  },
+  {
+    "personId": 30,
+    "id": "pessoa-30",
+    "name": "André Valadão",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Andre%20Machado%20Valad%C3%A3o%20do%20Diante%20do%20Trono%20(cropped).jpg?width=900",
+    "initials": "AV"
+  },
+  {
+    "personId": 31,
+    "id": "pessoa-31",
+    "name": "Andrei Rodrigues",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-31.jpg",
+    "initials": "AR"
+  },
+  {
+    "personId": 34,
+    "id": "pessoa-34",
+    "name": "Anielle Franco",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2023-01-26%20Anielle%20Franco.JPG?width=900",
+    "initials": "AF"
+  },
+  {
+    "personId": 35,
+    "id": "pessoa-35",
+    "name": "Anitta",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Anitta%20for%20Attractive%20Mindset%20podcast%2002.jpg?width=900",
+    "initials": "A"
+  },
+  {
+    "personId": 36,
+    "id": "pessoa-36",
+    "name": "Anthony Garotinho",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-36.jpg",
+    "initials": "AG"
+  },
+  {
+    "personId": 37,
+    "id": "pessoa-37",
+    "name": "Antonio Brito",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Deputado%20Antonio%20Brito.png?width=900",
+    "initials": "AB"
+  },
+  {
+    "personId": 39,
+    "id": "pessoa-39",
+    "name": "Antônio Carlos Camilo Antunes (Careca do INSS)",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-39.jpg",
+    "initials": "AA"
+  },
+  {
+    "personId": 40,
+    "id": "pessoa-40",
+    "name": "Antonio Carlos Ferreira",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2025-12-18%2C%20Posse%20do%20Ministro%20Antonio%20Carlos%20Ferreira%20no%20cargo%20de%20corregedor-geral%20da%20Justi%C3%A7a%20-%20041.jpg?width=900",
+    "initials": "AF"
+  },
+  {
+    "personId": 41,
+    "id": "pessoa-41",
+    "name": "Antônio Carlos Freixo Júnior (Mineiro)",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-41.jpg",
+    "initials": "AJ"
+  },
+  {
+    "personId": 42,
+    "id": "pessoa-42",
+    "name": "Antônio Carlos Welter",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-42.jpg",
+    "initials": "AW"
+  },
+  {
+    "personId": 43,
+    "id": "pessoa-43",
+    "name": "Antônio de Rueda",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-43.jpg",
+    "initials": "AR"
+  },
+  {
+    "personId": 45,
+    "id": "pessoa-45",
+    "name": "Arthur Lira",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Arthur%20Lira%20como%20presidente%20da%20C%C3%A2mara.jpg?width=900",
+    "initials": "AL"
+  },
+  {
+    "personId": 46,
+    "id": "pessoa-46",
+    "name": "Athayde Ribeiro Costa",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-46.jpg",
+    "initials": "AC"
+  },
+  {
+    "personId": 47,
     "id": "cury",
     "name": "Augusto Cury",
     "party": "Avante",
@@ -48,30 +360,484 @@
     "initials": "AC"
   },
   {
-    "id": "rui-costa-pimenta",
-    "name": "Rui Costa Pimenta",
-    "party": "PCO",
-    "vice": "Antônio Carlos (PCO)",
-    "photo": "/candidates/rui-costa-pimenta.jpg",
-    "initials": "RP"
+    "personId": 49,
+    "id": "pessoa-49",
+    "name": "Augusto Heleno",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Augusto%20Heleno%20(cropped).jpg?width=900",
+    "initials": "AH"
   },
   {
-    "id": "samara-martins",
-    "name": "Samara Martins",
-    "party": "UP",
-    "vice": "Raquel Brício (UP)",
-    "photo": "/candidates/samara-martins.jpg",
-    "initials": "SM"
+    "personId": 50,
+    "id": "pessoa-50",
+    "name": "Augusto Nunes",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Augusto%20Nunes.jpg?width=900",
+    "initials": "AN"
   },
   {
-    "id": "hertz-dias",
-    "name": "Hertz Dias",
-    "party": "PSTU",
-    "vice": "Vanessa Portugal (PSTU)",
-    "photo": "/candidates/hertz-dias.jpg",
-    "initials": "HD"
+    "personId": 51,
+    "id": "pessoa-51",
+    "name": "Baleia Rossi",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Baleia%20Rossi%20(MDB%20-%20SP)%20(cropped).jpg?width=900",
+    "initials": "BR"
   },
   {
+    "personId": 53,
+    "id": "pessoa-53",
+    "name": "Bia Kicis",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2023-10-03%20Sess%C3%A3o%20Solene%20-%20Promulga%C3%A7%C3%A3o%20das%20Emendas%20Constitucionais%20130%20e%20131%20de%202023%20-%2001%20(cropped).jpg?width=900",
+    "initials": "BK"
+  },
+  {
+    "personId": 54,
+    "id": "pessoa-54",
+    "name": "Bosco Costa",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-54.jpg",
+    "initials": "BC"
+  },
+  {
+    "personId": 55,
+    "id": "pessoa-55",
+    "name": "Braga Netto",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2020-10-17%20Cerim%C3%B4nia%20de%20Entrega%20de%20Espadim%20aos%20Cadetes%20da%20Turma%20%E2%80%9CCenten%C3%A1rio%20da%20Miss%C3%A3o%20Militar%20Francesa%20no%20Brasil%E2%80%9D%20073%20(cropped).jpg?width=900",
+    "initials": "BN"
+  },
+  {
+    "personId": 56,
+    "id": "pessoa-56",
+    "name": "Bruno Carazza",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-56.jpg",
+    "initials": "BC"
+  },
+  {
+    "personId": 57,
+    "id": "pessoa-57",
+    "name": "Bruno Reis",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2020%20BRUNO%20REIS%20CANDIDATO%20PREFEITO%20BA%20SALVADOR%20TSE%20(50000674223).jpg?width=900",
+    "initials": "BR"
+  },
+  {
+    "personId": 58,
+    "id": "pessoa-58",
+    "name": "Cabo Daciolo",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Deputados%20cabo%20Daciolo%20(PSOL-RJ)%20e%20Marcos%20Reategui%20(PSC-AP)%20participam%20do%20programa%20Brasil%20em%20Debate%20(cropped).jpg?width=900",
+    "initials": "CD"
+  },
+  {
+    "personId": 59,
+    "id": "pessoa-59",
+    "name": "Caetano Veloso",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Caetano%20Veloso%20(cropped).jpg?width=900",
+    "initials": "CV"
+  },
+  {
+    "personId": 60,
+    "id": "pessoa-60",
+    "name": "Caio Coppolla",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Caio%20Coppolla%20(entrevista).png?width=900",
+    "initials": "CC"
+  },
+  {
+    "personId": 61,
+    "id": "pessoa-61",
+    "name": "Camilo Santana",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Senador%20Camilo%20Santana.jpg?width=900",
+    "initials": "CS"
+  },
+  {
+    "personId": 62,
+    "id": "pessoa-62",
+    "name": "Carla Zambelli",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Carla%20Zambelli%202.jpg?width=900",
+    "initials": "CZ"
+  },
+  {
+    "personId": 63,
+    "id": "pessoa-63",
+    "name": "Carlos Bezerra Jr.",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Cbjr.jpg?width=900",
+    "initials": "CJ"
+  },
+  {
+    "personId": 64,
+    "id": "pessoa-64",
+    "name": "Carlos Bolsonaro",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Carlos%20Bolsonaro%20durante%20Encontro%20Brasil-R%C3%BAssia%20em%202022.jpg?width=900",
+    "initials": "CB"
+  },
+  {
+    "personId": 65,
+    "id": "pessoa-65",
+    "name": "Carlos Brandão",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Retrato%20Oficial%20de%20Carlos%20Brand%C3%A3o%20como%20governador%20do%20Maranh%C3%A3o.jpg?width=900",
+    "initials": "CB"
+  },
+  {
+    "personId": 66,
+    "id": "pessoa-66",
+    "name": "Carlos Eduardo Thompson Flores Lenz",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/IBPA%2022853%20-%20O%20prefeito%20Nelson%20Marchezan%20J%C3%BAnior%20realizou%20na%20tarde%20-%202019-02-11%20-%20Joel%20Vargas-PMPA%20(cropped).jpg?width=900",
+    "initials": "CL"
+  },
+  {
+    "personId": 67,
+    "id": "pessoa-67",
+    "name": "Carlos Fávaro",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-67.jpg",
+    "initials": "CF"
+  },
+  {
+    "personId": 68,
+    "id": "pessoa-68",
+    "name": "Carlos Fernando dos Santos Lima",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-68.jpg",
+    "initials": "CL"
+  },
+  {
+    "personId": 69,
+    "id": "pessoa-69",
+    "name": "Carlos Massa (Ratinho)",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Carlos%20Roberto%20Massa.jpg?width=900",
+    "initials": "CM"
+  },
+  {
+    "personId": 71,
+    "id": "pessoa-71",
+    "name": "Cármen Lúcia",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/C%C3%A1rmen%20L%C3%BAcia%20em%202016%2002%20(cropped%203x4).jpg?width=900",
+    "initials": "CL"
+  },
+  {
+    "personId": 72,
+    "id": "pessoa-72",
+    "name": "Carolina Lebbos",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-72.jpg",
+    "initials": "CL"
+  },
+  {
+    "personId": 73,
+    "id": "pessoa-73",
+    "name": "Casimiro Miguel",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Casimiro%20Miguel.jpg?width=900",
+    "initials": "CM"
+  },
+  {
+    "personId": 74,
+    "id": "pessoa-74",
+    "name": "Celina Leão",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/F%C3%A1brica%20Social%20forma%20170%20alunos%2C%20e%20nova%20turma%20far%C3%A1%20material%20para%20hospitais.jpg?width=900",
+    "initials": "CL"
+  },
+  {
+    "personId": 75,
+    "id": "pessoa-75",
+    "name": "Celso de Mello",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Celso%20de%20Mello%20em%20fevereiro%20de%202017.jpg?width=900",
+    "initials": "CM"
+  },
+  {
+    "personId": 76,
+    "id": "pessoa-76",
+    "name": "Cezinha de Madureira",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-76.jpg",
+    "initials": "CM"
+  },
+  {
+    "personId": 77,
+    "id": "pessoa-77",
+    "name": "Chico Alencar",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-77.jpg",
+    "initials": "CA"
+  },
+  {
+    "personId": 78,
+    "id": "pessoa-78",
+    "name": "Chico Buarque",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Chico%20Buarque%20no%20BRAVO.jpg?width=900",
+    "initials": "CB"
+  },
+  {
+    "personId": 79,
+    "id": "pessoa-79",
+    "name": "Cícero Lucena",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/11%2012%202024%20-%20Reuni%C3%A3o%20com%20Cicero%20Lucena%2C%20Prefeito%20de%20Jo%C3%A3o%20Pessoa%20(54198867920)%20(cropped).jpg?width=900",
+    "initials": "CL"
+  },
+  {
+    "personId": 80,
+    "id": "pessoa-80",
+    "name": "Ciro Gomes",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ciro%20Gomes%20na%20Carta%20Capital%202015%20(foto%202)%20(cropped).jpg?width=900",
+    "initials": "CG"
+  },
+  {
+    "personId": 81,
+    "id": "pessoa-81",
+    "name": "Ciro Nogueira",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-81.jpg",
+    "initials": "CN"
+  },
+  {
+    "personId": 83,
+    "id": "clariana-barao",
+    "name": "Clariana Barão",
+    "party": "DC",
+    "vice": "Fabiana Torquato (DC)",
+    "photo": "/candidates/clariana-barao.jpg",
+    "initials": "CB"
+  },
+  {
+    "personId": 84,
+    "id": "pessoa-84",
+    "name": "Cláudio Castro",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Claudio%20Castro%20como%20Vice%20Governador%20do%20Rio%20de%20Janeiro.jpg?width=900",
+    "initials": "CC"
+  },
+  {
+    "personId": 85,
+    "id": "pessoa-85",
+    "name": "Clécio Luís",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Foto%20oficial%20do%20governador%20do%20Estado%20do%20Amap%C3%A1%2C%20Cl%C3%A9cio%20Lu%C3%ADs.jpg?width=900",
+    "initials": "CL"
+  },
+  {
+    "personId": 86,
+    "id": "pessoa-86",
+    "name": "Cleitinho Azevedo",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Cleiton%20Gontijo%20de%20Azevedo%20-%202019.jpg?width=900",
+    "initials": "CA"
+  },
+  {
+    "personId": 89,
+    "id": "pessoa-89",
+    "name": "Cristiano Zanin",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/17.06.2026%20-%20Cristiano%20Zanin%20(cropped).jpg?width=900",
+    "initials": "CZ"
+  },
+  {
+    "personId": 91,
+    "id": "pessoa-91",
+    "name": "Damares Alves",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2025-03-20%20Senado%20Federal%20do%20Brasil%2C%20080%20(Damares%20Alves).jpg?width=900",
+    "initials": "DA"
+  },
+  {
+    "personId": 92,
+    "id": "pessoa-92",
+    "name": "Daniel Vilela",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Daniel%20Vilela%2C%20November%202023%20(cropped).jpg?width=900",
+    "initials": "DV"
+  },
+  {
+    "personId": 93,
+    "id": "pessoa-93",
+    "name": "Daniel Vorcaro",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Daniel%20Vorcaro%20-%202024.jpg?width=900",
+    "initials": "DV"
+  },
+  {
+    "personId": 94,
+    "id": "pessoa-94",
+    "name": "Daniela Abravanel Beyruti",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Daniela%20Beyruti.jpg?width=900",
+    "initials": "DB"
+  },
+  {
+    "personId": 95,
+    "id": "pessoa-95",
+    "name": "Danilo Pereira Júnior",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-95.jpg",
+    "initials": "DJ"
+  },
+  {
+    "personId": 96,
+    "id": "pessoa-96",
+    "name": "Dario Durigan",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Dario%20Durigan%20(cropped).jpg?width=900",
+    "initials": "DD"
+  },
+  {
+    "personId": 97,
+    "id": "pessoa-97",
+    "name": "Davi Alcolumbre",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-97.jpg",
+    "initials": "DA"
+  },
+  {
+    "personId": 98,
+    "id": "pessoa-98",
+    "name": "David Almeida",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Deputado%20Estadual%20David%20Almeida%20(Foto%20anterior).jpg?width=900",
+    "initials": "DA"
+  },
+  {
+    "personId": 99,
+    "id": "pessoa-99",
+    "name": "Deltan Dallagnol",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-99.jpg",
+    "initials": "DD"
+  },
+  {
+    "personId": 100,
+    "id": "pessoa-100",
+    "name": "Dias Toffoli",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Toffoli%20aniversario%20da%20constitui%C3%A7%C3%A3o.jpg?width=900",
+    "initials": "DT"
+  },
+  {
+    "personId": 101,
+    "id": "pessoa-101",
+    "name": "Dilma Rousseff",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/04-06-2024%20Reuni%C3%A3o%20com%20a%20Presidente%20do%20Novo%20Banco%20de%20Desenvolvimento%20Dilma%20Rousseff%20(53769684843)%20(cropped).jpg?width=900",
+    "initials": "DR"
+  },
+  {
+    "personId": 102,
+    "id": "pessoa-102",
+    "name": "Diogo Castor de Mattos",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-102.jpg",
+    "initials": "DM"
+  },
+  {
+    "personId": 103,
+    "id": "pessoa-103",
+    "name": "Dom Jaime Spengler",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Spengler%202023.jpg?width=900",
+    "initials": "DS"
+  },
+  {
+    "personId": 104,
+    "id": "pessoa-104",
+    "name": "Duarte Jr.",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-104.jpg",
+    "initials": "DJ"
+  },
+  {
+    "personId": 105,
+    "id": "pessoa-105",
+    "name": "Duda Salabert",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2023-08-01%20CPMI%20do%208%20de%20Janeiro%2003%20(Duda%20Salabert).jpg?width=900",
+    "initials": "DS"
+  },
+  {
+    "personId": 107,
+    "id": "pessoa-107",
+    "name": "Edinho Silva",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Edinho%20Silva-2015%2005%2006.jpg?width=900",
+    "initials": "ES"
+  },
+  {
+    "personId": 108,
+    "id": "pessoa-108",
+    "name": "Edir Macedo",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Edir%20Macedo2007.jpg?width=900",
+    "initials": "EM"
+  },
+  {
+    "personId": 109,
     "id": "edmilson-costa",
     "name": "Edmilson Costa",
     "party": "PCB",
@@ -80,6 +846,2374 @@
     "initials": "EC"
   },
   {
+    "personId": 110,
+    "id": "pessoa-110",
+    "name": "Edson Fachin",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Luiz%20Edson%20Fachin-12-05.2015.jpg?width=900",
+    "initials": "EF"
+  },
+  {
+    "personId": 111,
+    "id": "pessoa-111",
+    "name": "Eduardo Bolsonaro",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Eduardo%20Bolsonaro%20by%20Gage%20Skidmore.jpg?width=900",
+    "initials": "EB"
+  },
+  {
+    "personId": 112,
+    "id": "pessoa-112",
+    "name": "Eduardo Braga",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-112.jpg",
+    "initials": "EB"
+  },
+  {
+    "personId": 113,
+    "id": "pessoa-113",
+    "name": "Eduardo Braide",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2024%20EDUARDO%20BRAIDE%20CANDIDATO%20PREFEITO%20MA%20SAO%20LUIS%20TSE%20(100002092730).jpg?width=900",
+    "initials": "EB"
+  },
+  {
+    "personId": 114,
+    "id": "pessoa-114",
+    "name": "Eduardo Cunha",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Eduardo%20Cunha.jpg?width=900",
+    "initials": "EC"
+  },
+  {
+    "personId": 115,
+    "id": "pessoa-115",
+    "name": "Eduardo Girão",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Senador%20Eduardo%20Gir%C3%A3o.jpg?width=900",
+    "initials": "EG"
+  },
+  {
+    "personId": 116,
+    "id": "pessoa-116",
+    "name": "Eduardo Gomes",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-116.jpg",
+    "initials": "EG"
+  },
+  {
+    "personId": 117,
+    "id": "pessoa-117",
+    "name": "Eduardo Leite",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/09.02.2026%20%E2%80%93%20Eduardo%20Leite%20in%20February%202026%20-%2055087496770%20(3x4).jpg?width=900",
+    "initials": "EL"
+  },
+  {
+    "personId": 118,
+    "id": "pessoa-118",
+    "name": "Eduardo Paes",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Foto%20oficial%20de%20Eduardo%20Paes.jpg?width=900",
+    "initials": "EP"
+  },
+  {
+    "personId": 119,
+    "id": "pessoa-119",
+    "name": "Eduardo Pazuello",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Eduardo%20Pazuello.jpg?width=900",
+    "initials": "EP"
+  },
+  {
+    "personId": 120,
+    "id": "pessoa-120",
+    "name": "Eduardo Pimentel",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Posse%20prefeito%20e%20vice-prefeito%20de%20Curitiba%20(2021-2024)%20(50787720983)%20(cropped).jpg?width=900",
+    "initials": "EP"
+  },
+  {
+    "personId": 121,
+    "id": "pessoa-121",
+    "name": "Eduardo Riedel",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/XIV%20Reuni%C3%A3o%20do%20F%C3%B3rum%20Nacional%20de%20Governadores%20em%20Bras%C3%ADlia%20(52922688344).jpg?width=900",
+    "initials": "ER"
+  },
+  {
+    "personId": 122,
+    "id": "pessoa-122",
+    "name": "Efraim Filho",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-122.jpg",
+    "initials": "EF"
+  },
+  {
+    "personId": 123,
+    "id": "pessoa-123",
+    "name": "Elmano de Freitas",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Elmano%20gov%20ceara%202023.png?width=900",
+    "initials": "EF"
+  },
+  {
+    "personId": 124,
+    "id": "pessoa-124",
+    "name": "Elmar Nascimento",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Elmar%20Nascimento.png?width=900",
+    "initials": "EN"
+  },
+  {
+    "personId": 126,
+    "id": "pessoa-126",
+    "name": "Erika Hilton",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2025-10-08%20CCJ%20-%20Comiss%C3%A3o%20de%20Constitui%C3%A7%C3%A3o%2C%20Justi%C3%A7a%20e%20Cidadania%20(54841482519)%20(Erika%20Hilton).jpg?width=900",
+    "initials": "EH"
+  },
+  {
+    "personId": 127,
+    "id": "pessoa-127",
+    "name": "Erika Marena",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-127.jpg",
+    "initials": "EM"
+  },
+  {
+    "personId": 128,
+    "id": "pessoa-128",
+    "name": "Evandro Leitão",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/CE%202022%20Evandro%20Leit%C3%A3o.jpg?width=900",
+    "initials": "EL"
+  },
+  {
+    "personId": 130,
+    "id": "pessoa-130",
+    "name": "Fabiano Zettel",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Fabiano%20Zettel.jpg?width=900",
+    "initials": "FZ"
+  },
+  {
+    "personId": 131,
+    "id": "pessoa-131",
+    "name": "Fábio Augusto Vieira",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-131.jpg",
+    "initials": "FV"
+  },
+  {
+    "personId": 132,
+    "id": "pessoa-132",
+    "name": "Fábio Faria",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/F%C3%A1bio%20Faria%20em%20abril%20de%202017.jpg?width=900",
+    "initials": "FF"
+  },
+  {
+    "personId": 133,
+    "id": "pessoa-133",
+    "name": "Fábio Luís Lula da Silva (Lulinha)",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-133.jpg",
+    "initials": "FS"
+  },
+  {
+    "personId": 134,
+    "id": "pessoa-134",
+    "name": "Fátima Bezerra",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/F%C3%A1tima%20Bezerra%20in%202023%20(cropped).jpg?width=900",
+    "initials": "FB"
+  },
+  {
+    "personId": 135,
+    "id": "pessoa-135",
+    "name": "Felipe Neto",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Felipe%20Neto%20at%20the%20Lady%20Night%20in%202022%20(01).png?width=900",
+    "initials": "FN"
+  },
+  {
+    "personId": 136,
+    "id": "pessoa-136",
+    "name": "Felipe Nunes",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Felipe%20Nunes%202024.jpg?width=900",
+    "initials": "FN"
+  },
+  {
+    "personId": 138,
+    "id": "pessoa-138",
+    "name": "Fernando Collor de Mello",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Foto%20oficial%20do%20presidente%20Fernando%20Collor%20de%20Melo.%20(38405801411).jpg?width=900",
+    "initials": "FM"
+  },
+  {
+    "personId": 140,
+    "id": "pessoa-140",
+    "name": "Fernando Haddad",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Fernando%20Haddad%20posse%20min.%20da%20Fazenda.jpg?width=900",
+    "initials": "FH"
+  },
+  {
+    "personId": 141,
+    "id": "pessoa-141",
+    "name": "Fernando Henrique Cardoso",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Fernando%20Henrique%20Cardoso%20(1999).jpg?width=900",
+    "initials": "FC"
+  },
+  {
+    "personId": 142,
+    "id": "pessoa-142",
+    "name": "Fernando Schüler",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Fernando%20Sch%C3%BCler.png?width=900",
+    "initials": "FS"
+  },
+  {
+    "personId": 143,
+    "id": "flavio-bolsonaro",
+    "name": "Flávio Bolsonaro",
+    "party": "PL",
+    "vice": "Alfredo Gaspar (PL)",
+    "photo": "/candidates/flavio-bolsonaro.jpg",
+    "initials": "FB"
+  },
+  {
+    "personId": 144,
+    "id": "pessoa-144",
+    "name": "Flávio Dino",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Fl%C3%A1vio%20Dino%20no%20voto%20da%20A%C3%A7%C3%A3o%20Penal%20(AP)%202668%20(cropped).jpg?width=900",
+    "initials": "FD"
+  },
+  {
+    "personId": 145,
+    "id": "pessoa-145",
+    "name": "Francisco Mesquita Neto",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-145.jpg",
+    "initials": "FN"
+  },
+  {
+    "personId": 146,
+    "id": "pessoa-146",
+    "name": "Gabriel Galípolo",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gabriel%20Gal%C3%ADpolo%20in%202023.jpg?width=900",
+    "initials": "GG"
+  },
+  {
+    "personId": 147,
+    "id": "pessoa-147",
+    "name": "Gabriela Hardt",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-147.jpg",
+    "initials": "GH"
+  },
+  {
+    "personId": 148,
+    "id": "pessoa-148",
+    "name": "George André Palermo Santoro",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/George%20Andr%C3%A9%20Palermo%20Santoro.jpg?width=900",
+    "initials": "GS"
+  },
+  {
+    "personId": 149,
+    "id": "pessoa-149",
+    "name": "Geraldo Alckmin",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/08.08.2026%20-%20FOTOS%20OFICIAIS%20-%2055450293534.jpg?width=900",
+    "initials": "GA"
+  },
+  {
+    "personId": 150,
+    "id": "pessoa-150",
+    "name": "Geraldo Luís",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Geraldo%20Luis.jpg?width=900",
+    "initials": "GL"
+  },
+  {
+    "personId": 151,
+    "id": "pessoa-151",
+    "name": "Gilberto Gil",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/22.05.2026%20-%20Gilberto%20Gil%20(cropped).jpg?width=900",
+    "initials": "GG"
+  },
+  {
+    "personId": 152,
+    "id": "pessoa-152",
+    "name": "Gilberto Kassab",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Governo%20do%20Estado%20de%20S%C3%A3o%20Paulo%20-%2052600908378.jpg?width=900",
+    "initials": "GK"
+  },
+  {
+    "personId": 153,
+    "id": "pessoa-153",
+    "name": "Gilmar Mendes",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gilmar%20Mendes.jpg?width=900",
+    "initials": "GM"
+  },
+  {
+    "personId": 154,
+    "id": "pessoa-154",
+    "name": "Gladson Cameli",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gladson%20Cameli%20em%20outubro%20de%202018.jpg?width=900",
+    "initials": "GC"
+  },
+  {
+    "personId": 155,
+    "id": "pessoa-155",
+    "name": "Gleisi Hoffmann",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gleisi%20Hoffmann%20in%202023%20(cropped).jpg?width=900",
+    "initials": "GH"
+  },
+  {
+    "personId": 156,
+    "id": "pessoa-156",
+    "name": "Gorete Pereira",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-156.jpg",
+    "initials": "GP"
+  },
+  {
+    "personId": 157,
+    "id": "pessoa-157",
+    "name": "Guido Mantega",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Guido%20mantega.jpg?width=900",
+    "initials": "GM"
+  },
+  {
+    "personId": 158,
+    "id": "pessoa-158",
+    "name": "Guilherme Boulos",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/(2019-05-01)%201%C2%BA%20de%20Maio%20S%C3%A3o%20Paulo%20064%20Romerito%20Pontes%20(cropped).jpg?width=900",
+    "initials": "GB"
+  },
+  {
+    "personId": 159,
+    "id": "pessoa-159",
+    "name": "Guilherme Derrite",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Retratos%20Oficiais%20-%20Secret%C3%A1rios%20de%20Estado%20de%20S%C3%A3o%20Paulo%20em%202023%2002.jpg?width=900",
+    "initials": "GD"
+  },
+  {
+    "personId": 160,
+    "id": "pessoa-160",
+    "name": "Gustavo Feliciano",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/23.12.2025%20-%20Cerim%C3%B4nia%20de%20transmiss%C3%A3o%20de%20cargo%20e%20posse%20do%20Ministro%20do%20Turismo%2C%20Gustavo%20Feliciano%20(55001712455)%20(cropped).jpg?width=900",
+    "initials": "GF"
+  },
+  {
+    "personId": 161,
+    "id": "pessoa-161",
+    "name": "Gustavo Gayer",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gustavo%20Gayer%20no%20Vlog%20do%20Lisboa%20-2021-02-13.png?width=900",
+    "initials": "GG"
+  },
+  {
+    "personId": 163,
+    "id": "pessoa-163",
+    "name": "Gusttavo Lima",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gustavo%20Lima%202021.jpg?width=900",
+    "initials": "GL"
+  },
+  {
+    "personId": 164,
+    "id": "pessoa-164",
+    "name": "Hamilton Mourão",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Hamilton%20Mour%C3%A3o%20em%2025%20de%20junho%20de%202019%20(2%3B%20recorte).jpg?width=900",
+    "initials": "HM"
+  },
+  {
+    "personId": 165,
+    "id": "pessoa-165",
+    "name": "Hana Ghassan",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2023-06-30%20Medalha%20da%20Ordem%20do%20M%C3%A9rito%20Dom%20Pedro%20II%2010%20(Hana%20Ghassan).jpg?width=900",
+    "initials": "HG"
+  },
+  {
+    "personId": 166,
+    "id": "pessoa-166",
+    "name": "Helder Barbalho",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Helder%20Barbalho%2C%20January%202023%20(cropped).jpg?width=900",
+    "initials": "HB"
+  },
+  {
+    "personId": 167,
+    "id": "pessoa-167",
+    "name": "Hélio Lopes",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-167.jpg",
+    "initials": "HL"
+  },
+  {
+    "personId": 168,
+    "id": "pessoa-168",
+    "name": "Henrique Meirelles",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Henrique%20Meirelles%20-%20World%20Economic%20Forum%20on%20Latin%20America%202011.jpg?width=900",
+    "initials": "HM"
+  },
+  {
+    "personId": 169,
+    "id": "pessoa-169",
+    "name": "Henrique Vorcaro",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-169.jpg",
+    "initials": "HV"
+  },
+  {
+    "personId": 170,
+    "id": "hertz-dias",
+    "name": "Hertz Dias",
+    "party": "PSTU",
+    "vice": "Vanessa Portugal (PSTU)",
+    "photo": "/candidates/hertz-dias.jpg",
+    "initials": "HD"
+  },
+  {
+    "personId": 171,
+    "id": "pessoa-171",
+    "name": "Hugo Motta",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/11%C2%BA%20F%C3%B3rum%20Parlamentar%20do%20Brics%20-%20Brasil%202025%20-%20Entrevista%20Coletiva%20(54569126271).jpg?width=900",
+    "initials": "HM"
+  },
+  {
+    "personId": 172,
+    "id": "pessoa-172",
+    "name": "Humberto Costa",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-172.jpg",
+    "initials": "HC"
+  },
+  {
+    "personId": 173,
+    "id": "pessoa-173",
+    "name": "Ian Neves",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-173.jpg",
+    "initials": "IN"
+  },
+  {
+    "personId": 174,
+    "id": "pessoa-174",
+    "name": "Ibaneis Rocha",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ibaneis%20Rocha%2C%20January%202023%20(cropped).jpg?width=900",
+    "initials": "IR"
+  },
+  {
+    "personId": 175,
+    "id": "pessoa-175",
+    "name": "Igor Normando",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Igor%20Normando%20em%20evento%20na%20UNAMA%20(2023).png?width=900",
+    "initials": "IN"
+  },
+  {
+    "personId": 176,
+    "id": "pessoa-176",
+    "name": "Isabel Cristina Groba Vieira",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-176.jpg",
+    "initials": "IV"
+  },
+  {
+    "personId": 177,
+    "id": "pessoa-177",
+    "name": "Isnaldo Bulhões Jr.",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Isnaldo%20Bulh%C3%B5es%20(cropped).jpg?width=900",
+    "initials": "IJ"
+  },
+  {
+    "personId": 178,
+    "id": "pessoa-178",
+    "name": "Ivan Valente",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ivan%20valente.PNG?width=900",
+    "initials": "IV"
+  },
+  {
+    "personId": 179,
+    "id": "pessoa-179",
+    "name": "Jader Barbalho Filho",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/02.01.2023%20-%20Posse%20de%20Jader%20Filho%2C%20Ministro%20de%20Estado%20das%20Cidades%20(52626809793)%20(cropped).jpg?width=900",
+    "initials": "JF"
+  },
+  {
+    "personId": 180,
+    "id": "pessoa-180",
+    "name": "Jair Messias Bolsonaro",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Presidente%20Jair%20Messias%20Bolsonaro.jpg?width=900",
+    "initials": "JB"
+  },
+  {
+    "personId": 181,
+    "id": "pessoa-181",
+    "name": "Janine Mello",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-181.jpg",
+    "initials": "JM"
+  },
+  {
+    "personId": 182,
+    "id": "pessoa-182",
+    "name": "Janja da Silva",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Janja%20da%20Silva%20(cropped).jpg?width=900",
+    "initials": "JS"
+  },
+  {
+    "personId": 183,
+    "id": "pessoa-183",
+    "name": "Januário Paludo",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-183.jpg",
+    "initials": "JP"
+  },
+  {
+    "personId": 184,
+    "id": "pessoa-184",
+    "name": "Jaques Wagner",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Senadores%20da%2056%C2%AA%20Legislatura%20-%20Jaques%20Wagner%20(40052644823).jpg?width=900",
+    "initials": "JW"
+  },
+  {
+    "personId": 185,
+    "id": "pessoa-185",
+    "name": "Jean Wyllys",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-185.jpg",
+    "initials": "JW"
+  },
+  {
+    "personId": 186,
+    "id": "pessoa-186",
+    "name": "Jerônimo Rodrigues",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/PGP%20Bacia%20do%20Jacu%C3%ADpe%20em%20Capim%20Grosso%20(52241179839)%20(cropped%202).jpg?width=900",
+    "initials": "JR"
+  },
+  {
+    "personId": 187,
+    "id": "pessoa-187",
+    "name": "Jerusa Burmann Viecili",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-187.jpg",
+    "initials": "JV"
+  },
+  {
+    "personId": 188,
+    "id": "pessoa-188",
+    "name": "João Accioly",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-188.jpg",
+    "initials": "JA"
+  },
+  {
+    "personId": 189,
+    "id": "pessoa-189",
+    "name": "João Azevêdo",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Jo%C3%A3o%20Azev%C3%AAdo%2C%20May%202023%20(cropped).jpg?width=900",
+    "initials": "JA"
+  },
+  {
+    "personId": 190,
+    "id": "pessoa-190",
+    "name": "João Campos",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Jo%C3%A3o%20Henrique%20Campos%2C%20January%202025%20(cropped).jpg?width=900",
+    "initials": "JC"
+  },
+  {
+    "personId": 191,
+    "id": "pessoa-191",
+    "name": "João Carlos Mansur",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-191.jpg",
+    "initials": "JM"
+  },
+  {
+    "personId": 192,
+    "id": "pessoa-192",
+    "name": "João Carlos Saad",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/03%2002%202020%20Visita%20%C3%A0s%20instala%C3%A7%C3%B5es%20da%20TV%20Band%20S%C3%A3o%20Paulo%20SP%20(49483778758)%20(cropped).jpg?width=900",
+    "initials": "JS"
+  },
+  {
+    "personId": 193,
+    "id": "pessoa-193",
+    "name": "João Paulo Capobianco",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-193.jpg",
+    "initials": "JC"
+  },
+  {
+    "personId": 194,
+    "id": "pessoa-194",
+    "name": "João Pedro Gebran Neto",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-194.jpg",
+    "initials": "JN"
+  },
+  {
+    "personId": 195,
+    "id": "pessoa-195",
+    "name": "João Pedro Stédile",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Jo%C3%A3o%20Pedro%20St%C3%A9dile.jpg?width=900",
+    "initials": "JS"
+  },
+  {
+    "personId": 196,
+    "id": "pessoa-196",
+    "name": "João Roberto Marinho",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-196.jpg",
+    "initials": "JM"
+  },
+  {
+    "personId": 197,
+    "id": "pessoa-197",
+    "name": "Joaquim Barbosa",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Joaquim%20barbosa%20stf.jpg?width=900",
+    "initials": "JB"
+  },
+  {
+    "personId": 198,
+    "id": "pessoa-198",
+    "name": "Jones Manoel",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Jones%20Manoel.jpg?width=900",
+    "initials": "JM"
+  },
+  {
+    "personId": 199,
+    "id": "pessoa-199",
+    "name": "Jorge Messias",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/01.01.2023%20-%20Posse%20de%20Jorge%20Messias%2C%20Ministro-chefe%20da%20AGU%20(52656084176)%20(cropped).jpg?width=900",
+    "initials": "JM"
+  },
+  {
+    "personId": 200,
+    "id": "pessoa-200",
+    "name": "Jorge Seif",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Senadores%20da%2057%C2%AA%20Legislatura%20(52689452150).jpg?width=900",
+    "initials": "JS"
+  },
+  {
+    "personId": 201,
+    "id": "pessoa-201",
+    "name": "Jorginho Mello",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-201.jpg",
+    "initials": "JM"
+  },
+  {
+    "personId": 202,
+    "id": "pessoa-202",
+    "name": "José Guimarães",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-202.jpg",
+    "initials": "JG"
+  },
+  {
+    "personId": 203,
+    "id": "pessoa-203",
+    "name": "José Luiz Datena",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Filia%C3%A7%C3%A3o%20do%20Datena%2019%2012%202023%20-%20Foto%20Chico%20Ferreira%20(53407967727)%20(cropped).jpg?width=900",
+    "initials": "JD"
+  },
+  {
+    "personId": 204,
+    "id": "pessoa-204",
+    "name": "José Múcio Monteiro",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Foto%20Oficial%20do%20Senhor%20Ministro%20da%20Defesa%20Jos%C3%A9%20M%C3%BAcio%20Monteiro%20Filho%20(52624967260).jpg?width=900",
+    "initials": "JM"
+  },
+  {
+    "personId": 205,
+    "id": "pessoa-205",
+    "name": "José Roberto Arruda",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Joserobertoarruda2006.jpg?width=900",
+    "initials": "JA"
+  },
+  {
+    "personId": 206,
+    "id": "pessoa-206",
+    "name": "José Sarney",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Jos%C3%A9%20Sarney%2C%20June%202024.jpg?width=900",
+    "initials": "JS"
+  },
+  {
+    "personId": 207,
+    "id": "pessoa-207",
+    "name": "José Wellington Bezerra da Costa",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-207.jpg",
+    "initials": "JC"
+  },
+  {
+    "personId": 208,
+    "id": "pessoa-208",
+    "name": "Josimar Maranhãozinho",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Dep%20Josimar%20Maranh%C3%A3ozinho.jpg?width=900",
+    "initials": "JM"
+  },
+  {
+    "personId": 209,
+    "id": "pessoa-209",
+    "name": "Josué Gomes da Silva",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-209.jpg",
+    "initials": "JS"
+  },
+  {
+    "personId": 210,
+    "id": "pessoa-210",
+    "name": "Júlio Cesar de Arruda",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/GenArruda.jpg?width=900",
+    "initials": "JA"
+  },
+  {
+    "personId": 211,
+    "id": "pessoa-211",
+    "name": "Júlio Delgado",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/JulioDelgado%20(cropped).jpg?width=900",
+    "initials": "JD"
+  },
+  {
+    "personId": 212,
+    "id": "pessoa-212",
+    "name": "Katia Abreu",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Visitas.Visitantes%20(33153798354)%20(K%C3%A1tia%20Abreu).jpg?width=900",
+    "initials": "KA"
+  },
+  {
+    "personId": 213,
+    "id": "pessoa-213",
+    "name": "Kim Kataguiri",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/CCJ%20-%20Comiss%C3%A3o%20de%20Constitui%C3%A7%C3%A3o%2C%20Justi%C3%A7a%20e%20Cidadania%20-%2045921653432%20(cropped).jpg?width=900",
+    "initials": "KK"
+  },
+  {
+    "personId": 214,
+    "id": "pessoa-214",
+    "name": "Laura Gonçalves Tessler",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-214.jpg",
+    "initials": "LT"
+  },
+  {
+    "personId": 215,
+    "id": "pessoa-215",
+    "name": "Leandro Almada da Costa",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-215.jpg",
+    "initials": "LC"
+  },
+  {
+    "personId": 216,
+    "id": "pessoa-216",
+    "name": "Leandro Paulsen",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-216.jpg",
+    "initials": "LP"
+  },
+  {
+    "personId": 217,
+    "id": "pessoa-217",
+    "name": "Leila Barros",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-217.jpg",
+    "initials": "LB"
+  },
+  {
+    "personId": 219,
+    "id": "pessoa-219",
+    "name": "Leonardo Avalanche",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Leonardo%20Avalanche.jpg?width=900",
+    "initials": "LA"
+  },
+  {
+    "personId": 220,
+    "id": "pessoa-220",
+    "name": "Leonardo Barchini",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Leonardo%20Barchini.jpg?width=900",
+    "initials": "LB"
+  },
+  {
+    "personId": 221,
+    "id": "pessoa-221",
+    "name": "Leonardo Pericles",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/L%C3%A9o%20Pericles.jpg?width=900",
+    "initials": "LP"
+  },
+  {
+    "personId": 222,
+    "id": "pessoa-222",
+    "name": "Lorenzo Pazolini",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2024%20LORENZO%20PAZOLINI%20CANDIDATO%20PREFEITO%20ES%20VITORIA%20TSE%20(80002366610).jpg?width=900",
+    "initials": "LP"
+  },
+  {
+    "personId": 223,
+    "id": "pessoa-223",
+    "name": "Lucas Pavanato",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-223.jpg",
+    "initials": "LP"
+  },
+  {
+    "personId": 224,
+    "id": "pessoa-224",
+    "name": "Lucas Ribeiro",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Lucas%20Ribeiro%20Novais%2C%20pol%C3%ADtico%20brasileiro.jpg?width=900",
+    "initials": "LR"
+  },
+  {
+    "personId": 225,
+    "id": "pessoa-225",
+    "name": "Luciano Hang",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/07%2005%202021%20Cerim%C3%B4nia%20de%20Inaugura%C3%A7%C3%A3o%20da%20ponte%20sobre%20o%20Rio%20Madeira%2C%20BR-364%2C%20Distrito%20de%20Abun%C3%A3%20(51164250821)%20(cropped).jpg?width=900",
+    "initials": "LH"
+  },
+  {
+    "personId": 226,
+    "id": "pessoa-226",
+    "name": "Luciano Huck",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Luciano%20Huck%20in%20April%202019.jpg?width=900",
+    "initials": "LH"
+  },
+  {
+    "personId": 227,
+    "id": "pessoa-227",
+    "name": "Luis Felipe Salomão",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2024-08-22%20DPGF%20Leonardo%20Magalhaes%20na%20posse%20do%20novo%20Presidente%20do%20STJ%2C%20Ministro%20Herman%20Benjamin%20e%20o%20do%20novo%20Vice-Presidente%2C%20Ministro%20Lu%C3%ADs%20Felipe%20Salom%C3%A3o%2C%2050%20(cropped).jpg?width=900",
+    "initials": "LS"
+  },
+  {
+    "personId": 228,
+    "id": "pessoa-228",
+    "name": "Luís Roberto Barroso",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Luis%20Roberto%20Barroso%202014.jpg?width=900",
+    "initials": "LB"
+  },
+  {
+    "personId": 230,
+    "id": "pessoa-230",
+    "name": "Luiz Frias",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/LuisFrias%20(cropped).jpg?width=900",
+    "initials": "LF"
+  },
+  {
+    "personId": 231,
+    "id": "pessoa-231",
+    "name": "Luiz Fux",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/19.12.2025%20-%20Luiz%20Fux.jpg?width=900",
+    "initials": "LF"
+  },
+  {
+    "personId": 232,
+    "id": "lula",
+    "name": "Luiz Inácio Lula da Silva",
+    "party": "PT",
+    "vice": "Geraldo Alckmin (PSB)",
+    "photo": "/candidates/lula.jpg",
+    "initials": "LS"
+  },
+  {
+    "personId": 233,
+    "id": "pessoa-233",
+    "name": "Luiz Marinho",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Luiz%20Marinho.%20CDH%20-%20Comiss%C3%A3o%20de%20Direitos%20Humanos%20e%20Legisla%C3%A7%C3%A3o%20Participativa%20(cropped).jpg?width=900",
+    "initials": "LM"
+  },
+  {
+    "personId": 234,
+    "id": "pessoa-234",
+    "name": "Luiz Philippe Vieira de Mello Filho",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Plen%C3%A1rio%20do%20Senado%20-%2054820218794.jpg?width=900",
+    "initials": "LF"
+  },
+  {
+    "personId": 236,
+    "id": "pessoa-236",
+    "name": "Luiza Erundina",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2020%20LUIZA%20ERUNDINA%20CANDIDATO%20VICE-PREFEITO%20SP%20SAO%20PAULO%20TSE%20(250000746935).jpg?width=900",
+    "initials": "LE"
+  },
+  {
+    "personId": 237,
+    "id": "pessoa-237",
+    "name": "Luiza Helena Trajano",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Magazine%20Luiza%20Luiza%20Helena%20Trajano%20(51387211323)%20(cropped).jpg?width=900",
+    "initials": "LT"
+  },
+  {
+    "personId": 238,
+    "id": "pessoa-238",
+    "name": "Macaé Evaristo",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Maca%C3%A9%20Evaristo%201.jpg?width=900",
+    "initials": "ME"
+  },
+  {
+    "personId": 239,
+    "id": "pessoa-239",
+    "name": "Magno Malta",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Foto%20oficial%20de%20Magno%20Malta.jpg?width=900",
+    "initials": "MM"
+  },
+  {
+    "personId": 240,
+    "id": "pessoa-240",
+    "name": "Mailza Assis",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Mailza%20Gomes%20em%20outubro%20de%202018%20(1).jpg?width=900",
+    "initials": "MA"
+  },
+  {
+    "personId": 241,
+    "id": "pessoa-241",
+    "name": "Marcel van Hattem",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-241.jpg",
+    "initials": "MH"
+  },
+  {
+    "personId": 242,
+    "id": "pessoa-242",
+    "name": "Marcelo Crivella",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-242.jpg",
+    "initials": "MC"
+  },
+  {
+    "personId": 243,
+    "id": "pessoa-243",
+    "name": "Marcelo Freixo",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/MG%203467%20(52376036017)%20(cropped%203).jpg?width=900",
+    "initials": "MF"
+  },
+  {
+    "personId": 244,
+    "id": "pessoa-244",
+    "name": "Márcia Lopes",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-244.jpg",
+    "initials": "ML"
+  },
+  {
+    "personId": 245,
+    "id": "pessoa-245",
+    "name": "Márcio Elias Rosa",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/M%C3%A1rcio%20Fernando%20Elias%20Rosa.jpg?width=900",
+    "initials": "MR"
+  },
+  {
+    "personId": 246,
+    "id": "pessoa-246",
+    "name": "Marco Aurélio Mello",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Marco%20Aur%C3%A9lio%20Ministro%20stf.jpg?width=900",
+    "initials": "MM"
+  },
+  {
+    "personId": 247,
+    "id": "pessoa-247",
+    "name": "Marco Edson Gonçalves Dias (G. Dias)",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/02.01.2023%20-%20Posse%20de%20Marco%20Edson%20Gon%C3%A7alves%20Dias%2C%20Ministro%20de%20Estado%20do%20GSI%20(52626569129)%20(cropped).jpg?width=900",
+    "initials": "MD"
+  },
+  {
+    "personId": 248,
+    "id": "pessoa-248",
+    "name": "Marco Feliciano",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/CPMI%20-%208%20de%20Janeiro%20-%20Comiss%C3%A3o%20Parlamentar%20Mista%20de%20Inqu%C3%A9rito%20dos%20Atos%20de%208%20de%20Janeiro%20de%202023%20(52989106736).jpg?width=900",
+    "initials": "MF"
+  },
+  {
+    "personId": 249,
+    "id": "pessoa-249",
+    "name": "Marcos Pereira",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Marcos%20Antonio%20Pereira.jpg?width=900",
+    "initials": "MP"
+  },
+  {
+    "personId": 250,
+    "id": "pessoa-250",
+    "name": "Marcos Pontes",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Marcos%20Pontes.jpg?width=900",
+    "initials": "MP"
+  },
+  {
+    "personId": 251,
+    "id": "pessoa-251",
+    "name": "Marcos Rocha",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Marcos%20Rocha%20em%20abril%20de%202019.jpg?width=900",
+    "initials": "MR"
+  },
+  {
+    "personId": 252,
+    "id": "pessoa-252",
+    "name": "Maria do Rosário",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Maria%20do%20rosario%202.jpg?width=900",
+    "initials": "MR"
+  },
+  {
+    "personId": 253,
+    "id": "pessoa-253",
+    "name": "Maria Elena Lourenço Passos",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-253.jpg",
+    "initials": "MP"
+  },
+  {
+    "personId": 255,
+    "id": "pessoa-255",
+    "name": "Marina Helena",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Marina%20Helena%20home.jpg?width=900",
+    "initials": "MH"
+  },
+  {
+    "personId": 256,
+    "id": "pessoa-256",
+    "name": "Marina Silva",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/01.01.2023%20-%20Posse%20de%20Marina%20Silva%2C%20Ministra%20de%20Estado%20do%20Meio%20Ambiente%20(52623748361)%20(cropped).jpg?width=900",
+    "initials": "MS"
+  },
+  {
+    "personId": 257,
+    "id": "pessoa-257",
+    "name": "Mário Fernandes",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/M%C3%A1rio%20Fernandes%202019.jpg?width=900",
+    "initials": "MF"
+  },
+  {
+    "personId": 258,
+    "id": "pessoa-258",
+    "name": "Mário Frias",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/M%C3%A1rio%20Frias%20em%202020.jpg?width=900",
+    "initials": "MF"
+  },
+  {
+    "personId": 259,
+    "id": "pessoa-259",
+    "name": "Martha Graeff",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-259.jpg",
+    "initials": "MG"
+  },
+  {
+    "personId": 260,
+    "id": "pessoa-260",
+    "name": "Mateus Simões",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Mateus%20Sim%C3%B5es%2C%20April%202024%20(cropped).jpg?width=900",
+    "initials": "MS"
+  },
+  {
+    "personId": 261,
+    "id": "pessoa-261",
+    "name": "Maurício Camisotti",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-261.jpg",
+    "initials": "MC"
+  },
+  {
+    "personId": 262,
+    "id": "pessoa-262",
+    "name": "Maurício Souza",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-262.jpg",
+    "initials": "MS"
+  },
+  {
+    "personId": 263,
+    "id": "pessoa-263",
+    "name": "Maurício Valeixo",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-263.jpg",
+    "initials": "MV"
+  },
+  {
+    "personId": 264,
+    "id": "pessoa-264",
+    "name": "Mauro Benevides Filho",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Mauro%20Benevides%20Filho%20(13).jpg?width=900",
+    "initials": "MF"
+  },
+  {
+    "personId": 265,
+    "id": "pessoa-265",
+    "name": "Mauro Cid",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Mauro%20Cid%2C%202023.jpg?width=900",
+    "initials": "MC"
+  },
+  {
+    "personId": 266,
+    "id": "pessoa-266",
+    "name": "Mauro Mendes",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2019%20Reuni%C3%A3o%20com%20Ministros%20da%20Casa%20Civil%2C%20Defesa%2C%20Rela%C3%A7%C3%B5es%20Exteriores%2C%20Meio%20Ambiente%2C%20Secretaria-Geral%2C%20Secretaria%20de%20Governo%2C%20GSI%20e%20Governadores%20da%20Amaz%C3%B4nia%20Legal%20-%2048630502003%20(cropped)%20Mauro%20Mendes.jpg?width=900",
+    "initials": "MM"
+  },
+  {
+    "personId": 267,
+    "id": "pessoa-267",
+    "name": "Mauro Vieira",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Mauro%20Vieira%20em%202023.jpeg?width=900",
+    "initials": "MV"
+  },
+  {
+    "personId": 268,
+    "id": "pessoa-268",
+    "name": "Mendonça Filho",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-268.jpg",
+    "initials": "MF"
+  },
+  {
+    "personId": 269,
+    "id": "pessoa-269",
+    "name": "Michel Temer",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Presidente%20Michel%20Temer%20(foto%20oficial)%20-%20cortada.jpg?width=900",
+    "initials": "MT"
+  },
+  {
+    "personId": 270,
+    "id": "pessoa-270",
+    "name": "Michelle Bolsonaro",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Michelle%20Bolsonaro%20em%207%20de%20setembro%20de%202022.jpg?width=900",
+    "initials": "MB"
+  },
+  {
+    "personId": 271,
+    "id": "pessoa-271",
+    "name": "Miriam Belchior",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Miriam%20Belchior%20(24-11-2010).jpg?width=900",
+    "initials": "MB"
+  },
+  {
+    "personId": 272,
+    "id": "pessoa-272",
+    "name": "Miriam Leitão",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/CDD%20-%20Comiss%C3%A3o%20de%20Defesa%20da%20Democracia%20(53847128122)%20(cropped).jpg?width=900",
+    "initials": "ML"
+  },
+  {
+    "personId": 273,
+    "id": "pessoa-273",
+    "name": "Nando Moura",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-273.jpg",
+    "initials": "NM"
+  },
+  {
+    "personId": 274,
+    "id": "pessoa-274",
+    "name": "Nelson Tanure",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-274.jpg",
+    "initials": "NT"
+  },
+  {
+    "personId": 275,
+    "id": "pessoa-275",
+    "name": "Neymar Jr.",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Neymar%20Junior%20Brazil%20V%20Morocco%2013%20June%202026-40.jpg?width=900",
+    "initials": "NJ"
+  },
+  {
+    "personId": 276,
+    "id": "pessoa-276",
+    "name": "Nikolas Ferreira",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Nikolas%20Ferreira%20in%202023%20(cropped).jpg?width=900",
+    "initials": "NF"
+  },
+  {
+    "personId": 277,
+    "id": "pessoa-277",
+    "name": "Nunes Marques",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Nunes%20Marques%2C%20February%202025%20(cropped).jpg?width=900",
+    "initials": "NM"
+  },
+  {
+    "personId": 278,
+    "id": "pessoa-278",
+    "name": "Omar Aziz",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-278.jpg",
+    "initials": "OA"
+  },
+  {
+    "personId": 279,
+    "id": "pessoa-279",
+    "name": "Orlando Martello Júnior",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-279.jpg",
+    "initials": "OJ"
+  },
+  {
+    "personId": 280,
+    "id": "pessoa-280",
+    "name": "Orlando Silva",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-280.jpg",
+    "initials": "OS"
+  },
+  {
+    "personId": 281,
+    "id": "pessoa-281",
+    "name": "Otaviano Pivetta",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Otaviano%20Pivetta%20out%202022.jpg?width=900",
+    "initials": "OP"
+  },
+  {
+    "personId": 282,
+    "id": "pessoa-282",
+    "name": "Otto Alencar",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Foto%20oficial%20de%20Otto%20Alencar.jpg?width=900",
+    "initials": "OA"
+  },
+  {
+    "personId": 283,
+    "id": "pessoa-283",
+    "name": "Pablo Marçal",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Pablo%20Mar%C3%A7al%20(cropped).png?width=900",
+    "initials": "PM"
+  },
+  {
+    "personId": 284,
+    "id": "pessoa-284",
+    "name": "Pastor Gil",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Dep%20Pastor%20Gil.jpg?width=900",
+    "initials": "PG"
+  },
+  {
+    "personId": 285,
+    "id": "pessoa-285",
+    "name": "Paulo Dantas",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Paulo%20Dantas%20-%20Deputado%20Estadual.jpg?width=900",
+    "initials": "PD"
+  },
+  {
+    "personId": 286,
+    "id": "pessoa-286",
+    "name": "Paulo Figueiredo",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Paulo%20Figueiredo%20(cropped).jpg?width=900",
+    "initials": "PF"
+  },
+  {
+    "personId": 287,
+    "id": "pessoa-287",
+    "name": "Paulo Gonet",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Paulo%20Gustavo%20Gonet%20Branco%20.jpg?width=900",
+    "initials": "PG"
+  },
+  {
+    "personId": 288,
+    "id": "pessoa-288",
+    "name": "Paulo Guedes",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Jair%20Bolsonaro%20e%20Paulo%20Guedes%20em%20solenidade%20(cropped).jpg?width=900",
+    "initials": "PG"
+  },
+  {
+    "personId": 289,
+    "id": "pessoa-289",
+    "name": "Paulo Henrique Bezerra Rodrigues Costa",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-289.jpg",
+    "initials": "PC"
+  },
+  {
+    "personId": 290,
+    "id": "pessoa-290",
+    "name": "Paulo Henrique Perna Cordeiro",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-290.jpg",
+    "initials": "PC"
+  },
+  {
+    "personId": 291,
+    "id": "pessoa-291",
+    "name": "Paulo Jorge Fernandes da Hora",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-291.jpg",
+    "initials": "PH"
+  },
+  {
+    "personId": 292,
+    "id": "pessoa-292",
+    "name": "Paulo Marinho",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Paulo%20Marinho%20em%202018.jpg?width=900",
+    "initials": "PM"
+  },
+  {
+    "personId": 293,
+    "id": "pessoa-293",
+    "name": "Paulo Paim",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Foto%20oficial%20de%20Paulo%20Paim.jpg?width=900",
+    "initials": "PP"
+  },
+  {
+    "personId": 294,
+    "id": "pessoa-294",
+    "name": "Paulo Sergio Neves de Souza",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-294.jpg",
+    "initials": "PS"
+  },
+  {
+    "personId": 295,
+    "id": "pessoa-295",
+    "name": "Paulo Sérgio Nogueira de Oliveira",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2021-03-31%20Encontro%20com%20os%20novos%20comandantes%20das%20For%C3%A7as%20Armadas%20-%2051086752341%20(cropped).jpg?width=900",
+    "initials": "PO"
+  },
+  {
+    "personId": 296,
+    "id": "pessoa-296",
+    "name": "Paulo Teixeira",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/02.01.2023%20-%20Posse%20de%20Paulo%20Teixeira%2C%20Ministro%20de%20Estado%20de%20Estado%20do%20Desenvolvimento%20Agr%C3%A1rio%20(52626408096)%20(cropped).jpg?width=900",
+    "initials": "PT"
+  },
+  {
+    "personId": 297,
+    "id": "pessoa-297",
+    "name": "Pedro Lupion",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Pedro%20Lupion%20(45178901555).jpg?width=900",
+    "initials": "PL"
+  },
+  {
+    "personId": 298,
+    "id": "pessoa-298",
+    "name": "Pedro Paulo",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Pedro%20Paulo%2C%20August%202024.jpg?width=900",
+    "initials": "PP"
+  },
+  {
+    "personId": 299,
+    "id": "pessoa-299",
+    "name": "Rachel Barros de Oliveira",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-299.jpg",
+    "initials": "RO"
+  },
+  {
+    "personId": 300,
+    "id": "pessoa-300",
+    "name": "Rachel Sheherazade",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Rachel%20Sheherazade.png?width=900",
+    "initials": "RS"
+  },
+  {
+    "personId": 301,
+    "id": "pessoa-301",
+    "name": "Rafael Fonteles",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Rafael%20Fonteles%20(Foto%20Oficial).jpg?width=900",
+    "initials": "RF"
+  },
+  {
+    "personId": 302,
+    "id": "pessoa-302",
+    "name": "Randolfe Rodrigues",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Senadores%20da%2056%C2%AA%20Legislatura%20-%20Randolfe%20Rodrigues%20(46149534405).jpg?width=900",
+    "initials": "RR"
+  },
+  {
+    "personId": 303,
+    "id": "pessoa-303",
+    "name": "Raquel Brício",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2026%20RAQUEL%20BR%C3%8DCIO%20CANDIDATA%20VICE-PRESIDENTE%20TSE%20(280002538812).jpg?width=900",
+    "initials": "RB"
+  },
+  {
+    "personId": 304,
+    "id": "pessoa-304",
+    "name": "Raquel Dodge",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Raquel%20Dodge.jpg?width=900",
+    "initials": "RD"
+  },
+  {
+    "personId": 305,
+    "id": "pessoa-305",
+    "name": "Raquel Lyra",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Raquel%20Lyra%2C%20June%202023.jpg?width=900",
+    "initials": "RL"
+  },
+  {
+    "personId": 306,
+    "id": "pessoa-306",
+    "name": "Ratinho Júnior",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ratinho%20J%C3%BAnior%20as%20governor%20of%20Paran%C3%A1%2C%20January%202023%20(cropped).jpg?width=900",
+    "initials": "RJ"
+  },
+  {
+    "personId": 307,
+    "id": "pessoa-307",
+    "name": "Reinaldo Azevedo",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/02.03.2023%20-%20Entrevista%20ao%20jornalista%20Reinaldo%20Azevedo%20(52722706645)%20(cropped).jpg?width=900",
+    "initials": "RA"
+  },
+  {
+    "personId": 308,
+    "id": "pessoa-308",
+    "name": "Renan Calheiros",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Senador%20Renan%20Calheiros%20MDB%20-%20AL.jpg?width=900",
+    "initials": "RC"
+  },
+  {
+    "personId": 309,
+    "id": "pessoa-309",
+    "name": "Renan Filho",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Senadores%20da%2057%C2%AA%20Legislatura%20(52689452405).jpg?width=900",
+    "initials": "RF"
+  },
+  {
+    "personId": 310,
+    "id": "renan-santos",
+    "name": "Renan Santos",
+    "party": "Missão",
+    "vice": "Aroldo Medina (Missão)",
+    "photo": "/candidates/renan-santos.jpg",
+    "initials": "RS"
+  },
+  {
+    "personId": 311,
+    "id": "pessoa-311",
+    "name": "Renato Casagrande",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Renato%20Casagrande%20em%20janeiro%20de%202017.jpg?width=900",
+    "initials": "RC"
+  },
+  {
+    "personId": 312,
+    "id": "pessoa-312",
+    "name": "Ricardo Alban",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ricardo%20Alban.jpg?width=900",
+    "initials": "RA"
+  },
+  {
+    "personId": 313,
+    "id": "pessoa-313",
+    "name": "Ricardo Ferraço",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-313.jpg",
+    "initials": "RF"
+  },
+  {
+    "personId": 314,
+    "id": "pessoa-314",
+    "name": "Ricardo Lewandowski",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ricardo%20Lewandowski%202011.jpg?width=900",
+    "initials": "RL"
+  },
+  {
+    "personId": 315,
+    "id": "pessoa-315",
+    "name": "Ricardo Nunes",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ricardo%20Nunes%2C%20December%202024.jpg?width=900",
+    "initials": "RN"
+  },
+  {
+    "personId": 316,
+    "id": "pessoa-316",
+    "name": "Ricardo Salles",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ricardo%20Salles%20em%208%20de%20agosto%20de%202019%20(1).jpg?width=900",
+    "initials": "RS"
+  },
+  {
+    "personId": 317,
+    "id": "pessoa-317",
+    "name": "Ricardo Villas Bôas Cueva",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Ricardo%20Villas%20B%C3%B4as%20Cueva.jpg?width=900",
+    "initials": "RC"
+  },
+  {
+    "personId": 318,
+    "id": "pessoa-318",
+    "name": "Roberson Pozzetti",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-318.jpg",
+    "initials": "RP"
+  },
+  {
+    "personId": 319,
+    "id": "pessoa-319",
+    "name": "Roberta Luchsinger",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-319.jpg",
+    "initials": "RL"
+  },
+  {
+    "personId": 321,
+    "id": "pessoa-321",
+    "name": "Roberto Campos Neto",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Roberto%20Campos%20Neto.jpg?width=900",
+    "initials": "RN"
+  },
+  {
+    "personId": 322,
+    "id": "pessoa-322",
+    "name": "Roberto Cidade",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Presidente%20da%20ALEAM.jpg?width=900",
+    "initials": "RC"
+  },
+  {
+    "personId": 323,
+    "id": "pessoa-323",
+    "name": "Roberto Setúbal",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-323.jpg",
+    "initials": "RS"
+  },
+  {
+    "personId": 324,
+    "id": "pessoa-324",
+    "name": "Robson Rodovalho",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-324.jpg",
+    "initials": "RR"
+  },
+  {
+    "personId": 325,
+    "id": "pessoa-325",
+    "name": "Rodrigo Constantino",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Rodrigo%20Constantino%20no%20Democracia%20na%20Teia%2C%20em%202020.jpg?width=900",
+    "initials": "RC"
+  },
+  {
+    "personId": 326,
+    "id": "pessoa-326",
+    "name": "Rodrigo Janot",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-326.jpg",
+    "initials": "RJ"
+  },
+  {
+    "personId": 327,
+    "id": "pessoa-327",
+    "name": "Rodrigo Manga",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2024%20RODRIGO%20MANGA%20CANDIDATO%20PREFEITO%20SP%20SOROCABA%20TSE%20(250001997217).jpg?width=900",
+    "initials": "RM"
+  },
+  {
+    "personId": 328,
+    "id": "pessoa-328",
+    "name": "Rodrigo Pacheco",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/24.09.2024%20-%20Encontro%20com%20o%20Secret%C3%A1rio-Geral%20das%20Na%C3%A7%C3%B5es%20Unidas%2C%20Ant%C3%B3nio%20Guterres%20(54018352041)%20(Rodrigo%20Pacheco).jpg?width=900",
+    "initials": "RP"
+  },
+  {
+    "personId": 329,
+    "id": "pessoa-329",
+    "name": "Rogério Carvalho",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-329.jpg",
+    "initials": "RC"
+  },
+  {
+    "personId": 330,
+    "id": "pessoa-330",
+    "name": "Rogério Galloro",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-330.jpg",
+    "initials": "RG"
+  },
+  {
+    "personId": 331,
+    "id": "pessoa-331",
+    "name": "Rogério Marinho",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-331.jpg",
+    "initials": "RM"
+  },
+  {
+    "personId": 332,
+    "id": "pessoa-332",
+    "name": "Romário",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Senadores%20da%2057%C2%AA%20Legislatura%20(52689451805).jpg?width=900",
+    "initials": "R"
+  },
+  {
+    "personId": 333,
+    "id": "zema",
+    "name": "Romeu Zema",
+    "party": "Novo",
+    "vice": "Eduardo Girão (Novo)",
+    "photo": "/candidates/zema.jpg",
+    "initials": "RZ"
+  },
+  {
+    "personId": 334,
+    "id": "caiado",
+    "name": "Ronaldo Caiado",
+    "party": "PSD",
+    "vice": "Gilberto Kassab (PSD)",
+    "photo": "/candidates/caiado.jpg",
+    "initials": "RC"
+  },
+  {
+    "personId": 335,
+    "id": "pessoa-335",
+    "name": "Rosângela Moro",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-335.jpg",
+    "initials": "RM"
+  },
+  {
+    "personId": 336,
+    "id": "pessoa-336",
+    "name": "Rui Costa",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Rui%20Costa%202023.jpg?width=900",
+    "initials": "RC"
+  },
+  {
+    "personId": 337,
+    "id": "rui-costa-pimenta",
+    "name": "Rui Costa Pimenta",
+    "party": "PCO",
+    "vice": "Antônio Carlos (PCO)",
+    "photo": "/candidates/rui-costa-pimenta.jpg",
+    "initials": "RP"
+  },
+  {
+    "personId": 338,
+    "id": "pessoa-338",
+    "name": "Sabrina Fernandes",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Sabrina%20Fernandes%20-%20Ato%20Resist%C3%AAncia%20LGBT%20(36644574683)%20(cropped).jpg?width=900",
+    "initials": "SF"
+  },
+  {
+    "personId": 339,
+    "id": "samara-martins",
+    "name": "Samara Martins",
+    "party": "UP",
+    "vice": "Raquel Brício (UP)",
+    "photo": "/candidates/samara-martins.jpg",
+    "initials": "SM"
+  },
+  {
+    "personId": 340,
+    "id": "pessoa-340",
+    "name": "Sâmia Bomfim",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2025-03-13%20Sess%C3%A3o%20Conjunta%20do%20Congresso%20Nacional%20(54384895200)%20(S%C3%A2mia%20Bomfim).jpg?width=900",
+    "initials": "SB"
+  },
+  {
+    "personId": 341,
+    "id": "pessoa-341",
+    "name": "Sandro Mabel",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-341.jpg",
+    "initials": "SM"
+  },
+  {
+    "personId": 342,
+    "id": "pessoa-342",
+    "name": "Sargento Fahur",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Sargento%20Fahur%20e%20Soldado%20Adriano%20Jos%C3%A9%20em%202017%20(cropped).jpg?width=900",
+    "initials": "SF"
+  },
+  {
+    "personId": 343,
+    "id": "pessoa-343",
+    "name": "Sebastião Melo",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Sebasti%C3%A3o%20Melo%20in%202025.jpg?width=900",
+    "initials": "SM"
+  },
+  {
+    "personId": 344,
+    "id": "pessoa-344",
+    "name": "Sergio Moro",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Senadores%20da%2057%C2%AA%20Legislatura%20(52689302414).jpg?width=900",
+    "initials": "SM"
+  },
+  {
+    "personId": 345,
+    "id": "pessoa-345",
+    "name": "Sérgio Nobre",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-345.jpg",
+    "initials": "SN"
+  },
+  {
+    "personId": 346,
+    "id": "pessoa-346",
+    "name": "Sidônio Palmeira",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/28.08.2024%20-%20Lan%C3%A7amento%20do%20livro%20%E2%80%9CBrasil%20da%20Esperan%C3%A7a%20-%20O%20Marketing%20Nas%20Elei%C3%A7%C3%B5es%20Mais%20Importantes%20do%20Pa%C3%ADs%E2%80%9D%2C%20do%20marqueteiro%20Sid%C3%B4nio%20Palmeira%20(53954931766)%20(Sid%C3%B4nio%20Palmeira).jpg?width=900",
+    "initials": "SP"
+  },
+  {
+    "personId": 347,
+    "id": "pessoa-347",
+    "name": "Sikêra Júnior",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Sik%C3%AAra%20J%C3%BAnior%202021%20(cropped).jpg?width=900",
+    "initials": "SJ"
+  },
+  {
+    "personId": 348,
+    "id": "pessoa-348",
+    "name": "Silas Malafaia",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Silas%20Malafaia%20em%20abril%20de%202019%20(cropped).jpg?width=900",
+    "initials": "SM"
+  },
+  {
+    "personId": 349,
+    "id": "pessoa-349",
+    "name": "Sílvio Costa Filho",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/31-10-2023.%20Juscelino%20Filho%20recebe%20o%20ministro%20de%20Portos%20e%20Aeroportos%20Silvio%20Costa%20Filho%20(cropped).jpg?width=900",
+    "initials": "SF"
+  },
+  {
+    "personId": 350,
+    "id": "pessoa-350",
+    "name": "Simone Tebet",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2024-08-28%20Audi%C3%AAncia%20entre%20as%20Ministras%20Simone%20Tebet%20e%20Luciana%20Santos%2C%2010%20(cropped).jpg?width=900",
+    "initials": "ST"
+  },
+  {
+    "personId": 351,
+    "id": "pessoa-351",
+    "name": "Sofia Manzano",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Sofia%20Manzano%202022%20(cropped).jpg?width=900",
+    "initials": "SM"
+  },
+  {
+    "personId": 352,
+    "id": "pessoa-352",
+    "name": "Sônia Guajajara",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-352.jpg",
+    "initials": "SG"
+  },
+  {
+    "personId": 353,
+    "id": "pessoa-353",
+    "name": "Sóstenes Cavalcante",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/S%C3%B3stenes%20Cavalcante%20(cropped).jpg?width=900",
+    "initials": "SC"
+  },
+  {
+    "personId": 354,
+    "id": "pessoa-354",
+    "name": "Suêd Haidar",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2026%20SU%C3%8AD%20HAIDAR%20CANDIDATA%20VICE-PRESIDENTE%20TSE%20(280002548140).jpg?width=900",
+    "initials": "SH"
+  },
+  {
+    "personId": 355,
+    "id": "pessoa-355",
+    "name": "Talíria Petrone",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2025-03-11%20Encontro%20%E2%80%9CMulher%2C%20Presente%E2%80%9D%2C%20promovido%20pelo%20TSE%2C%20015%20(Tal%C3%ADria%20Petrone).jpg?width=900",
+    "initials": "TP"
+  },
+  {
+    "personId": 356,
+    "id": "pessoa-356",
+    "name": "Tarcísio de Freitas",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Governador%20do%20Estado%20de%20S%C3%A3o%20Paulo%2C%20Tarc%C3%ADsio%20de%20Freitas%20-%20Foto%20Oficial.jpg?width=900",
+    "initials": "TF"
+  },
+  {
+    "personId": 357,
+    "id": "pessoa-357",
+    "name": "Teresa Leitão",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Senadores%20da%2057%C2%AA%20Legislatura%20(52689032511).jpg?width=900",
+    "initials": "TL"
+  },
+  {
+    "personId": 358,
+    "id": "pessoa-358",
+    "name": "Tereza Cristina",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Tereza%20Cristina%20em%2018%20de%20julho%20de%202019.jpg?width=900",
+    "initials": "TC"
+  },
+  {
+    "personId": 359,
+    "id": "pessoa-359",
+    "name": "Thalles Andrade Costa",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-359.jpg",
+    "initials": "TC"
+  },
+  {
+    "personId": 360,
+    "id": "pessoa-360",
+    "name": "Thammy Miranda",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Thammy%20Miranda.jpg?width=900",
+    "initials": "TM"
+  },
+  {
+    "personId": 362,
+    "id": "pessoa-362",
+    "name": "Thomas Traumann",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Thomas%20Traumann%20ex-ministro%20do%20governo%20brasileiro.jpg?width=900",
+    "initials": "TT"
+  },
+  {
+    "personId": 363,
+    "id": "pessoa-363",
+    "name": "Tiririca",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Tiririca%20na%20camara.jpg?width=900",
+    "initials": "T"
+  },
+  {
+    "personId": 364,
+    "id": "pessoa-364",
+    "name": "Topázio Neto",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Prefeito%20Topazio%20Neto%202022.jpg?width=900",
+    "initials": "TN"
+  },
+  {
+    "personId": 365,
+    "id": "pessoa-365",
+    "name": "Valdemar Costa Neto",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Valdemar%20Costa%20Neto%20em%20junho%20de%202005.jpeg?width=900",
+    "initials": "VN"
+  },
+  {
+    "personId": 366,
+    "id": "pessoa-366",
+    "name": "Valdemiro Santiago",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Valdemiro%20santiago.jpg?width=900",
+    "initials": "VS"
+  },
+  {
+    "personId": 367,
+    "id": "pessoa-367",
+    "name": "Vanderson Alves Nunes (Vandinho Patriota)",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-367.jpg",
+    "initials": "VN"
+  },
+  {
+    "personId": 369,
+    "id": "pessoa-369",
+    "name": "Vera Lúcia",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Vera%20L%C3%BAcia%20no%20Dia%20Internacional%20da%20Mulher%20Trabalhadora%202018%20-%20PSTU%20(cropped%203x4).jpg?width=900",
+    "initials": "VL"
+  },
+  {
+    "personId": 370,
+    "id": "pessoa-370",
+    "name": "Vera Magalhães",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Programa%20Roda%20Viva%20com%20Senadora%20Simone%20Tebet%20(52275113869)%20(cropped%202).jpg?width=900",
+    "initials": "VM"
+  },
+  {
+    "personId": 371,
+    "id": "pessoa-371",
+    "name": "Victor César dos Santos",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-371.jpg",
+    "initials": "VS"
+  },
+  {
+    "personId": 372,
+    "id": "pessoa-372",
+    "name": "Victor Luiz dos Santos Laus",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-372.jpg",
+    "initials": "VL"
+  },
+  {
+    "personId": 373,
+    "id": "pessoa-373",
+    "name": "Virgílio Antônio Ribeiro Filho",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-373.jpg",
+    "initials": "VF"
+  },
+  {
+    "personId": 374,
+    "id": "pessoa-374",
+    "name": "Vital do Rêgo",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Vital%20do%20Rego%20Filho.jpg?width=900",
+    "initials": "VR"
+  },
+  {
+    "personId": 375,
+    "id": "pessoa-375",
+    "name": "Vitor Belfort",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-375.jpg",
+    "initials": "VB"
+  },
+  {
+    "personId": 376,
+    "id": "pessoa-376",
+    "name": "Viviane Barci de Moraes",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-376.jpg",
+    "initials": "VM"
+  },
+  {
+    "personId": 377,
+    "id": "pessoa-377",
+    "name": "Vladimir Lima",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/reviewed/pessoa-377.jpg",
+    "initials": "VL"
+  },
+  {
+    "personId": 378,
+    "id": "pessoa-378",
+    "name": "Wagner Moura",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Wagner%20Moura-6546.jpg?width=900",
+    "initials": "WM"
+  },
+  {
+    "personId": 379,
+    "id": "pessoa-379",
+    "name": "Waldemar Gonçalves Ortunho Jr.",
+    "party": "",
+    "vice": "",
+    "photo": "/candidates/imported/pessoa-379.jpg",
+    "initials": "WJ"
+  },
+  {
+    "personId": 380,
+    "id": "pessoa-380",
+    "name": "Waldez Góes",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/12.01.2023%20-%20Ministro%20da%20Integra%C3%A7%C3%A3o%20e%20do%20Desenvolvimento%20Regional%2C%20Waldez%20G%C3%B3es%20(cropped2).jpg?width=900",
+    "initials": "WG"
+  },
+  {
+    "personId": 381,
+    "id": "pessoa-381",
+    "name": "Walter Casagrande",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Walter%20Casagrande.jpg?width=900",
+    "initials": "WC"
+  },
+  {
+    "personId": 382,
+    "id": "pessoa-382",
+    "name": "Wanderlei Barbosa",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Wanderlei%20Barbosa.jpg?width=900",
+    "initials": "WB"
+  },
+  {
+    "personId": 383,
+    "id": "pessoa-383",
+    "name": "Wellington César Lima e Silva",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Wellington%20C%C3%A9sar%20Lima%20e%20Silva.jpg?width=900",
+    "initials": "WS"
+  },
+  {
+    "personId": 384,
+    "id": "pessoa-384",
+    "name": "Wellington Dias",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Senadores%20da%2057%C2%AA%20Legislatura%20(52689032501).jpg?width=900",
+    "initials": "WD"
+  },
+  {
+    "personId": 385,
     "id": "wilson-grassi",
     "name": "Wilson Grassi",
     "party": "Democrata",
@@ -88,11 +3222,21 @@
     "initials": "WG"
   },
   {
-    "id": "clariana-barao",
-    "name": "Clariana Barão",
-    "party": "DC",
-    "vice": "Fabiana Torquato (DC)",
-    "photo": "/candidates/clariana-barao.jpg",
-    "initials": "CB"
+    "personId": 386,
+    "id": "pessoa-386",
+    "name": "Wilson Lima",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Wilson%20Lima%2C%20January%202023%20(cropped).jpg?width=900",
+    "initials": "WL"
+  },
+  {
+    "personId": 387,
+    "id": "pessoa-387",
+    "name": "Zeina Latif",
+    "party": "",
+    "vice": "",
+    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Cerim%C3%B4nia%20de%20Posse%20da%20secret%C3%A1ria%20de%20Desenvolvimento%20Econ%C3%B4mico%2C%20Zeina%20Latif%20(52079014385)%20(cropped).jpg?width=900",
+    "initials": "ZL"
   }
 ]

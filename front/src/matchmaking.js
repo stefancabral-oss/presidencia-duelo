@@ -1,6 +1,6 @@
 import { ELO_START } from "../../shared/elo.js";
 
-/** First N shown pairs must cover every candidate (12 presidential names). */
+/** Minimum opening coverage window retained for the original 12-name roster. */
 export const COVERAGE_DUELS = 12;
 /** Elo gap in `1 / (1 + |Δelo| / scale)` — closer ratings get a higher weight. */
 export const ELO_GAP_SCALE = 100;
@@ -82,14 +82,20 @@ export function isSamePair(left, right) {
   );
 }
 
-export function candidatePairs(ids) {
+export function candidatePairs(ids, pairAllowed = () => true) {
   const pairs = [];
   for (let i = 0; i < ids.length; i++) {
     for (let j = i + 1; j < ids.length; j++) {
-      pairs.push([ids[i], ids[j]]);
+      if (pairAllowed(ids[i], ids[j])) pairs.push([ids[i], ids[j]]);
     }
   }
   return pairs;
+}
+
+/** Large catalogs need enough duels to show every person at least once. */
+export function coverageDuelLimit(candidateCount) {
+  const count = Math.max(0, Math.trunc(Number(candidateCount) || 0));
+  return Math.max(COVERAGE_DUELS, Math.ceil(count / 2));
 }
 
 /** Drop `lastPair` unless it is the only pair (two-candidate roster). */
@@ -151,20 +157,22 @@ function ratingOf(ratings, id) {
 
 /**
  * Weighted pair draw: rarity × Elo proximity, minus `lastPair`,
- * with a coverage filter for the first 12 shown duels.
+ * with a coverage filter sized to the active catalog.
  */
-export function pickPair(candidates, state, rng = Math.random) {
+export function pickPair(candidates, state, rng = Math.random, pairAllowed = () => true) {
   const ids = candidates.map((c) => c.id);
   if (ids.length < 2) return [ids[0] || "", ids[0] || ""];
 
   const pairCount = state.pairCount || {};
   const ratings = state.ratings || {};
-  let pairs = excludeLastPair(candidatePairs(ids), state.lastPair);
+  const coverageDuels = coverageDuelLimit(ids.length);
+  let pairs = excludeLastPair(candidatePairs(ids, pairAllowed), state.lastPair);
+  if (!pairs.length) return [ids[0] || "", ids[0] || ""];
 
   const shown = shownPairTotal(pairCount);
-  if (shown < COVERAGE_DUELS) {
+  if (shown < coverageDuels) {
     const unseen = unseenCandidateIds(ids, pairCount);
-    pairs = coveragePool(pairs, unseen, COVERAGE_DUELS - shown);
+    pairs = coveragePool(pairs, unseen, coverageDuels - shown);
   }
 
   const weights = pairs.map(([a, b]) =>
@@ -175,8 +183,8 @@ export function pickPair(candidates, state, rng = Math.random) {
 }
 
 /** Pick, record the appearance, and set `lastPair` — same steps as `nextDuel`. */
-export function takeNextPair(candidates, state, rng = Math.random) {
-  const pair = pickPair(candidates, state, rng);
+export function takeNextPair(candidates, state, rng = Math.random, pairAllowed = () => true) {
+  const pair = pickPair(candidates, state, rng, pairAllowed);
   state.pairCount = recordPair(state.pairCount, pair);
   state.lastPair = pair;
   return pair;

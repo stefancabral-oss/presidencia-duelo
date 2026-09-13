@@ -26,13 +26,16 @@ app.get("/api/health", async (_req, res) => {
 
 app.get("/api/candidates", (_req, res) => {
   res.json({
-    candidates: CANDIDATES.map(({ id, name, party, vice, photo, initials }) => ({
+    candidates: CANDIDATES.map(({ personId, id, name, party, vice, photo, initials, topics, politicalSide }) => ({
+      personId,
       id,
       name,
       party,
       vice,
       photo,
       initials,
+      topics,
+      politicalSide,
     })),
   });
 });

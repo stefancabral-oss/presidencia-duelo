@@ -8,11 +8,17 @@ const catalog = JSON.parse(
   readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../../shared/candidates.json"), "utf8"),
 );
 
-test("approved people catalog contains all 387 stable records", () => {
-  assert.equal(catalog.length, 387);
-  assert.deepEqual(catalog.map((person) => person.personId), Array.from({ length: 387 }, (_, i) => i + 1));
-  assert.equal(new Set(catalog.map((person) => person.id)).size, 387);
-  assert.equal(new Set(catalog.map((person) => person.name)).size, 387);
+const removedPersonIds = new Set([
+  4, 20, 29, 32, 33, 38, 44, 48, 52, 70, 82, 87, 88, 90, 106, 125, 129, 137, 139, 162, 218, 229,
+  235, 254, 320, 361, 368,
+]);
+
+test("approved people catalog contains the 360 selected stable records", () => {
+  const expectedIds = Array.from({ length: 387 }, (_, i) => i + 1).filter((id) => !removedPersonIds.has(id));
+  assert.equal(catalog.length, 360);
+  assert.deepEqual(catalog.map((person) => person.personId), expectedIds);
+  assert.equal(new Set(catalog.map((person) => person.id)).size, 360);
+  assert.equal(new Set(catalog.map((person) => person.name)).size, 360);
 });
 
 test("approved list endpoints and representative names are present", () => {
@@ -39,7 +45,7 @@ test("existing profiles keep their IDs and curated metadata", () => {
 
 test("every licensed profile reference is shown as a photo", () => {
   const photographed = catalog.filter((person) => person.photo);
-  assert.equal(photographed.length, 383);
+  assert.equal(photographed.length, 360);
   for (const person of photographed) {
     assert.ok(
       person.photo.startsWith("/candidates/") ||

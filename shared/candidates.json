@@ -27,15 +27,6 @@
     "initials": "AV"
   },
   {
-    "personId": 4,
-    "id": "pessoa-4",
-    "name": "Alberto Felix de Oliveira Neto",
-    "party": "",
-    "vice": "",
-    "photo": null,
-    "initials": "AN"
-  },
-  {
     "personId": 5,
     "id": "pessoa-5",
     "name": "Aldo Rebelo",
@@ -171,15 +162,6 @@
     "initials": "AC"
   },
   {
-    "personId": 20,
-    "id": "pessoa-20",
-    "name": "Ana Claudia Queiroz de Paiva",
-    "party": "",
-    "vice": "",
-    "photo": null,
-    "initials": "AP"
-  },
-  {
     "personId": 21,
     "id": "pessoa-21",
     "name": "Ana Karina Bortoni",
@@ -252,15 +234,6 @@
     "initials": "AM"
   },
   {
-    "personId": 29,
-    "id": "pessoa-29",
-    "name": "André Paulo Félix Fidelis",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-29.jpg",
-    "initials": "AF"
-  },
-  {
     "personId": 30,
     "id": "pessoa-30",
     "name": "André Valadão",
@@ -277,24 +250,6 @@
     "vice": "",
     "photo": "/candidates/imported/pessoa-31.jpg",
     "initials": "AR"
-  },
-  {
-    "personId": 32,
-    "id": "pessoa-32",
-    "name": "Andrei Roman",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-32.jpg",
-    "initials": "AR"
-  },
-  {
-    "personId": 33,
-    "id": "pessoa-33",
-    "name": "Ângelo Antônio Ribeiro da Silva",
-    "party": "",
-    "vice": "",
-    "photo": null,
-    "initials": "ÂS"
   },
   {
     "personId": 34,
@@ -331,15 +286,6 @@
     "vice": "",
     "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Deputado%20Antonio%20Brito.png?width=900",
     "initials": "AB"
-  },
-  {
-    "personId": 38,
-    "id": "pessoa-38",
-    "name": "Antônio Carlos",
-    "party": "",
-    "vice": "",
-    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2026%20ANT%C3%94NIO%20CARLOS%20CANDIDATO%20VICE-PRESIDENTE%20TSE%20(280002552486).jpg?width=900",
-    "initials": "AC"
   },
   {
     "personId": 39,
@@ -387,15 +333,6 @@
     "initials": "AR"
   },
   {
-    "personId": 44,
-    "id": "pessoa-44",
-    "name": "Armando Miguel Gallo Neto",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-44.jpg",
-    "initials": "AN"
-  },
-  {
     "personId": 45,
     "id": "pessoa-45",
     "name": "Arthur Lira",
@@ -423,15 +360,6 @@
     "initials": "AC"
   },
   {
-    "personId": 48,
-    "id": "pessoa-48",
-    "name": "Augusto Ferreira Lima",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-48.jpg",
-    "initials": "AL"
-  },
-  {
     "personId": 49,
     "id": "pessoa-49",
     "name": "Augusto Heleno",
@@ -457,15 +385,6 @@
     "vice": "",
     "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Baleia%20Rossi%20(MDB%20-%20SP)%20(cropped).jpg?width=900",
     "initials": "BR"
-  },
-  {
-    "personId": 52,
-    "id": "pessoa-52",
-    "name": "Belline Santana",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-52.jpg",
-    "initials": "BS"
   },
   {
     "personId": 53,
@@ -621,15 +540,6 @@
     "initials": "CM"
   },
   {
-    "personId": 70,
-    "id": "pessoa-70",
-    "name": "Carlos Roberto Ferreira Lopes",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-70.jpg",
-    "initials": "CL"
-  },
-  {
     "personId": 71,
     "id": "pessoa-71",
     "name": "Cármen Lúcia",
@@ -729,15 +639,6 @@
     "initials": "CN"
   },
   {
-    "personId": 82,
-    "id": "pessoa-82",
-    "name": "Ciro Soares",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-82.jpg",
-    "initials": "CS"
-  },
-  {
     "personId": 83,
     "id": "clariana-barao",
     "name": "Clariana Barão",
@@ -774,24 +675,6 @@
     "initials": "CA"
   },
   {
-    "personId": 87,
-    "id": "pessoa-87",
-    "name": "Cleusa Santos",
-    "party": "",
-    "vice": "",
-    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2026%20CLEUSA%20SANTOS%20CANDIDATA%20VICE-PRESIDENTE%20TSE%20(280002551976).jpg?width=900",
-    "initials": "CS"
-  },
-  {
-    "personId": 88,
-    "id": "pessoa-88",
-    "name": "Coronel Medina",
-    "party": "",
-    "vice": "",
-    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2026%20CORONEL%20MEDINA%20CANDIDATO%20VICE-PRESIDENTE%20TSE%20(280002540693).jpg?width=900",
-    "initials": "CM"
-  },
-  {
     "personId": 89,
     "id": "pessoa-89",
     "name": "Cristiano Zanin",
@@ -799,15 +682,6 @@
     "vice": "",
     "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/17.06.2026%20-%20Cristiano%20Zanin%20(cropped).jpg?width=900",
     "initials": "CZ"
-  },
-  {
-    "personId": 90,
-    "id": "pessoa-90",
-    "name": "Dalma Régina Florêncio de Morais (Tenente Dalma)",
-    "party": "",
-    "vice": "",
-    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Dalma%20Regina%202024.jpg?width=900",
-    "initials": "DM"
   },
   {
     "personId": 91,
@@ -943,15 +817,6 @@
     "vice": "",
     "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2023-08-01%20CPMI%20do%208%20de%20Janeiro%2003%20(Duda%20Salabert).jpg?width=900",
     "initials": "DS"
-  },
-  {
-    "personId": 106,
-    "id": "pessoa-106",
-    "name": "Edilson Damião",
-    "party": "",
-    "vice": "",
-    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/FRR230001604254%20div.jpg?width=900",
-    "initials": "ED"
   },
   {
     "personId": 107,
@@ -1116,15 +981,6 @@
     "initials": "EN"
   },
   {
-    "personId": 125,
-    "id": "pessoa-125",
-    "name": "Eric Douglas Fidelis",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-125.jpg",
-    "initials": "EF"
-  },
-  {
     "personId": 126,
     "id": "pessoa-126",
     "name": "Erika Hilton",
@@ -1150,15 +1006,6 @@
     "vice": "",
     "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/CE%202022%20Evandro%20Leit%C3%A3o.jpg?width=900",
     "initials": "EL"
-  },
-  {
-    "personId": 129,
-    "id": "pessoa-129",
-    "name": "Fabiana Torquato",
-    "party": "",
-    "vice": "",
-    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2026%20FABIANA%20TORQUATO%20CANDIDATA%20VICE-PRESIDENTE%20TSE%20(280002552485).jpg?width=900",
-    "initials": "FT"
   },
   {
     "personId": 130,
@@ -1224,15 +1071,6 @@
     "initials": "FN"
   },
   {
-    "personId": 137,
-    "id": "pessoa-137",
-    "name": "Felipe Wallace Simonsen",
-    "party": "",
-    "vice": "",
-    "photo": null,
-    "initials": "FS"
-  },
-  {
     "personId": 138,
     "id": "pessoa-138",
     "name": "Fernando Collor de Mello",
@@ -1240,15 +1078,6 @@
     "vice": "",
     "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Foto%20oficial%20do%20presidente%20Fernando%20Collor%20de%20Melo.%20(38405801411).jpg?width=900",
     "initials": "FM"
-  },
-  {
-    "personId": 139,
-    "id": "pessoa-139",
-    "name": "Fernando de Sousa Oliveira",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-139.jpg",
-    "initials": "FO"
   },
   {
     "personId": 140,
@@ -1447,15 +1276,6 @@
     "vice": "",
     "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gustavo%20Gayer%20no%20Vlog%20do%20Lisboa%20-2021-02-13.png?width=900",
     "initials": "GG"
-  },
-  {
-    "personId": 162,
-    "id": "pessoa-162",
-    "name": "Gustavo Henrique Menezes Dutra",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-162.jpg",
-    "initials": "GD"
   },
   {
     "personId": 163,
@@ -1953,15 +1773,6 @@
     "initials": "LB"
   },
   {
-    "personId": 218,
-    "id": "pessoa-218",
-    "name": "Leonardo Augusto Furtado Palhares",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-218.jpg",
-    "initials": "LP"
-  },
-  {
     "personId": 219,
     "id": "pessoa-219",
     "name": "Leonardo Avalanche",
@@ -2052,15 +1863,6 @@
     "initials": "LB"
   },
   {
-    "personId": 229,
-    "id": "pessoa-229",
-    "name": "Luiz Antônio Bull",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-229.jpg",
-    "initials": "LB"
-  },
-  {
     "personId": 230,
     "id": "pessoa-230",
     "name": "Luiz Frias",
@@ -2104,15 +1906,6 @@
     "vice": "",
     "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Plen%C3%A1rio%20do%20Senado%20-%2054820218794.jpg?width=900",
     "initials": "LF"
-  },
-  {
-    "personId": 235,
-    "id": "pessoa-235",
-    "name": "Luiz Phillipi Machado de Moraes Mourão",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-235.jpg",
-    "initials": "LM"
   },
   {
     "personId": 236,
@@ -2275,15 +2068,6 @@
     "vice": "",
     "photo": "/candidates/imported/pessoa-253.jpg",
     "initials": "MP"
-  },
-  {
-    "personId": 254,
-    "id": "pessoa-254",
-    "name": "Marilson Roseno da Silva",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-254.jpg",
-    "initials": "MS"
   },
   {
     "personId": 255,
@@ -2871,15 +2655,6 @@
     "initials": "RL"
   },
   {
-    "personId": 320,
-    "id": "pessoa-320",
-    "name": "Roberto Araújo",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-320.jpg",
-    "initials": "RA"
-  },
-  {
     "personId": 321,
     "id": "pessoa-321",
     "name": "Roberto Campos Neto",
@@ -3240,15 +3015,6 @@
     "initials": "TM"
   },
   {
-    "personId": 361,
-    "id": "pessoa-361",
-    "name": "Thiago Miranda",
-    "party": "",
-    "vice": "",
-    "photo": "/candidates/imported/pessoa-361.jpg",
-    "initials": "TM"
-  },
-  {
     "personId": 362,
     "id": "pessoa-362",
     "name": "Thomas Traumann",
@@ -3301,15 +3067,6 @@
     "vice": "",
     "photo": "/candidates/imported/pessoa-367.jpg",
     "initials": "VN"
-  },
-  {
-    "personId": 368,
-    "id": "pessoa-368",
-    "name": "Vanessa Portugal",
-    "party": "",
-    "vice": "",
-    "photo": "https://commons.wikimedia.org/wiki/Special:Redirect/file/2026%20VANESSA%20PORTUGAL%20CANDIDATA%20VICE-PRESIDENTE%20TSE%20(280002541458).jpg?width=900",
-    "initials": "VP"
   },
   {
     "personId": 369,

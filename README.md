@@ -4,7 +4,7 @@ Monorepo do jogo web casual estilo **Facemash**: duas pessoas da vida pública b
 
 Além do duelo contínuo, a aba **Torneio** sorteia 12 pessoas do catálogo para um mata-mata: oito disputam a primeira rodada e quatro avançam direto, seguindo por quartas, semifinais e final. São 11 escolhas até o resultado, que pode ser compartilhado. O torneio é salvo separadamente e não altera o Elo local nem o agregado da API.
 
-O catálogo de duelo contém os **387 nomes aprovados** e perfis básicos. Chromas, versões históricas e suas artes serão modeladas em outra área do app; não fazem parte deste arquivo nem alteram o ranking atual.
+O catálogo de duelo contém os **360 nomes aprovados** e perfis básicos. Chromas, versões históricas e suas artes serão modeladas em outra área do app; não fazem parte deste arquivo nem alteram o ranking atual.
 
 > **Não é pesquisa oficial.** Não mede intenção de voto real. É só entretenimento.
 
@@ -18,7 +18,7 @@ O catálogo de duelo contém os **387 nomes aprovados** e perfis básicos. Chrom
   app/                      # PWA (wrapper do mesmo jogo + manifest/SW)
 ```
 
-O catálogo inclui 383 perfis com fotos de fontes públicas e crédito registrado: 85 arquivos locais e 298 imagens servidas diretamente pelo Wikimedia Commons. Quatro perfis sem retrato público verificável continuam usando iniciais para evitar associação com homônimos. Nenhuma face foi gerada por IA.
+Os 360 perfis do catálogo têm fotos de fontes públicas e crédito registrado: 69 arquivos locais e 291 imagens servidas diretamente pelo Wikimedia Commons. Nenhuma face foi gerada por IA.
 
 ## Requisitos
 
@@ -43,7 +43,7 @@ npm run dev --prefix back
 | Método | Rota | Descrição |
 |---|---|---|
 | `GET` | `/api/health` | Saúde do serviço |
-| `GET` | `/api/candidates` | 387 pessoas (`personId`, `id`, `name`, `party`, `vice`, `photo`, `initials`) |
+| `GET` | `/api/candidates` | 360 pessoas (`personId`, `id`, `name`, `party`, `vice`, `photo`, `initials`) |
 | `GET` | `/api/ranking` | Ranking Elo agregado armazenado no PostgreSQL |
 | `POST` | `/api/vote` | Corpo `{ "winnerId", "loserId" }` — atualiza o Elo do servidor |
 

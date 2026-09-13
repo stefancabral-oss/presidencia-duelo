@@ -35,7 +35,13 @@ import {
   shareOrCopyPodium,
   SHARE_TITLE,
 } from "./podium.js";
-import { RANKING_SUBTITLE, rankMetaText, sortCandidatesByRank } from "./ranking.js";
+import {
+  RANKING_SUBTITLE,
+  RANK_SORT_CRITERIA,
+  rankMetaText,
+  rankSortSummary,
+  sortCandidatesByRank,
+} from "./ranking.js";
 import { findLeaderId, rarityFor } from "./rarity.js";
 import { commitPersonalReset } from "./ranking-reset.js";
 import { normalizePairCount, takeNextPair } from "./matchmaking.js";
@@ -321,13 +327,22 @@ function renderShell(root, { requireApi = false } = {}) {
       <section id="panel-rank" class="panel" aria-label="Ranking">
         <div class="ranking-toolbar">
           <div>
-            <strong>Ranking Elo · <span id="rank-mode">Pessoas</span> · <span id="rank-topic">Política em Jogo</span></strong>
-            <div class="rank-sub">${RANKING_SUBTITLE}</div>
+            <strong>Ranking · <span id="rank-mode">Pessoas</span> · <span id="rank-topic">Política em Jogo</span></strong>
+            <div class="rank-sub" id="rank-sort-summary">${RANKING_SUBTITLE}</div>
           </div>
           <div class="ranking-actions">
             <button type="button" class="btn primary" id="open-podium">Ver pódio</button>
             <button type="button" class="btn danger" id="reset-ranking">Zerar meu ranking</button>
           </div>
+        </div>
+        <div class="rank-sort-toolbar">
+          <span>Ordenar por</span>
+          <div class="rank-sort-options" role="group" aria-label="Critério de ordenação do ranking">
+            <button type="button" class="rank-sort active" data-rank-sort="elo" aria-pressed="true">Elo</button>
+            <button type="button" class="rank-sort" data-rank-sort="wins" aria-pressed="false">Vitórias</button>
+            <button type="button" class="rank-sort" data-rank-sort="zebras" aria-pressed="false">Zebras</button>
+          </div>
+          <button type="button" class="rank-direction" id="rank-sort-direction" aria-label="Ordem: maior para o menor">↓ Maior primeiro</button>
         </div>
         <ol class="rank-list" id="rank-list"></ol>
         <section class="achievements-panel" aria-label="Conquistas">
@@ -402,7 +417,7 @@ function renderShell(root, { requireApi = false } = {}) {
   `;
 }
 
-function renderRankItems(candidates, byId, getStats, getRarity = () => null) {
+function renderRankItems(candidates, byId, getStats, getRarity = () => null, sort = {}) {
 function renderConnectionRequired(root) {
   root.innerHTML = `
     <main class="app connection-required">
@@ -419,7 +434,7 @@ function renderConnectionRequired(root) {
   `;
   document.getElementById("retry-connection")?.addEventListener("click", () => location.reload());
 }
-  const ranked = sortCandidatesByRank(candidates, getStats);
+  const ranked = sortCandidatesByRank(candidates, getStats, sort);
 
   return ranked
     .map((c, i) => {
@@ -482,6 +497,9 @@ export async function initGame({ requireApi = false } = {}) {
     topicCount: document.getElementById("topic-count"),
     topicDescription: document.getElementById("topic-description"),
     rankTopic: document.getElementById("rank-topic"),
+    rankSortSummary: document.getElementById("rank-sort-summary"),
+    rankSortButtons: [...document.querySelectorAll("[data-rank-sort]")],
+    rankSortDirection: document.getElementById("rank-sort-direction"),
     tournamentTopic: document.getElementById("tournament-topic"),
     duelCount: document.getElementById("duel-count"),
     comboBanner: document.getElementById("combo-banner"),
@@ -593,6 +611,7 @@ export async function initGame({ requireApi = false } = {}) {
   let tournament = loadTournament();
   const tournamentPickLock = createTournamentPickLock();
   let onboardingState = quickControlsHintState();
+  let rankSort = { criterion: RANK_SORT_CRITERIA.ELO, direction: "desc" };
 
   function renderOnboarding() {
     const complete = onboardingState === QUICK_CONTROLS_STATES.COMPLETE;
@@ -1356,7 +1375,25 @@ export async function initGame({ requireApi = false } = {}) {
       losses: state.losses[id] || 0,
       wr: winRate(state, id),
       zebras: state.zebras?.[id] || 0,
-    }), (id) => rarityFor(state, id, leaderId));
+    }), (id) => rarityFor(state, id, leaderId), rankSort);
+  }
+
+  function renderRankSortUi() {
+    for (const button of els.rankSortButtons) {
+      const active = button.dataset.rankSort === rankSort.criterion;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    }
+    const descending = rankSort.direction === "desc";
+    els.rankSortDirection.textContent = descending ? "↓ Maior primeiro" : "↑ Menor primeiro";
+    els.rankSortDirection.setAttribute("aria-label", `Ordem: ${descending ? "maior para o menor" : "menor para o maior"}`);
+    els.rankSortSummary.textContent = rankSortSummary(rankSort);
+  }
+
+  function applyRankSort() {
+    renderRankSortUi();
+    renderRanking();
+    renderServerRanking();
   }
 
   async function renderServerRanking() {
@@ -1382,7 +1419,7 @@ export async function initGame({ requireApi = false } = {}) {
           wr: row.winRate ?? 0,
           zebras: row.zebras || 0,
         };
-      });
+      }, () => null, rankSort);
       els.serverWrap.hidden = false;
     } catch {
       els.serverWrap.hidden = true;
@@ -1397,6 +1434,16 @@ export async function initGame({ requireApi = false } = {}) {
   els.cardA.addEventListener("click", () => pick(els.cardA));
   els.cardB.addEventListener("click", () => pick(els.cardB));
   els.skipDuel.addEventListener("click", skipCurrentDuel);
+  for (const button of els.rankSortButtons) {
+    button.addEventListener("click", () => {
+      rankSort = { ...rankSort, criterion: button.dataset.rankSort };
+      applyRankSort();
+    });
+  }
+  els.rankSortDirection.addEventListener("click", () => {
+    rankSort = { ...rankSort, direction: rankSort.direction === "desc" ? "asc" : "desc" };
+    applyRankSort();
+  });
   els.modePresidentes.addEventListener("click", () => setMode("presidentes"));
   els.modeVices.addEventListener("click", () => setMode("vices"));
   for (const button of els.topicButtons) {

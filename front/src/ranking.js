@@ -7,8 +7,36 @@
  * existing sort. The subtitle copy is kept in this module so UI text and
  * comparator cannot drift apart.
  */
+export const RANK_SORT_CRITERIA = {
+  ELO: "elo",
+  WINS: "wins",
+  ZEBRAS: "zebras",
+};
+
 export const RANKING_SUBTITLE =
-  "Ordenado por Elo; vitórias como desempate visual. Sempre funciona no aparelho.";
+  "Elo, do maior para o menor; vitórias como desempate. Ranking pessoal neste aparelho.";
+
+const SORT_LABELS = {
+  [RANK_SORT_CRITERIA.ELO]: "Elo",
+  [RANK_SORT_CRITERIA.WINS]: "Vitórias",
+  [RANK_SORT_CRITERIA.ZEBRAS]: "Zebras",
+};
+
+export function normalizeRankSort(sort = {}) {
+  const criterion = Object.values(RANK_SORT_CRITERIA).includes(sort.criterion)
+    ? sort.criterion
+    : RANK_SORT_CRITERIA.ELO;
+  return { criterion, direction: sort.direction === "asc" ? "asc" : "desc" };
+}
+
+export function rankSortSummary(sort = {}) {
+  const normalized = normalizeRankSort(sort);
+  const direction = normalized.direction === "asc" ? "menor para o maior" : "maior para o menor";
+  const tie = normalized.criterion === RANK_SORT_CRITERIA.ELO
+    ? "vitórias"
+    : "Elo";
+  return `${SORT_LABELS[normalized.criterion]}, do ${direction}; ${tie} como desempate.`;
+}
 
 export function formatZebraCount(count) {
   const n = Math.max(0, Math.trunc(Number(count)));
@@ -28,14 +56,31 @@ export function rankMetaText({ party, vice, wins, losses, zebras = 0 }) {
   return details.join(" · ");
 }
 
-export function compareRankStats(a, b) {
-  const eloDelta = a.elo - b.elo;
-  if (eloDelta !== 0) return -eloDelta;
-  return (b.wins || 0) - (a.wins || 0);
+function numericMetric(stats, criterion) {
+  const value = Number(stats?.[criterion]);
+  return Number.isFinite(value) ? value : 0;
 }
 
-export function sortCandidatesByRank(candidates, getStats) {
-  return candidates.slice().sort((left, right) =>
-    compareRankStats(getStats(left.id), getStats(right.id)),
-  );
+export function compareRankStats(a, b, sort = {}) {
+  const { criterion, direction } = normalizeRankSort(sort);
+  const primaryDelta = numericMetric(a, criterion) - numericMetric(b, criterion);
+  if (primaryDelta !== 0) return direction === "asc" ? primaryDelta : -primaryDelta;
+
+  const tieBreakers = criterion === RANK_SORT_CRITERIA.ELO
+    ? [RANK_SORT_CRITERIA.WINS]
+    : [RANK_SORT_CRITERIA.ELO, RANK_SORT_CRITERIA.WINS];
+  for (const tieBreaker of tieBreakers) {
+    if (tieBreaker === criterion) continue;
+    const delta = numericMetric(a, tieBreaker) - numericMetric(b, tieBreaker);
+    if (delta !== 0) return -delta;
+  }
+  return 0;
+}
+
+export function sortCandidatesByRank(candidates, getStats, sort = {}) {
+  return candidates.slice().sort((left, right) => {
+    const statsOrder = compareRankStats(getStats(left.id), getStats(right.id), sort);
+    if (statsOrder !== 0) return statsOrder;
+    return String(left.name || left.id).localeCompare(String(right.name || right.id), "pt-BR");
+  });
 }

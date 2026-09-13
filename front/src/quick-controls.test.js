@@ -2,9 +2,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   QUICK_CONTROLS_HINT_KEY,
+  QUICK_CONTROLS_STATES,
   hasSeenQuickControlsHint,
   keyboardPickSide,
+  markQuickControlsHintControls,
   markQuickControlsHintSeen,
+  quickControlsHintState,
+  quickControlsHintText,
   swipePickSide,
 } from "./quick-controls.js";
 
@@ -33,8 +37,17 @@ test("first-visit hint is persisted without breaking when storage is blocked", (
     setItem: (key, value) => values.set(key, value),
   };
   assert.equal(hasSeenQuickControlsHint(storage), false);
+  assert.equal(quickControlsHintState(storage), QUICK_CONTROLS_STATES.INTRO);
+  assert.equal(markQuickControlsHintControls(storage), true);
+  assert.equal(quickControlsHintState(storage), QUICK_CONTROLS_STATES.CONTROLS);
   assert.equal(markQuickControlsHintSeen(storage), true);
-  assert.equal(values.get(QUICK_CONTROLS_HINT_KEY), "1");
+  assert.equal(values.get(QUICK_CONTROLS_HINT_KEY), QUICK_CONTROLS_STATES.COMPLETE);
   assert.equal(hasSeenQuickControlsHint(storage), true);
   assert.equal(markQuickControlsHintSeen({ setItem() { throw new Error("blocked"); } }), false);
+});
+
+test("control hint matches the device without mentioning undo", () => {
+  assert.match(quickControlsHintText(true), /deslize.*celular/i);
+  assert.match(quickControlsHintText(false), /setas.*computador/i);
+  assert.doesNotMatch(`${quickControlsHintText(true)} ${quickControlsHintText(false)}`, /desfazer/i);
 });

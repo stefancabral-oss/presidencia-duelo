@@ -1,0 +1,31 @@
+# PoliMatch
+
+PoliMatch é um jogo web casual brasileiro de comparação entre pessoas da vida pública.
+
+Site oficial: https://polimatch.com.br/
+Idioma principal: pt-BR
+Categoria: jogo casual / entretenimento político
+
+## O que é
+
+O usuário recebe duas pessoas lado a lado e escolhe uma. As escolhas alimentam um ranking Elo do jogo. O produto também possui modo Torneio e rankings temáticos.
+
+## Temas
+
+- Política em Jogo
+- Justiça & Escândalos
+- Direita x Esquerda
+- Corrida 2026
+- Em Alta
+
+## Importante
+
+PoliMatch não é pesquisa eleitoral oficial e não mede intenção de voto real. É um produto de entretenimento.
+
+## Marca e interface
+
+A identidade visual vigente é Malaquita 2026 / Digital First, com base em verde malaquita, ouro e porcelana. As cartas utilizam fotografias de fontes públicas com créditos registrados no produto.
+
+## URL canônica
+
+https://polimatch.com.br/

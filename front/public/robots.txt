@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://polimatch.com.br/sitemap.xml

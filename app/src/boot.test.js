@@ -7,8 +7,9 @@ const nginx = readFileSync(new URL("../nginx.conf", import.meta.url), "utf8");
 
 test("public PWA requires API and turns bootstrap crashes into a retry gate", () => {
   assert.match(source, /initGame\(\{ requireApi: true \}\)/);
+  assert.match(source, /resetGlobalVoteDataOnce\(\)/);
   assert.match(source, /\.catch\(\(error\) => \{/);
-  assert.match(source, /renderConnectionRequired\(document\.getElementById\("app"\)\)/);
+  assert.match(source, /connectionDiagnosticCode\("app", error\)/);
 });
 
 test("PWA manifest is served with its standard MIME type", () => {

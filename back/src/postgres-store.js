@@ -83,7 +83,6 @@ export function normalizePlayerState(value) {
       || !Number.isInteger(wins) || wins < 0
       || !Number.isInteger(losses) || losses < 0
       || !Number.isInteger(zebras) || zebras < 0
-      || zebras > wins
     ) {
       const error = new Error("estado individual inválido");
       error.status = 400;
@@ -102,15 +101,10 @@ export function normalizePlayerState(value) {
   }
   const totalWins = Object.values(normalized.wins).reduce((total, count) => total + count, 0);
   const totalLosses = Object.values(normalized.losses).reduce((total, count) => total + count, 0);
-  // Early local-only builds stored the overall duel counter before they
-  // reliably stored every per-person result. Keep those unattributed legacy
-  // duels instead of rejecting the whole mobile profile during first sync.
-  if (totalWins !== totalLosses || totalWins > duels) {
-    const error = new Error("estado individual inconsistente");
-    error.status = 400;
-    throw error;
-  }
-  normalized.duels = duels;
+  // Early local-only builds did not always update all counters atomically.
+  // Preserve every recoverable counter and use their largest total as the
+  // lower bound instead of blocking an old mobile profile forever.
+  normalized.duels = Math.max(duels, totalWins, totalLosses);
   return normalized;
 }
 

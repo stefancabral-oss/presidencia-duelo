@@ -13,7 +13,7 @@ import {
   replacePlayerState,
 } from "./api.js";
 import { applyCardAriaLabel } from "./card-label.js";
-import { renderConnectionRequired } from "./connection-required.js";
+import { connectionDiagnosticCode, renderConnectionRequired } from "./connection-required.js";
 import { GITHUB_README_URL, GITHUB_REPO_URL, bindCreditsSearch, creditsPanelHtml } from "./credits.js";
 import { homePanelHtml } from "./home.js";
 import { fillDuelCard } from "./duel-card.js";
@@ -465,9 +465,9 @@ export async function initGame({ requireApi = false } = {}) {
     candidates = list;
     apiOnline = true;
     setNetworkStatus(statusEl, NETWORK_STATES.ONLINE);
-  } catch {
+  } catch (error) {
     if (requireApi) {
-      renderConnectionRequired(root);
+      renderConnectionRequired(root, { code: connectionDiagnosticCode("boot", error) });
       return false;
     }
     setNetworkStatus(statusEl, NETWORK_STATES.LOCAL);
@@ -621,7 +621,7 @@ export async function initGame({ requireApi = false } = {}) {
     // Never leave the fully drawn game interactive-looking when the anonymous
     // player could not be synchronized. In that state a vote cannot be safely
     // attributed, so the only honest UI is the recoverable online gate.
-    renderConnectionRequired(root);
+    renderConnectionRequired(root, { code: connectionDiagnosticCode("sync", playerSyncError) });
     return false;
   }
   let mode = "presidentes";

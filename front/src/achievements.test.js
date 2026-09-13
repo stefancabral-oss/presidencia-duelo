@@ -201,7 +201,7 @@ test("game wires toast, combo, persistence, and tournament completion", () => {
   assert.match(gameSrc, /id="combo-banner"/);
   assert.match(gameSrc, /id="achievement-toasts"/);
   assert.match(gameSrc, /id="achievements-list"/);
-  assert.match(gameSrc, /applyCombo\(state\)/);
+  assert.match(gameSrc, /applyCombo\(targetState\)/);
   assert.match(gameSrc, /unlockDueAchievements\(state/);
   assert.match(gameSrc, /migrateAchievements\(parsed/);
   assert.match(gameSrc, /achievements: \[\]/);

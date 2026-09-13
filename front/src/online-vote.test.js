@@ -12,7 +12,7 @@ test("online vote updates local statistics only after the server succeeds", asyn
     () => calls.push("local"),
   );
   assert.deepEqual(calls, ["remote", "local"]);
-  assert.deepEqual(response, { ok: true });
+  assert.deepEqual(response, { response: { ok: true }, applied: true });
 });
 
 test("online vote leaves local statistics untouched when the server fails", async () => {
@@ -25,4 +25,24 @@ test("online vote leaves local statistics untouched when the server fails", asyn
     /offline/,
   );
   assert.equal(localUpdates, 0);
+});
+
+test("a controlled late response does not apply to an invalidated session", async () => {
+  let resolveRemote;
+  let current = true;
+  let localUpdates = 0;
+  const remote = new Promise((resolve) => { resolveRemote = resolve; });
+  const pending = commitOnlineVote(
+    () => remote,
+    () => { localUpdates += 1; },
+    () => current,
+  );
+
+  current = false;
+  resolveRemote({ vote: { id: "persisted-on-server" } });
+  const result = await pending;
+
+  assert.equal(localUpdates, 0);
+  assert.equal(result.applied, false);
+  assert.equal(result.response.vote.id, "persisted-on-server");
 });

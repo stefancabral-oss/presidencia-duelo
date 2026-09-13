@@ -4,10 +4,6 @@
  * Persist in the same localStorage blob as `achievements: []`, plus
  * `combo` / `lastVoteAt` for the 2 s sequência window.
  *
- * Desfazer (#11): milestones stay unlocked once earned. Combo resets
- * on undo. pairCount is show history and is not reverted, so
- * "Viu todos os candidatos" also stays if it already unlocked.
- *
  * Tournament mode calls `unlockTournamentCompleted` when a champion is chosen.
  */
 
@@ -217,11 +213,4 @@ export function applyCombo(state, now = Date.now()) {
   state.combo = next;
   state.lastVoteAt = now;
   return next;
-}
-
-export function resetCombo(state) {
-  if (!state || typeof state !== "object") return state;
-  state.combo = 0;
-  state.lastVoteAt = null;
-  return state;
 }

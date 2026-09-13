@@ -1,21 +1,38 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { findLeaderId, rarityFor } from "./rarity.js";
+import { findLeaderId, rarityFor, rarityForElo } from "./rarity.js";
 
 function state(ratings, wins = {}, losses = {}) {
   return { ratings, wins, losses };
 }
 
-test("rarity follows Elo thresholds", () => {
-  assert.equal(rarityFor(state({ a: 1000 }), "a").id, "comum");
-  assert.equal(rarityFor(state({ a: 1040 }), "a").id, "raro");
-  assert.equal(rarityFor(state({ a: 1100 }), "a").id, "epico");
-  assert.equal(rarityFor(state({ a: 1180 }), "a").id, "lendario");
+test("rarity follows Malaquita Elo thresholds", () => {
+  const samples = [
+    [1000, "basica"],
+    [1015, "incomum"],
+    [1040, "rara"],
+    [1070, "rara-dupla"],
+    [1100, "ultra"],
+    [1120, "chroma-ilustrada"],
+    [1150, "chroma-especial"],
+    [1180, "chroma-suprema"],
+    [1220, "chroma-comemorativa"],
+  ];
+  for (const [elo, expected] of samples) {
+    assert.equal(rarityForElo(elo).id, expected);
+    assert.equal(rarityFor(state({ a: elo }), "a").id, expected);
+  }
 });
 
-test("only an isolated, experienced leader receives the legendary crown", () => {
-  assert.equal(findLeaderId(["a", "b"], state({ a: 1100, b: 1090 }, { a: 5 })), null);
-  assert.equal(findLeaderId(["a", "b"], state({ a: 1100, b: 1100 }, { a: 6 })), null);
-  assert.equal(findLeaderId(["a", "b"], state({ a: 1100, b: 1090 }, { a: 6 })), "a");
-  assert.equal(rarityFor(state({ a: 1100 }), "a", "a").id, "lendario");
+test("families remain simple for public reading", () => {
+  assert.equal(rarityForElo(1000).family, "Comum");
+  assert.equal(rarityForElo(1070).family, "Rara");
+  assert.equal(rarityForElo(1180).family, "Chroma");
+});
+
+test("experienced Chroma leader receives commemorative treatment", () => {
+  assert.equal(findLeaderId(["a", "b"], state({ a: 1119, b: 1090 }, { a: 6 })), "a");
+  assert.equal(rarityFor(state({ a: 1119 }), "a", "a").id, "ultra");
+  assert.equal(findLeaderId(["a", "b"], state({ a: 1120, b: 1090 }, { a: 6 })), "a");
+  assert.equal(rarityFor(state({ a: 1120 }), "a", "a").id, "chroma-comemorativa");
 });

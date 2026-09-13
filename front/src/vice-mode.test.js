@@ -28,4 +28,5 @@ test("vice mode swaps the person while preserving the chapa id", () => {
 test("the active legacy pool is presented as people", () => {
   assert.equal(MODES.presidentes.label, "Pessoas");
   assert.equal(MODES.presidentes.singular, "pessoa");
+  assert.equal(MODES.presidentes.prompt, "Toque na pessoa preferida");
 });

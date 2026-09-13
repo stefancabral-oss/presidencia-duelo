@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { runLockedPick } from "./pick.js";
+import { PICK_FEEDBACK_MS, runLockedPick } from "./pick.js";
 
 test("runLockedPick schedules onDone after a successful pick", () => {
   const calls = [];
@@ -47,10 +47,10 @@ test("runLockedPick schedules onDone even if work throws before unlock", () => {
         },
         () => {},
         schedule,
-        420,
+        PICK_FEEDBACK_MS,
       ),
     /boom/,
   );
   assert.equal(scheduled.length, 1);
-  assert.equal(scheduled[0].delay, 420);
+  assert.equal(scheduled[0].delay, PICK_FEEDBACK_MS);
 });

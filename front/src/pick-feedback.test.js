@@ -1,29 +1,24 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  PICK_PENDING_TEXT,
+  VIBRATE_MS,
+  applyPendingPickFeedback,
   applyPickFeedback,
   clearPickFeedback,
   formatEloDelta,
-  showEloFloat,
-  showZebraBadge,
+  formatPickResult,
+  showPickResult,
   tryVibrate,
-  VIBRATE_MS,
-  ZEBRA_BADGE_TEXT,
 } from "./pick-feedback.js";
 
 function mockClassList() {
   const items = new Set();
   return {
     items,
-    add(...names) {
-      for (const name of names) items.add(name);
-    },
-    remove(...names) {
-      for (const name of names) items.delete(name);
-    },
-    contains(name) {
-      return items.has(name);
-    },
+    add(...names) { names.forEach((name) => items.add(name)); },
+    remove(...names) { names.forEach((name) => items.delete(name)); },
+    contains(name) { return items.has(name); },
   };
 }
 
@@ -39,160 +34,87 @@ function mockCard() {
           className: "",
           textContent: "",
           attrs: {},
-          setAttribute(name, value) {
-            this.attrs[name] = value;
-          },
+          setAttribute(name, value) { this.attrs[name] = value; },
           remove() {
-            const i = children.indexOf(node);
-            if (i >= 0) children.splice(i, 1);
+            const index = children.indexOf(node);
+            if (index >= 0) children.splice(index, 1);
           },
         };
         return node;
       },
     },
-    querySelector(sel) {
-      const cls = sel.startsWith(".") ? sel.slice(1) : sel;
-      if (cls === "art-frame") return null;
-      return children.find((child) => String(child.className).split(/\s+/).includes(cls)) ?? null;
+    querySelector(selector) {
+      const className = selector.startsWith(".") ? selector.slice(1) : selector;
+      return children.find((child) => child.className.split(/\s+/).includes(className)) || null;
     },
-    appendChild(node) {
-      children.push(node);
-      return node;
-    },
+    appendChild(node) { children.push(node); return node; },
   };
   return card;
 }
 
-function mockCardWithArt() {
-  const card = mockCard();
-  const artChildren = [];
-  const art = {
-    className: "art-frame",
-    children: artChildren,
-    ownerDocument: card.ownerDocument,
-    querySelector(sel) {
-      const cls = sel.startsWith(".") ? sel.slice(1) : sel;
-      return artChildren.find((child) => String(child.className).split(/\s+/).includes(cls)) ?? null;
-    },
-    appendChild(node) {
-      artChildren.push(node);
-      const origRemove = node.remove;
-      node.remove = () => {
-        const i = artChildren.indexOf(node);
-        if (i >= 0) artChildren.splice(i, 1);
-        origRemove?.();
-      };
-      return node;
-    },
-  };
-  const cardQuery = card.querySelector;
-  card.querySelector = (sel) => {
-    if (sel === ".art-frame") return art;
-    return cardQuery(sel) || art.querySelector(sel);
-  };
-  card.art = art;
-  return card;
-}
-
-test("formatEloDelta shows a signed plus on gains and keeps the minus on losses", () => {
-  assert.equal(formatEloDelta(14), "+14");
+test("formatEloDelta shows signed rounded changes", () => {
   assert.equal(formatEloDelta(16), "+16");
   assert.equal(formatEloDelta(-14), "-14");
-  assert.equal(formatEloDelta(-16), "-16");
   assert.equal(formatEloDelta(0), "0");
   assert.equal(formatEloDelta(8.4), "+8");
 });
 
-test("tryVibrate no-ops when vibrate is missing and does not throw", () => {
-  assert.equal(tryVibrate(VIBRATE_MS, undefined), false);
-  assert.equal(tryVibrate(VIBRATE_MS, {}), false);
+test("result priority is zebra, Elo, combo, then persistence confirmation", () => {
   assert.equal(
-    tryVibrate(VIBRATE_MS, {
-      vibrate() {
-        throw new Error("blocked");
-      },
-    }),
-    false,
+    formatPickResult({ winnerDelta: 20, zebra: true, combo: 3, saved: true }),
+    "ZEBRA! · +20 Elo · Combo x3 · Voto salvo",
+  );
+  assert.equal(
+    formatPickResult({ winnerDelta: 16, combo: 1, saved: false }),
+    "+16 Elo · Escolha registrada",
   );
 });
 
-test("tryVibrate calls navigator.vibrate(30) when supported", () => {
+test("tryVibrate is safe and uses the short haptic pulse when supported", () => {
+  assert.equal(tryVibrate(VIBRATE_MS, undefined), false);
   const calls = [];
-  const ok = tryVibrate(VIBRATE_MS, {
-    vibrate(ms) {
-      calls.push(ms);
-    },
-  });
-  assert.equal(ok, true);
+  assert.equal(tryVibrate(VIBRATE_MS, { vibrate: (ms) => calls.push(ms) }), true);
   assert.deepEqual(calls, [30]);
+  assert.equal(tryVibrate(VIBRATE_MS, { vibrate() { throw new Error("blocked"); } }), false);
 });
 
-test("applyPickFeedback adds classes, floats, and a vibrate hook", () => {
+test("pending feedback says chosen, never saved", () => {
   const winner = mockCard();
   const loser = mockCard();
-  const vibrated = [];
-  applyPickFeedback(winner, loser, 16, -16, {
-    navigator: {
-      vibrate(ms) {
-        vibrated.push(ms);
-      },
-    },
+  const node = applyPendingPickFeedback(winner, loser);
+  assert.equal(winner.classList.contains("picked-pending"), true);
+  assert.equal(node.textContent, PICK_PENDING_TEXT);
+  assert.doesNotMatch(node.textContent, /salvo/i);
+  assert.equal(node.attrs.role, "status");
+  assert.equal(node.attrs["aria-live"], "polite");
+});
+
+test("confirmed feedback creates one readable moment on the winner", () => {
+  const winner = mockCard();
+  const loser = mockCard();
+  applyPickFeedback(winner, loser, 20, -20, {
+    zebra: true,
+    combo: 2,
+    saved: true,
+    navigator: { vibrate() {} },
   });
   assert.equal(winner.classList.contains("picked-win"), true);
   assert.equal(loser.classList.contains("picked-lose"), true);
-  assert.equal(winner.children[0].textContent, "+16");
-  assert.equal(winner.children[0].className, "elo-float win");
-  assert.equal(winner.children[0].attrs["aria-hidden"], "true");
-  assert.equal(loser.children[0].textContent, "-16");
-  assert.equal(loser.children[0].className, "elo-float lose");
-  assert.deepEqual(vibrated, [30]);
+  assert.equal(winner.children.length, 1);
+  assert.equal(loser.children.length, 0);
+  assert.equal(winner.children[0].className, "pick-result zebra");
+  assert.match(winner.children[0].textContent, /^ZEBRA! · \+20 Elo · Combo x2 · Voto salvo$/);
 });
 
-test("showEloFloat replaces a previous float instead of stacking", () => {
-  const el = mockCard();
-  showEloFloat(el, 16, "win");
-  showEloFloat(el, 8, "win");
-  assert.equal(el.children.length, 1);
-  assert.equal(el.children[0].textContent, "+8");
-});
-
-test("clearPickFeedback removes hit classes and the float", () => {
-  const el = mockCard();
-  applyPickFeedback(el, mockCard(), 16, -16, { navigator: { vibrate() {} } });
-  clearPickFeedback(el);
-  assert.equal(el.classList.contains("picked-win"), false);
-  assert.equal(el.children[0], undefined);
-});
-
-test("showZebraBadge stamps ZEBRA! on the photo frame and replaces a previous badge", () => {
-  const el = mockCardWithArt();
-  showZebraBadge(el);
-  showZebraBadge(el);
-  assert.equal(el.art.children.length, 1);
-  assert.equal(el.art.children[0].textContent, ZEBRA_BADGE_TEXT);
-  assert.equal(el.art.children[0].className, "zebra-badge");
-  assert.equal(el.art.children[0].attrs["aria-hidden"], "true");
-});
-
-test("applyPickFeedback stamps ZEBRA! on the winner only when zebra is true", () => {
-  const winner = mockCardWithArt();
-  const loser = mockCardWithArt();
-  applyPickFeedback(winner, loser, 20, -20, { zebra: true, navigator: { vibrate() {} } });
-  assert.equal(winner.art.children[0].textContent, "ZEBRA!");
-  assert.equal(loser.art.children.length, 0);
-
-  const evenWinner = mockCardWithArt();
-  applyPickFeedback(evenWinner, mockCardWithArt(), 16, -16, {
-    zebra: false,
-    navigator: { vibrate() {} },
-  });
-  assert.equal(evenWinner.art.children.length, 0);
-});
-
-test("clearPickFeedback also removes the zebra badge", () => {
-  const el = mockCardWithArt();
-  applyPickFeedback(el, mockCardWithArt(), 20, -20, { zebra: true, navigator: { vibrate() {} } });
-  clearPickFeedback(el);
-  assert.equal(el.children.length, 0);
-  assert.equal(el.art.children.length, 0);
+test("result replacement and cleanup never stack moments", () => {
+  const card = mockCard();
+  showPickResult(card, "primeiro");
+  showPickResult(card, "segundo");
+  assert.equal(card.children.length, 1);
+  assert.equal(card.children[0].textContent, "segundo");
+  card.classList.add("picked-pending", "picked-win");
+  clearPickFeedback(card);
+  assert.equal(card.children.length, 0);
+  assert.equal(card.classList.contains("picked-pending"), false);
+  assert.equal(card.classList.contains("picked-win"), false);
 });

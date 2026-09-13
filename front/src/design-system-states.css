@@ -1,0 +1,83 @@
+/* Interaction and rarity states for the ICM 02 design system. */
+
+.pm-card {
+  transition: transform var(--pm-fast) var(--pm-ease), box-shadow var(--pm-medium) var(--pm-ease), border-color var(--pm-fast) var(--pm-ease), opacity var(--pm-fast) var(--pm-ease);
+}
+.pm-card:focus-visible {
+  outline: none;
+  box-shadow: var(--pm-shadow-card), 0 0 22px var(--pm-card-glow), var(--pm-focus);
+}
+@media (hover:hover) {
+  .pm-card:hover { transform: translateY(-3px); }
+}
+.pm-card:active { transform: translateY(0) scale(.985); }
+.pm-card.is-pending { opacity: .8; cursor: wait; }
+.pm-card.is-selected,
+.pm-card.picked-win { box-shadow: var(--pm-shadow-card), 0 0 0 3px rgba(20,122,82,.18), 0 0 28px rgba(20,122,82,.18); }
+.pm-card.is-error { box-shadow: var(--pm-shadow-card), 0 0 0 3px rgba(180,35,45,.14); }
+
+/* Chroma stays expressive while the shell remains quiet. */
+.pm-card[data-rarity="chroma-ilustrada"] {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--pm-surface),var(--pm-surface)) padding-box,
+    linear-gradient(135deg,#36d7ce,#68a7ff,#a47aff) border-box;
+}
+.pm-card[data-rarity="chroma-especial"] {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--pm-surface),var(--pm-surface)) padding-box,
+    linear-gradient(135deg,#6de7d0,#8b5cf6,#e657a6) border-box;
+}
+.pm-card[data-rarity="chroma-suprema"] {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--pm-surface),var(--pm-surface)) padding-box,
+    linear-gradient(135deg,#f8efb1,#d4af37,#f1cf62,#9f7720) border-box;
+}
+.pm-card[data-rarity="chroma-suprema"] .pm-card__rarity {
+  color: #fff8d3;
+  background: linear-gradient(145deg,#826214,#c99a25);
+  border-color: rgba(255,243,184,.72);
+  text-shadow: 0 1px 5px rgba(52,34,0,.55);
+}
+.pm-card[data-rarity="chroma-comemorativa"] {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--pm-surface),var(--pm-surface)) padding-box,
+    conic-gradient(from 210deg,#31d9c2,#54a7ff,#a468ff,#e657a6,#f1c75e,#31d9c2) border-box;
+}
+.pm-card[data-rarity="chroma-comemorativa"] .pm-card__rarity {
+  color:#fff;
+  background:conic-gradient(from 210deg,#31d9c2,#54a7ff,#a468ff,#e657a6,#f1c75e,#31d9c2);
+  border-color:rgba(255,255,255,.72);
+  text-shadow:0 1px 5px rgba(0,0,0,.45);
+}
+
+.pm-card[data-rarity^="chroma"] .pm-card__media::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(140deg,rgba(255,255,255,.05),transparent 35%,rgba(75,220,210,.08) 62%,rgba(184,104,255,.07));
+  mix-blend-mode:screen;
+}
+
+.pm-button.is-loading { position:relative; color:transparent; pointer-events:none; }
+.pm-button.is-loading::after {
+  content:"";
+  width:16px;
+  height:16px;
+  position:absolute;
+  border:2px solid currentColor;
+  border-right-color:transparent;
+  border-radius:50%;
+  animation:pm-spin .7s linear infinite;
+  color:var(--pm-malachite-900);
+}
+@keyframes pm-spin { to { transform:rotate(360deg); } }
+
+@media (prefers-reduced-motion:reduce) {
+  .pm-card,.pm-button.is-loading::after { transition:none; animation:none; }
+  .pm-card:hover { transform:none; }
+}

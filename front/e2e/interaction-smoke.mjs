@@ -61,6 +61,16 @@ try {
     return style.display !== "none" && style.pointerEvents !== "none";
   }));
   assert.equal(hiddenBlocking, false, "Overlay oculto intercepta cliques");
+
+  await page.waitForSelector("#tab-chromas");
+  await page.locator("#tab-chromas").click();
+  await page.waitForURL(/\/chromas\.html$/);
+  await page.waitForSelector("#chroma-grid");
+  assert.equal(await page.locator(".chroma-filter").count(), 5, "Galeria Chroma não expôs todos os filtros");
+  assert.match(await page.locator("h1").textContent(), /Galeria Chroma/);
+
+  await page.goto(baseUrl, { waitUntil: "networkidle" });
+  await page.waitForSelector("#tab-duel");
   assert.deepEqual(errors, [], `Erros no browser: ${errors.join(" | ")}`);
 } finally {
   await browser.close();

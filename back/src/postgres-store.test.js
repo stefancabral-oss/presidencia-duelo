@@ -46,7 +46,7 @@ test("anonymous recovery keys have 256 random bits and are stored as hashes", ()
   assert.throws(() => recoveryKeyHash("player-123"), (error) => error.status === 401);
 });
 
-test("individual state is canonicalized and rejects invalid counters", () => {
+test("individual state is canonicalized and accepts unattributed legacy duels", () => {
   const state = normalizePlayerState({
     ratings: { zema: 1016 },
     wins: { zema: 1 },
@@ -59,8 +59,16 @@ test("individual state is canonicalized and rejects invalid counters", () => {
   assert.equal(state.wins.zema, 1);
   assert.equal(state.duels, 1);
   assert.equal("ignored" in state, false);
+  const legacy = normalizePlayerState({ duels: 841 });
+  assert.equal(legacy.duels, 841);
+  assert.equal(Object.values(legacy.wins).reduce((sum, count) => sum + count, 0), 0);
   assert.throws(() => normalizePlayerState({ wins: { zema: -1 } }), /estado individual inválido/);
   assert.throws(() => normalizePlayerState({ wins: { zema: 1 }, duels: 1 }), /inconsistente/);
+  assert.throws(() => normalizePlayerState({
+    wins: { zema: 2 },
+    losses: { "pessoa-133": 2 },
+    duels: 1,
+  }), /inconsistente/);
 });
 
 test("reusing a vote ID with different content is rejected", () => {

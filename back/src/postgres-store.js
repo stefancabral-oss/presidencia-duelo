@@ -102,7 +102,10 @@ export function normalizePlayerState(value) {
   }
   const totalWins = Object.values(normalized.wins).reduce((total, count) => total + count, 0);
   const totalLosses = Object.values(normalized.losses).reduce((total, count) => total + count, 0);
-  if (totalWins !== duels || totalLosses !== duels) {
+  // Early local-only builds stored the overall duel counter before they
+  // reliably stored every per-person result. Keep those unattributed legacy
+  // duels instead of rejecting the whole mobile profile during first sync.
+  if (totalWins !== totalLosses || totalWins > duels) {
     const error = new Error("estado individual inconsistente");
     error.status = 400;
     throw error;

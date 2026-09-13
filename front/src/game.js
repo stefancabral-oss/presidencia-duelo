@@ -273,7 +273,6 @@ function renderShell(root, { requireApi = false } = {}) {
           <button type="button" class="btn" id="restart-tournament">Novo torneio</button>
         </div>
         <p class="podium-share-status" id="tournament-recovery-status" role="status" hidden></p>
-        <div class="tournament-bracket" id="tournament-bracket" aria-label="Chave do torneio"></div>
         <div class="tournament-stage" id="tournament-stage">
           <p class="tournament-round" id="tournament-round"></p>
           <div class="vs-row" id="tournament-duel">
@@ -292,6 +291,10 @@ function renderShell(root, { requireApi = false } = {}) {
             </div>
           </div>
         </div>
+        <details class="tournament-bracket-details">
+          <summary>Ver chave completa</summary>
+          <div class="tournament-bracket" id="tournament-bracket" aria-label="Chave do torneio"></div>
+        </details>
       </section>
 
       <section id="panel-rank" class="panel" aria-label="Ranking">

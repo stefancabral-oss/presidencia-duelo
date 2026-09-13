@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { test } from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   completedTournamentDuels,
   createTournament,
@@ -11,6 +14,7 @@ import {
 } from "./tournament.js";
 
 const ids = Array.from({ length: 12 }, (_, index) => `c${index + 1}`);
+const gameSource = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "game.js"), "utf8");
 
 test("12 candidates produce four opening matches and four byes", () => {
   const tournament = createTournament(ids, () => 0.999999);
@@ -98,4 +102,13 @@ test("invalid or incompatible saved state is replaced with a playable 11-duel br
     }
     assert.equal(completedTournamentDuels(loaded.tournament), 11);
   }
+});
+
+test("active tournament duel precedes a collapsible full bracket", () => {
+  const stageIndex = gameSource.indexOf('id="tournament-stage"');
+  const bracketIndex = gameSource.indexOf('id="tournament-bracket"');
+  assert.ok(stageIndex > 0 && bracketIndex > stageIndex);
+  assert.match(gameSource, /<details class="tournament-bracket-details">/);
+  assert.match(gameSource, /duelo \$\{played \+ 1\} de 11/);
+  assert.doesNotMatch(gameSource, /Próximo jogo/);
 });

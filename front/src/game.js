@@ -78,6 +78,7 @@ import {
   isValidTournament,
   tournamentPick,
 } from "./tournament.js";
+import { createTournamentPickLock } from "./tournament-pick-lock.js";
 import { lastDuelFromParsed, restoreDuel, snapshotDuel, undoPair } from "./undo.js";
 import { MODES, VICE_STORAGE_KEY, candidateForMode } from "./vice-mode.js";
 import { createVoteId } from "./vote-id.js";
@@ -565,6 +566,7 @@ export async function initGame({ requireApi = false } = {}) {
   let locked = false;
   let pickTimer = null;
   let tournament = loadTournament();
+  const tournamentPickLock = createTournamentPickLock();
 
   function renderPlayerRecovery(message = "") {
     if (!els.playerKey) return;
@@ -992,6 +994,8 @@ export async function initGame({ requireApi = false } = {}) {
     els.tournamentWinner.hidden = true;
     els.tournamentDuel.hidden = false;
     els.tournamentRound.hidden = false;
+    els.tournamentCardA.disabled = false;
+    els.tournamentCardB.disabled = false;
     const round = tournament.rounds[tournament.roundIndex];
     els.tournamentRound.textContent = `${round.name} · duelo ${played + 1} de 11`;
     renderTournamentCard(els.tournamentCardA, match.candidates[0]);
@@ -999,17 +1003,34 @@ export async function initGame({ requireApi = false } = {}) {
   }
 
   function pickTournamentCard(card) {
-    if (!tournamentPick(tournament, card.dataset.id)) return;
-    saveTournament();
-    if (tournament.champion && unlockTournamentCompleted(state)) {
-      persist();
-      renderAchievements();
-      showAchievementToasts(["completou-torneio"]);
-    }
-    renderTournament();
+    const cards = [els.tournamentCardA, els.tournamentCardB];
+    const loser = card === els.tournamentCardA ? els.tournamentCardB : els.tournamentCardA;
+    tournamentPickLock.run({
+      cards,
+      commit: () => {
+        if (!tournamentPick(tournament, card.dataset.id)) return false;
+        saveTournament();
+        if (tournament.champion && unlockTournamentCompleted(state)) {
+          persist();
+          renderAchievements();
+          showAchievementToasts(["completou-torneio"]);
+        }
+        return true;
+      },
+      feedback: () => {
+        card.classList.add("picked-win");
+        loser.classList.add("picked-lose");
+      },
+      render: () => {
+        card.classList.remove("picked-win");
+        loser.classList.remove("picked-lose");
+        renderTournament();
+      },
+    });
   }
 
   function restartTournament() {
+    tournamentPickLock.reset([els.tournamentCardA, els.tournamentCardB]);
     tournament = createTournament(topicCandidates().map((candidate) => candidate.id));
     saveTournament();
     if (els.tournamentShareStatus) els.tournamentShareStatus.hidden = true;

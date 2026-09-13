@@ -7,6 +7,7 @@ import "../../front/src/styles.css";
 import "../../front/src/malaquita.css";
 import "../../front/src/malaquita-shell.css";
 import "../../front/src/duel-v2.css";
+import "../../front/src/interaction-sound.css";
 import { registerServiceWorker } from "./register-sw.js";
 
 installTournamentRestartGuard();

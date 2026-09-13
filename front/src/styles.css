@@ -876,7 +876,8 @@ h1 {
   animation: achievement-toast-in .45s ease-out both;
 }
 
-.podium-overlay {
+.podium-overlay,
+.reset-overlay {
   position: fixed;
   inset: 0;
   z-index: 30;
@@ -887,10 +888,21 @@ h1 {
 .podium-overlay[hidden] {
   display: none;
 }
+.reset-overlay[hidden] {
+  display: none;
+}
 .podium-backdrop {
   position: absolute;
   inset: 0;
   background: rgba(5, 8, 16, .72);
+}
+.reset-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: rgba(5, 8, 16, .78);
+  cursor: default;
 }
 .podium-dialog {
   position: relative;
@@ -904,6 +916,17 @@ h1 {
   padding: 18px 16px 16px;
   text-align: center;
 }
+.reset-dialog {
+  position: relative;
+  width: min(100%, 440px);
+  padding: 20px;
+  border: 2px solid var(--danger);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+.reset-dialog h2 { margin-top: 0; }
+.reset-status { min-height: 1.3em; color: var(--muted); }
 .podium-kicker {
   margin: 0 0 4px;
   color: var(--gold);

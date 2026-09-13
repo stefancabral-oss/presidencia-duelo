@@ -6,8 +6,8 @@ export function connectionRequiredHtml() {
         <h1>PoliMatch</h1>
       </div>
       <section class="connection-required-card" role="alert">
-        <h2>Conexão necessária</h2>
-        <p>O jogo funciona somente online para registrar cada voto no ranking compartilhado sem perder suas estatísticas individuais.</p>
+        <h2>Não foi possível sincronizar</h2>
+        <p>O PoliMatch precisa acessar o servidor para preservar seus votos e estatísticas. Wi-Fi e dados móveis são compatíveis.</p>
         <button type="button" class="btn primary" id="retry-connection">Tentar novamente</button>
       </section>
     </main>

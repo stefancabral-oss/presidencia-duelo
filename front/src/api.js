@@ -1,4 +1,12 @@
-const API_BASE = (import.meta.env?.VITE_API_URL || "").replace(/\/$/, "");
+const LEGACY_API_BASE = "https://api-polimatch.e7h3.com";
+const PRIMARY_API_BASE = "https://api.polimatch.com.br";
+
+export function normalizeApiBase(configuredBase = "") {
+  const base = configuredBase.replace(/\/$/, "");
+  return base === LEGACY_API_BASE ? PRIMARY_API_BASE : base;
+}
+
+const API_BASE = normalizeApiBase(import.meta.env?.VITE_API_URL || "");
 export const API_TIMEOUT_MS = 8000;
 
 export class ApiRequestError extends Error {

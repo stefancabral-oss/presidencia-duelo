@@ -63,6 +63,14 @@ test("poke-card no longer shares one hover+focus-visible rule", () => {
   assert.doesNotMatch(clean, /\.poke-card:focus-visible\s*,\s*\.poke-card:hover/);
 });
 
+test("rarity styling is confined to ranking items", () => {
+  assert.doesNotMatch(clean, /\.poke-card\[data-rarity/);
+  assert.doesNotMatch(clean, /\.rarity-chip/);
+  assert.doesNotMatch(clean, /\.art-frame\s+\.holo/);
+  assert.match(clean, /\.rank-item\[data-rarity\]/);
+  assert.match(clean, /\.rarity-tag/);
+});
+
 test("picked-win flashes and picked-lose shakes", () => {
   assert.match(clean, /\.poke-card\.picked-win\s*\{[^}]*animation:\s*pick-flash/);
   assert.match(clean, /\.poke-card\.picked-lose\s*\{[^}]*animation:\s*pick-shake/);

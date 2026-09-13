@@ -5,10 +5,9 @@ import "../../front/src/styles.css";
 import "../../front/src/malaquita.css";
 import "../../front/src/malaquita-shell.css";
 import "../../front/src/design-system.css";
+import "./design-system-bridge.css";
 import { registerServiceWorker } from "./register-sw.js";
 
 installTournamentRestartGuard();
 registerServiceWorker();
-// Temporary compatibility mode: keep aggregate API voting available while
-// avoiding a hard dependency on player-sync endpoints during rollout.
 initGame().then(() => installFrontendEnhancements());

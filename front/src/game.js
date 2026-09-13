@@ -3,9 +3,12 @@ import { applyElo, emptyStats, mergeStats } from "../../shared/elo.js";
 import {
   fetchCandidates,
   fetchHealth,
+  fetchPlayerState,
   fetchServerRanking,
   isUnknownVoteConfirmation,
   postVote,
+  createPlayer,
+  replacePlayerState,
 } from "./api.js";
 import { applyCardAriaLabel } from "./card-label.js";
 import { renderConnectionRequired } from "./connection-required.js";
@@ -34,6 +37,12 @@ import { findLeaderId, rarityFor } from "./rarity.js";
 import { normalizePairCount, takeNextPair } from "./matchmaking.js";
 import { NETWORK_STATES, setNetworkStatus } from "./network-status.js";
 import { commitOnlineVote } from "./online-vote.js";
+import {
+  applyServerPlayerState,
+  initializePlayerSync,
+  loadRecoveryKey,
+  saveRecoveryKey,
+} from "./player-sync.js";
 import {
   INITIAL_GOAL,
   acceptGoal,
@@ -296,6 +305,22 @@ function renderShell(root, { requireApi = false } = {}) {
           <h2 class="achievements-title">Conquistas</h2>
           <ul class="achievements-list" id="achievements-list"></ul>
         </section>
+        <section class="player-recovery" aria-labelledby="player-recovery-title">
+          <h2 id="player-recovery-title">Seu ranking em qualquer aparelho</h2>
+          <p>Guarde sua chave privada. Ela recupera seu ranking pessoal após reinstalar ou trocar de navegador.</p>
+          <div class="player-key-row">
+            <code id="player-key">Preparando chave…</code>
+            <button type="button" class="btn" id="copy-player-key">Copiar chave</button>
+          </div>
+          <form id="recover-player-form">
+            <label for="recover-player-key">Recuperar uma chave existente</label>
+            <div class="player-key-row">
+              <input id="recover-player-key" name="recoveryKey" autocomplete="off" spellcheck="false" />
+              <button type="submit" class="btn primary">Recuperar</button>
+            </div>
+          </form>
+          <p id="player-recovery-status" role="status" aria-live="polite"></p>
+        </section>
         <div id="server-rank-wrap" hidden>
           <h2 class="server-rank-title">Ranking agregado do servidor</h2>
           <p class="rank-sub">Soma dos votos enviados à API (compartilhado). O jogo local continua independente.</p>
@@ -423,6 +448,11 @@ export async function initGame({ requireApi = false } = {}) {
     cardB: document.getElementById("card-b"),
     rankList: document.getElementById("rank-list"),
     resetBtn: document.getElementById("reset-ranking"),
+    playerKey: document.getElementById("player-key"),
+    copyPlayerKey: document.getElementById("copy-player-key"),
+    recoverPlayerForm: document.getElementById("recover-player-form"),
+    recoverPlayerKey: document.getElementById("recover-player-key"),
+    playerRecoveryStatus: document.getElementById("player-recovery-status"),
     serverWrap: document.getElementById("server-rank-wrap"),
     serverList: document.getElementById("server-rank-list"),
     storageNotice: document.getElementById("storage-notice"),
@@ -454,6 +484,34 @@ export async function initGame({ requireApi = false } = {}) {
     presidentes: loadState(candidates),
     vices: loadState(candidates, VICE_STORAGE_KEY),
   };
+  const playerVersions = { presidentes: 0, vices: 0 };
+  let recoveryKey = loadRecoveryKey();
+  let playerReady = !requireApi;
+  let playerSyncError = null;
+  if (requireApi && apiOnline) {
+    try {
+      const synced = await initializePlayerSync({
+        states,
+        recoveryKey,
+        createRemotePlayer: createPlayer,
+        fetchRemoteState: fetchPlayerState,
+        replaceRemoteState: replacePlayerState,
+        onRecoveryKey: (createdKey) => {
+          recoveryKey = createdKey;
+          saveRecoveryKey(createdKey);
+        },
+      });
+      recoveryKey = synced.recoveryKey;
+      Object.assign(playerVersions, synced.versions);
+      saveRecoveryKey(recoveryKey);
+      playerReady = true;
+      saveState(states.presidentes, undefined, STORAGE_KEY);
+      saveState(states.vices, undefined, VICE_STORAGE_KEY);
+    } catch (error) {
+      playerSyncError = error;
+      playerReady = false;
+    }
+  }
   let mode = "presidentes";
   let state = states[mode];
   let topicId = loadTopic();
@@ -462,6 +520,41 @@ export async function initGame({ requireApi = false } = {}) {
   let locked = false;
   let pickTimer = null;
   let tournament = loadTournament();
+
+  function renderPlayerRecovery(message = "") {
+    if (!els.playerKey) return;
+    els.playerKey.textContent = recoveryKey
+      ? `${recoveryKey.slice(0, 10)}…${recoveryKey.slice(-6)}`
+      : "Chave não conectada";
+    els.copyPlayerKey.disabled = !recoveryKey;
+    els.playerRecoveryStatus.textContent = message || (playerSyncError
+      ? "Não foi possível sincronizar. Informe sua chave novamente; nenhum dado remoto foi sobrescrito."
+      : "Ranking pessoal sincronizado com o servidor.");
+  }
+
+  async function recoverPlayer(recoveredKey) {
+    const synced = await initializePlayerSync({
+      states,
+      recoveryKey: recoveredKey,
+      createRemotePlayer: createPlayer,
+      fetchRemoteState: fetchPlayerState,
+      replaceRemoteState: replacePlayerState,
+    });
+    recoveryKey = synced.recoveryKey;
+    Object.assign(playerVersions, synced.versions);
+    saveRecoveryKey(recoveryKey);
+    saveState(states.presidentes, undefined, STORAGE_KEY);
+    saveState(states.vices, undefined, VICE_STORAGE_KEY);
+    state = states[mode];
+    playerSyncError = null;
+    playerReady = true;
+    cancelPickTimer();
+    nextDuel();
+    renderRanking();
+    renderAchievements();
+    renderCombo();
+    renderPlayerRecovery("Ranking pessoal recuperado neste aparelho.");
+  }
 
   function loadTournament() {
     const ids = topicCandidates().map((candidate) => candidate.id);
@@ -863,10 +956,25 @@ export async function initGame({ requireApi = false } = {}) {
     renderCombo();
   }
 
-  function commitLocalPick(session) {
+  function commitLocalPick(session, serverPlayer = null) {
     const { state: targetState, pair, winnerEl, winnerId, loserId } = session;
     const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
-    const { winnerDelta, loserDelta, zebra } = applyElo(targetState, winnerId, loserId);
+    let result;
+    if (serverPlayer) {
+      const winnerBefore = targetState.ratings[winnerId];
+      const loserBefore = targetState.ratings[loserId];
+      const zebrasBefore = targetState.zebras?.[winnerId] || 0;
+      applyServerPlayerState(targetState, serverPlayer.state);
+      playerVersions[session.mode] = serverPlayer.version;
+      result = {
+        winnerDelta: targetState.ratings[winnerId] - winnerBefore,
+        loserDelta: targetState.ratings[loserId] - loserBefore,
+        zebra: (targetState.zebras?.[winnerId] || 0) > zebrasBefore,
+      };
+    } else {
+      result = applyElo(targetState, winnerId, loserId);
+    }
+    const { winnerDelta, loserDelta, zebra } = result;
     applyCombo(targetState);
     applyUnlocks();
     persist();
@@ -879,6 +987,11 @@ export async function initGame({ requireApi = false } = {}) {
 
   async function pick(winnerEl) {
     if (locked || !currentPair) return;
+    if (requireApi && !playerReady) {
+      renderPlayerRecovery("Informe uma chave válida para preservar seu ranking pessoal.");
+      setTab("rank");
+      return;
+    }
     locked = true;
     const session = captureVoteSession({
       generation: duelGeneration,
@@ -903,8 +1016,12 @@ export async function initGame({ requireApi = false } = {}) {
       setNetworkStatus(statusEl, NETWORK_STATES.REGISTERING);
       try {
         const result = await commitOnlineVote(
-          () => postVote(session.winnerId, session.loserId, session.mode, { voteId }),
-          () => commitLocalPick(session),
+          () => postVote(session.winnerId, session.loserId, session.mode, {
+            voteId,
+            recoveryKey,
+            playerVersion: playerVersions[session.mode],
+          }),
+          (response) => commitLocalPick(session, response.player),
           sessionIsCurrent,
         );
         if (!result.applied) return;
@@ -912,6 +1029,10 @@ export async function initGame({ requireApi = false } = {}) {
         pickTimer = setTimeout(nextDuel, 420);
       } catch (error) {
         if (!sessionIsCurrent()) return;
+        if (error.status === 409 && error.body?.code === "PLAYER_VERSION_CONFLICT") {
+          playerReady = false;
+          renderPlayerRecovery("Há dados mais recentes no servidor. Recupere sua chave para sincronizar antes de continuar.");
+        }
         if (isUnknownVoteConfirmation(error)) {
           setNetworkStatus(statusEl, NETWORK_STATES.UNKNOWN);
           return;
@@ -1070,6 +1191,33 @@ export async function initGame({ requireApi = false } = {}) {
     els.quickControlsHint.hidden = true;
     markQuickControlsHintSeen();
   });
+  els.copyPlayerKey.addEventListener("click", async () => {
+    if (!recoveryKey) return;
+    try {
+      await navigator.clipboard.writeText(recoveryKey);
+      renderPlayerRecovery("Chave copiada. Guarde-a como uma senha.");
+    } catch {
+      renderPlayerRecovery("Não foi possível copiar automaticamente. Tente novamente.");
+    }
+  });
+  els.recoverPlayerForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const recoveredKey = els.recoverPlayerKey.value.trim();
+    if (!recoveredKey) return;
+    const submit = els.recoverPlayerForm.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    renderPlayerRecovery("Recuperando ranking…");
+    try {
+      await recoverPlayer(recoveredKey);
+      els.recoverPlayerKey.value = "";
+    } catch (error) {
+      renderPlayerRecovery(error.status === 401
+        ? "Chave não encontrada. Confira e tente novamente."
+        : "Não foi possível recuperar agora; seus dados atuais não foram sobrescritos.");
+    } finally {
+      submit.disabled = false;
+    }
+  });
 
   els.resetBtn.addEventListener("click", () => {
     if (!confirm("Zerar ranking e duelos salvos neste aparelho?")) return;
@@ -1090,6 +1238,7 @@ export async function initGame({ requireApi = false } = {}) {
   renderTopicUi();
   renderAchievements();
   renderCombo();
+  renderPlayerRecovery();
   nextDuel();
   maybeShowGoalMoment();
   return true;

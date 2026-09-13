@@ -51,7 +51,16 @@ export async function requestJson(
   }
 
   if (!response.ok) {
-    throw new ApiRequestError(`${path} ${response.status}`, { kind: "http" });
+    let errorBody = null;
+    try {
+      errorBody = await response.json();
+    } catch {
+      // An HTTP status is enough to classify the failure.
+    }
+    const error = new ApiRequestError(`${path} ${response.status}`, { kind: "http" });
+    error.status = response.status;
+    error.body = errorBody;
+    throw error;
   }
 
   try {
@@ -83,11 +92,37 @@ export async function fetchServerRanking(mode = "presidentes", options) {
 }
 
 export async function postVote(winnerId, loserId, mode = "presidentes", options = {}) {
-  const { voteId, ...requestOptions } = options;
+  const { voteId, recoveryKey, playerVersion, ...requestOptions } = options;
   return requestJson("/api/vote", {
     ...requestOptions,
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ voteId, winnerId, loserId, mode }),
+    headers: {
+      "Content-Type": "application/json",
+      ...(recoveryKey ? { Authorization: `Bearer ${recoveryKey}` } : {}),
+    },
+    body: JSON.stringify({ voteId, winnerId, loserId, mode, playerVersion }),
+  });
+}
+
+export async function createPlayer(options) {
+  return requestJson("/api/player", { ...options, method: "POST" });
+}
+
+export async function fetchPlayerState(recoveryKey, mode = "presidentes", options = {}) {
+  return requestJson(`/api/player/state?mode=${encodeURIComponent(mode)}`, {
+    ...options,
+    headers: { Authorization: `Bearer ${recoveryKey}` },
+  });
+}
+
+export async function replacePlayerState(recoveryKey, mode, version, state, options = {}) {
+  return requestJson("/api/player/state", {
+    ...options,
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${recoveryKey}`,
+    },
+    body: JSON.stringify({ mode, version, state }),
   });
 }

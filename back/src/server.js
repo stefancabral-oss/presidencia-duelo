@@ -10,6 +10,18 @@ const store = createPostgresStore();
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: "32kb" }));
 
+function recoveryKeyFrom(req) {
+  const match = /^Bearer\s+(.+)$/i.exec(String(req.get("authorization") || ""));
+  return match?.[1] || "";
+}
+
+function sendError(res, err) {
+  const body = { error: err.message || "erro interno" };
+  if (err.code) body.code = err.code;
+  if (err.current) body.current = err.current;
+  res.status(err.status || 500).json(body);
+}
+
 app.get("/api/health", async (_req, res) => {
   try {
     await store.health();
@@ -48,8 +60,41 @@ app.get("/api/ranking", async (req, res) => {
   }
 });
 
+app.post("/api/player", async (_req, res) => {
+  try {
+    res.status(201).json(await store.createPlayer());
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.get("/api/player/state", async (req, res) => {
+  try {
+    res.json(await store.playerState(
+      recoveryKeyFrom(req),
+      String(req.query.mode || "presidentes"),
+    ));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.put("/api/player/state", async (req, res) => {
+  const { mode, version, state } = req.body || {};
+  try {
+    res.json(await store.replacePlayerState(
+      recoveryKeyFrom(req),
+      String(mode || "presidentes"),
+      version,
+      state,
+    ));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
 app.post("/api/vote", async (req, res) => {
-  const { voteId, winnerId, loserId, mode } = req.body || {};
+  const { voteId, winnerId, loserId, mode, playerVersion } = req.body || {};
   try {
     res.json(
       await store.vote(
@@ -57,10 +102,11 @@ app.post("/api/vote", async (req, res) => {
         String(loserId || ""),
         String(mode || "presidentes"),
         voteId,
+        { recoveryKey: recoveryKeyFrom(req), version: playerVersion },
       ),
     );
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.message || "erro interno" });
+    sendError(res, err);
   }
 });
 

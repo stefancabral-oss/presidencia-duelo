@@ -6,6 +6,6 @@
 export async function commitOnlineVote(postRemote, applyLocal, isCurrent = () => true) {
   const response = await postRemote();
   if (!isCurrent()) return { response, applied: false };
-  applyLocal();
+  applyLocal(response);
   return { response, applied: true };
 }

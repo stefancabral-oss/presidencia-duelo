@@ -10,8 +10,6 @@
   --danger: #c45c5c;
   --win: #86d4a7;
   --porcelain: #f3f1e9;
-  --malachite: #0b3325;
-  --malachite-deep: #041a13;
   --shadow: 0 20px 55px rgba(0,0,0,.38);
 }
 
@@ -20,8 +18,8 @@ html, body {
     radial-gradient(900px 520px at 50% -10%, rgba(30,96,69,.34), transparent 58%),
     linear-gradient(145deg, #061a14, #08281d 48%, #04130f);
 }
-
 .app { max-width: 1040px; }
+
 .logo-badge {
   border-radius: 7px;
   transform: rotate(45deg);
@@ -37,28 +35,19 @@ html, body {
   background: rgba(255,255,255,.72);
   transform: rotate(-45deg);
 }
-h1 {
-  color: var(--porcelain);
-  background: none;
-  -webkit-text-fill-color: initial;
-}
+h1 { color: var(--porcelain); background: none; -webkit-text-fill-color: initial; }
 .subtitle { color: #c2ccc4; }
 
-.tab {
-  border-color: rgba(216,184,90,.2);
-  background: rgba(8,40,29,.8);
-}
+.tab { border-color: rgba(216,184,90,.2); background: rgba(8,40,29,.8); }
 .tab.active {
   color: #082017;
   background: linear-gradient(135deg, #ead58d, #c8a64e);
   box-shadow: 0 8px 20px rgba(216,184,90,.18);
 }
-
 .home-hero,
 .tournament-stage,
 .tournament-bracket-details {
-  background:
-    linear-gradient(140deg, rgba(16,63,45,.94), rgba(4,25,18,.98));
+  background: linear-gradient(140deg, rgba(16,63,45,.94), rgba(4,25,18,.98));
   border-color: rgba(216,184,90,.28);
 }
 
@@ -77,16 +66,19 @@ h1 {
 }
 
 .poke-card {
-  --rarity-metal: #7fa28f;
-  --rarity-glow: rgba(123,196,160,.2);
-  --foil-opacity: .08;
+  --rarity-metal: #8ca697;
+  --rarity-glow: rgba(124,164,142,.16);
+  --rarity-symbol: "●";
+  --foil-opacity: .06;
+  display: flex;
+  flex-direction: column;
   padding: 5px;
   overflow: hidden;
   border: 1px solid var(--rarity-metal);
   border-radius: 18px;
   color: #10231c;
   background:
-    linear-gradient(145deg, rgba(255,255,255,.06), transparent 34%),
+    linear-gradient(145deg, rgba(255,255,255,.05), transparent 34%),
     linear-gradient(165deg, #0e4934, #08281d 58%, #041a13);
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,.1),
@@ -97,104 +89,103 @@ h1 {
 .poke-card::before {
   content: "";
   position: absolute;
-  inset: 7px;
+  inset: 6px;
   border: 1px solid color-mix(in srgb, var(--rarity-metal) 72%, transparent);
   border-radius: 13px;
   pointer-events: none;
-  z-index: 3;
+  z-index: 4;
 }
 .poke-card::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(112deg, transparent 25%, rgba(255,255,255,var(--foil-opacity)) 43%, transparent 58%);
-  transform: translateX(-90%);
+  z-index: 5;
   pointer-events: none;
-  z-index: 4;
+  background: linear-gradient(112deg, transparent 25%, rgba(255,255,255,var(--foil-opacity)) 43%, transparent 58%);
+  transform: translateX(-95%);
 }
 @media (hover: hover) {
   .poke-card:hover::after { animation: malaquita-sheen 1.1s ease; }
 }
-@keyframes malaquita-sheen {
-  to { transform: translateX(95%); }
-}
-
-.card-brand-row {
-  position: absolute;
-  top: 11px;
-  left: 13px;
-  right: 13px;
-  z-index: 5;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  pointer-events: none;
-}
-.card-brand {
-  color: #fff;
-  font-weight: 850;
-  font-size: clamp(.62rem, 1.8vw, .77rem);
-  letter-spacing: -.01em;
-  text-shadow: 0 2px 9px rgba(0,0,0,.65);
-}
-.rarity-badge {
-  min-width: 31px;
-  height: 31px;
-  padding: 0 7px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  border: 1px solid var(--rarity-metal);
-  background: rgba(5,25,18,.78);
-  color: var(--rarity-metal);
-  font-size: .8rem;
-  font-weight: 900;
-  letter-spacing: -.08em;
-  box-shadow: 0 4px 12px rgba(0,0,0,.28), inset 0 0 12px var(--rarity-glow);
-}
+@keyframes malaquita-sheen { to { transform: translateX(95%); } }
 
 .art-frame {
+  order: 1;
+  position: relative;
   aspect-ratio: 4 / 5.55;
+  margin: 0;
   border: 0;
-  border-radius: 14px 14px 3px 3px;
+  border-radius: 14px 14px 2px 2px;
+  overflow: hidden;
   background: #061a14;
   box-shadow: none;
+}
+.art-frame::before {
+  content: "◆ PoliMatch";
+  position: absolute;
+  top: 11px;
+  left: 12px;
+  z-index: 3;
+  color: #fff;
+  font-size: clamp(.58rem, 1.7vw, .76rem);
+  font-weight: 850;
+  text-shadow: 0 2px 9px rgba(0,0,0,.72);
+  pointer-events: none;
 }
 .art-frame::after {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 2;
+  pointer-events: none;
   background:
     linear-gradient(150deg, transparent 55%, rgba(216,184,90,.13)),
     linear-gradient(35deg, rgba(9,68,47,.25), transparent 34%);
-  pointer-events: none;
 }
 .art-frame img {
-  object-position: center 18%;
-  filter: saturate(.95) contrast(1.03);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 16%;
+  display: block;
   transform: scale(1.025);
-}
-.card-foil {
-  position: absolute;
-  inset: 0;
-  opacity: var(--foil-opacity);
-  mix-blend-mode: screen;
-  background: repeating-linear-gradient(135deg, transparent 0 18px, rgba(255,255,255,.28) 19px 20px, transparent 21px 38px);
-  pointer-events: none;
+  filter: saturate(.96) contrast(1.035);
 }
 
-.card-porcelain {
+.card-top {
+  order: 2;
   position: relative;
   z-index: 2;
-  min-height: 70px;
+  display: block;
+  min-height: 68px;
+  margin: -1px 0 0;
   padding: 9px 10px 10px;
-  margin-top: -1px;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.74), transparent 32%),
-    var(--porcelain);
   border-radius: 0 0 12px 12px;
   border-top: 1px solid rgba(216,184,90,.35);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.8), transparent 34%),
+    var(--porcelain);
+}
+.card-top::before {
+  content: var(--rarity-symbol);
+  position: absolute;
+  top: calc(-100% * 5.55 / 4 + 13px);
+  right: 8px;
+  z-index: 6;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rarity-metal);
+  border-radius: 10px;
+  color: var(--rarity-metal);
+  background: rgba(5,25,18,.82);
+  box-shadow: 0 4px 12px rgba(0,0,0,.32), inset 0 0 12px var(--rarity-glow);
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: -.08em;
+  text-shadow: 0 1px 5px rgba(0,0,0,.55);
 }
 .card-name {
   color: #0d261d;
@@ -216,98 +207,84 @@ h1 {
   letter-spacing: .2em;
   text-transform: uppercase;
 }
-.card-legacy-metrics { display: none; }
+.card-bottom { display: none; }
 
-.poke-card[data-rarity="basica"] { --rarity-metal: #8ca697; --rarity-glow: rgba(124,164,142,.16); }
-.poke-card[data-rarity="incomum"] { --rarity-metal: #a6c9b7; --rarity-glow: rgba(166,201,183,.2); --foil-opacity: .1; }
-.poke-card[data-rarity="rara"] { --rarity-metal: #d8b85a; --rarity-glow: rgba(216,184,90,.22); --foil-opacity: .12; }
-.poke-card[data-rarity="rara-dupla"] { --rarity-metal: #e3c56d; --rarity-glow: rgba(227,197,109,.28); --foil-opacity: .15; }
-.poke-card[data-rarity="ultra"] { --rarity-metal: #d8dce0; --rarity-glow: rgba(218,225,230,.25); --foil-opacity: .2; }
-.poke-card[data-rarity="chroma-ilustrada"] { --rarity-metal: #d9bd6c; --rarity-glow: rgba(216,184,90,.34); --foil-opacity: .22; }
-.poke-card[data-rarity="chroma-especial"] { --rarity-metal: #efd98b; --rarity-glow: rgba(239,217,139,.42); --foil-opacity: .27; }
+.poke-card[data-rarity="basica"] { --rarity-metal:#8ca697; --rarity-glow:rgba(124,164,142,.16); --rarity-symbol:"●"; }
+.poke-card[data-rarity="incomum"] { --rarity-metal:#a6c9b7; --rarity-glow:rgba(166,201,183,.20); --rarity-symbol:"◆"; --foil-opacity:.08; }
+.poke-card[data-rarity="rara"] { --rarity-metal:#d8b85a; --rarity-glow:rgba(216,184,90,.22); --rarity-symbol:"★"; --foil-opacity:.11; }
+.poke-card[data-rarity="rara-dupla"] { --rarity-metal:#e3c56d; --rarity-glow:rgba(227,197,109,.28); --rarity-symbol:"★★"; --foil-opacity:.14; }
+.poke-card[data-rarity="ultra"] { --rarity-metal:#d8dce0; --rarity-glow:rgba(218,225,230,.25); --rarity-symbol:"✦"; --foil-opacity:.18; }
+.poke-card[data-rarity="chroma-ilustrada"] { --rarity-metal:#d9bd6c; --rarity-glow:rgba(216,184,90,.34); --rarity-symbol:"★"; --foil-opacity:.22; }
+.poke-card[data-rarity="chroma-especial"] { --rarity-metal:#efd98b; --rarity-glow:rgba(239,217,139,.42); --rarity-symbol:"★★"; --foil-opacity:.27; }
 .poke-card[data-rarity="chroma-suprema"] {
-  --rarity-metal: #f3d777;
-  --rarity-glow: rgba(243,215,119,.52);
-  --foil-opacity: .34;
+  --rarity-metal:#f3d777;
+  --rarity-glow:rgba(243,215,119,.52);
+  --rarity-symbol:"★★★";
+  --foil-opacity:.34;
   background:
     radial-gradient(circle at 50% 8%, rgba(243,215,119,.18), transparent 38%),
     linear-gradient(160deg, #173e2d, #071f17 64%, #2f2510);
 }
 .poke-card[data-rarity="chroma-comemorativa"] {
-  --rarity-metal: #e5dcff;
-  --rarity-glow: rgba(116,220,255,.48);
-  --foil-opacity: .42;
-  border-color: transparent;
-  background:
-    linear-gradient(#071f17, #071f17) padding-box,
-    linear-gradient(115deg, #7cf4d4, #7cbcff, #b88cff, #ff87bf, #ffd069, #7cf4d4) border-box;
+  --rarity-metal:#ffffff;
+  --rarity-glow:rgba(116,220,255,.48);
+  --rarity-symbol:"★";
+  --foil-opacity:.42;
   border: 2px solid transparent;
+  background:
+    linear-gradient(#071f17,#071f17) padding-box,
+    linear-gradient(115deg,#7cf4d4,#7cbcff,#b88cff,#ff87bf,#ffd069,#7cf4d4) border-box;
   animation: chroma-breathe 3.8s ease-in-out infinite;
 }
-.poke-card[data-rarity="chroma-comemorativa"] .rarity-badge {
+.poke-card[data-rarity="chroma-comemorativa"] .card-top::before {
   color: #fff;
-  border-color: rgba(255,255,255,.55);
-  background: conic-gradient(from 210deg, #18d5a1, #51a8ff, #aa6cff, #ff6da8, #ffd15e, #18d5a1);
-  text-shadow: 0 1px 6px rgba(0,0,0,.5);
+  border-color: rgba(255,255,255,.65);
+  background: conic-gradient(from 210deg,#18d5a1,#51a8ff,#aa6cff,#ff6da8,#ffd15e,#18d5a1);
 }
 .poke-card[data-rarity="chroma-comemorativa"] .art-frame img {
-  filter: saturate(1.2) contrast(1.08) brightness(1.02);
+  filter: saturate(1.24) contrast(1.11) brightness(1.03);
 }
-.poke-card[data-rarity="chroma-comemorativa"] .art-frame::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
+.poke-card[data-rarity="chroma-comemorativa"] .art-frame::after {
   background:
-    linear-gradient(115deg, rgba(43,225,184,.13), transparent 28%),
-    linear-gradient(245deg, rgba(184,108,255,.13), transparent 34%),
-    repeating-linear-gradient(25deg, transparent 0 22px, rgba(255,209,94,.08) 23px 24px);
+    linear-gradient(115deg, rgba(43,225,184,.18), transparent 28%),
+    linear-gradient(245deg, rgba(184,108,255,.18), transparent 34%),
+    repeating-linear-gradient(25deg, transparent 0 22px, rgba(255,209,94,.1) 23px 24px);
   mix-blend-mode: screen;
-  pointer-events: none;
 }
 @keyframes chroma-breathe {
-  50% { box-shadow: 0 20px 46px rgba(0,0,0,.4), 0 0 30px rgba(119,201,255,.34), 0 0 52px rgba(255,111,181,.18); }
+  50% { box-shadow:0 20px 46px rgba(0,0,0,.4),0 0 30px rgba(119,201,255,.34),0 0 52px rgba(255,111,181,.18); }
 }
 
-[data-rarity="basica"] { --rarity: #8ca697; --rarity-ring: #4d6659; }
-[data-rarity="incomum"] { --rarity: #a6c9b7; --rarity-ring: #648a76; }
-[data-rarity="rara"] { --rarity: #d8b85a; --rarity-ring: #84691f; }
-[data-rarity="rara-dupla"] { --rarity: #e3c56d; --rarity-ring: #8f7122; }
-[data-rarity="ultra"] { --rarity: #d8dce0; --rarity-ring: #7d8790; }
-[data-rarity="chroma-ilustrada"] { --rarity: #d9bd6c; --rarity-ring: #8a6d23; }
-[data-rarity="chroma-especial"] { --rarity: #efd98b; --rarity-ring: #9a7b2b; }
-[data-rarity="chroma-suprema"] { --rarity: #f3d777; --rarity-ring: #a17d1d; }
-[data-rarity="chroma-comemorativa"] { --rarity: #8edcff; --rarity-ring: #b56cff; }
-
+[data-rarity="basica"] { --rarity:#8ca697; --rarity-ring:#4d6659; }
+[data-rarity="incomum"] { --rarity:#a6c9b7; --rarity-ring:#648a76; }
+[data-rarity="rara"] { --rarity:#d8b85a; --rarity-ring:#84691f; }
+[data-rarity="rara-dupla"] { --rarity:#e3c56d; --rarity-ring:#8f7122; }
+[data-rarity="ultra"] { --rarity:#d8dce0; --rarity-ring:#7d8790; }
+[data-rarity="chroma-ilustrada"] { --rarity:#d9bd6c; --rarity-ring:#8a6d23; }
+[data-rarity="chroma-especial"] { --rarity:#efd98b; --rarity-ring:#9a7b2b; }
+[data-rarity="chroma-suprema"] { --rarity:#f3d777; --rarity-ring:#a17d1d; }
+[data-rarity="chroma-comemorativa"] { --rarity:#8edcff; --rarity-ring:#b56cff; }
 .rarity-tag {
-  border: 1px solid color-mix(in srgb, var(--rarity, #8ca697) 62%, transparent);
-  background: color-mix(in srgb, var(--rarity, #8ca697) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--rarity,#8ca697) 62%, transparent);
+  background: color-mix(in srgb, var(--rarity,#8ca697) 13%, transparent);
 }
 
-@media (max-width: 620px) {
-  .app { padding-left: 8px; padding-right: 8px; }
-  .vs-row {
-    grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr);
-    gap: 5px;
-  }
-  .vs-badge {
-    width: 34px;
-    height: 34px;
-    font-size: .78rem;
-  }
-  .poke-card { padding: 4px; border-radius: 14px; }
-  .poke-card::before { inset: 6px; border-radius: 10px; }
-  .card-brand-row { top: 9px; left: 10px; right: 10px; }
-  .card-brand { font-size: .55rem; }
-  .rarity-badge { min-width: 25px; height: 25px; padding: 0 5px; font-size: .68rem; border-radius: 8px; }
-  .art-frame { aspect-ratio: 3 / 4.45; border-radius: 10px 10px 2px 2px; }
-  .card-porcelain { min-height: 58px; padding: 7px 8px 8px; border-radius: 0 0 9px 9px; }
-  .card-name { font-size: clamp(.68rem, 3.4vw, .88rem); }
-  .party-chip { margin-top: 4px; font-size: .52rem; letter-spacing: .16em; }
-  .card-info { min-height: 30px; padding: 5px 7px; font-size: .68rem; }
+@media (max-width:620px) {
+  .app { padding-left:8px; padding-right:8px; }
+  .vs-row { grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr); gap:5px; }
+  .vs-badge { width:34px; height:34px; font-size:.78rem; }
+  .poke-card { padding:4px; border-radius:14px; }
+  .poke-card::before { inset:5px; border-radius:10px; }
+  .art-frame { aspect-ratio:3/4.55; border-radius:10px 10px 2px 2px; }
+  .art-frame::before { top:9px; left:9px; font-size:.52rem; }
+  .card-top { min-height:56px; padding:7px 8px 8px; border-radius:0 0 9px 9px; }
+  .card-top::before { min-width:25px; height:25px; top:calc(-100% * 4.55 / 3 + 11px); right:6px; padding:0 4px; font-size:.62rem; border-radius:8px; }
+  .card-name { font-size:clamp(.67rem,3.4vw,.87rem); }
+  .party-chip { margin-top:4px; font-size:.5rem; letter-spacing:.16em; }
+  .card-info { min-height:30px; padding:5px 7px; font-size:.68rem; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .poke-card[data-rarity="chroma-comemorativa"] { animation: none; }
-  .poke-card:hover::after { animation: none; }
+@media (prefers-reduced-motion:reduce) {
+  .poke-card[data-rarity="chroma-comemorativa"] { animation:none; }
+  .poke-card:hover::after { animation:none; }
 }

@@ -48,6 +48,18 @@ test("one person can belong to multiple topics", () => {
   assert.equal(lula.politicalSide, "esquerda");
 });
 
+test("Corrida 2026 is explicit and independent from party affiliation", () => {
+  const unapproved = candidates.find((candidate) => candidate.name === "Adriana Ventura");
+  assert.equal(
+    candidatesForTopic([{ ...unapproved, party: "Partido Teste" }], TOPIC_IDS.RACE_2026).length,
+    0,
+  );
+  assert.equal(
+    candidatesForTopic([{ ...unapproved, corrida2026: true }], TOPIC_IDS.RACE_2026).length,
+    1,
+  );
+});
+
 test("Direita x Esquerda only accepts cross-side pairs", () => {
   const allowed = pairAllowedForTopic(TOPIC_IDS.SIDES, byId);
   const lula = candidates.find((candidate) => candidate.name === "Luiz Inácio Lula da Silva");

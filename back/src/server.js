@@ -38,7 +38,7 @@ app.get("/api/health", async (_req, res) => {
 
 app.get("/api/candidates", (_req, res) => {
   res.json({
-    candidates: CANDIDATES.map(({ personId, id, name, party, vice, photo, initials, topics, politicalSide }) => ({
+    candidates: CANDIDATES.map(({ personId, id, name, party, vice, photo, initials, corrida2026, topics, politicalSide }) => ({
       personId,
       id,
       name,
@@ -46,6 +46,7 @@ app.get("/api/candidates", (_req, res) => {
       vice,
       photo,
       initials,
+      corrida2026: corrida2026 === true,
       topics,
       politicalSide,
     })),

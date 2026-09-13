@@ -6,7 +6,7 @@ import "../../front/src/malaquita.css";
 import "../../front/src/malaquita-shell.css";
 import "../../front/src/design-system.css";
 import "../../front/src/design-system-states.css";
-import "./design-system-bridge.css";
+import "../../front/src/design-system-bridge.css";
 import { registerServiceWorker } from "./register-sw.js";
 
 installTournamentRestartGuard();

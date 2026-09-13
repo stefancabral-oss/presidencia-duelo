@@ -74,7 +74,7 @@ import {
   createTournament,
   currentTournamentMatch,
   formatTournamentShareText,
-  isValidTournament,
+  loadOrCreateTournament,
   tournamentPick,
 } from "./tournament.js";
 import { createTournamentPickLock } from "./tournament-pick-lock.js";
@@ -270,6 +270,7 @@ function renderShell(root, { requireApi = false } = {}) {
           </div>
           <button type="button" class="btn" id="restart-tournament">Novo torneio</button>
         </div>
+        <p class="podium-share-status" id="tournament-recovery-status" role="status" hidden></p>
         <div class="tournament-bracket" id="tournament-bracket" aria-label="Chave do torneio"></div>
         <div class="tournament-stage" id="tournament-stage">
           <p class="tournament-round" id="tournament-round"></p>
@@ -488,6 +489,7 @@ export async function initGame({ requireApi = false } = {}) {
     tournamentWinnerCard: document.getElementById("tournament-winner-card"),
     tournamentShare: document.getElementById("tournament-share"),
     tournamentShareStatus: document.getElementById("tournament-share-status"),
+    tournamentRecoveryStatus: document.getElementById("tournament-recovery-status"),
     tournamentAgain: document.getElementById("tournament-again"),
     restartTournament: document.getElementById("restart-tournament"),
     duelCards: document.getElementById("duel-cards"),
@@ -540,6 +542,7 @@ export async function initGame({ requireApi = false } = {}) {
   let duelGeneration = 0;
   let locked = false;
   let pickTimer = null;
+  let tournamentRecovered = false;
   let tournament = loadTournament();
   const tournamentPickLock = createTournamentPickLock();
 
@@ -640,12 +643,13 @@ export async function initGame({ requireApi = false } = {}) {
   function loadTournament() {
     const ids = topicCandidates().map((candidate) => candidate.id);
     try {
-      const parsed = JSON.parse(localStorage.getItem(tournamentStorageKey()));
-      if (isValidTournament(parsed, ids)) return parsed;
+      const loaded = loadOrCreateTournament(localStorage.getItem(tournamentStorageKey()), ids);
+      tournamentRecovered = loaded.recovered;
+      return loaded.tournament;
     } catch {
-      // Start a fresh bracket when storage is unavailable or stale.
+      tournamentRecovered = true;
+      return createTournament(ids);
     }
-    return createTournament(ids);
   }
 
   function saveTournament() {
@@ -943,6 +947,12 @@ export async function initGame({ requireApi = false } = {}) {
   }
 
   function renderTournament() {
+    if (els.tournamentRecoveryStatus) {
+      els.tournamentRecoveryStatus.hidden = !tournamentRecovered;
+      els.tournamentRecoveryStatus.textContent = tournamentRecovered
+        ? "A chave salva estava incompatível. Criamos um novo torneio jogável para você."
+        : "";
+    }
     renderTournamentBracket();
     const match = currentTournamentMatch(tournament);
     const played = completedTournamentDuels(tournament);
@@ -977,6 +987,7 @@ export async function initGame({ requireApi = false } = {}) {
       cards,
       commit: () => {
         if (!tournamentPick(tournament, card.dataset.id)) return false;
+        tournamentRecovered = false;
         saveTournament();
         if (tournament.champion && unlockTournamentCompleted(state)) {
           persist();
@@ -1000,6 +1011,7 @@ export async function initGame({ requireApi = false } = {}) {
   function restartTournament() {
     tournamentPickLock.reset([els.tournamentCardA, els.tournamentCardB]);
     tournament = createTournament(topicCandidates().map((candidate) => candidate.id));
+    tournamentRecovered = false;
     saveTournament();
     if (els.tournamentShareStatus) els.tournamentShareStatus.hidden = true;
     renderTournament();

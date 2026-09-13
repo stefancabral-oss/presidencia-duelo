@@ -7,6 +7,7 @@ import "./malaquita.css";
 import "./malaquita-shell.css";
 import "./duel-v2.css";
 import "./home-v2.css";
+import "./nav-v2.css";
 
 installTournamentRestartGuard();
 initGame().then(() => {

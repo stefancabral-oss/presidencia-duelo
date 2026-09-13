@@ -4,6 +4,7 @@ import { installFrontendEnhancements } from "../../front/src/frontend-enhancemen
 import "../../front/src/styles.css";
 import "../../front/src/malaquita.css";
 import "../../front/src/malaquita-shell.css";
+import "../../front/src/design-system.css";
 import { registerServiceWorker } from "./register-sw.js";
 
 installTournamentRestartGuard();

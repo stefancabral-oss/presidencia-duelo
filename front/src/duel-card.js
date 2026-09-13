@@ -10,8 +10,6 @@ export const DUEL_CARD_SKELETON = `
       <div class="art-frame">
         <img alt="" />
         <div class="placeholder" style="display:none"></div>
-        <div class="holo" aria-hidden="true"></div>
-        <div class="rarity-chip"></div>
       </div>
       <div class="card-bottom">
         <div class="vice">Vice: <strong></strong></div>
@@ -29,7 +27,7 @@ function showPhotoError(img, placeholder) {
   if (placeholder) placeholder.style.display = "grid";
 }
 
-export function fillDuelCard(el, candidate, { elo, wr, barWidth, rarity, crowned = false }) {
+export function fillDuelCard(el, candidate, { elo, wr, barWidth }) {
   if (!hasDuelPhoto(el)) {
     el.innerHTML = DUEL_CARD_SKELETON;
   }
@@ -45,12 +43,6 @@ export function fillDuelCard(el, candidate, { elo, wr, barWidth, rarity, crowned
   const placeholder = el.querySelector(".placeholder");
   placeholder.textContent = candidate.initials;
   placeholder.style.display = candidate.photo ? "none" : "grid";
-
-  const rarityChip = el.querySelector(".rarity-chip");
-  if (rarityChip) {
-    rarityChip.textContent = rarity ? `${crowned ? "♛ " : ""}${rarity.label}` : "";
-    rarityChip.hidden = !rarity;
-  }
 
   const img = el.querySelector(".art-frame img");
   img.removeAttribute("loading");

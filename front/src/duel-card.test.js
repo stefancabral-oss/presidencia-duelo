@@ -32,7 +32,6 @@ function createCardEl() {
     ".hp-fill": { style: {} },
     ".placeholder": { textContent: "", style: { display: "none" } },
     ".art-frame img": img,
-    ".rarity-chip": { textContent: "", hidden: true },
   };
   let html = "";
   let writes = 0;
@@ -77,6 +76,11 @@ test("duel card skeleton has an eager img, not loading=lazy", () => {
   assert.doesNotMatch(DUEL_CARD_SKELETON, /loading\s*=\s*["']lazy["']/);
 });
 
+test("duel card skeleton omits rarity and holographic decorations", () => {
+  assert.doesNotMatch(DUEL_CARD_SKELETON, /rarity-chip/);
+  assert.doesNotMatch(DUEL_CARD_SKELETON, /class=["']holo["']/);
+});
+
 test("fillDuelCard builds the card once, then only swaps src and text", () => {
   const el = createCardEl();
   assert.equal(hasDuelPhoto(el), false);
@@ -104,7 +108,7 @@ test("fillDuelCard builds the card once, then only swaps src and text", () => {
   assert.equal(el.fields[".placeholder"].style.display, "none");
 });
 
-test("fillDuelCard renders vice placeholders and rarity without a broken image", () => {
+test("fillDuelCard renders vice placeholders without a broken image", () => {
   const el = createCardEl();
   fillDuelCard(el, {
     ...lula,
@@ -114,9 +118,8 @@ test("fillDuelCard renders vice placeholders and rarity without a broken image",
     mateLabel: "Presidente",
     photo: null,
     initials: "GA",
-  }, { elo: 1100, wr: 60, barWidth: 60, rarity: { id: "epico", label: "Épico" } });
+  }, { elo: 1100, wr: 60, barWidth: 60 });
   assert.equal(el.fields[".vice"].firstChild.textContent, "Presidente: ");
   assert.equal(el.fields[".placeholder"].style.display, "grid");
   assert.equal(el.img.getAttribute("src"), undefined);
-  assert.equal(el.fields[".rarity-chip"].textContent, "Épico");
 });

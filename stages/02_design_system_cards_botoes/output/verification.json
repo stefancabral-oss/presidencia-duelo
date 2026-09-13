@@ -1,0 +1,29 @@
+{
+  "stage": "ICM 02",
+  "status": "ready_for_review",
+  "implemented": [
+    "design tokens",
+    "button families",
+    "TCG card anatomy",
+    "rarity and Chroma states",
+    "visual playground",
+    "legacy CSS bridge",
+    "front and PWA imports",
+    "contract tests",
+    "CI workflow"
+  ],
+  "manual_checks": [
+    "playground visual review pending on real device"
+  ],
+  "automated_checks": {
+    "local_execution": "not_available_in_current_runtime",
+    "github_ci": "workflow_added; run not yet observed"
+  },
+  "known_risks": [
+    "legacy CSS still exists outside migrated components",
+    "profile role and description depend on editorial data coverage"
+  ],
+  "human_gate": {
+    "status": "pending"
+  }
+}

@@ -8,6 +8,7 @@ test("cardAriaLabel announces name and party", () => {
     "Votar em Luiz Inácio Lula da Silva (PT)",
   );
   assert.equal(cardAriaLabel({ name: "Romeu Zema", party: "Novo" }), "Votar em Romeu Zema (Novo)");
+  assert.equal(cardAriaLabel({ name: "Felipe Neto", party: "" }), "Votar em Felipe Neto");
 });
 
 test("applyCardAriaLabel updates when the candidate on the card changes", () => {

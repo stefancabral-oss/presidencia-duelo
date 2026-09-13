@@ -20,12 +20,12 @@ Nenhuma face foi gerada por IA. Arquivos locais em `front/public/candidates/` (o
 
 ## Status das fotos
 
-- **Fotos reais (12/12):** Lula, Flávio Bolsonaro, Caiado, Zema, Renan Santos, Augusto Cury, Rui Costa Pimenta, Samara Martins, Hertz Dias, Edmilson Costa, Wilson Grassi, Clariana Barão.
-- **Placeholders por iniciais:** nenhum. O app ainda tem fallback de iniciais se alguma imagem falhar ao carregar.
-- Pablo Marçal **não** está na lista.
+- **Fotos reais (12/387):** Lula, Flávio Bolsonaro, Caiado, Zema, Renan Santos, Augusto Cury, Rui Costa Pimenta, Samara Martins, Hertz Dias, Edmilson Costa, Wilson Grassi, Clariana Barão.
+- **Placeholders por iniciais (375/387):** usados até cada perfil receber imagem verificada com fonte e licença.
+- Nenhuma foto foi inventada ou gerada para completar o catálogo.
 
 ## Observações
 
 - Imagens foram redimensionadas localmente (~720px no maior lado) para uso web.
 - Licenças CC exigem atribuição; este arquivo cumpre esse papel.
-- Este projeto **não** é afiliado a partidos, TSE, Wikimedia ou candidatos.
+- Este projeto **não** é afiliado a partidos, TSE, Wikimedia ou às pessoas listadas.

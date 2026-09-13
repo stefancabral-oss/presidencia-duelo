@@ -3,7 +3,8 @@
  * A static "Candidato A/B" aria-label would hide the rendered name from screen readers.
  */
 export function cardAriaLabel(candidate) {
-  return `Votar em ${candidate.name} (${candidate.party})`;
+  const affiliation = candidate.party ? ` (${candidate.party})` : "";
+  return `Votar em ${candidate.name}${affiliation}`;
 }
 
 export function applyCardAriaLabel(el, candidate) {

@@ -636,7 +636,24 @@ h1 {
   gap: 10px;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 8px;
+}
+.tournament-bracket-details {
+  margin-top: 12px;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  background: rgba(18, 26, 43, .55);
+}
+.tournament-bracket-details summary {
+  min-height: 42px;
+  padding: 11px 13px;
+  color: var(--gold);
+  font-size: .82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.tournament-bracket-details[open] summary {
+  border-bottom: 1px solid #334155;
 }
 .tournament-bracket {
   display: grid;
@@ -644,7 +661,7 @@ h1 {
   grid-auto-columns: minmax(190px, 1fr);
   gap: 10px;
   overflow-x: auto;
-  padding: 2px 2px 12px;
+  padding: 10px 12px 12px;
   scrollbar-color: var(--gold2) var(--bg2);
 }
 .bracket-round h3 {
@@ -690,13 +707,13 @@ h1 {
 }
 .tournament-stage {
   margin-top: 4px;
-  padding: 14px;
+  padding: 10px 12px 12px;
   border: 1px solid #334155;
   border-radius: var(--radius);
   background: rgba(18, 26, 43, .74);
 }
 .tournament-round {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--gold);
   font-weight: 800;
   text-align: center;

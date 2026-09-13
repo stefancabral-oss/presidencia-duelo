@@ -63,9 +63,21 @@
   cursor: pointer;
   transition: transform var(--pm-fast) var(--pm-ease), box-shadow var(--pm-fast) var(--pm-ease), background var(--pm-fast) var(--pm-ease), border-color var(--pm-fast) var(--pm-ease);
 }
-.pm-button:focus-visible { outline: none; box-shadow: var(--pm-focus); }
-.pm-button:active { transform: scale(.97); }
-.pm-button:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+.pm-button:focus-visible,
+.pm-topic-chip:focus-visible,
+.pm-segment-button:focus-visible,
+.pm-nav-button:focus-visible,
+.pm-tile-button:focus-visible { outline: none; box-shadow: var(--pm-focus); }
+.pm-button:active,
+.pm-topic-chip:active,
+.pm-segment-button:active,
+.pm-nav-button:active,
+.pm-tile-button:active { transform: scale(.97); }
+.pm-button:disabled,
+.pm-topic-chip:disabled,
+.pm-segment-button:disabled,
+.pm-nav-button:disabled,
+.pm-tile-button:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
 
 .pm-button--primary {
   color: #112219;
@@ -89,6 +101,8 @@
   border-color: transparent;
 }
 .pm-button--ghost:hover { background: rgba(11,75,55,.07); }
+
+.pm-button--compact { min-height: 34px; padding: 7px 11px; font-size: .76rem; }
 
 .pm-button--icon {
   width: 44px;
@@ -120,13 +134,67 @@
   font: inherit;
   font-weight: 760;
   cursor: pointer;
+  transition: transform var(--pm-fast) var(--pm-ease), background var(--pm-fast) var(--pm-ease), color var(--pm-fast) var(--pm-ease), border-color var(--pm-fast) var(--pm-ease);
 }
-.pm-topic-chip[aria-pressed="true"], .pm-topic-chip.is-active {
+.pm-topic-chip[aria-pressed="true"], .pm-topic-chip.is-active, .pm-topic-chip.active {
   color: #fff;
   background: var(--pm-malachite-900);
   border-color: var(--pm-malachite-900);
   box-shadow: 0 7px 16px rgba(7,51,38,.18);
 }
+
+.pm-segment-button {
+  appearance: none;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid var(--pm-border);
+  background: var(--pm-surface);
+  color: var(--pm-muted);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform var(--pm-fast) var(--pm-ease), background var(--pm-fast) var(--pm-ease), color var(--pm-fast) var(--pm-ease);
+}
+.pm-segment-button:first-of-type { border-radius: var(--pm-radius-pill) 0 0 var(--pm-radius-pill); }
+.pm-segment-button:last-of-type { border-radius: 0 var(--pm-radius-pill) var(--pm-radius-pill) 0; }
+.pm-segment-button.active, .pm-segment-button[aria-pressed="true"] { background: var(--pm-malachite-900); color: #fff; border-color: var(--pm-malachite-900); }
+
+.pm-nav-button {
+  appearance: none;
+  min-height: 52px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: var(--pm-radius-sm);
+  background: transparent;
+  color: var(--pm-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font: inherit;
+  font-size: .7rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform var(--pm-fast) var(--pm-ease), background var(--pm-fast) var(--pm-ease), color var(--pm-fast) var(--pm-ease);
+}
+.pm-nav-button.active, .pm-nav-button[aria-current="page"] { background: var(--pm-malachite-900); color: #fff; }
+
+.pm-tile-button {
+  appearance: none;
+  min-height: 88px;
+  padding: 14px;
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius-md);
+  background: var(--pm-surface);
+  color: var(--pm-ink);
+  box-shadow: var(--pm-shadow-1);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--pm-fast) var(--pm-ease), box-shadow var(--pm-fast) var(--pm-ease), border-color var(--pm-fast) var(--pm-ease);
+}
+.pm-tile-button:hover { border-color: #b7c0bb; box-shadow: var(--pm-shadow-2); }
 
 /* Card base TCG. A anatomia é compartilhada por duelo, coleção e detalhe. */
 .pm-card {
@@ -233,19 +301,10 @@
 .pm-card[data-rarity="basica"], .pm-card[data-rarity="incomum"] { --pm-card-accent: #cfd4d0; }
 .pm-card[data-rarity="rara"], .pm-card[data-rarity="rara-dupla"] { --pm-card-accent: #c9aa45; --pm-card-glow: rgba(201,170,69,.18); }
 .pm-card[data-rarity="ultra"] { --pm-card-accent: #9faab2; --pm-card-glow: rgba(149,170,190,.18); }
-.pm-card[data-rarity^="chroma"] {
-  --pm-card-accent: var(--pm-chroma-cyan);
-  --pm-card-glow: rgba(0,201,216,.28);
-}
+.pm-card[data-rarity^="chroma"] { --pm-card-accent: var(--pm-chroma-cyan); --pm-card-glow: rgba(0,201,216,.28); }
 .pm-card[data-rarity="chroma-especial"] { --pm-card-accent: var(--pm-chroma-violet); --pm-card-glow: rgba(139,92,246,.3); }
-.pm-card[data-rarity="chroma-suprema"] {
-  --pm-card-accent: var(--pm-gold-500);
-  --pm-card-glow: rgba(212,175,55,.42);
-}
-.pm-card[data-rarity="chroma-comemorativa"] {
-  --pm-card-accent: var(--pm-chroma-magenta);
-  --pm-card-glow: rgba(230,87,166,.35);
-}
+.pm-card[data-rarity="chroma-suprema"] { --pm-card-accent: var(--pm-gold-500); --pm-card-glow: rgba(212,175,55,.42); }
+.pm-card[data-rarity="chroma-comemorativa"] { --pm-card-accent: var(--pm-chroma-magenta); --pm-card-glow: rgba(230,87,166,.35); }
 .pm-card[data-rarity^="chroma"]::after {
   content: "";
   position: absolute;
@@ -255,18 +314,17 @@
   transform: translateX(-75%) rotate(8deg);
   transition: transform 650ms var(--pm-ease);
 }
-@media (hover:hover) {
-  .pm-card[data-rarity^="chroma"]:hover::after { transform: translateX(75%) rotate(8deg); }
-}
+@media (hover:hover) { .pm-card[data-rarity^="chroma"]:hover::after { transform: translateX(75%) rotate(8deg); } }
 
 @media (max-width: 620px) {
   .pm-card { border-radius: 15px; }
   .pm-card__body { padding: 8px 8px 9px; }
   .pm-card__rarity { min-width: 27px; height: 27px; top: 7px; right: 7px; border-radius: 8px; }
   .pm-card__brand { top: 8px; left: 8px; }
+  .pm-nav-button { min-height: 48px; font-size: .64rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pm-button, .pm-card[data-rarity^="chroma"]::after { transition: none; }
+  .pm-button, .pm-topic-chip, .pm-segment-button, .pm-nav-button, .pm-tile-button, .pm-card[data-rarity^="chroma"]::after { transition: none; }
   .pm-card[data-rarity^="chroma"]::after { display: none; }
 }

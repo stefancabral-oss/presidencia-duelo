@@ -3,6 +3,8 @@ import { chromium, webkit } from "playwright";
 
 const baseUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173";
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
+const expectedCollectionFilters = Number(process.env.POLIMATCH_E2E_COLLECTION_FILTERS || 7);
+const legacyCollection = process.env.POLIMATCH_E2E_LEGACY_COLLECTION === "1";
 const browserType = browserName === "webkit" ? webkit : chromium;
 const browser = await browserType.launch({ headless: true });
 
@@ -74,8 +76,17 @@ async function exerciseMainUi(page) {
   await page.locator("#tab-chromas").click();
   await page.waitForURL(/\/chromas\.html$/);
   await page.waitForSelector("#chroma-grid");
-  assert.equal(await page.locator(".chroma-filter").count(), 5, `${browserName}: Galeria Chroma não expôs todos os filtros`);
-  assert.match(await page.locator("h1").textContent(), /Galeria Chroma/);
+  assert.equal(
+    await page.locator(".chroma-filter").count(),
+    expectedCollectionFilters,
+    `${browserName}: coleção não expôs todos os filtros`,
+  );
+  if (!legacyCollection) {
+    assert.match(await page.locator("h1").textContent(), /Minha coleção/);
+    await page.locator('[data-filter="regular"]').click();
+    await page.locator("#chroma-search").fill("Lula");
+    await page.locator("#chroma-sort").selectOption("name");
+  }
 }
 
 try {

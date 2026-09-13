@@ -1,0 +1,51 @@
+.chroma-discovery {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 220px);
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.chroma-discovery label {
+  display: grid;
+  gap: 5px;
+  color: #526058;
+  font-size: .7rem;
+  font-weight: 800;
+}
+
+.chroma-discovery input,
+.chroma-discovery select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 11px;
+  border: 1px solid #d9d6ce;
+  border-radius: 12px;
+  background: #fff;
+  color: #10211a;
+  font: inherit;
+}
+
+.chroma-card[data-family="regular"] {
+  border: 1px solid #d5d9d5;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(30, 42, 35, .07);
+}
+
+.chroma-card[data-family="regular"] .chroma-card-shine { display: none; }
+
+.chroma-card[data-family="regular"] .chroma-card-badge {
+  border-color: transparent;
+  background: rgba(30, 42, 35, .75);
+  color: #fff;
+}
+
+.chroma-card[data-family="chroma"] { transform: translateY(-1px); }
+
+@media (max-width: 680px) {
+  .chroma-discovery { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chroma-card[data-family="chroma"] { transform: none; }
+}

@@ -17,7 +17,8 @@ import "./ranking-v2.css";
 import "./tournament-v2.css";
 
 installTournamentRestartGuard();
-initGame().then(() => {
+initGame().then((ready) => {
+  if (!ready) return;
   installDuelV2Layout();
   installRankingV2();
   installTournamentV2();

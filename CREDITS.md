@@ -1,7 +1,7 @@
 # Créditos das fotos
 
-As imagens vêm de fontes públicas, principalmente do **Wikimedia Commons**.
-Nenhuma face foi gerada por IA. Os 12 arquivos locais ficam em `front/public/candidates/`; outras 298 imagens com atribuição verificada são carregadas do Commons e têm crédito completo na aba **Créditos** do app.
+As imagens vêm de fontes públicas, principalmente do **Wikimedia Commons**, páginas institucionais, perfis públicos e veículos de imprensa.
+Nenhuma face foi gerada por IA. Os 85 arquivos locais ficam em `front/public/candidates/`; outras 298 imagens com atribuição verificada são carregadas do Commons. A fonte individual das 383 fotos aparece na aba **Créditos** do app.
 
 | Candidato | Arquivo | Fonte Commons | Autor / crédito | Licença |
 |---|---|---|---|---|
@@ -20,8 +20,8 @@ Nenhuma face foi gerada por IA. Os 12 arquivos locais ficam em `front/public/can
 
 ## Status das fotos
 
-- **Fotos reais (310/387):** 12 locais e 298 carregadas diretamente do Wikimedia Commons.
-- **Placeholders por iniciais (77/387):** usados quando a planilha ainda não contém uma imagem com licença ou atribuição verificada.
+- **Fotos reais (383/387):** 85 locais e 298 carregadas diretamente do Wikimedia Commons.
+- **Placeholders por iniciais (4/387):** Alberto Felix de Oliveira Neto, Ana Claudia Queiroz de Paiva, Ângelo Antônio Ribeiro da Silva e Felipe Wallace Simonsen. As buscas retornaram homônimos, fachadas ou documentos, mas nenhum retrato público identificável.
 - Nenhuma foto foi inventada ou gerada para completar o catálogo.
 
 ## Observações

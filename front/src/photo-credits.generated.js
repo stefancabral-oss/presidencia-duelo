@@ -103,6 +103,20 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Amom_Mandel_Lins_Filho_(cropped).jpg"
   },
   {
+    "name": "Ana Campopiano",
+    "license": "Foto institucional",
+    "author": "Partido Liberal de Santa Catarina",
+    "commons": "https://www.partidoliberalsc.com.br/team/deputada-estadual-ana-campagnolo",
+    "sourceLabel": "Fonte oficial"
+  },
+  {
+    "name": "Ana Karina Bortoni",
+    "license": "Fonte pública — uso editorial",
+    "author": "Folhapress",
+    "commons": "https://www1.folha.uol.com.br/mercado/2025/04/nao-deixe-ninguem-te-definir-diz-na-casafolha-bioquimica-que-virou-ceo-do-grupo-silvio-santos.shtml",
+    "sourceLabel": "Folha de S.Paulo"
+  },
+  {
     "name": "Anderson Torres",
     "license": "CC BY 2.0",
     "author": "Marcos Corrêa/PR",
@@ -145,10 +159,31 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Ministro_Andr%C3%A9_Mendon%C3%A7a_em_outubro_de_2025_(3x4).jpg"
   },
   {
+    "name": "André Paulo Félix Fidelis",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução / Metrópoles",
+    "commons": "https://www.metropoles.com/sao-paulo/ex-diretor-preso-no-escandalo-do-inss-liberou-consignado-no-digimais",
+    "sourceLabel": "Metrópoles"
+  },
+  {
     "name": "André Valadão",
     "license": "CC BY-SA 3.0",
     "author": "Magno Dos Santos . Crop by Fronteira",
     "commons": "https://commons.wikimedia.org/wiki/File:Andre_Machado_Valad%C3%A3o_do_Diante_do_Trono_(cropped).jpg"
+  },
+  {
+    "name": "Andrei Rodrigues",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://www.gazetadopovo.com.br/republica/diretor-da-pf-diz-que-caso-master-vem-de-outras-gestoes-do-banco-central/",
+    "sourceLabel": "Gazeta do Povo"
+  },
+  {
+    "name": "Andrei Roman",
+    "license": "Fonte pública — uso editorial",
+    "author": "A Tarde",
+    "commons": "https://atarde.com.br/politica/eleicoes-2024/eleicoes-estaduais/sou-muito-grato-ao-a-tarde-diz-ceo-da-atlasintel-1208267",
+    "sourceLabel": "A Tarde"
   },
   {
     "name": "Anielle Franco",
@@ -193,16 +228,58 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:2025-12-18,_Posse_do_Ministro_Antonio_Carlos_Ferreira_no_cargo_de_corregedor-geral_da_Justi%C3%A7a_-_041.jpg"
   },
   {
+    "name": "Antônio Carlos Freixo Júnior (Mineiro)",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução / Terra",
+    "commons": "https://www.terra.com.br/economia/quem-e-antonio-carlos-freixo-junior-ceo-da-entrepay-empresa-liquidada-pelo-banco-central,e2dcf0f11646ec2343331829c4443e19hf9q9m18.html",
+    "sourceLabel": "Terra"
+  },
+  {
+    "name": "Antônio Carlos Welter",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução / Poder360",
+    "commons": "https://www.poder360.com.br/lava-jato/lava-jato-pagou-r-38-milhoes-em-diarias-e-passagens-a-so-5-procuradores/",
+    "sourceLabel": "Poder360"
+  },
+  {
+    "name": "Antônio de Rueda",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://www.diariodepernambuco.com.br/politica/2025/09/11696220-rueda-consta-denuncia-e-aponta-pano-de-fundo-politico-orquestrado-por-adversarios.html",
+    "sourceLabel": "Diário de Pernambuco"
+  },
+  {
+    "name": "Armando Miguel Gallo Neto",
+    "license": "Fonte pública — uso editorial",
+    "author": "Armando Gallo / perfil profissional público",
+    "commons": "https://br.linkedin.com/in/armando-gallo-7824a723",
+    "sourceLabel": "LinkedIn"
+  },
+  {
     "name": "Arthur Lira",
     "license": "CC BY 3.0",
     "author": "Luis Macedo/Câmara dos Deputados",
     "commons": "https://commons.wikimedia.org/wiki/File:Arthur_Lira_como_presidente_da_C%C3%A2mara.jpg"
   },
   {
+    "name": "Athayde Ribeiro Costa",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução / Folha de S.Paulo",
+    "commons": "https://www1.folha.uol.com.br/poder/2019/06/veja-quem-sao-e-as-conversas-dos-10-procuradores-da-lava-jato-citados-em-vazamento.shtml",
+    "sourceLabel": "Folha de S.Paulo"
+  },
+  {
     "name": "Augusto Cury",
     "license": "CC BY-SA 2.0",
     "author": "Lima Andruška",
     "commons": "https://commons.wikimedia.org/wiki/File:Augusto_Cury,_escritor_(28339139296)_(cropped).jpg"
+  },
+  {
+    "name": "Augusto Ferreira Lima",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução",
+    "commons": "https://odia.ig.com.br/brasil/2026/02/amp/7210173-augusto-lima-do-banco-pleno-se-reuniu-sete-vezes-com-bc-em-2025-como-ceo-do-master.html",
+    "sourceLabel": "O Dia"
   },
   {
     "name": "Augusto Heleno",
@@ -223,16 +300,37 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Baleia_Rossi_(MDB_-_SP)_(cropped).jpg"
   },
   {
+    "name": "Belline Santana",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução / Metrópoles",
+    "commons": "https://www.metropoles.com/colunas/mirelle-pinheiro/servidores-bc-afastados-master-compliance-zero",
+    "sourceLabel": "Metrópoles"
+  },
+  {
     "name": "Bia Kicis",
     "license": "CC BY 2.0",
     "author": "Agência Senado",
     "commons": "https://commons.wikimedia.org/wiki/File:2023-10-03_Sess%C3%A3o_Solene_-_Promulga%C3%A7%C3%A3o_das_Emendas_Constitucionais_130_e_131_de_2023_-_01_(cropped).jpg"
   },
   {
+    "name": "Bosco Costa",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://www.sergipenoticias.com/politica/2025/02/37418/supremo-tira-sigilo-do-processo-contra-bosco-costa.html",
+    "sourceLabel": "Sergipe Notícias"
+  },
+  {
     "name": "Braga Netto",
     "license": "CC BY 2.0",
     "author": "Palácio do Planalto",
     "commons": "https://commons.wikimedia.org/wiki/File:2020-10-17_Cerim%C3%B4nia_de_Entrega_de_Espadim_aos_Cadetes_da_Turma_%E2%80%9CCenten%C3%A1rio_da_Miss%C3%A3o_Militar_Francesa_no_Brasil%E2%80%9D_073_(cropped).jpg"
+  },
+  {
+    "name": "Bruno Carazza",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://www.agazeta.com.br/mundo/os-8-grupos-mais-privilegiados-do-servico-publico-no-brasil-segundo-novo-livro-0624",
+    "sourceLabel": "A Gazeta"
   },
   {
     "name": "Bruno Reis",
@@ -301,16 +399,37 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Carlos_F%C3%A1varo_(cropped).jpg"
   },
   {
+    "name": "Carlos Fernando dos Santos Lima",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://www.agazeta.com.br/",
+    "sourceLabel": "A Gazeta"
+  },
+  {
     "name": "Carlos Massa (Ratinho)",
     "license": "CC BY-SA 2.0",
     "author": "Sérgio Savarese",
     "commons": "https://commons.wikimedia.org/wiki/File:Carlos_Roberto_Massa.jpg"
   },
   {
+    "name": "Carlos Roberto Ferreira Lopes",
+    "license": "Fonte institucional",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/noticias/1205567-em-depoimento-na-cpmi-do-inss%2C-presidente-de-entidade-de-agricultores-nega-acusacoes-de-fraude",
+    "sourceLabel": "Câmara dos Deputados"
+  },
+  {
     "name": "Cármen Lúcia",
     "license": "CC BY 3.0 br",
     "author": "Marcelo Camargo/Agência Brasil",
     "commons": "https://commons.wikimedia.org/wiki/File:C%C3%A1rmen_L%C3%BAcia_em_2016_02_(cropped_3x4).jpg"
+  },
+  {
+    "name": "Carolina Lebbos",
+    "license": "Fonte pública — uso editorial",
+    "author": "Hedeson Alves / Gazeta do Povo",
+    "commons": "https://www.gazetadopovo.com.br/republica/breves/carolina-lebbos-juiza-lula-ferias/",
+    "sourceLabel": "Gazeta do Povo"
   },
   {
     "name": "Casimiro Miguel",
@@ -365,6 +484,13 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 3.0 br",
     "author": "Antonio Cruz/ABr",
     "commons": "https://commons.wikimedia.org/wiki/File:Ciro_Nogueira_Filho_2013.jpg"
+  },
+  {
+    "name": "Ciro Soares",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução / ICL Notícias",
+    "commons": "https://iclnoticias.com.br/elo-entre-vorcaro-e-mendonca-ciro-soares/",
+    "sourceLabel": "ICL Notícias"
   },
   {
     "name": "Clariana Barão",
@@ -439,6 +565,13 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Daniela_Beyruti.jpg"
   },
   {
+    "name": "Danilo Pereira Júnior",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://gauchazh.clicrbs.com.br/politica/noticia/2019/11/juiz-que-autorizou-soltura-de-lula-foi-auxiliar-de-gilmar-mendes-no-stf-ck2qknwkk00mv01qyakzwy85e.html",
+    "sourceLabel": "GaúchaZH"
+  },
+  {
     "name": "Dario Durigan",
     "license": "Public domain",
     "author": "Diogo Zacarias",
@@ -473,6 +606,13 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 2.0",
     "author": "Vice-Presidência da República",
     "commons": "https://commons.wikimedia.org/wiki/File:04-06-2024_Reuni%C3%A3o_com_a_Presidente_do_Novo_Banco_de_Desenvolvimento_Dilma_Rousseff_(53769684843)_(cropped).jpg"
+  },
+  {
+    "name": "Diogo Castor de Mattos",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://www.gazetadopovo.com.br/republica/justica-mantem-cargo-de-ex-lava-jato-apos-cnmp-demissao-devido-a-outdoor/",
+    "sourceLabel": "Gazeta do Povo"
   },
   {
     "name": "Dom Jaime Spengler",
@@ -607,10 +747,24 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Elmar_Nascimento.png"
   },
   {
+    "name": "Eric Douglas Fidelis",
+    "license": "Fonte institucional",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/noticias/1223205-relator-da-cpmi-do-inss-acusa-advogado-de-intermediar-propina-em-fraudes-previdenciarias/",
+    "sourceLabel": "Câmara dos Deputados"
+  },
+  {
     "name": "Erika Hilton",
     "license": "CC BY-SA 4.0",
     "author": "Agência Senado from Brasilia, Brazil",
     "commons": "https://commons.wikimedia.org/wiki/File:2025-10-08_CCJ_-_Comiss%C3%A3o_de_Constitui%C3%A7%C3%A3o,_Justi%C3%A7a_e_Cidadania_(54841482519)_(Erika_Hilton).jpg"
+  },
+  {
+    "name": "Erika Marena",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução",
+    "commons": "https://exame.com/brasil/quem-e-erika-marena-delegada-escolhida-por-moro-para-integrar-sua-equipe/",
+    "sourceLabel": "Exame"
   },
   {
     "name": "Evandro Leitão",
@@ -631,10 +785,24 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Fabiano_Zettel.jpg"
   },
   {
+    "name": "Fábio Augusto Vieira",
+    "license": "Fonte pública — uso editorial",
+    "author": "Metrópoles",
+    "commons": "https://www.metropoles.com/colunas/grande-angular/moraes-manda-pmdf-demitir-imediatamente-coroneis-condenados-pelo-8-1",
+    "sourceLabel": "Metrópoles"
+  },
+  {
     "name": "Fábio Faria",
     "license": "CC BY 3.0",
     "author": "Billy Boss",
     "commons": "https://commons.wikimedia.org/wiki/File:F%C3%A1bio_Faria_em_abril_de_2017.jpg"
+  },
+  {
+    "name": "Fábio Luís Lula da Silva (Lulinha)",
+    "license": "Fonte pública — uso editorial",
+    "author": "Nelson Almeida / AFP",
+    "commons": "https://www.brasilagro.com.br/conteudo/o-peso-do-fator-lulinha-por-elio-gaspari.html",
+    "sourceLabel": "BrasilAgro"
   },
   {
     "name": "Fátima Bezerra",
@@ -659,6 +827,13 @@ export const PHOTO_CREDITS = [
     "license": "CC BY-SA 2.0",
     "author": "Ubirajara Dettimar/Presidência da República",
     "commons": "https://commons.wikimedia.org/wiki/File:Foto_oficial_do_presidente_Fernando_Collor_de_Melo._(38405801411).jpg"
+  },
+  {
+    "name": "Fernando de Sousa Oliveira",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução / Metrópoles",
+    "commons": "https://www.metropoles.com/colunas/grande-angular/8-1-saiba-quem-e-delegado-da-pf-que-moraes-votou-para-absolver",
+    "sourceLabel": "Metrópoles"
   },
   {
     "name": "Fernando Haddad",
@@ -691,10 +866,24 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Fl%C3%A1vio_Dino_no_voto_da_A%C3%A7%C3%A3o_Penal_(AP)_2668_(cropped).jpg"
   },
   {
+    "name": "Francisco Mesquita Neto",
+    "license": "Fonte pública — uso editorial",
+    "author": "Francisco Mesquita Neto / perfil profissional público",
+    "commons": "https://www.linkedin.com/in/francisco-mesquita-neto-98a11226/",
+    "sourceLabel": "LinkedIn"
+  },
+  {
     "name": "Gabriel Galípolo",
     "license": "CC BY 2.0",
     "author": "Agência Senado",
     "commons": "https://commons.wikimedia.org/wiki/File:Gabriel_Gal%C3%ADpolo_in_2023.jpg"
+  },
+  {
+    "name": "Gabriela Hardt",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://www.congressoemfoco.com.br/noticia/7237/cnj-revoga-afastamento-da-juiza-da-lava-jato-gabriela-hardt",
+    "sourceLabel": "Congresso em Foco"
   },
   {
     "name": "George André Palermo Santoro",
@@ -781,6 +970,13 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Gustavo_Gayer_no_Vlog_do_Lisboa_-2021-02-13.png"
   },
   {
+    "name": "Gustavo Henrique Menezes Dutra",
+    "license": "Fonte pública — uso editorial",
+    "author": "Agência Senado",
+    "commons": "https://noticias.uol.com.br/politica/ultimas-noticias/2025/07/28/josias-veto-ao-uso-de-fardas-por-reus-militares-deveria-vir-do-exercito.htm",
+    "sourceLabel": "UOL"
+  },
+  {
     "name": "Gusttavo Lima",
     "license": "CC BY 3.0",
     "author": "Record TV Goiás",
@@ -817,6 +1013,13 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Henrique_Meirelles_-_World_Economic_Forum_on_Latin_America_2011.jpg"
   },
   {
+    "name": "Henrique Vorcaro",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução",
+    "commons": "https://portal3dejulho.com.br/",
+    "sourceLabel": "Portal 3 de Julho"
+  },
+  {
     "name": "Hertz Dias",
     "license": "CC BY 2.0",
     "author": "Romerito Pontes",
@@ -835,6 +1038,13 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Humberto_costa.jpg"
   },
   {
+    "name": "Ian Neves",
+    "license": "Fonte pública — uso editorial",
+    "author": "Ian Neves",
+    "commons": "https://x.com/ianfneves",
+    "sourceLabel": "Perfil público no X"
+  },
+  {
     "name": "Ibaneis Rocha",
     "license": "CC BY 2.0",
     "author": "Agência Brasília from Brasília, Brasil",
@@ -845,6 +1055,13 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 4.0",
     "author": "Carlos Ricarte",
     "commons": "https://commons.wikimedia.org/wiki/File:Igor_Normando_em_evento_na_UNAMA_(2023).png"
+  },
+  {
+    "name": "Isabel Cristina Groba Vieira",
+    "license": "Fonte pública — uso editorial",
+    "author": "M. Pimenta / El País",
+    "commons": "https://brasil.elpais.com/brasil/2017/03/08/politica/1488974592_918526.html",
+    "sourceLabel": "El País"
   },
   {
     "name": "Isnaldo Bulhões Jr.",
@@ -871,10 +1088,24 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Presidente_Jair_Messias_Bolsonaro.jpg"
   },
   {
+    "name": "Janine Mello",
+    "license": "Fonte institucional",
+    "author": "Ministério dos Direitos Humanos",
+    "commons": "https://www.gov.br/mdh/pt-br/assuntos/noticias/2026/maio/bom-dia-ministra-janine-mello-detalha-acoes-de-enfrentamento-ao-abuso-e-a-exploracao-sexual-de-criancas-e-adolescentes",
+    "sourceLabel": "gov.br"
+  },
+  {
     "name": "Janja da Silva",
     "license": "CC BY 3.0",
     "author": "Pablo Valadares/Câmara dos Deputados",
     "commons": "https://commons.wikimedia.org/wiki/File:Janja_da_Silva_(cropped).jpg"
+  },
+  {
+    "name": "Januário Paludo",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução / Poder360",
+    "commons": "https://www.poder360.com.br/lava-jato/lava-jato-pagou-r-38-milhoes-em-diarias-e-passagens-a-so-5-procuradores/",
+    "sourceLabel": "Poder360"
   },
   {
     "name": "Jaques Wagner",
@@ -895,6 +1126,20 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:PGP_Bacia_do_Jacu%C3%ADpe_em_Capim_Grosso_(52241179839)_(cropped_2).jpg"
   },
   {
+    "name": "Jerusa Burmann Viecili",
+    "license": "Fonte pública — uso editorial",
+    "author": "M. Pimenta / El País",
+    "commons": "https://brasil.elpais.com/brasil/2017/03/08/politica/1488974592_918526.html",
+    "sourceLabel": "El País"
+  },
+  {
+    "name": "João Accioly",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://www.congressoemfoco.com.br/noticia/116458/cae-ouvira-presidente-interino-da-cvm-sobre-fiscalizacao-do-master",
+    "sourceLabel": "Congresso em Foco"
+  },
+  {
     "name": "João Azevêdo",
     "license": "CC BY 2.0",
     "author": "Agência Brasília from Brasília, Brasil",
@@ -907,6 +1152,13 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Jo%C3%A3o_Henrique_Campos,_January_2025_(cropped).jpg"
   },
   {
+    "name": "João Carlos Mansur",
+    "license": "Fonte pública — uso editorial",
+    "author": "Geraldo Magela / Agência Senado",
+    "commons": "https://www.gazetadopovo.com.br/republica/fundador-reag-confirma-operacoes-master-nega-pcc/",
+    "sourceLabel": "Gazeta do Povo"
+  },
+  {
     "name": "João Carlos Saad",
     "license": "CC BY 2.0",
     "author": "Palácio do Planalto from Brasilia, Brasil",
@@ -917,6 +1169,13 @@ export const PHOTO_CREDITS = [
     "license": "CC BY-SA 4.0",
     "author": "Senado Federal",
     "commons": "https://commons.wikimedia.org/wiki/File:CRA_-_Comiss%C3%A3o_de_Agricultura_e_Reforma_Agr%C3%A1ria_-_54976306073.jpg"
+  },
+  {
+    "name": "João Pedro Gebran Neto",
+    "license": "Fonte pública — uso editorial",
+    "author": "Fórum de Lisboa",
+    "commons": "https://www.forumdelisboa.com/palestrantes/joao-pedro-gebran-neto",
+    "sourceLabel": "Fórum de Lisboa"
   },
   {
     "name": "João Pedro Stédile",
@@ -991,10 +1250,24 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Jos%C3%A9_Sarney,_June_2024.jpg"
   },
   {
+    "name": "José Wellington Bezerra da Costa",
+    "license": "Foto institucional",
+    "author": "Assembleia de Deus",
+    "commons": "https://ad.org.br/assembleia-geral-empossa-diretoria-da-igreja-para-o-bienio-2024-2025/",
+    "sourceLabel": "Site institucional"
+  },
+  {
     "name": "Josimar Maranhãozinho",
     "license": "CC BY 3.0",
     "author": "Câmara dos Deputados do Brasil",
     "commons": "https://commons.wikimedia.org/wiki/File:Dep_Josimar_Maranh%C3%A3ozinho.jpg"
+  },
+  {
+    "name": "Josué Gomes da Silva",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://oglobo.globo.com/economia/noticia/2024/07/30/presidente-da-fiesp-critica-juros-alto-e-afirma-que-campos-neto-optou-por-posicionamento-politico.ghtml",
+    "sourceLabel": "O Globo"
   },
   {
     "name": "Júlio Cesar de Arruda",
@@ -1021,10 +1294,38 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:CCJ_-_Comiss%C3%A3o_de_Constitui%C3%A7%C3%A3o,_Justi%C3%A7a_e_Cidadania_-_45921653432_(cropped).jpg"
   },
   {
+    "name": "Laura Gonçalves Tessler",
+    "license": "Fonte pública — uso editorial",
+    "author": "M. Pimenta / El País",
+    "commons": "https://brasil.elpais.com/brasil/2017/03/08/politica/1488974592_918526.html",
+    "sourceLabel": "El País"
+  },
+  {
+    "name": "Leandro Almada da Costa",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução / UOL",
+    "commons": "https://noticias.uol.com.br/politica/ultimas-noticias/2024/12/03/delegado-pf-caso-marielle-leando-almada-diretor-inteligencia.htm",
+    "sourceLabel": "UOL"
+  },
+  {
+    "name": "Leandro Paulsen",
+    "license": "Fonte institucional",
+    "author": "TRE-RS",
+    "commons": "https://www.tre-rs.jus.br/institucional/memorial-da-justica-eleitoral-gaucha/membros-do-pleno/membros-do-pleno-exposicao-plone/copy_of_vania-hack-de-almeida",
+    "sourceLabel": "TRE-RS"
+  },
+  {
     "name": "Leila Barros",
     "license": "Attribution",
     "author": "Agência Senado",
     "commons": "https://commons.wikimedia.org/wiki/File:Senadora_Leila_Barros.jpg"
+  },
+  {
+    "name": "Leonardo Augusto Furtado Palhares",
+    "license": "Fonte pública — uso editorial",
+    "author": "Carol Carquejeiro / Valor",
+    "commons": "https://valor.globo.com/legislacao/noticia/2012/02/02/rio-e-o-primeiro-estado-a-ter-lei-para-compras-coletivas.ghtml",
+    "sourceLabel": "Valor Econômico"
   },
   {
     "name": "Leonardo Avalanche",
@@ -1087,6 +1388,13 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Luis_Roberto_Barroso_2014.jpg"
   },
   {
+    "name": "Luiz Antônio Bull",
+    "license": "Fonte pública — uso editorial",
+    "author": "Luiz Antônio Bull",
+    "commons": "https://x.com/luizlbull",
+    "sourceLabel": "Perfil público no X"
+  },
+  {
     "name": "Luiz Frias",
     "license": "CC BY 3.0 br",
     "author": "Ricardo Stuckert/PR",
@@ -1115,6 +1423,13 @@ export const PHOTO_CREDITS = [
     "license": "CC BY-SA 4.0",
     "author": "Senado Federal",
     "commons": "https://commons.wikimedia.org/wiki/File:Plen%C3%A1rio_do_Senado_-_54820218794.jpg"
+  },
+  {
+    "name": "Luiz Phillipi Machado de Moraes Mourão",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução",
+    "commons": "https://www.congressoemfoco.com.br/noticia/116957/coordenador-de-vigilancia-de-vorcaro-tenta-suicidio-em-sede-da-pf",
+    "sourceLabel": "Congresso em Foco"
   },
   {
     "name": "Luiza Erundina",
@@ -1219,6 +1534,20 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Maria_do_rosario_2.jpg"
   },
   {
+    "name": "Maria Elena Lourenço Passos",
+    "license": "Fonte eleitoral pública",
+    "author": "Dados eleitorais do TSE via Radar do Voto",
+    "commons": "https://radardovoto.com/pessoa/76570086/maria-elena-lourenco-passos",
+    "sourceLabel": "Radar do Voto"
+  },
+  {
+    "name": "Marilson Roseno da Silva",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução",
+    "commons": "https://www.itatiaia.com.br/brasil/sudeste/mg/policial-federal-aposentado-preso-em-bh-era-do-braco-armado-de-daniel-vorcaro",
+    "sourceLabel": "Itatiaia"
+  },
+  {
     "name": "Marina Helena",
     "license": "CC BY-SA 4.0",
     "author": "Julia Godoy",
@@ -1243,16 +1572,37 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:M%C3%A1rio_Frias_em_2020.jpg"
   },
   {
+    "name": "Martha Graeff",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução",
+    "commons": "https://noticias.r7.com/brasilia/quem-e-martha-graeff-namorada-de-vorcaro-citada-em-conversas-obtidas-pela-pf-05032026/",
+    "sourceLabel": "R7"
+  },
+  {
     "name": "Mateus Simões",
     "license": "CC BY 2.0",
     "author": "Jonas Pereira/Agência Senado",
     "commons": "https://commons.wikimedia.org/wiki/File:Mateus_Sim%C3%B5es,_April_2024_(cropped).jpg"
   },
   {
+    "name": "Maurício Camisotti",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução / Poder360",
+    "commons": "https://www.poder360.com.br/poder-justica/delator-do-inss-vai-devolver-r-400-milhoes-em-acordo-com-a-pf/",
+    "sourceLabel": "Poder360"
+  },
+  {
     "name": "Maurício Souza",
     "license": "CC BY 3.0 br",
     "author": "Fernando Frazão/Agência Brasil",
     "commons": "https://commons.wikimedia.org/wiki/File:Maur%C3%ADcio_Souza_Rio_2016.jpg"
+  },
+  {
+    "name": "Maurício Valeixo",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://www.estadao.com.br/politica/quem-e-mauricio-valeixo-delegado-da-policia-federal-pivo-da-ameaca-de-demissao-de-sergio-moro/",
+    "sourceLabel": "Estadão"
   },
   {
     "name": "Mauro Benevides Filho",
@@ -1309,6 +1659,20 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:CDD_-_Comiss%C3%A3o_de_Defesa_da_Democracia_(53847128122)_(cropped).jpg"
   },
   {
+    "name": "Nando Moura",
+    "license": "Fonte pública — uso editorial",
+    "author": "Perfil público do IMDb",
+    "commons": "https://www.imdb.com/name/nm12388279/",
+    "sourceLabel": "IMDb"
+  },
+  {
+    "name": "Nelson Tanure",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://www.gazetadopovo.com.br/economia/nelson-tanure-operacao-compliance-zero-banco-master/",
+    "sourceLabel": "Gazeta do Povo"
+  },
+  {
     "name": "Neymar Jr.",
     "license": "CC BY-SA 4.0",
     "author": "Bryan Berlin",
@@ -1331,6 +1695,13 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 3.0 br",
     "author": "Fabio Rodrigues Pozzebom/ABr",
     "commons": "https://commons.wikimedia.org/wiki/File:Omar_Aziz.png"
+  },
+  {
+    "name": "Orlando Martello Júnior",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução / Poder360",
+    "commons": "https://www.poder360.com.br/lava-jato/lava-jato-pagou-r-38-milhoes-em-diarias-e-passagens-a-so-5-procuradores/",
+    "sourceLabel": "Poder360"
   },
   {
     "name": "Orlando Silva",
@@ -1387,6 +1758,27 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Jair_Bolsonaro_e_Paulo_Guedes_em_solenidade_(cropped).jpg"
   },
   {
+    "name": "Paulo Henrique Bezerra Rodrigues Costa",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://www.correiobraziliense.com.br/app/noticia/cidadesdf,719971/governador-eleito-anuncia-mais-tres-nomes-para-o-novo-governo.shtml",
+    "sourceLabel": "Correio Braziliense"
+  },
+  {
+    "name": "Paulo Henrique Perna Cordeiro",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução",
+    "commons": "https://diariodopoder.com.br/brasil-e-regioes/e01-brasil/mulher-de-secretario-do-esporte-tem-boquinha-de-r258-mil-em-estatal",
+    "sourceLabel": "Diário do Poder"
+  },
+  {
+    "name": "Paulo Jorge Fernandes da Hora",
+    "license": "Fonte pública — uso editorial",
+    "author": "Sérgio Lima / Poder360",
+    "commons": "https://www.poder360.com.br/brasil/comandante-da-guarda-presidencial-deve-deixar-posto-na-6a-feira/",
+    "sourceLabel": "Poder360"
+  },
+  {
     "name": "Paulo Marinho",
     "license": "CC BY 4.0",
     "author": "Unknown author Unknown author",
@@ -1397,6 +1789,13 @@ export const PHOTO_CREDITS = [
     "license": "Attribution",
     "author": "Senado Federal do Brasil",
     "commons": "https://commons.wikimedia.org/wiki/File:Foto_oficial_de_Paulo_Paim.jpg"
+  },
+  {
+    "name": "Paulo Sergio Neves de Souza",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução",
+    "commons": "https://timesbrasil.com.br/empresas-e-negocios/quem-e-paulo-sergio-neves-souza-ex-diretor-banco-central-preso-caso-master/",
+    "sourceLabel": "Times Brasil"
   },
   {
     "name": "Paulo Sérgio Nogueira de Oliveira",
@@ -1421,6 +1820,13 @@ export const PHOTO_CREDITS = [
     "license": "CC BY-SA 2.0",
     "author": "Lula Oficial",
     "commons": "https://commons.wikimedia.org/wiki/File:Pedro_Paulo,_August_2024.jpg"
+  },
+  {
+    "name": "Rachel Barros de Oliveira",
+    "license": "Fonte institucional",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/noticias/1276334-ministra-da-igualdade-racial-afirma-que-demarcacao-de-terras-quilombolas-e-prioridade-de-estado/",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "Rachel Sheherazade",
@@ -1531,6 +1937,27 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Ricardo_Villas_B%C3%B4as_Cueva.jpg"
   },
   {
+    "name": "Roberson Pozzetti",
+    "license": "Fonte pública — uso editorial",
+    "author": "Gazeta do Povo",
+    "commons": "https://www.gazetadopovo.com.br/vida-publica/nao-vale-a-pena-fingir-que-nao-cometeu-delitos-diz-procurador-da-lava-jato-0rppavbjujo8zwfk0ehp96l2c/",
+    "sourceLabel": "Gazeta do Povo"
+  },
+  {
+    "name": "Roberta Luchsinger",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução",
+    "commons": "https://noticias.uol.com.br/politica/ultimas-noticias/2026/08/20/amiga-de-lulinha-relatou-em-mensagem-conversa-com-lula-diz-revista.ghtm",
+    "sourceLabel": "UOL"
+  },
+  {
+    "name": "Roberto Araújo",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução",
+    "commons": "https://www.jornaldacidadeonline.com.br/noticias/43571/enfim-a-jovem-pan-se-manifesta-detona-a-folha-e-garante-que-nao-vai-mudar-sua-posicao-veja-o-video",
+    "sourceLabel": "Jornal da Cidade Online"
+  },
+  {
     "name": "Roberto Campos Neto",
     "license": "Attribution",
     "author": "Pedro França/Agência Senado",
@@ -1541,6 +1968,20 @@ export const PHOTO_CREDITS = [
     "license": "CC BY-SA 4.0",
     "author": "Ana Beatriz Melo da Silva",
     "commons": "https://commons.wikimedia.org/wiki/File:Presidente_da_ALEAM.jpg"
+  },
+  {
+    "name": "Roberto Setúbal",
+    "license": "Foto institucional",
+    "author": "FGV EAESP",
+    "commons": "https://eaesp.fgv.br/noticias/evento-recebe-roberto-setubal-para-debater-sobre-mercado-financeiro",
+    "sourceLabel": "FGV"
+  },
+  {
+    "name": "Robson Rodovalho",
+    "license": "Foto institucional",
+    "author": "Sara Play",
+    "commons": "https://www.saraplay.com.br/video/4476/sara-conference-df-2025-bispo-robson-rodovalho-nao-saia-da-posicao/",
+    "sourceLabel": "Sara Play"
   },
   {
     "name": "Rodrigo Constantino",
@@ -1663,6 +2104,13 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Senadores_da_57%C2%AA_Legislatura_(52689302414).jpg"
   },
   {
+    "name": "Sérgio Nobre",
+    "license": "Fonte pública — uso editorial",
+    "author": "Sapão / CUT",
+    "commons": "https://www.cut.org.br/noticias/todos-devem-ir-as-ruas-nesta-terca-contra-juros-altos-diz-presidente-da-cut-32a3",
+    "sourceLabel": "CUT"
+  },
+  {
     "name": "Sidônio Palmeira",
     "license": "CC BY-SA 2.0",
     "author": "Lula Oficial",
@@ -1741,10 +2189,24 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Tereza_Cristina_em_18_de_julho_de_2019.jpg"
   },
   {
+    "name": "Thalles Andrade Costa",
+    "license": "Fonte eleitoral pública",
+    "author": "Dados eleitorais do TSE via Radar do Voto",
+    "commons": "https://radardovoto.com/pessoa/78286395/thalles-andrade-costa",
+    "sourceLabel": "Radar do Voto"
+  },
+  {
     "name": "Thammy Miranda",
     "license": "CC BY 2.0",
     "author": "Governo do Estado de São Paulo",
     "commons": "https://commons.wikimedia.org/wiki/File:Thammy_Miranda.jpg"
+  },
+  {
+    "name": "Thiago Miranda",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução",
+    "commons": "https://www.goias246.com.br/noticia/32580/ultimas/vorcaro-pagou-r-61-milhoes-para-filme-de-bolsonaro-flavio-cobrou-valor.html",
+    "sourceLabel": "Goiás 246"
   },
   {
     "name": "Thomas Traumann",
@@ -1777,6 +2239,13 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Valdemiro_santiago.jpg"
   },
   {
+    "name": "Vanderson Alves Nunes (Vandinho Patriota)",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução / RepórterMT",
+    "commons": "https://www.reportermt.com/papo-reto/pre-candidato-a-vereador-usa-tornozeleira-com-bandeira-do-brasil-em-convencao-do-pl/210173",
+    "sourceLabel": "RepórterMT"
+  },
+  {
     "name": "Vanessa Portugal",
     "license": "CC BY 4.0",
     "author": "Tribunal Superior Eleitoral do Brasil (TSE)",
@@ -1795,6 +2264,27 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Programa_Roda_Viva_com_Senadora_Simone_Tebet_(52275113869)_(cropped_2).jpg"
   },
   {
+    "name": "Victor César dos Santos",
+    "license": "Fonte pública — uso editorial",
+    "author": "Divulgação",
+    "commons": "https://vejario.abril.com.br/cidade/victor-santos-novo-secretario-seguranca-publica-rio",
+    "sourceLabel": "Veja Rio"
+  },
+  {
+    "name": "Victor Luiz dos Santos Laus",
+    "license": "Fonte pública — uso editorial",
+    "author": "Agência Estado",
+    "commons": "https://noticias.uol.com.br/ultimas-noticias/agencia-estado/2019/06/25/victor-laus-assume-presidencia-do-tribunal-da-lava-jato.htm",
+    "sourceLabel": "UOL"
+  },
+  {
+    "name": "Virgílio Antônio Ribeiro Filho",
+    "license": "Fonte institucional",
+    "author": "Carlos Moura / Agência Senado",
+    "commons": "https://www12.senado.leg.br/noticias/materias/2025/10/23/ex-procurador-nao-esclarece-evolucao-patrimonial-de-r-18-milhoes",
+    "sourceLabel": "Senado Federal"
+  },
+  {
     "name": "Vital do Rêgo",
     "license": "Attribution",
     "author": "Janine Moraes",
@@ -1807,10 +2297,31 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Vitor_belfort_cropped.jpg"
   },
   {
+    "name": "Viviane Barci de Moraes",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução",
+    "commons": "https://noticias.uol.com.br/politica/ultimas-noticias/2026/03/09/escritorio-da-mulher-de-moraes-diz-que-nunca-atuou-para-banco-master-no-stf.htm",
+    "sourceLabel": "UOL"
+  },
+  {
+    "name": "Vladimir Lima",
+    "license": "Fonte pública — uso editorial",
+    "author": "Reprodução / R7",
+    "commons": "https://noticias.r7.com/brasilia/novo-ministro-das-cidades-promete-1-milhao-de-novas-moradias-do-minha-casa-minha-vida-em-2026-10042026/",
+    "sourceLabel": "R7"
+  },
+  {
     "name": "Wagner Moura",
     "license": "CC BY-SA 4.0",
     "author": "Harald Krichel",
     "commons": "https://commons.wikimedia.org/wiki/File:Wagner_Moura-6546.jpg"
+  },
+  {
+    "name": "Waldemar Gonçalves Ortunho Jr.",
+    "license": "Fonte pública — uso editorial",
+    "author": "Tech Policy Press",
+    "commons": "https://www.techpolicy.press/brazil-wants-to-reshape-the-internet-for-kids-the-hard-part-just-began/",
+    "sourceLabel": "Tech Policy Press"
   },
   {
     "name": "Waldez Góes",

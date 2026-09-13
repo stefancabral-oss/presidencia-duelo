@@ -35,7 +35,7 @@ test("photo credits cover every candidate with local attribution text", () => {
   for (const row of PHOTO_CREDITS) {
     assert.ok(row.license);
     assert.ok(row.author);
-    assert.match(row.commons, /^https:\/\/commons\.wikimedia\.org\//);
+    assert.match(row.commons, /^https:\/\//);
   }
 });
 

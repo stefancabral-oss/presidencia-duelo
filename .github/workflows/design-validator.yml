@@ -1,0 +1,38 @@
+name: Design Validator
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'front/**'
+      - 'app/**'
+      - 'docs/design/**'
+      - '.github/workflows/design-validator.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            front/package-lock.json
+            app/package-lock.json
+      - name: Install front
+        run: npm ci --prefix front
+      - name: Test front including design validator
+        run: npm test --prefix front
+      - name: Build front
+        run: npm run build --prefix front
+      - name: Install app
+        run: npm ci --prefix app
+      - name: Test app
+        run: npm test --prefix app
+      - name: Build app
+        run: npm run build --prefix app

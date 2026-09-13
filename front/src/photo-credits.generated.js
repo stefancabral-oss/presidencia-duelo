@@ -169,6 +169,12 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Deputado_Antonio_Brito.png"
   },
   {
+    "name": "Antônio Carlos",
+    "license": "CC BY 4.0",
+    "author": "Tribunal Superior Eleitoral do Brasil (TSE)",
+    "commons": "https://commons.wikimedia.org/wiki/File:2026_ANT%C3%94NIO_CARLOS_CANDIDATO_VICE-PRESIDENTE_TSE_(280002552486).jpg"
+  },
+  {
     "name": "Antônio Carlos Camilo Antunes (Careca do INSS)",
     "license": "CC BY-SA 4.0",
     "author": "Agência Senado from Brasilia, Brazil",
@@ -257,6 +263,12 @@ export const PHOTO_CREDITS = [
     "license": "CC BY-SA 4.0",
     "author": "Silas Leal",
     "commons": "https://commons.wikimedia.org/wiki/File:Carla_Zambelli_2.jpg"
+  },
+  {
+    "name": "Carlos Bezerra Jr.",
+    "license": "CC BY-SA 4.0",
+    "author": "Alesp",
+    "commons": "https://commons.wikimedia.org/wiki/File:Cbjr.jpg"
   },
   {
     "name": "Carlos Bolsonaro",
@@ -373,6 +385,18 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Cleiton_Gontijo_de_Azevedo_-_2019.jpg"
   },
   {
+    "name": "Cleusa Santos",
+    "license": "CC BY 4.0",
+    "author": "Tribunal Superior Eleitoral do Brasil (TSE)",
+    "commons": "https://commons.wikimedia.org/wiki/File:2026_CLEUSA_SANTOS_CANDIDATA_VICE-PRESIDENTE_TSE_(280002551976).jpg"
+  },
+  {
+    "name": "Coronel Medina",
+    "license": "CC BY 4.0",
+    "author": "Tribunal Superior Eleitoral",
+    "commons": "https://commons.wikimedia.org/wiki/File:2026_CORONEL_MEDINA_CANDIDATO_VICE-PRESIDENTE_TSE_(280002540693).jpg"
+  },
+  {
     "name": "Cristiano Zanin",
     "license": "Public domain",
     "author": "Rosinei Coutinho/STF",
@@ -401,6 +425,12 @@ export const PHOTO_CREDITS = [
     "license": "CC BY-SA 2.0",
     "author": "https://www.flickr.com/photos/savaman/ Sérgio (Savaman) Savarese",
     "commons": "https://commons.wikimedia.org/wiki/File:Daniela_Beyruti.jpg"
+  },
+  {
+    "name": "Dario Durigan",
+    "license": "Public domain",
+    "author": "Diogo Zacarias",
+    "commons": "https://commons.wikimedia.org/wiki/File:Dario_Durigan_(cropped).jpg"
   },
   {
     "name": "Davi Alcolumbre",
@@ -505,6 +535,12 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Senador_Eduardo_Gir%C3%A3o.jpg"
   },
   {
+    "name": "Eduardo Gomes",
+    "license": "CC BY 2.0",
+    "author": "Jefferson Rudy/Agência Senado",
+    "commons": "https://commons.wikimedia.org/wiki/File:Carlos_Eduardo_Torres_Gomes.jpg"
+  },
+  {
     "name": "Eduardo Leite",
     "license": "CC BY-SA 4.0",
     "author": "Governo RS",
@@ -563,6 +599,12 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 4.0",
     "author": "Portal de Dados Abertos do Tribunal Superior Eleitoral do Brasil (TSE)",
     "commons": "https://commons.wikimedia.org/wiki/File:CE_2022_Evandro_Leit%C3%A3o.jpg"
+  },
+  {
+    "name": "Fabiana Torquato",
+    "license": "CC BY 4.0",
+    "author": "Tribunal Superior Eleitoral do Brasil (TSE)",
+    "commons": "https://commons.wikimedia.org/wiki/File:2026_FABIANA_TORQUATO_CANDIDATA_VICE-PRESIDENTE_TSE_(280002552485).jpg"
   },
   {
     "name": "Fábio Faria",
@@ -703,6 +745,12 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Retratos_Oficiais_-_Secret%C3%A1rios_de_Estado_de_S%C3%A3o_Paulo_em_2023_02.jpg"
   },
   {
+    "name": "Gustavo Feliciano",
+    "license": "CC BY-SA 4.0",
+    "author": "Lula Oficial",
+    "commons": "https://commons.wikimedia.org/wiki/File:23.12.2025_-_Cerim%C3%B4nia_de_transmiss%C3%A3o_de_cargo_e_posse_do_Ministro_do_Turismo,_Gustavo_Feliciano_(55001712455)_(cropped).jpg"
+  },
+  {
     "name": "Gustavo Gayer",
     "license": "CC BY 3.0",
     "author": "Vlog do Lisboa",
@@ -775,6 +823,12 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Igor_Normando_em_evento_na_UNAMA_(2023).png"
   },
   {
+    "name": "Isnaldo Bulhões Jr.",
+    "license": "CC BY 3.0",
+    "author": "Michel Jesus/Câmara dos Deputados",
+    "commons": "https://commons.wikimedia.org/wiki/File:Isnaldo_Bulh%C3%B5es_(cropped).jpg"
+  },
+  {
     "name": "Ivan Valente",
     "license": "CC BY 3.0 br",
     "author": "Agência Brasil (Foto de arquivo)",
@@ -791,6 +845,12 @@ export const PHOTO_CREDITS = [
     "license": "Public domain",
     "author": "US Embassy Brasília",
     "commons": "https://commons.wikimedia.org/wiki/File:Presidente_Jair_Messias_Bolsonaro.jpg"
+  },
+  {
+    "name": "Janja da Silva",
+    "license": "CC BY 3.0",
+    "author": "Pablo Valadares/Câmara dos Deputados",
+    "commons": "https://commons.wikimedia.org/wiki/File:Janja_da_Silva_(cropped).jpg"
   },
   {
     "name": "Jaques Wagner",
@@ -871,6 +931,12 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Plen%C3%A1rio_do_Senado_(22335628008).jpg"
   },
   {
+    "name": "José Guimarães",
+    "license": "CC BY 3.0 br",
+    "author": "José Cruz/ABr",
+    "commons": "https://commons.wikimedia.org/wiki/File:Jose_Guimaraes.jpg"
+  },
+  {
     "name": "José Luiz Datena",
     "license": "CC BY 2.0",
     "author": "Liderança do PSB na Câmara",
@@ -931,6 +997,12 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Senadora_Leila_Barros.jpg"
   },
   {
+    "name": "Leonardo Avalanche",
+    "license": "CC BY-SA 4.0",
+    "author": "LFLN",
+    "commons": "https://commons.wikimedia.org/wiki/File:Leonardo_Avalanche.jpg"
+  },
+  {
     "name": "Leonardo Barchini",
     "license": "CC BY 3.0",
     "author": "Fábio Nakakura",
@@ -947,6 +1019,12 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 4.0",
     "author": "Portal de Dados Abertos do Tribunal Superior Eleitoral do Brasil (TSE)",
     "commons": "https://commons.wikimedia.org/wiki/File:2024_LORENZO_PAZOLINI_CANDIDATO_PREFEITO_ES_VITORIA_TSE_(80002366610).jpg"
+  },
+  {
+    "name": "Lucas Pavanato",
+    "license": "CC0",
+    "author": "JeanFrancoZ",
+    "commons": "https://commons.wikimedia.org/wiki/File:Lucas_Pavanato.jpg"
   },
   {
     "name": "Lucas Ribeiro",
@@ -1333,6 +1411,12 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Senadores_da_56%C2%AA_Legislatura_-_Randolfe_Rodrigues_(46149534405).jpg"
   },
   {
+    "name": "Raquel Brício",
+    "license": "CC BY 4.0",
+    "author": "Tribunal Superior Eleitoral",
+    "commons": "https://commons.wikimedia.org/wiki/File:2026_RAQUEL_BR%C3%8DCIO_CANDIDATA_VICE-PRESIDENTE_TSE_(280002538812).jpg"
+  },
+  {
     "name": "Raquel Dodge",
     "license": "CC BY 2.0",
     "author": "Jefferson Rudy from Senado Federal",
@@ -1379,6 +1463,12 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 2.0",
     "author": "Senado Federal",
     "commons": "https://commons.wikimedia.org/wiki/File:Renato_Casagrande_em_janeiro_de_2017.jpg"
+  },
+  {
+    "name": "Ricardo Alban",
+    "license": "CC BY-SA 4.0",
+    "author": "Pedro.1217",
+    "commons": "https://commons.wikimedia.org/wiki/File:Ricardo_Alban.jpg"
   },
   {
     "name": "Ricardo Ferraço",
@@ -1591,6 +1681,12 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:S%C3%B3stenes_Cavalcante_(cropped).jpg"
   },
   {
+    "name": "Suêd Haidar",
+    "license": "CC BY 4.0",
+    "author": "Tribunal Superior Eleitoral",
+    "commons": "https://commons.wikimedia.org/wiki/File:2026_SU%C3%8AD_HAIDAR_CANDIDATA_VICE-PRESIDENTE_TSE_(280002548140).jpg"
+  },
+  {
     "name": "Talíria Petrone",
     "license": "Public domain",
     "author": "TSE - Tribunal Superior Eleitoral",
@@ -1651,10 +1747,28 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Valdemiro_santiago.jpg"
   },
   {
+    "name": "Vanessa Portugal",
+    "license": "CC BY 4.0",
+    "author": "Tribunal Superior Eleitoral do Brasil (TSE)",
+    "commons": "https://commons.wikimedia.org/wiki/File:2026_VANESSA_PORTUGAL_CANDIDATA_VICE-PRESIDENTE_TSE_(280002541458).jpg"
+  },
+  {
+    "name": "Vera Lúcia",
+    "license": "CC BY 2.0",
+    "author": "Romerito Pontes",
+    "commons": "https://commons.wikimedia.org/wiki/File:Vera_L%C3%BAcia_no_Dia_Internacional_da_Mulher_Trabalhadora_2018_-_PSTU_(cropped_3x4).jpg"
+  },
+  {
     "name": "Vera Magalhães",
     "license": "CC BY 2.0",
     "author": "MDB Nacional",
     "commons": "https://commons.wikimedia.org/wiki/File:Programa_Roda_Viva_com_Senadora_Simone_Tebet_(52275113869)_(cropped_2).jpg"
+  },
+  {
+    "name": "Vital do Rêgo",
+    "license": "Attribution",
+    "author": "Janine Moraes",
+    "commons": "https://commons.wikimedia.org/wiki/File:Vital_do_Rego_Filho.jpg"
   },
   {
     "name": "Vitor Belfort",

@@ -40,7 +40,7 @@ export function creditsPanelHtml() {
         <ul class="credits-list">${items}
         </ul>
         <p class="credits-notes">
-          Fotos reais em 286 dos 387 perfis. Os 101 restantes usam iniciais até receberem imagem verificada e crédito.
+          Fotos reais em 305 dos 387 perfis. Os 82 restantes usam iniciais até receberem imagem verificada e crédito.
           Este projeto não é afiliado a partidos, TSE, Wikimedia ou às pessoas listadas.
         </p>`;
 }

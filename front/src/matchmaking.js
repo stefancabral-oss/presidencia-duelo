@@ -8,10 +8,9 @@ export const ELO_GAP_SCALE = 100;
 /**
  * `pairCount` is a **show** history, not a vote history.
  *
- * `nextDuel` records a pair when it appears on the cards. Desfazer restores Elo,
- * W/L, zebras, and `duels`, but leaves `pairCount` alone: the undone pair (and
- * any pair that already flashed after the vote) did appear. A missing persisted
- * field migrates to `{}`.
+ * `nextDuel` records a pair when it appears on the cards. This is show history,
+ * so it remains independent from the vote counters. A missing persisted field
+ * migrates to `{}`.
  */
 
 export function pairKey(a, b) {

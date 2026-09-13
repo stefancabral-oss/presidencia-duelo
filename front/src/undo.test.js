@@ -189,7 +189,7 @@ test("game wires Desfazer below the cards and undoes lastDuel locally", () => {
   assert.match(gameSrc, /id="undo-duel"/);
   assert.match(gameSrc, />Desfazer</);
   assert.match(gameSrc, /disabled/);
-  assert.match(gameSrc, /snapshotDuel\(state, winnerId, loserId, currentPair\)/);
+  assert.match(gameSrc, /snapshotDuel\(targetState, winnerId, loserId, pair\)/);
   assert.match(gameSrc, /restoreDuel\(state, snap\)/);
   assert.match(gameSrc, /state\.lastDuel = null/);
   assert.match(gameSrc, /clearTimeout\(pickTimer\)/);

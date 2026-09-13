@@ -71,6 +71,7 @@ import {
 import { lastDuelFromParsed, restoreDuel, snapshotDuel, undoPair } from "./undo.js";
 import { MODES, VICE_STORAGE_KEY, candidateForMode } from "./vice-mode.js";
 import { createVoteId } from "./vote-id.js";
+import { captureVoteSession, isCurrentVoteSession } from "./vote-session.js";
 import {
   TOPICS,
   TOPIC_IDS,
@@ -482,6 +483,7 @@ export async function initGame({ requireApi = false } = {}) {
   let state = states[mode];
   let topicId = loadTopic();
   let currentPair = null;
+  let duelGeneration = 0;
   let locked = false;
   let pickTimer = null;
   let tournament = loadTournament();
@@ -561,6 +563,7 @@ export async function initGame({ requireApi = false } = {}) {
     closePodium();
     renderTopicUi();
     nextDuel();
+    if (requireApi && apiOnline) setNetworkStatus(statusEl, NETWORK_STATES.ONLINE);
     renderRanking();
     renderServerRanking();
   }
@@ -576,6 +579,7 @@ export async function initGame({ requireApi = false } = {}) {
     closePodium();
     renderModeUi();
     nextDuel();
+    if (requireApi && apiOnline) setNetworkStatus(statusEl, NETWORK_STATES.ONLINE);
     renderRanking();
     renderServerRanking();
   }
@@ -742,6 +746,11 @@ export async function initGame({ requireApi = false } = {}) {
   }
 
   function setTab(name) {
+    if (name !== "duel" && locked) {
+      cancelPickTimer();
+      nextDuel();
+      if (requireApi && apiOnline) setNetworkStatus(statusEl, NETWORK_STATES.ONLINE);
+    }
     const tabs = [
       ["duel", els.panelDuel, els.tabDuel],
       ["tournament", els.panelTournament, els.tabTournament],
@@ -870,6 +879,7 @@ export async function initGame({ requireApi = false } = {}) {
   }
 
   function nextDuel() {
+    duelGeneration += 1;
     locked = false;
     pickTimer = null;
     els.duelCards.classList.remove("swipe-commit-left", "swipe-commit-right", "is-dragging");
@@ -888,11 +898,12 @@ export async function initGame({ requireApi = false } = {}) {
     syncUndoButton();
   }
 
-  function commitLocalPick(winnerEl, winnerId, loserId) {
+  function commitLocalPick(session) {
+    const { state: targetState, pair, winnerEl, winnerId, loserId } = session;
     const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
-    state.lastDuel = snapshotDuel(state, winnerId, loserId, currentPair);
-    const { winnerDelta, loserDelta, zebra } = applyElo(state, winnerId, loserId);
-    applyCombo(state);
+    targetState.lastDuel = snapshotDuel(targetState, winnerId, loserId, pair);
+    const { winnerDelta, loserDelta, zebra } = applyElo(targetState, winnerId, loserId);
+    applyCombo(targetState);
     applyUnlocks();
     persist();
     syncUndoButton();
@@ -906,8 +917,21 @@ export async function initGame({ requireApi = false } = {}) {
   async function pick(winnerEl) {
     if (locked || !currentPair) return;
     locked = true;
-    const winnerId = winnerEl.dataset.id;
-    const loserId = currentPair[0] === winnerId ? currentPair[1] : currentPair[0];
+    const session = captureVoteSession({
+      generation: duelGeneration,
+      pair: currentPair,
+      mode,
+      topicId,
+      state,
+      winnerEl,
+    });
+    const sessionIsCurrent = () => isCurrentVoteSession(session, {
+      generation: duelGeneration,
+      pair: currentPair,
+      mode,
+      topicId,
+      state,
+    });
 
     if (requireApi) {
       const voteId = createVoteId();
@@ -915,13 +939,16 @@ export async function initGame({ requireApi = false } = {}) {
       els.cardB.disabled = true;
       setNetworkStatus(statusEl, NETWORK_STATES.REGISTERING);
       try {
-        await commitOnlineVote(
-          () => postVote(winnerId, loserId, mode, { voteId }),
-          () => commitLocalPick(winnerEl, winnerId, loserId),
+        const result = await commitOnlineVote(
+          () => postVote(session.winnerId, session.loserId, session.mode, { voteId }),
+          () => commitLocalPick(session),
+          sessionIsCurrent,
         );
+        if (!result.applied) return;
         setNetworkStatus(statusEl, NETWORK_STATES.SAVED);
         pickTimer = setTimeout(nextDuel, 420);
       } catch (error) {
+        if (!sessionIsCurrent()) return;
         if (isUnknownVoteConfirmation(error)) {
           setNetworkStatus(statusEl, NETWORK_STATES.UNKNOWN);
           return;
@@ -935,10 +962,11 @@ export async function initGame({ requireApi = false } = {}) {
     }
 
     pickTimer = runLockedPick(() => {
-      commitLocalPick(winnerEl, winnerId, loserId);
+      commitLocalPick(session);
 
       if (apiOnline) {
-        postVote(winnerId, loserId, mode, { voteId: createVoteId() }).catch(() => {
+        postVote(session.winnerId, session.loserId, session.mode, { voteId: createVoteId() }).catch(() => {
+          if (!sessionIsCurrent()) return;
           apiOnline = false;
           setNetworkStatus(statusEl, NETWORK_STATES.LOCAL);
         });
@@ -1118,6 +1146,7 @@ export async function initGame({ requireApi = false } = {}) {
     state = states[mode];
     persist();
     nextDuel();
+    if (requireApi && apiOnline) setNetworkStatus(statusEl, NETWORK_STATES.ONLINE);
     renderRanking();
     renderAchievements();
     renderCombo();

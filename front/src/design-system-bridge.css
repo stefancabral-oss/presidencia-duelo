@@ -1,0 +1,85 @@
+/* ICM 02 migration bridge.
+   Keeps the new components visually authoritative while legacy CSS is still loaded.
+   Remove this file during #99 after legacy rules are retired. */
+
+html, body { background: var(--pm-bg); color: var(--pm-ink); }
+
+button.poke-card.pm-card {
+  appearance: none;
+  padding: 0;
+  border: 2px solid var(--pm-card-accent);
+  border-radius: 19px;
+  background: var(--pm-surface);
+  color: var(--pm-ink);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: var(--pm-shadow-card), 0 0 22px var(--pm-card-glow);
+}
+button.poke-card.pm-card:focus-visible {
+  outline: none;
+  box-shadow: var(--pm-shadow-card), 0 0 22px var(--pm-card-glow), var(--pm-focus);
+}
+button.poke-card.pm-card:disabled { opacity: .58; cursor: wait; }
+
+button.poke-card.pm-card .art-frame.pm-card__media {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  aspect-ratio: auto;
+  box-shadow: none;
+}
+button.poke-card.pm-card .card-top.pm-card__body {
+  margin: 0;
+  display: flex;
+  align-items: stretch;
+}
+button.poke-card.pm-card .party-chip.pm-card__meta {
+  display: block;
+  margin: auto 0 0;
+  padding: 5px 0 0;
+  border: 0;
+  border-top: 1px solid rgba(16,33,26,.12);
+  border-radius: 0;
+  background: none;
+  color: var(--pm-muted);
+  letter-spacing: .02em;
+  text-transform: none;
+}
+button.poke-card.pm-card .card-legacy-metrics[hidden] { display: none !important; }
+
+.topic-btn.pm-topic-chip {
+  border: 1px solid var(--pm-border);
+  background: var(--pm-surface);
+  color: var(--pm-ink);
+  box-shadow: none;
+}
+.topic-btn.pm-topic-chip.active,
+.topic-btn.pm-topic-chip[aria-pressed="true"] {
+  background: var(--pm-malachite-900);
+  color: #fff;
+  border-color: var(--pm-malachite-900);
+}
+
+.tab.pm-nav-button {
+  border: 0;
+  background: transparent;
+  color: var(--pm-muted);
+  box-shadow: none;
+}
+.tab.pm-nav-button.active,
+.tab.pm-nav-button[aria-current="page"] {
+  background: var(--pm-malachite-900);
+  color: #fff;
+}
+
+.card-info.pm-button {
+  width: 100%;
+  margin-top: 7px;
+  text-decoration: none;
+}
+
+.home-play.pm-button { width: min(100%, 360px); margin-inline: auto; }
+
+@media (max-width:620px) {
+  button.poke-card.pm-card { border-radius: 15px; }
+}

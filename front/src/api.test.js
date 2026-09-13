@@ -6,10 +6,20 @@ import {
   fetchCandidates,
   fetchPlayerState,
   isUnknownVoteConfirmation,
+  normalizeApiBase,
   postVote,
   replacePlayerState,
   requestJson,
 } from "./api.js";
+
+test("legacy deployments migrate to the first-party API domain", () => {
+  assert.equal(
+    normalizeApiBase("https://api-polimatch.e7h3.com/"),
+    "https://api.polimatch.com.br",
+  );
+  assert.equal(normalizeApiBase("https://api.example.com/"), "https://api.example.com");
+  assert.equal(normalizeApiBase(""), "");
+});
 
 function jsonResponse(data, { ok = true, status = 200 } = {}) {
   return { ok, status, json: async () => data };

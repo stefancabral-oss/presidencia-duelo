@@ -8,9 +8,9 @@ const gameSrc = readFileSync(new URL("./game.js", import.meta.url), "utf8");
 test("connectionRequiredHtml exposes an alert and retry action", () => {
   const html = connectionRequiredHtml();
   assert.match(html, /role="alert"/);
-  assert.match(html, /Conexão necessária/);
+  assert.match(html, /Não foi possível sincronizar/);
   assert.match(html, /id="retry-connection"/);
-  assert.match(html, /somente online/);
+  assert.match(html, /Wi-Fi e dados móveis são compatíveis/);
   assert.match(html, />PM</);
   assert.match(html, />PoliMatch</);
 });
@@ -36,7 +36,7 @@ test("renderConnectionRequired replaces the shell and wires retry", () => {
     reload: () => { reloads += 1; },
   });
 
-  assert.match(root.innerHTML, /Conexão necessária/);
+  assert.match(root.innerHTML, /Não foi possível sincronizar/);
   assert.equal(typeof clickHandler, "function");
   clickHandler();
   assert.equal(reloads, 1);

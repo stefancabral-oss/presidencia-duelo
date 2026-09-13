@@ -608,12 +608,6 @@ h1 {
   font-weight: 700;
 }
 
-.duel-actions {
-  display: flex;
-  justify-content: center;
-  margin-top: 12px;
-}
-
 .hint {
   text-align: center;
   color: var(--muted);
@@ -1218,48 +1212,6 @@ footer a { color: var(--gold); }
 [data-rarity="raro"] { --rarity: var(--r-raro); --rarity-ring: var(--r-raro-ring); }
 [data-rarity="epico"] { --rarity: var(--r-epico); --rarity-ring: var(--r-epico-ring); }
 [data-rarity="lendario"] { --rarity: var(--r-lendario); --rarity-ring: var(--r-lendario-ring); }
-.poke-card[data-rarity] {
-  border-color: var(--rarity);
-  box-shadow: 0 0 0 2px var(--rarity-ring), var(--shadow);
-}
-.poke-card[data-rarity="lendario"] { animation: legendary-aura 3.2s ease-in-out infinite; }
-@keyframes legendary-aura {
-  0%, 100% { filter: drop-shadow(0 0 6px rgba(255, 215, 106, .45)); }
-  50% { filter: drop-shadow(0 0 16px rgba(224, 163, 255, .55)); }
-}
-.rarity-chip {
-  position: absolute;
-  left: 6px;
-  bottom: 6px;
-  z-index: 2;
-  font-size: .58rem;
-  font-weight: 900;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  padding: 3px 7px;
-  border-radius: 999px;
-  color: #0b1220;
-  background: var(--rarity, var(--gold));
-}
-.art-frame .holo {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  mix-blend-mode: screen;
-  background-image:
-    radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,var(--holo-hl,0)), transparent 42%),
-    linear-gradient(115deg, transparent 42%, rgba(255,255,255,.42) 50%, transparent 58%),
-    repeating-linear-gradient(115deg, rgba(255,0,128,.13) 0 13px, rgba(255,170,0,.13) 13px 26px, rgba(0,255,170,.13) 26px 39px, rgba(0,160,255,.13) 39px 52px, rgba(170,0,255,.13) 52px 65px);
-  background-size: 100% 100%, 320% 100%, auto;
-  animation: holo-sweep 5s linear infinite;
-}
-@keyframes holo-sweep {
-  from { background-position: 0 0, -70% 0, 0 0; }
-  to { background-position: 0 0, 170% 0, 65px 0; }
-}
-.poke-card[data-rarity="epico"] .holo { opacity: .32; }
-.poke-card[data-rarity="lendario"] .holo { opacity: .55; }
 .rank-item[data-rarity] { border-left: 4px solid var(--rarity); }
 .rarity-tag {
   display: inline-block;
@@ -1324,11 +1276,6 @@ footer a { color: var(--gold); }
   .hint { font-size: .72rem; }
   .quick-controls-hint { justify-content: space-between; }
   .player-key-row { align-items: stretch; flex-direction: column; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .poke-card[data-rarity="lendario"],
-  .art-frame .holo { animation: none; }
 }
 
 @media (min-width: 700px) {

@@ -1,0 +1,272 @@
+/* PoliMatch Design System — ICM 02
+   Camada nova e autocontida. Deve substituir gradualmente regras legadas. */
+
+:root {
+  --pm-bg: #faf8f3;
+  --pm-surface: #ffffff;
+  --pm-surface-soft: #f4f1e9;
+  --pm-porcelain: #f7f3e8;
+  --pm-malachite-950: #05241a;
+  --pm-malachite-900: #073326;
+  --pm-malachite-800: #0b4b37;
+  --pm-malachite-700: #126247;
+  --pm-gold-500: #d4af37;
+  --pm-gold-400: #e8cc6d;
+  --pm-gold-200: #f4e8b7;
+  --pm-ink: #10211a;
+  --pm-muted: #617068;
+  --pm-border: #dedbd2;
+  --pm-danger: #b4232d;
+  --pm-success: #147a52;
+  --pm-chroma-cyan: #00c9d8;
+  --pm-chroma-violet: #8b5cf6;
+  --pm-chroma-magenta: #e657a6;
+
+  --pm-radius-xs: 8px;
+  --pm-radius-sm: 12px;
+  --pm-radius-md: 18px;
+  --pm-radius-lg: 24px;
+  --pm-radius-pill: 999px;
+
+  --pm-space-1: 4px;
+  --pm-space-2: 8px;
+  --pm-space-3: 12px;
+  --pm-space-4: 16px;
+  --pm-space-5: 20px;
+  --pm-space-6: 24px;
+  --pm-space-8: 32px;
+
+  --pm-shadow-1: 0 6px 18px rgba(26, 41, 34, .08);
+  --pm-shadow-2: 0 14px 36px rgba(26, 41, 34, .12);
+  --pm-shadow-card: 0 18px 42px rgba(26, 41, 34, .16);
+
+  --pm-focus: 0 0 0 3px rgba(11, 75, 55, .22);
+  --pm-fast: 120ms;
+  --pm-medium: 220ms;
+  --pm-ease: cubic-bezier(.2,.8,.2,1);
+}
+
+/* Botões PoliMatch */
+.pm-button {
+  appearance: none;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: var(--pm-radius-pill);
+  padding: 10px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font: inherit;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform var(--pm-fast) var(--pm-ease), box-shadow var(--pm-fast) var(--pm-ease), background var(--pm-fast) var(--pm-ease), border-color var(--pm-fast) var(--pm-ease);
+}
+.pm-button:focus-visible { outline: none; box-shadow: var(--pm-focus); }
+.pm-button:active { transform: scale(.97); }
+.pm-button:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.pm-button--primary {
+  color: #112219;
+  background: linear-gradient(145deg, #f2dc86, var(--pm-gold-500));
+  border-color: #c3981e;
+  box-shadow: 0 8px 18px rgba(212,175,55,.24);
+}
+.pm-button--primary:hover { box-shadow: 0 10px 24px rgba(212,175,55,.32); }
+
+.pm-button--secondary {
+  color: var(--pm-malachite-900);
+  background: var(--pm-surface);
+  border-color: #bfc8c2;
+  box-shadow: var(--pm-shadow-1);
+}
+.pm-button--secondary:hover { border-color: var(--pm-malachite-700); }
+
+.pm-button--ghost {
+  color: var(--pm-malachite-800);
+  background: transparent;
+  border-color: transparent;
+}
+.pm-button--ghost:hover { background: rgba(11,75,55,.07); }
+
+.pm-button--icon {
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+  border-radius: 50%;
+  color: var(--pm-malachite-900);
+  background: var(--pm-surface);
+  border-color: var(--pm-border);
+}
+
+.pm-button--danger {
+  color: #fff;
+  background: var(--pm-danger);
+  border-color: #8f1820;
+}
+
+.pm-topic-chip {
+  appearance: none;
+  min-height: 42px;
+  padding: 8px 14px;
+  border-radius: var(--pm-radius-pill);
+  border: 1px solid var(--pm-border);
+  background: var(--pm-surface);
+  color: var(--pm-ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  font-weight: 760;
+  cursor: pointer;
+}
+.pm-topic-chip[aria-pressed="true"], .pm-topic-chip.is-active {
+  color: #fff;
+  background: var(--pm-malachite-900);
+  border-color: var(--pm-malachite-900);
+  box-shadow: 0 7px 16px rgba(7,51,38,.18);
+}
+
+/* Card base TCG. A anatomia é compartilhada por duelo, coleção e detalhe. */
+.pm-card {
+  --pm-card-accent: #a6aea9;
+  --pm-card-glow: rgba(120,130,125,.12);
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 5 / 7;
+  overflow: hidden;
+  border-radius: 19px;
+  border: 2px solid var(--pm-card-accent);
+  background: var(--pm-surface);
+  color: var(--pm-ink);
+  box-shadow: var(--pm-shadow-card), 0 0 22px var(--pm-card-glow);
+}
+.pm-card__media {
+  position: relative;
+  height: 63%;
+  overflow: hidden;
+  background: #e5e8e6;
+}
+.pm-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+.pm-card__brand {
+  position: absolute;
+  z-index: 4;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #fff;
+  font-size: clamp(.58rem, 1.7vw, .75rem);
+  font-weight: 900;
+  text-shadow: 0 2px 8px rgba(0,0,0,.6);
+}
+.pm-card__rarity {
+  position: absolute;
+  z-index: 4;
+  top: 9px;
+  right: 9px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 7px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: rgba(5,36,26,.82);
+  border: 1px solid rgba(255,255,255,.38);
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: -.08em;
+  backdrop-filter: blur(8px);
+}
+.pm-card__body {
+  height: 37%;
+  min-height: 0;
+  padding: 10px 11px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: linear-gradient(150deg, rgba(255,255,255,.98), var(--pm-porcelain));
+  border-top: 1px solid rgba(16,33,26,.12);
+}
+.pm-card__name {
+  margin: 0;
+  font-size: clamp(.82rem, 2.8vw, 1.08rem);
+  line-height: 1.04;
+  font-weight: 900;
+}
+.pm-card__role {
+  color: var(--pm-malachite-800);
+  font-size: clamp(.62rem, 2vw, .76rem);
+  line-height: 1.2;
+  font-weight: 800;
+}
+.pm-card__description {
+  margin: 2px 0 0;
+  color: #39483f;
+  font-size: clamp(.58rem, 1.8vw, .72rem);
+  line-height: 1.27;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pm-card__meta {
+  margin-top: auto;
+  padding-top: 5px;
+  border-top: 1px solid rgba(16,33,26,.12);
+  color: var(--pm-muted);
+  font-size: .58rem;
+  line-height: 1.2;
+}
+.pm-card__role:empty, .pm-card__description:empty, .pm-card__meta:empty { display: none; }
+
+.pm-card[data-rarity="basica"], .pm-card[data-rarity="incomum"] { --pm-card-accent: #cfd4d0; }
+.pm-card[data-rarity="rara"], .pm-card[data-rarity="rara-dupla"] { --pm-card-accent: #c9aa45; --pm-card-glow: rgba(201,170,69,.18); }
+.pm-card[data-rarity="ultra"] { --pm-card-accent: #9faab2; --pm-card-glow: rgba(149,170,190,.18); }
+.pm-card[data-rarity^="chroma"] {
+  --pm-card-accent: var(--pm-chroma-cyan);
+  --pm-card-glow: rgba(0,201,216,.28);
+}
+.pm-card[data-rarity="chroma-especial"] { --pm-card-accent: var(--pm-chroma-violet); --pm-card-glow: rgba(139,92,246,.3); }
+.pm-card[data-rarity="chroma-suprema"] {
+  --pm-card-accent: var(--pm-gold-500);
+  --pm-card-glow: rgba(212,175,55,.42);
+}
+.pm-card[data-rarity="chroma-comemorativa"] {
+  --pm-card-accent: var(--pm-chroma-magenta);
+  --pm-card-glow: rgba(230,87,166,.35);
+}
+.pm-card[data-rarity^="chroma"]::after {
+  content: "";
+  position: absolute;
+  inset: -35%;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.35) 48%, transparent 61%);
+  transform: translateX(-75%) rotate(8deg);
+  transition: transform 650ms var(--pm-ease);
+}
+@media (hover:hover) {
+  .pm-card[data-rarity^="chroma"]:hover::after { transform: translateX(75%) rotate(8deg); }
+}
+
+@media (max-width: 620px) {
+  .pm-card { border-radius: 15px; }
+  .pm-card__body { padding: 8px 8px 9px; }
+  .pm-card__rarity { min-width: 27px; height: 27px; top: 7px; right: 7px; border-radius: 8px; }
+  .pm-card__brand { top: 8px; left: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-button, .pm-card[data-rarity^="chroma"]::after { transition: none; }
+  .pm-card[data-rarity^="chroma"]::after { display: none; }
+}

@@ -1,7 +1,7 @@
 export const VICE_STORAGE_KEY = "presidencia-duelo-vices-v1";
 export const MODES = {
-  presidentes: { label: "Pessoas", singular: "pessoa", mate: "Vice" },
-  vices: { label: "Vices", singular: "vice", mate: "Presidente" },
+  presidentes: { label: "Pessoas", singular: "pessoa", mate: "Vice", prompt: "Toque na pessoa preferida" },
+  vices: { label: "Vices", singular: "vice", mate: "Presidente", prompt: "Toque no vice preferido" },
 };
 
 export function parseVice(value = "") {

@@ -468,7 +468,7 @@ export async function initGame({ requireApi = false } = {}) {
     els.modePresidentes.setAttribute("aria-pressed", String(isPresidentes));
     els.modeVices.classList.toggle("active", !isPresidentes);
     els.modeVices.setAttribute("aria-pressed", String(!isPresidentes));
-    els.duelPrompt.textContent = `Toque no ${config.singular} preferido`;
+    els.duelPrompt.textContent = config.prompt;
     els.rankMode.textContent = config.label;
   }
 

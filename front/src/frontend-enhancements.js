@@ -40,7 +40,7 @@ function addProductHeader() {
       <span>PoliMatch</span>
       <small>Malaquita 2026</small>
     </div>
-    <button type="button" class="sso-entry" aria-label="Entrar ou sincronizar conta" data-sso-entry>
+    <button type="button" class="sso-entry pm-button pm-button--secondary" aria-label="Entrar ou sincronizar conta" data-sso-entry>
       <span aria-hidden="true">◉</span><span>Entrar</span>
     </button>`;
   header.prepend(row);
@@ -53,14 +53,14 @@ function addSsoDialog() {
   dialog.className = "sso-dialog";
   dialog.innerHTML = `
     <form method="dialog" class="sso-card">
-      <button class="sso-close" value="cancel" aria-label="Fechar">×</button>
+      <button class="sso-close pm-button pm-button--icon" value="cancel" aria-label="Fechar">×</button>
       <p class="sso-kicker">Sua coleção em qualquer tela</p>
       <h2>Entrar no PoliMatch</h2>
       <p class="sso-copy">O SSO será conectado a um provedor compatível com OpenID Connect. A interface já está preparada sem alterar seu jogo anônimo atual.</p>
       <div class="sso-options" role="group" aria-label="Opções de entrada">
-        <button type="button" disabled>Continuar com Google</button>
-        <button type="button" disabled>Continuar com Apple</button>
-        <button type="button" disabled>Continuar com Microsoft</button>
+        <button type="button" class="pm-button pm-button--secondary" disabled>Continuar com Google</button>
+        <button type="button" class="pm-button pm-button--secondary" disabled>Continuar com Apple</button>
+        <button type="button" class="pm-button pm-button--secondary" disabled>Continuar com Microsoft</button>
       </div>
       <small>Disponível quando o provedor de identidade for definido.</small>
     </form>`;
@@ -86,6 +86,7 @@ function enhanceNavigation() {
     "tab-credits": "◇",
   };
   for (const button of nav.querySelectorAll(".tab")) {
+    button.classList.add("pm-nav-button");
     if (button.querySelector(".tab-icon")) continue;
     const icon = document.createElement("span");
     icon.className = "tab-icon";
@@ -95,13 +96,52 @@ function enhanceNavigation() {
   }
 }
 
+function enhanceButtons() {
+  for (const button of document.querySelectorAll("button")) {
+    if (button.classList.contains("poke-card")) continue;
+    if (button.classList.contains("tab")) continue;
+
+    if (button.classList.contains("topic-btn")) {
+      button.classList.add("pm-topic-chip");
+      continue;
+    }
+
+    if (button.classList.contains("mode-btn")) {
+      button.classList.add("pm-segment-button");
+      continue;
+    }
+
+    if (button.classList.contains("home-shortcut")) {
+      button.classList.add("pm-tile-button");
+      continue;
+    }
+
+    if (button.classList.contains("sso-close")) continue;
+    if (button.classList.contains("sso-entry")) continue;
+    if (button.closest?.(".sso-options")) continue;
+
+    button.classList.add("pm-button");
+    if (button.classList.contains("primary") || button.classList.contains("home-play")) {
+      button.classList.add("pm-button--primary");
+    } else if (button.classList.contains("skip-duel") || button.classList.contains("card-info")) {
+      button.classList.add("pm-button--ghost", "pm-button--compact");
+    } else if (button.classList.contains("rank-direction")) {
+      button.classList.add("pm-button--icon");
+    } else if (button.id === "reset-btn" || button.id === "reset-confirm") {
+      button.classList.add("pm-button--danger");
+    } else {
+      button.classList.add("pm-button--secondary");
+    }
+  }
+}
+
 function enhanceDuelPrompt() {
   const prompt = document.getElementById("duel-prompt");
   if (prompt) prompt.textContent = "Quem representa melhor sua escolha?";
 }
 
 export function installFrontendEnhancements() {
-  ensureMeta("theme-color", "#061a14");
+  ensureMeta("theme-color", "#faf8f3");
   ensureMeta("application-name", "PoliMatch");
   ensureMeta("robots", "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1");
   ensureMeta("og:site_name", "PoliMatch", true);
@@ -111,5 +151,6 @@ export function installFrontendEnhancements() {
   addSsoDialog();
   bindSsoDialog();
   enhanceNavigation();
+  enhanceButtons();
   enhanceDuelPrompt();
 }

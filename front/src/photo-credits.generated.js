@@ -25,6 +25,12 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Aldo_Rebelo_(16654292721)_(cropped).jpg"
   },
   {
+    "name": "Alessandro Antônio Stefanutto",
+    "license": "CC BY-SA 4.0",
+    "author": "Senado Federal",
+    "commons": "https://commons.wikimedia.org/wiki/File:CPMI_-_INSS_-_Comiss%C3%A3o_Parlamentar_Mista_de_Inqu%C3%A9rito_do_INSS_-_2025_-_54853000456.jpg"
+  },
+  {
     "name": "Alessandro Molon",
     "license": "CC BY 3.0",
     "author": "Luis Macedo/Câmara dos Deputados",
@@ -403,6 +409,12 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:17.06.2026_-_Cristiano_Zanin_(cropped).jpg"
   },
   {
+    "name": "Dalma Régina Florêncio de Morais (Tenente Dalma)",
+    "license": "CC BY 4.0",
+    "author": "Portal de Dados Abertos do Tribunal Superior Eleitoral do Brasil (TSE)",
+    "commons": "https://commons.wikimedia.org/wiki/File:Dalma_Regina_2024.jpg"
+  },
+  {
     "name": "Damares Alves",
     "license": "CC BY 2.0",
     "author": "Senado Federal",
@@ -467,6 +479,12 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 2.0",
     "author": "Ricardo Stuckert",
     "commons": "https://commons.wikimedia.org/wiki/File:Spengler_2023.jpg"
+  },
+  {
+    "name": "Duarte Jr.",
+    "license": "CC BY-SA 4.0",
+    "author": "Senado Federal",
+    "commons": "https://commons.wikimedia.org/wiki/File:CPMI_-_INSS_-_Comiss%C3%A3o_Parlamentar_Mista_de_Inqu%C3%A9rito_do_INSS_-_2025_-_54821673993.jpg"
   },
   {
     "name": "Duda Salabert",
@@ -605,6 +623,12 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 4.0",
     "author": "Tribunal Superior Eleitoral do Brasil (TSE)",
     "commons": "https://commons.wikimedia.org/wiki/File:2026_FABIANA_TORQUATO_CANDIDATA_VICE-PRESIDENTE_TSE_(280002552485).jpg"
+  },
+  {
+    "name": "Fabiano Zettel",
+    "license": "CC BY-SA 2.0",
+    "author": "Editor Luiz",
+    "commons": "https://commons.wikimedia.org/wiki/File:Fabiano_Zettel.jpg"
   },
   {
     "name": "Fábio Faria",
@@ -887,6 +911,12 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 2.0",
     "author": "Palácio do Planalto from Brasilia, Brasil",
     "commons": "https://commons.wikimedia.org/wiki/File:03_02_2020_Visita_%C3%A0s_instala%C3%A7%C3%B5es_da_TV_Band_S%C3%A3o_Paulo_SP_(49483778758)_(cropped).jpg"
+  },
+  {
+    "name": "João Paulo Capobianco",
+    "license": "CC BY-SA 4.0",
+    "author": "Senado Federal",
+    "commons": "https://commons.wikimedia.org/wiki/File:CRA_-_Comiss%C3%A3o_de_Agricultura_e_Reforma_Agr%C3%A1ria_-_54976306073.jpg"
   },
   {
     "name": "João Pedro Stédile",

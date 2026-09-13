@@ -1123,6 +1123,14 @@ footer a { color: var(--gold); }
   border-radius: 14px;
   background: rgba(18, 26, 43, .72);
 }
+.topic-picker.onboarding-focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px rgba(246, 216, 96, .14);
+  animation: onboarding-focus 1.4s ease-in-out 2;
+}
+@keyframes onboarding-focus {
+  50% { box-shadow: 0 0 0 4px rgba(246, 216, 96, .22); }
+}
 .topic-picker-heading {
   display: flex;
   align-items: center;
@@ -1276,6 +1284,10 @@ footer a { color: var(--gold); }
   .hint { font-size: .72rem; }
   .quick-controls-hint { justify-content: space-between; }
   .player-key-row { align-items: stretch; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topic-picker.onboarding-focus { animation: none; }
 }
 
 @media (min-width: 700px) {

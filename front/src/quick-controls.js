@@ -1,5 +1,10 @@
 export const SWIPE_THRESHOLD = 60;
 export const QUICK_CONTROLS_HINT_KEY = "presidencia-duelo-quick-controls-hint-v1";
+export const QUICK_CONTROLS_STATES = {
+  INTRO: "intro",
+  CONTROLS: "controls",
+  COMPLETE: "complete",
+};
 
 export function isTypingTarget(target) {
   if (!target) return false;
@@ -24,8 +29,26 @@ export function swipePickSide(startX, endX, threshold = SWIPE_THRESHOLD) {
 }
 
 export function hasSeenQuickControlsHint(storage = globalThis.localStorage) {
+  return quickControlsHintState(storage) === QUICK_CONTROLS_STATES.COMPLETE;
+}
+
+export function quickControlsHintState(storage = globalThis.localStorage) {
   try {
-    return storage.getItem(QUICK_CONTROLS_HINT_KEY) === "1";
+    const value = storage.getItem(QUICK_CONTROLS_HINT_KEY);
+    if (value === "1" || value === QUICK_CONTROLS_STATES.COMPLETE) {
+      return QUICK_CONTROLS_STATES.COMPLETE;
+    }
+    if (value === QUICK_CONTROLS_STATES.CONTROLS) return QUICK_CONTROLS_STATES.CONTROLS;
+  } catch {
+    // Start from the intro when storage is unavailable.
+  }
+  return QUICK_CONTROLS_STATES.INTRO;
+}
+
+export function markQuickControlsHintControls(storage = globalThis.localStorage) {
+  try {
+    storage.setItem(QUICK_CONTROLS_HINT_KEY, QUICK_CONTROLS_STATES.CONTROLS);
+    return true;
   } catch {
     return false;
   }
@@ -33,9 +56,15 @@ export function hasSeenQuickControlsHint(storage = globalThis.localStorage) {
 
 export function markQuickControlsHintSeen(storage = globalThis.localStorage) {
   try {
-    storage.setItem(QUICK_CONTROLS_HINT_KEY, "1");
+    storage.setItem(QUICK_CONTROLS_HINT_KEY, QUICK_CONTROLS_STATES.COMPLETE);
     return true;
   } catch {
     return false;
   }
+}
+
+export function quickControlsHintText(coarsePointer) {
+  return coarsePointer
+    ? "Dica: deslize os cards para escolher mais rápido no celular."
+    : "Dica: use as setas ← e → para escolher mais rápido no computador.";
 }

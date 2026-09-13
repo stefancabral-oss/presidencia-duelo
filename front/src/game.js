@@ -19,9 +19,12 @@ import { applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
 import { runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
 import {
-  hasSeenQuickControlsHint,
+  QUICK_CONTROLS_STATES,
   keyboardPickSide,
+  markQuickControlsHintControls,
   markQuickControlsHintSeen,
+  quickControlsHintState,
+  quickControlsHintText,
   swipePickSide,
 } from "./quick-controls.js";
 import {
@@ -191,7 +194,7 @@ function renderShell(root, { requireApi = false } = {}) {
       </nav>
 
       <section id="panel-duel" class="panel active" aria-label="Duelo">
-        <section class="topic-picker" aria-labelledby="topic-picker-title">
+        <section class="topic-picker" id="topic-picker" aria-labelledby="topic-picker-title">
           <div class="topic-picker-heading">
             <strong id="topic-picker-title">Escolha o assunto</strong>
             <span id="topic-count">360 pessoas</span>
@@ -251,7 +254,7 @@ function renderShell(root, { requireApi = false } = {}) {
         </div>
 
         <aside class="quick-controls-hint" id="quick-controls-hint" hidden>
-          <span><strong>Dica:</strong> use ← → no computador ou deslize os cards no celular.</span>
+          <span id="quick-controls-text"></span>
           <button type="button" id="dismiss-quick-controls">Entendi</button>
         </aside>
 
@@ -441,6 +444,7 @@ export async function initGame({ requireApi = false } = {}) {
     modePresidentes: document.getElementById("mode-presidentes"),
     modeVices: document.getElementById("mode-vices"),
     topicButtons: [...document.querySelectorAll("[data-topic]")],
+    topicPicker: document.getElementById("topic-picker"),
     topicCount: document.getElementById("topic-count"),
     topicDescription: document.getElementById("topic-description"),
     rankTopic: document.getElementById("rank-topic"),
@@ -499,6 +503,7 @@ export async function initGame({ requireApi = false } = {}) {
     restartTournament: document.getElementById("restart-tournament"),
     duelCards: document.getElementById("duel-cards"),
     quickControlsHint: document.getElementById("quick-controls-hint"),
+    quickControlsText: document.getElementById("quick-controls-text"),
     dismissQuickControls: document.getElementById("dismiss-quick-controls"),
   };
 
@@ -550,6 +555,26 @@ export async function initGame({ requireApi = false } = {}) {
   let tournamentRecovered = false;
   let tournament = loadTournament();
   const tournamentPickLock = createTournamentPickLock();
+  let onboardingState = quickControlsHintState();
+
+  function renderOnboarding() {
+    const complete = onboardingState === QUICK_CONTROLS_STATES.COMPLETE;
+    const intro = onboardingState === QUICK_CONTROLS_STATES.INTRO;
+    els.quickControlsHint.hidden = complete;
+    els.topicPicker.classList.toggle("onboarding-focus", intro);
+    if (complete) return;
+    els.quickControlsText.textContent = intro
+      ? "Primeiro duelo: escolha um assunto e toque em uma pessoa."
+      : quickControlsHintText(window.matchMedia?.("(pointer: coarse)")?.matches === true);
+    els.dismissQuickControls.textContent = intro ? "Pular" : "Entendi";
+  }
+
+  function advanceOnboarding() {
+    if (onboardingState !== QUICK_CONTROLS_STATES.INTRO) return;
+    onboardingState = QUICK_CONTROLS_STATES.CONTROLS;
+    markQuickControlsHintControls();
+    renderOnboarding();
+  }
 
   function renderPlayerRecovery(message = "") {
     if (!els.playerKey) return;
@@ -1099,6 +1124,7 @@ export async function initGame({ requireApi = false } = {}) {
     els.duelCount.textContent = String(state.duels);
     renderProgress();
     renderCombo();
+    advanceOnboarding();
     maybeShowGoalMoment();
   }
 
@@ -1303,10 +1329,11 @@ export async function initGame({ requireApi = false } = {}) {
     if (completedTournamentDuels(tournament) > 0 && !confirm("Começar um novo torneio e apagar esta chave?")) return;
     restartTournament();
   });
-  if (!hasSeenQuickControlsHint()) els.quickControlsHint.hidden = false;
+  renderOnboarding();
   els.dismissQuickControls.addEventListener("click", () => {
-    els.quickControlsHint.hidden = true;
+    onboardingState = QUICK_CONTROLS_STATES.COMPLETE;
     markQuickControlsHintSeen();
+    renderOnboarding();
   });
   els.copyPlayerKey.addEventListener("click", async () => {
     if (!recoveryKey) return;

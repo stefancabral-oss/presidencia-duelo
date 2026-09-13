@@ -39,7 +39,7 @@ test("existing profiles keep their IDs and curated metadata", () => {
 
 test("every licensed profile reference is shown as a photo", () => {
   const photographed = catalog.filter((person) => person.photo);
-  assert.equal(photographed.length, 286);
+  assert.equal(photographed.length, 305);
   for (const person of photographed) {
     assert.ok(
       person.photo.startsWith("/candidates/") ||

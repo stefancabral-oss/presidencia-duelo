@@ -18,7 +18,7 @@ O catálogo de duelo contém os **387 nomes aprovados** e perfis básicos. Chrom
   app/                      # PWA (wrapper do mesmo jogo + manifest/SW)
 ```
 
-O catálogo inclui 286 perfis com fotos licenciadas: 12 arquivos locais e 274 imagens servidas diretamente pelo Wikimedia Commons. Os 101 perfis ainda sem referência publicável usam iniciais. Nenhuma face foi gerada por IA.
+O catálogo inclui 305 perfis com fotos licenciadas: 12 arquivos locais e 293 imagens servidas diretamente pelo Wikimedia Commons. Os 82 perfis ainda sem referência publicável usam iniciais. Nenhuma face foi gerada por IA.
 
 ## Requisitos
 

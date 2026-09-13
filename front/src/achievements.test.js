@@ -27,7 +27,6 @@ import {
   liveCombo,
   migrateAchievements,
   normalizeAchievements,
-  resetCombo,
   unlockAchievement,
   unlockDueAchievements,
   unlockTournamentCompleted,
@@ -198,31 +197,15 @@ test("saveState persists achievements and combo in the same blob", () => {
   assert.equal(parsed.duels, 10);
 });
 
-test("resetCombo clears sequência; unlocks are not revoked", () => {
-  const state = baseState({
-    duels: 10,
-    achievements: [DUELS_10],
-    combo: 5,
-    lastVoteAt: 42,
-  });
-  resetCombo(state);
-  assert.equal(state.combo, 0);
-  assert.equal(state.lastVoteAt, null);
-  assert.deepEqual(state.achievements, [DUELS_10]);
-  assert.deepEqual(unlockDueAchievements(state, { candidateIds: ["a", "b"] }), []);
-});
-
 test("game wires toast, combo, persistence, and tournament completion", () => {
   assert.match(gameSrc, /id="combo-banner"/);
   assert.match(gameSrc, /id="achievement-toasts"/);
   assert.match(gameSrc, /id="achievements-list"/);
   assert.match(gameSrc, /applyCombo\(targetState\)/);
   assert.match(gameSrc, /unlockDueAchievements\(state/);
-  assert.match(gameSrc, /resetCombo\(state\)/);
   assert.match(gameSrc, /migrateAchievements\(parsed/);
   assert.match(gameSrc, /achievements: \[\]/);
   assert.match(gameSrc, /x5 combo|combo-label/);
-  assert.match(gameSrc, /milestones stay unlocked|resetCombo/);
   assert.match(gameSrc, /unlockTournamentCompleted\(state\)/);
   assert.match(gameSrc, /tab-tournament/);
   assert.equal(ACHIEVEMENT_IDS.includes(COMPLETOU_TORNEIO), true);

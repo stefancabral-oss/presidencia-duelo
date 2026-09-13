@@ -15,8 +15,8 @@ import { GITHUB_README_URL, GITHUB_REPO_URL, creditsPanelHtml } from "./credits.
 import { fillDuelCard } from "./duel-card.js";
 import { hpFillWidth } from "./hp-bar.js";
 import { bindHoloTilt } from "./holo.js";
-import { applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
-import { runLockedPick } from "./pick.js";
+import { applyPendingPickFeedback, applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
+import { PICK_FEEDBACK_MS, runLockedPick } from "./pick.js";
 import { preloadPhotos } from "./photos.js";
 import {
   QUICK_CONTROLS_STATES,
@@ -881,11 +881,11 @@ export async function initGame({ requireApi = false } = {}) {
     return candidates.map((c) => c.id);
   }
 
-  function renderCombo(now = Date.now()) {
+  function renderCombo(now = Date.now(), { suppress = false } = {}) {
     const n = liveCombo(state.combo, state.lastVoteAt, now);
     const label = comboLabel(n);
     if (!els.comboBanner || !els.comboLabel) return;
-    els.comboBanner.hidden = !label;
+    els.comboBanner.hidden = suppress || !label;
     if (!label) {
       els.comboLabel.textContent = "";
       return;
@@ -1133,7 +1133,7 @@ export async function initGame({ requireApi = false } = {}) {
     syncUndoButton();
   }
 
-  function commitLocalPick(session, serverPlayer = null) {
+  function commitLocalPick(session, serverPlayer = null, { saved = false } = {}) {
     const { state: targetState, pair, winnerEl, winnerId, loserId } = session;
     const loserEl = winnerEl === els.cardA ? els.cardB : els.cardA;
     targetState.lastDuel = snapshotDuel(targetState, winnerId, loserId, pair);
@@ -1153,14 +1153,14 @@ export async function initGame({ requireApi = false } = {}) {
       result = applyElo(targetState, winnerId, loserId);
     }
     const { winnerDelta, loserDelta, zebra } = result;
-    applyCombo(targetState);
+    const combo = applyCombo(targetState);
     applyUnlocks();
     persist();
     syncUndoButton();
-    applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta, { zebra });
+    applyPickFeedback(winnerEl, loserEl, winnerDelta, loserDelta, { zebra, combo, saved });
     els.duelCount.textContent = String(state.duels);
     renderProgress();
-    renderCombo();
+    renderCombo(Date.now(), { suppress: true });
     advanceOnboarding();
     maybeShowGoalMoment();
   }
@@ -1193,6 +1193,7 @@ export async function initGame({ requireApi = false } = {}) {
       const voteId = createVoteId();
       els.cardA.disabled = true;
       els.cardB.disabled = true;
+      applyPendingPickFeedback(winnerEl, winnerEl === els.cardA ? els.cardB : els.cardA);
       setNetworkStatus(statusEl, NETWORK_STATES.REGISTERING);
       try {
         const result = await commitOnlineVote(
@@ -1201,12 +1202,12 @@ export async function initGame({ requireApi = false } = {}) {
             recoveryKey,
             playerVersion: playerVersions[session.mode],
           }),
-          (response) => commitLocalPick(session, response.player),
+          (response) => commitLocalPick(session, response.player, { saved: true }),
           sessionIsCurrent,
         );
         if (!result.applied) return;
         setNetworkStatus(statusEl, NETWORK_STATES.SAVED);
-        pickTimer = setTimeout(nextDuel, 420);
+        pickTimer = setTimeout(nextDuel, PICK_FEEDBACK_MS);
       } catch (error) {
         if (!sessionIsCurrent()) return;
         if (error.status === 409 && error.body?.code === "PLAYER_VERSION_CONFLICT") {
@@ -1214,12 +1215,16 @@ export async function initGame({ requireApi = false } = {}) {
           renderPlayerRecovery("Há dados mais recentes no servidor. Recupere sua chave para sincronizar antes de continuar.");
         }
         if (isUnknownVoteConfirmation(error)) {
+          clearPickFeedback(els.cardA);
+          clearPickFeedback(els.cardB);
           setNetworkStatus(statusEl, NETWORK_STATES.UNKNOWN);
           return;
         }
         locked = false;
         els.cardA.disabled = false;
         els.cardB.disabled = false;
+        clearPickFeedback(els.cardA);
+        clearPickFeedback(els.cardB);
         setNetworkStatus(statusEl, NETWORK_STATES.FAILED);
       }
       return;

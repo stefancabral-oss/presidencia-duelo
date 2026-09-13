@@ -3,7 +3,9 @@
  * Always schedules `onDone` (typically `nextDuel`, which clears `locked`)
  * even if `work` throws.
  */
-export function runLockedPick(work, onDone, schedule = setTimeout, delay = 420) {
+export const PICK_FEEDBACK_MS = 900;
+
+export function runLockedPick(work, onDone, schedule = setTimeout, delay = PICK_FEEDBACK_MS) {
   try {
     work();
     return schedule(onDone, delay);

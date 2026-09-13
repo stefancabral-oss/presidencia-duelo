@@ -19,7 +19,8 @@ test("game attaches one document keydown handler for quick controls", () => {
 
 test("pick uses applyElo deltas and applyPickFeedback", () => {
   assert.match(src, /result = applyElo\(targetState, winnerId, loserId\)/);
-  assert.match(src, /applyPickFeedback\(winnerEl, loserEl, winnerDelta, loserDelta, \{ zebra \}\)/);
+  assert.match(src, /applyPickFeedback\(winnerEl, loserEl, winnerDelta, loserDelta, \{ zebra, combo, saved \}\)/);
+  assert.match(src, /applyPendingPickFeedback\(winnerEl/);
   assert.match(src, /els\.cardA\.addEventListener\("click", \(\) => pick\(els\.cardA\)\)/);
   assert.match(src, /els\.cardB\.addEventListener\("click", \(\) => pick\(els\.cardB\)\)/);
 });

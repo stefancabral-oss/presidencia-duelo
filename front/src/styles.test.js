@@ -70,24 +70,25 @@ test("picked-win flashes and picked-lose shakes", () => {
   assert.match(clean, /@keyframes pick-shake/);
 });
 
-test("elo-float uses win green and lose red", () => {
-  assert.match(clean, /\.elo-float\.win\s*\{\s*color:\s*var\(--win\)/);
-  assert.match(clean, /\.elo-float\.lose\s*\{\s*color:\s*var\(--danger\)/);
-  assert.match(clean, /@keyframes elo-float-pop/);
+test("the unified pick result distinguishes pending, saved, and zebra", () => {
+  assert.match(clean, /\.pick-result\.pending\s*\{\s*color:\s*var\(--accent\)/);
+  assert.match(clean, /\.pick-result\.saved\s*\{\s*color:\s*var\(--win\)/);
+  assert.match(clean, /\.pick-result\.zebra\s*\{\s*color:\s*var\(--gold\)/);
+  assert.match(clean, /@keyframes pick-result-in/);
 });
 
-test("loser dimming does not gray out the floating Elo delta", () => {
-  assert.match(clean, /\.poke-card\.picked-lose\s*>\s*:not\(\.elo-float\)\s*\{/);
+test("loser dimming remains separate from the winner result", () => {
+  assert.match(clean, /\.poke-card\.picked-lose\s*>\s*:not\(\.pick-result\)\s*\{/);
   assert.doesNotMatch(clean, /\.poke-card\.picked-lose\s*\{[^}]*\bopacity:/);
   assert.doesNotMatch(clean, /\.poke-card\.picked-lose\s*\{[^}]*\bfilter:/);
 });
 
-test("prefers-reduced-motion disables pick shake, flash, and float", () => {
+test("prefers-reduced-motion disables pick shake, flash, and result movement", () => {
   const reduced = mediaBlocks(clean, "(prefers-reduced-motion: reduce)").join("\n");
   assert.ok(reduced.length > 0, "expected @media (prefers-reduced-motion: reduce)");
   assert.match(reduced, /\.poke-card\.picked-win/);
   assert.match(reduced, /\.poke-card\.picked-lose/);
-  assert.match(reduced, /\.elo-float/);
+  assert.match(reduced, /\.pick-result/);
   assert.match(reduced, /animation:\s*none/);
 });
 
@@ -130,11 +131,11 @@ test("combo banner and achievement toast match the gold card theme", () => {
   assert.match(reduced, /animation:\s*none/);
 });
 
-test("zebra badge stamps on the winner card and respects reduced motion", () => {
-  assert.match(clean, /\.zebra-badge\s*\{[^}]*animation:\s*zebra-stamp/);
-  assert.match(clean, /@keyframes zebra-stamp/);
+test("zebra is integrated into the unified winner result", () => {
+  assert.match(clean, /\.pick-result\.zebra\s*\{/);
+  assert.doesNotMatch(clean, /\.zebra-badge\s*\{/);
   const reduced = mediaBlocks(clean, "(prefers-reduced-motion: reduce)").join("\n");
-  assert.match(reduced, /\.zebra-badge/);
+  assert.match(reduced, /\.pick-result/);
   assert.match(reduced, /animation:\s*none/);
 });
 

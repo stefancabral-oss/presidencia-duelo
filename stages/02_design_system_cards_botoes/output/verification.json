@@ -1,6 +1,6 @@
 {
   "stage": "ICM 02",
-  "status": "ready_for_review",
+  "status": "ready_for_human_gate",
   "implemented": [
     "design tokens",
     "button families",
@@ -16,8 +16,12 @@
     "playground visual review pending on real device"
   ],
   "automated_checks": {
-    "local_execution": "not_available_in_current_runtime",
-    "github_ci": "workflow_added; run not yet observed"
+    "github_actions_run_id": 34776067871,
+    "result": "success",
+    "front_tests": "success",
+    "front_build": "success",
+    "app_tests": "success",
+    "app_build": "success"
   },
   "known_risks": [
     "legacy CSS still exists outside migrated components",

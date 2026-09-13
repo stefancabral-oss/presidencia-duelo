@@ -1229,10 +1229,48 @@ h1 {
 }
 .credits-intro { margin: 0 0 14px; }
 .credits-notes { margin: 16px 0 0; }
+.credits-search-row {
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  background: rgba(18, 26, 43, .72);
+}
+.credits-search-row label { display: block; margin-bottom: 7px; font-size: .78rem; font-weight: 800; }
+.credits-search-row > div { display: flex; align-items: center; gap: 10px; }
+.credits-search-row input {
+  min-width: 0;
+  flex: 1;
+  min-height: 42px;
+  padding: 8px 11px;
+  border: 1px solid #475569;
+  border-radius: 10px;
+  background: rgba(3, 8, 20, .72);
+  color: var(--text);
+  font: inherit;
+}
+.credits-search-row input:focus-visible { border-color: var(--gold); outline: 2px solid rgba(246, 216, 96, .28); }
+.credits-search-row output { flex: 0 0 auto; color: var(--gold); font-size: .78rem; font-weight: 800; }
+.credits-groups { display: grid; gap: 8px; }
+.credit-group {
+  border: 1px solid #334155;
+  border-radius: 14px;
+  background: rgba(18, 26, 43, .5);
+  overflow: hidden;
+}
+.credit-group summary {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+  color: var(--gold);
+  font-weight: 900;
+  cursor: pointer;
+}
+.credit-group summary span { color: var(--muted); font-size: .75rem; }
 .credits-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 8px 8px;
   display: grid;
   gap: 8px;
 }
@@ -1243,12 +1281,31 @@ h1 {
   padding: 10px 12px;
 }
 .credit-name { font-weight: 800; font-size: .92rem; }
+.credit-party {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(79, 209, 197, .12);
+  color: #9be7df;
+  font-size: .66rem;
+}
 .credit-meta {
   font-size: .75rem;
   color: var(--muted);
   margin-top: 4px;
 }
-.credit-meta a { color: var(--gold); }
+.credit-meta span,
+.credit-meta a { display: block; }
+.credit-meta a { margin-top: 3px; color: var(--gold); }
+.credits-empty {
+  margin: 0;
+  padding: 22px 14px;
+  border: 1px dashed #475569;
+  border-radius: 14px;
+  color: var(--muted);
+  text-align: center;
+}
 
 footer {
   margin-top: 28px;
@@ -1472,6 +1529,7 @@ footer a { color: var(--gold); }
   .player-key-row { align-items: stretch; flex-direction: column; }
   .person-profile-dialog { padding: 16px; }
   .profile-facts div { grid-template-columns: 1fr; gap: 3px; }
+  .credits-search-row > div { align-items: stretch; flex-direction: column; }
 }
 
 @media (prefers-reduced-motion: reduce) {

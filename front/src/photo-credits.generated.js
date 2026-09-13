@@ -2,9 +2,10 @@
 export const PHOTO_CREDITS = [
   {
     "name": "Acelino Popó Freitas",
-    "license": "CC BY-SA 4.0",
-    "author": "Sintegrity",
-    "commons": "https://commons.wikimedia.org/wiki/File:Pop%C3%B3.png"
+    "license": "CC BY 4.0",
+    "author": "Portal de Dados Abertos do Tribunal Superior Eleitoral do Brasil (TSE)",
+    "commons": "https://commons.wikimedia.org/wiki/File:2020_ACELINO_POP%C3%93_FREITAS_CANDIDATO_VICE-PREFEITO_BA_SALVADOR_TSE_(50000771828).jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "ACM Neto",
@@ -14,9 +15,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Adriana Ventura",
-    "license": "CC BY 2.0",
-    "author": "Ministério da Ciência, Tecnologia e Inovações from Brasília - DF, Brasil",
-    "commons": "https://commons.wikimedia.org/wiki/File:Ministro_recebe_deputadas_(50272307573).jpg"
+    "license": "Foto oficial",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/internet/deputado/bandep/204528.jpg",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "Aldo Rebelo",
@@ -44,9 +46,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Alex Manente",
-    "license": "CC BY 3.0",
-    "author": "Mário Agra/Câmara dos Deputados",
-    "commons": "https://commons.wikimedia.org/wiki/File:Alex_Manente_in_2024_(cropped).jpg"
+    "license": "Foto oficial",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/internet/deputado/bandep/178972.jpg",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "Alexandre de Moraes",
@@ -56,9 +59,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Alexandre Garcia",
-    "license": "CC BY 3.0 br",
-    "author": "Antonio Cruz/ABr",
-    "commons": "https://commons.wikimedia.org/wiki/File:Alexandre_Garcia_2009.jpg"
+    "license": "Attribution",
+    "author": "Gabriel Ribeiro/CMPA",
+    "commons": "https://commons.wikimedia.org/wiki/File:GRS3874_Outorga_do_T%C3%ADtulo_de_Cidad%C3%A3o_de_Porto_Alegre_ao_sr._Alexandre_Garcia.jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "Alexandre Padilha",
@@ -136,15 +140,17 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "André Fernandes",
-    "license": "CC BY 3.0",
+    "license": "Foto oficial",
     "author": "Câmara dos Deputados",
-    "commons": "https://commons.wikimedia.org/wiki/File:Andr%C3%A9_Fernandes_(cropped).jpg"
+    "commons": "https://www.camara.leg.br/internet/deputado/bandep/220657.jpg",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "André Fufuca",
     "license": "CC BY 2.0",
-    "author": "Andeson Riedel",
-    "commons": "https://commons.wikimedia.org/wiki/File:Deputado_Andr%C3%A9_Fufuca_(cropped_2).png"
+    "author": "Ministério das Comunicações",
+    "commons": "https://commons.wikimedia.org/wiki/File:13-09-23._MEsp_-_Posse_Min_Andr%C3%A9_Fufuca_(cropped).jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "André Janones",
@@ -185,9 +191,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Anthony Garotinho",
-    "license": "CC BY 3.0",
-    "author": "Leonardo Prado/Câmara dos Deputados",
-    "commons": "https://commons.wikimedia.org/wiki/File:Deputado_Anthony_Garotinho_entrevistado_em_2011_(cropped).jpg"
+    "license": "CC BY-SA 4.0",
+    "author": "Senado Federal",
+    "commons": "https://commons.wikimedia.org/wiki/File:Anthony_Garotinho_na_CPI_do_Crime_Organizado_-_54988540833_(cropped).jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "Antonio Brito",
@@ -353,9 +360,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Carlos Fávaro",
-    "license": "CC BY 2.0",
-    "author": "Wilson Dias/Agência Brasil",
-    "commons": "https://commons.wikimedia.org/wiki/File:Carlos_F%C3%A1varo_(cropped).jpg"
+    "license": "Foto oficial",
+    "author": "Senado Federal",
+    "commons": "https://www.senado.leg.br/senadores/img/fotos-oficiais/senador6295.jpg",
+    "sourceLabel": "Senado Federal"
   },
   {
     "name": "Carlos Fernando dos Santos Lima",
@@ -403,15 +411,17 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Cezinha de Madureira",
-    "license": "CC BY-SA 4.0",
-    "author": "Leotv8",
-    "commons": "https://commons.wikimedia.org/wiki/File:Cezinha_de_Madureira1.jpg"
+    "license": "Foto oficial",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/internet/deputado/bandep/204504.jpg",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "Chico Alencar",
-    "license": "CC BY 3.0 br",
-    "author": "Antonio Cruz/Abr",
-    "commons": "https://commons.wikimedia.org/wiki/File:Chico_Alencar.jpg"
+    "license": "Foto oficial",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/internet/deputado/bandep/74171.jpg",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "Chico Buarque",
@@ -433,9 +443,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Ciro Nogueira",
-    "license": "CC BY 3.0 br",
-    "author": "Antonio Cruz/ABr",
-    "commons": "https://commons.wikimedia.org/wiki/File:Ciro_Nogueira_Filho_2013.jpg"
+    "license": "Foto oficial",
+    "author": "Senado Federal",
+    "commons": "https://www.senado.leg.br/senadores/img/fotos-oficiais/senador739.jpg",
+    "sourceLabel": "Senado Federal"
   },
   {
     "name": "Clariana Barão",
@@ -506,9 +517,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Davi Alcolumbre",
-    "license": "Attribution",
-    "author": "Agencia Senado",
-    "commons": "https://commons.wikimedia.org/wiki/File:Foto_oficial_2_de_Davi_Alcolumbre_(v._AgSen).jpg"
+    "license": "Foto oficial",
+    "author": "Senado Federal",
+    "commons": "https://www.senado.leg.br/senadores/img/fotos-oficiais/senador3830.jpg",
+    "sourceLabel": "Senado Federal"
   },
   {
     "name": "David Almeida",
@@ -518,9 +530,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Deltan Dallagnol",
-    "license": "CC BY 3.0 br",
-    "author": "José Cruz/ABr",
-    "commons": "https://commons.wikimedia.org/wiki/File:Deltan_Dallagnol-Devolu%C3%A7%C3%A3o_simb%C3%B3lica-2015_05_11.jpg"
+    "license": "Public domain",
+    "author": "Câmara dos Deputados",
+    "commons": "https://commons.wikimedia.org/wiki/File:Deputado_Federal_Deltan_Dallagnol.jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "Dias Toffoli",
@@ -549,9 +562,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Duarte Jr.",
-    "license": "CC BY-SA 4.0",
-    "author": "Senado Federal",
-    "commons": "https://commons.wikimedia.org/wiki/File:CPMI_-_INSS_-_Comiss%C3%A3o_Parlamentar_Mista_de_Inqu%C3%A9rito_do_INSS_-_2025_-_54821673993.jpg"
+    "license": "Foto oficial",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/internet/deputado/bandep/220686.jpg",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "Duda Salabert",
@@ -591,9 +605,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Eduardo Braga",
-    "license": "CC BY 2.0",
+    "license": "Foto oficial",
     "author": "Senado Federal",
-    "commons": "https://commons.wikimedia.org/wiki/File:Plen%C3%A1rio_do_Senado_(39426550304).jpg"
+    "commons": "https://www.senado.leg.br/senadores/img/fotos-oficiais/senador4994.jpg",
+    "sourceLabel": "Senado Federal"
   },
   {
     "name": "Eduardo Braide",
@@ -615,9 +630,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Eduardo Gomes",
-    "license": "CC BY 2.0",
-    "author": "Jefferson Rudy/Agência Senado",
-    "commons": "https://commons.wikimedia.org/wiki/File:Carlos_Eduardo_Torres_Gomes.jpg"
+    "license": "Foto oficial",
+    "author": "Senado Federal",
+    "commons": "https://www.senado.leg.br/senadores/img/fotos-oficiais/senador3777.jpg",
+    "sourceLabel": "Senado Federal"
   },
   {
     "name": "Eduardo Leite",
@@ -651,9 +667,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Efraim Filho",
-    "license": "CC BY 3.0",
-    "author": "Câmara dos Deputados do Brasil",
-    "commons": "https://commons.wikimedia.org/wiki/File:Dep_Efraim_Filho.jpg"
+    "license": "Foto oficial",
+    "author": "Senado Federal",
+    "commons": "https://www.senado.leg.br/senadores/img/fotos-oficiais/senador4642.jpg",
+    "sourceLabel": "Senado Federal"
   },
   {
     "name": "Elmano de Freitas",
@@ -896,9 +913,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Hélio Lopes",
-    "license": "CC BY 2.0",
-    "author": "Palácio do Planalto",
-    "commons": "https://commons.wikimedia.org/wiki/File:H%C3%A9lio_Fernando_Barbosa_Lopes.jpg"
+    "license": "Foto oficial",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/internet/deputado/bandep/204444.jpg",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "Henrique Meirelles",
@@ -927,9 +945,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Humberto Costa",
-    "license": "Public domain",
-    "author": "Humbertocosta",
-    "commons": "https://commons.wikimedia.org/wiki/File:Humberto_costa.jpg"
+    "license": "Foto oficial",
+    "author": "Senado Federal",
+    "commons": "https://www.senado.leg.br/senadores/img/fotos-oficiais/senador5008.jpg",
+    "sourceLabel": "Senado Federal"
   },
   {
     "name": "Ian Neves",
@@ -1010,8 +1029,9 @@ export const PHOTO_CREDITS = [
   {
     "name": "Jean Wyllys",
     "license": "CC BY 2.0",
-    "author": "Ministério da Cultura",
-    "commons": "https://commons.wikimedia.org/wiki/File:Jean_Wyllys,_2015_(cropped).jpg"
+    "author": "Palácio do Planalto from Brasilia, Brasil",
+    "commons": "https://commons.wikimedia.org/wiki/File:06.07.2023_-_Encontro_com_Jean_Wyllys_(53027931289).jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "Jerônimo Rodrigues",
@@ -1079,9 +1099,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "João Roberto Marinho",
-    "license": "CC BY 3.0 br",
-    "author": "Elza Fiuza/ABr",
-    "commons": "https://commons.wikimedia.org/wiki/File:Joao_roberto_marinho.jpg"
+    "license": "CC BY 2.0",
+    "author": "Marcos Oliveira/Agência Senado",
+    "commons": "https://commons.wikimedia.org/wiki/File:Jo%C3%A3o_Roberto_Marinho_(cropped).jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "Joaquim Barbosa",
@@ -1110,14 +1131,16 @@ export const PHOTO_CREDITS = [
   {
     "name": "Jorginho Mello",
     "license": "CC BY 2.0",
-    "author": "Senado Federal",
-    "commons": "https://commons.wikimedia.org/wiki/File:Plen%C3%A1rio_do_Senado_(22335628008).jpg"
+    "author": "Vice-Presidência da República",
+    "commons": "https://commons.wikimedia.org/wiki/File:Governador_de_Santa_Catarina_Jorginho_Mello_(52757880300).jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "José Guimarães",
-    "license": "CC BY 3.0 br",
-    "author": "José Cruz/ABr",
-    "commons": "https://commons.wikimedia.org/wiki/File:Jose_Guimaraes.jpg"
+    "license": "CC BY 2.0",
+    "author": "Palácio do Planalto from Brasilia, Brasil",
+    "commons": "https://commons.wikimedia.org/wiki/File:Jos%C3%A9_Guimar%C3%A3es_2023_(cropped).png",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "José Luiz Datena",
@@ -1210,9 +1233,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Leila Barros",
-    "license": "Attribution",
-    "author": "Agência Senado",
-    "commons": "https://commons.wikimedia.org/wiki/File:Senadora_Leila_Barros.jpg"
+    "license": "Foto oficial",
+    "author": "Senado Federal",
+    "commons": "https://www.senado.leg.br/senadores/img/fotos-oficiais/senador5979.jpg",
+    "sourceLabel": "Senado Federal"
   },
   {
     "name": "Leonardo Avalanche",
@@ -1240,9 +1264,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Lucas Pavanato",
-    "license": "CC0",
-    "author": "JeanFrancoZ",
-    "commons": "https://commons.wikimedia.org/wiki/File:Lucas_Pavanato.jpg"
+    "license": "CC BY 4.0",
+    "author": "Unknown author Unknown author",
+    "commons": "https://commons.wikimedia.org/wiki/File:2026_LUCAS_PAVANATO_CANDIDATO_DEPUTADO_FEDERAL_SP_TSE_(250002535995).jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "Lucas Ribeiro",
@@ -1336,15 +1361,17 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Marcel van Hattem",
-    "license": "CC BY 3.0",
+    "license": "Foto oficial",
     "author": "Câmara dos Deputados",
-    "commons": "https://commons.wikimedia.org/wiki/File:Deputado_Marcel_Van_Hattem_(NOVO-RS)_03.jpg"
+    "commons": "https://www.camara.leg.br/internet/deputado/bandep/156190.jpg",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "Marcelo Crivella",
-    "license": "CC BY 3.0 br",
-    "author": "Prefeitura do Rio de Janeiro",
-    "commons": "https://commons.wikimedia.org/wiki/File:Marcelo_Crivella_Prefeito.jpg"
+    "license": "Foto oficial",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/internet/deputado/bandep/220599.jpg",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "Marcelo Freixo",
@@ -1354,9 +1381,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Márcia Lopes",
-    "license": "CC BY 3.0 br",
-    "author": "José Cruz/ABr",
-    "commons": "https://commons.wikimedia.org/wiki/File:MarciaLopes.jpg"
+    "license": "CC BY-SA 4.0",
+    "author": "Xuthoria",
+    "commons": "https://commons.wikimedia.org/wiki/File:COP30_-_M%C3%A1rcia_Lopes_01.jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "Márcio Elias Rosa",
@@ -1459,9 +1487,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Maurício Souza",
-    "license": "CC BY 3.0 br",
-    "author": "Fernando Frazão/Agência Brasil",
-    "commons": "https://commons.wikimedia.org/wiki/File:Maur%C3%ADcio_Souza_Rio_2016.jpg"
+    "license": "CC BY 3.0",
+    "author": "Câmara dos Deputados",
+    "commons": "https://commons.wikimedia.org/wiki/File:Maur%C3%ADcio_Souza.jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "Maurício Valeixo",
@@ -1496,9 +1525,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Mendonça Filho",
-    "license": "CC BY 2.0",
-    "author": "Sidney Lins Jr. / Agência Liderança",
-    "commons": "https://commons.wikimedia.org/wiki/File:Mendon%C3%A7a_Filho_Dem.jpg"
+    "license": "Foto oficial",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/internet/deputado/bandep/74428.jpg",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "Michel Temer",
@@ -1558,9 +1588,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Omar Aziz",
-    "license": "CC BY 3.0 br",
-    "author": "Fabio Rodrigues Pozzebom/ABr",
-    "commons": "https://commons.wikimedia.org/wiki/File:Omar_Aziz.png"
+    "license": "Foto oficial",
+    "author": "Senado Federal",
+    "commons": "https://www.senado.leg.br/senadores/img/fotos-oficiais/senador5525.jpg",
+    "sourceLabel": "Senado Federal"
   },
   {
     "name": "Orlando Martello Júnior",
@@ -1571,9 +1602,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Orlando Silva",
-    "license": "CC BY 3.0 br",
-    "author": "Fabio Pozzebom/ABr",
-    "commons": "https://commons.wikimedia.org/wiki/File:Orlandosilva19122006.jpg"
+    "license": "Foto oficial",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/internet/deputado/bandep/178987.jpg",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "Otaviano Pivetta",
@@ -1774,9 +1806,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Ricardo Ferraço",
-    "license": "Attribution",
-    "author": "Pedro França/Agência Senado",
-    "commons": "https://commons.wikimedia.org/wiki/File:Ricardo_Ferra%C3%A7o21nov11.jpg"
+    "license": "CC BY 4.0",
+    "author": "Assembleia Legislativa do Espírito Santo",
+    "commons": "https://commons.wikimedia.org/wiki/File:2026-04-02_Sess%C3%A3o_Solene_de_Posse_do_Ricardo_Ferra%C3%A7o_como_Governador_do_Estado_-_070.jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "Ricardo Lewandowski",
@@ -1850,9 +1883,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Rodrigo Janot",
-    "license": "CC BY 3.0 br",
-    "author": "Wilson Dias/ABr",
-    "commons": "https://commons.wikimedia.org/wiki/File:Rodrigo_Janot.JPG"
+    "license": "CC BY 2.0",
+    "author": "File:Lançamento da campanha Todos juntos contra a corrupção (37047039121).jpg : Agência Brasil Fotografias derivative work: Minerva97",
+    "commons": "https://commons.wikimedia.org/wiki/File:Rodrigo_Janot,_cropped.jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "Rodrigo Manga",
@@ -1868,9 +1902,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Rogério Carvalho",
-    "license": "CC BY 2.0",
-    "author": "Valadares Filho",
-    "commons": "https://commons.wikimedia.org/wiki/File:Rog%C3%A9rio_Carvalho_2012_crop.jpg"
+    "license": "Foto oficial",
+    "author": "Senado Federal",
+    "commons": "https://www.senado.leg.br/senadores/img/fotos-oficiais/senador5352.jpg",
+    "sourceLabel": "Senado Federal"
   },
   {
     "name": "Rogério Galloro",
@@ -1880,9 +1915,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Rogério Marinho",
-    "license": "CC BY 2.0",
+    "license": "Foto oficial",
     "author": "Senado Federal",
-    "commons": "https://commons.wikimedia.org/wiki/File:Entrevistas_Diversas_(33317612900).jpg"
+    "commons": "https://www.senado.leg.br/senadores/img/fotos-oficiais/senador4694.jpg",
+    "sourceLabel": "Senado Federal"
   },
   {
     "name": "Romário",
@@ -1904,9 +1940,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Rosângela Moro",
-    "license": "CC BY 4.0",
-    "author": "Governo de São Paulo",
-    "commons": "https://commons.wikimedia.org/wiki/File:Ros%C3%A2ngela_e_Sergio_Moro_em_junho_de_2019.jpg"
+    "license": "Foto oficial",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/internet/deputado/bandep/220644.jpg",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "Rui Costa",
@@ -1940,9 +1977,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Sandro Mabel",
-    "license": "CC BY 2.0",
-    "author": "Anderson Riedel",
-    "commons": "https://commons.wikimedia.org/wiki/File:Sandro_Mabel_(cropped).jpg"
+    "license": "CC0",
+    "author": "Coronel Cláudia da Silva Lira",
+    "commons": "https://commons.wikimedia.org/wiki/File:Vice-prefeita_coronel_Cl%C3%A1udia_e_o_prefeito_Sandro_Mabel.jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "Sargento Fahur",
@@ -2007,9 +2045,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Sônia Guajajara",
-    "license": "CC BY-SA 4.0",
-    "author": "Xuthoria ( talk · contribs )",
-    "commons": "https://commons.wikimedia.org/wiki/File:S%C3%B4nia_Guajajara_na_COP30_em_novembro_de_2025_(clareado).png"
+    "license": "Foto oficial",
+    "author": "Câmara dos Deputados",
+    "commons": "https://www.camara.leg.br/internet/deputado/bandep/220643.jpg",
+    "sourceLabel": "Câmara dos Deputados"
   },
   {
     "name": "Sóstenes Cavalcante",
@@ -2138,9 +2177,10 @@ export const PHOTO_CREDITS = [
   },
   {
     "name": "Vitor Belfort",
-    "license": "CC BY 2.0",
-    "author": "https://www.flickr.com/photos/tiagoluiz/",
-    "commons": "https://commons.wikimedia.org/wiki/File:Vitor_belfort_cropped.jpg"
+    "license": "Public domain",
+    "author": "U.S. Navy photo by Seaman Ryan Freiburghaus",
+    "commons": "https://commons.wikimedia.org/wiki/File:USS_Ronald_Reagan_(CVN_76)_Sailors_warm_up_before_a_fitness_session_with_Vitor_Belfort_(8444027)(cropped).jpg",
+    "sourceLabel": "Wikimedia Commons"
   },
   {
     "name": "Viviane Barci de Moraes",

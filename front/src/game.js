@@ -12,7 +12,7 @@ import {
 } from "./api.js";
 import { applyCardAriaLabel } from "./card-label.js";
 import { renderConnectionRequired } from "./connection-required.js";
-import { GITHUB_README_URL, GITHUB_REPO_URL, creditsPanelHtml } from "./credits.js";
+import { GITHUB_README_URL, GITHUB_REPO_URL, bindCreditsSearch, creditsPanelHtml } from "./credits.js";
 import { fillDuelCard } from "./duel-card.js";
 import { hpFillWidth } from "./hp-bar.js";
 import { applyPendingPickFeedback, applyPickFeedback, clearPickFeedback } from "./pick-feedback.js";
@@ -469,6 +469,9 @@ export async function initGame({ requireApi = false } = {}) {
     panelTournament: document.getElementById("panel-tournament"),
     panelRank: document.getElementById("panel-rank"),
     panelCredits: document.getElementById("panel-credits"),
+    creditsSearch: document.getElementById("credits-search"),
+    creditsCount: document.getElementById("credits-count"),
+    creditsGroups: document.getElementById("credits-groups"),
     tabDuel: document.getElementById("tab-duel"),
     tabTournament: document.getElementById("tab-tournament"),
     tabRank: document.getElementById("tab-rank"),
@@ -1414,6 +1417,7 @@ export async function initGame({ requireApi = false } = {}) {
   els.tabRank.addEventListener("click", () => setTab("rank"));
   els.tabCredits.addEventListener("click", () => setTab("credits"));
   els.openCredits.addEventListener("click", () => setTab("credits"));
+  bindCreditsSearch({ input: els.creditsSearch, count: els.creditsCount, groups: els.creditsGroups });
   els.cardA.addEventListener("click", () => pick(els.cardA));
   els.cardB.addEventListener("click", () => pick(els.cardB));
   els.infoCardA.addEventListener("click", () => showProfile(els.infoCardA));

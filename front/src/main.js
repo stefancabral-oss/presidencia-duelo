@@ -5,6 +5,7 @@ import "./styles.css";
 import "./malaquita.css";
 import "./malaquita-shell.css";
 import "./design-system.css";
+import "./design-system-states.css";
 import "./design-system-bridge.css";
 
 installTournamentRestartGuard();

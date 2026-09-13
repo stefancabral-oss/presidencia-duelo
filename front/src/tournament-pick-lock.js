@@ -1,5 +1,6 @@
-export function createTournamentPickLock({ schedule = setTimeout, delay = 320 } = {}) {
+export function createTournamentPickLock({ schedule = setTimeout, cancel = clearTimeout, delay = 320 } = {}) {
   let locked = false;
+  let pending = null;
 
   function setDisabled(cards, disabled) {
     for (const card of cards) card.disabled = disabled;
@@ -21,7 +22,8 @@ export function createTournamentPickLock({ schedule = setTimeout, delay = 320 } 
           return false;
         }
         feedback?.();
-        schedule(() => {
+        pending = schedule(() => {
+          pending = null;
           try {
             render();
           } finally {
@@ -38,6 +40,8 @@ export function createTournamentPickLock({ schedule = setTimeout, delay = 320 } 
     },
 
     reset(cards = []) {
+      if (pending != null) cancel(pending);
+      pending = null;
       locked = false;
       setDisabled(cards, false);
     },

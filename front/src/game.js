@@ -78,6 +78,7 @@ import {
 } from "./achievements.js";
 import { saveState, STORAGE_KEY, STORAGE_UNAVAILABLE_MESSAGE } from "./storage.js";
 import { skipUnknownDuel } from "./skip-duel.js";
+import { topicSelectorHtml } from "./topic-selector.js";
 import {
   TOURNAMENT_STORAGE_KEY,
   completedTournamentDuels,
@@ -92,7 +93,6 @@ import { MODES, VICE_STORAGE_KEY, candidateForMode } from "./vice-mode.js";
 import { createVoteId } from "./vote-id.js";
 import { captureVoteSession, isCurrentVoteSession } from "./vote-session.js";
 import {
-  TOPICS,
   TOPIC_IDS,
   candidatesForTopic,
   pairAllowedForTopic,
@@ -201,23 +201,7 @@ function renderShell(root, { requireApi = false } = {}) {
       </nav>
 
       <section id="panel-duel" class="panel active" aria-label="Duelo">
-        <section class="topic-picker" id="topic-picker" aria-labelledby="topic-picker-title">
-          <div class="topic-picker-heading">
-            <strong id="topic-picker-title">Escolha o assunto</strong>
-            <span id="topic-count">360 pessoas</span>
-          </div>
-          <div class="topic-list" id="topic-list" role="group" aria-label="Tópico do duelo">
-            ${TOPICS.map((topic, index) => `
-              <button
-                type="button"
-                class="topic-btn${index === 0 ? " active" : ""}"
-                data-topic="${topic.id}"
-                aria-pressed="${index === 0 ? "true" : "false"}"
-              ><span aria-hidden="true">${topic.icon}</span>${escapeHtml(topic.label)}</button>
-            `).join("")}
-          </div>
-          <p class="topic-description" id="topic-description">${escapeHtml(TOPICS[0].description)}</p>
-        </section>
+        ${topicSelectorHtml("Escolha o assunto")}
         <div class="mode-switch" aria-label="Categoria do duelo">
           <span class="mode-label">Disputar:</span>
           <button type="button" class="mode-btn active" id="mode-presidentes" aria-pressed="true">Pessoas</button>
@@ -284,6 +268,7 @@ function renderShell(root, { requireApi = false } = {}) {
       </section>
 
       <section id="panel-tournament" class="panel" aria-label="Torneio">
+        ${topicSelectorHtml("Assunto do torneio")}
         <div class="tournament-toolbar">
           <div>
             <strong>Mata-mata · <span id="tournament-topic">Política em Jogo</span></strong>
@@ -317,6 +302,7 @@ function renderShell(root, { requireApi = false } = {}) {
       </section>
 
       <section id="panel-rank" class="panel" aria-label="Ranking">
+        ${topicSelectorHtml("Assunto do ranking")}
         <div class="ranking-toolbar">
           <div>
             <strong>Ranking · <span id="rank-mode">Pessoas</span> · <span id="rank-topic">Política em Jogo</span></strong>
@@ -469,9 +455,9 @@ export async function initGame({ requireApi = false } = {}) {
     modePresidentes: document.getElementById("mode-presidentes"),
     modeVices: document.getElementById("mode-vices"),
     topicButtons: [...document.querySelectorAll("[data-topic]")],
-    topicPicker: document.getElementById("topic-picker"),
-    topicCount: document.getElementById("topic-count"),
-    topicDescription: document.getElementById("topic-description"),
+    topicPickers: [...document.querySelectorAll("[data-topic-selector]")],
+    topicCounts: [...document.querySelectorAll("[data-topic-count]")],
+    topicDescriptions: [...document.querySelectorAll("[data-topic-description]")],
     rankTopic: document.getElementById("rank-topic"),
     rankSortSummary: document.getElementById("rank-sort-summary"),
     rankSortButtons: [...document.querySelectorAll("[data-rank-sort]")],
@@ -592,7 +578,7 @@ export async function initGame({ requireApi = false } = {}) {
     const complete = onboardingState === QUICK_CONTROLS_STATES.COMPLETE;
     const intro = onboardingState === QUICK_CONTROLS_STATES.INTRO;
     els.quickControlsHint.hidden = complete;
-    els.topicPicker.classList.toggle("onboarding-focus", intro);
+    for (const picker of els.topicPickers) picker.classList.toggle("onboarding-focus", intro);
     if (complete) return;
     els.quickControlsText.textContent = intro
       ? "Primeiro duelo: escolha um assunto e toque em uma pessoa."
@@ -758,8 +744,10 @@ export async function initGame({ requireApi = false } = {}) {
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", String(active));
     }
-    els.topicCount.textContent = `${count} ${count === 1 ? "pessoa" : "pessoas"}`;
-    els.topicDescription.textContent = topic.description;
+    for (const item of els.topicCounts) {
+      item.textContent = `${count} ${count === 1 ? "pessoa" : "pessoas"}`;
+    }
+    for (const item of els.topicDescriptions) item.textContent = topic.description;
     els.rankTopic.textContent = topic.label;
     els.tournamentTopic.textContent = topic.label;
   }
@@ -768,6 +756,7 @@ export async function initGame({ requireApi = false } = {}) {
     const nextTopic = topicById(nextTopicId);
     if (nextTopic.id === topicId) return;
     cancelPickTimer();
+    tournamentPickLock.reset([els.tournamentCardA, els.tournamentCardB]);
     locked = false;
     topicId = nextTopic.id;
     saveTopic(topicId);
@@ -780,6 +769,7 @@ export async function initGame({ requireApi = false } = {}) {
     if (requireApi && apiOnline) setNetworkStatus(statusEl, NETWORK_STATES.ONLINE);
     renderRanking();
     renderServerRanking();
+    if (els.panelTournament.classList.contains("active")) renderTournament();
   }
 
   function setMode(nextMode) {

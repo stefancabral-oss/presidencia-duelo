@@ -1,0 +1,28 @@
+{
+  "stage": "ICM 01",
+  "status": "ready_for_human_gate",
+  "tests": [
+    "front/src inventory reviewed",
+    "approved design decisions captured",
+    "known regressions converted to test invariants",
+    "screen-component-state-test matrix created"
+  ],
+  "manual_checks": [
+    "SSO real marked out of scope",
+    "direct card tap preserved as duel action",
+    "light porcelain shell and Chroma emphasis captured",
+    "sound and haptic scope captured"
+  ],
+  "artifacts": [
+    "inventory.md",
+    "matrix.md",
+    "README.md",
+    "output/HANDOFF.md"
+  ],
+  "known_failures": [],
+  "human_gate": {
+    "status": "pending",
+    "by": null,
+    "notes": null
+  }
+}

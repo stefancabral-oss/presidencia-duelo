@@ -40,7 +40,7 @@ export function creditsPanelHtml() {
         <ul class="credits-list">${items}
         </ul>
         <p class="credits-notes">
-          Fotos reais em 383 dos 387 perfis. Quatro perfis sem retrato público verificável continuam usando iniciais para evitar associações erradas.
+          Fotos reais e créditos verificados nos 360 perfis do catálogo.
           Este projeto não é afiliado a partidos, TSE, Wikimedia ou às pessoas listadas.
         </p>`;
 }

@@ -159,13 +159,6 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Ministro_Andr%C3%A9_Mendon%C3%A7a_em_outubro_de_2025_(3x4).jpg"
   },
   {
-    "name": "André Paulo Félix Fidelis",
-    "license": "Fonte pública — uso editorial",
-    "author": "Reprodução / Metrópoles",
-    "commons": "https://www.metropoles.com/sao-paulo/ex-diretor-preso-no-escandalo-do-inss-liberou-consignado-no-digimais",
-    "sourceLabel": "Metrópoles"
-  },
-  {
     "name": "André Valadão",
     "license": "CC BY-SA 3.0",
     "author": "Magno Dos Santos . Crop by Fronteira",
@@ -177,13 +170,6 @@ export const PHOTO_CREDITS = [
     "author": "Divulgação",
     "commons": "https://www.gazetadopovo.com.br/republica/diretor-da-pf-diz-que-caso-master-vem-de-outras-gestoes-do-banco-central/",
     "sourceLabel": "Gazeta do Povo"
-  },
-  {
-    "name": "Andrei Roman",
-    "license": "Fonte pública — uso editorial",
-    "author": "A Tarde",
-    "commons": "https://atarde.com.br/politica/eleicoes-2024/eleicoes-estaduais/sou-muito-grato-ao-a-tarde-diz-ceo-da-atlasintel-1208267",
-    "sourceLabel": "A Tarde"
   },
   {
     "name": "Anielle Franco",
@@ -208,12 +194,6 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 2.0",
     "author": "Pedro França /Agência Senado",
     "commons": "https://commons.wikimedia.org/wiki/File:Deputado_Antonio_Brito.png"
-  },
-  {
-    "name": "Antônio Carlos",
-    "license": "CC BY 4.0",
-    "author": "Tribunal Superior Eleitoral do Brasil (TSE)",
-    "commons": "https://commons.wikimedia.org/wiki/File:2026_ANT%C3%94NIO_CARLOS_CANDIDATO_VICE-PRESIDENTE_TSE_(280002552486).jpg"
   },
   {
     "name": "Antônio Carlos Camilo Antunes (Careca do INSS)",
@@ -249,13 +229,6 @@ export const PHOTO_CREDITS = [
     "sourceLabel": "Diário de Pernambuco"
   },
   {
-    "name": "Armando Miguel Gallo Neto",
-    "license": "Fonte pública — uso editorial",
-    "author": "Armando Gallo / perfil profissional público",
-    "commons": "https://br.linkedin.com/in/armando-gallo-7824a723",
-    "sourceLabel": "LinkedIn"
-  },
-  {
     "name": "Arthur Lira",
     "license": "CC BY 3.0",
     "author": "Luis Macedo/Câmara dos Deputados",
@@ -275,13 +248,6 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Augusto_Cury,_escritor_(28339139296)_(cropped).jpg"
   },
   {
-    "name": "Augusto Ferreira Lima",
-    "license": "Fonte pública — uso editorial",
-    "author": "Reprodução",
-    "commons": "https://odia.ig.com.br/brasil/2026/02/amp/7210173-augusto-lima-do-banco-pleno-se-reuniu-sete-vezes-com-bc-em-2025-como-ceo-do-master.html",
-    "sourceLabel": "O Dia"
-  },
-  {
     "name": "Augusto Heleno",
     "license": "CC BY 3.0",
     "author": "Pablo Valadares/Câmara dos Deputados",
@@ -298,13 +264,6 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 3.0",
     "author": "Michel Jesus/ Câmara dos Deputados",
     "commons": "https://commons.wikimedia.org/wiki/File:Baleia_Rossi_(MDB_-_SP)_(cropped).jpg"
-  },
-  {
-    "name": "Belline Santana",
-    "license": "Fonte pública — uso editorial",
-    "author": "Reprodução / Metrópoles",
-    "commons": "https://www.metropoles.com/colunas/mirelle-pinheiro/servidores-bc-afastados-master-compliance-zero",
-    "sourceLabel": "Metrópoles"
   },
   {
     "name": "Bia Kicis",
@@ -412,13 +371,6 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Carlos_Roberto_Massa.jpg"
   },
   {
-    "name": "Carlos Roberto Ferreira Lopes",
-    "license": "Fonte institucional",
-    "author": "Câmara dos Deputados",
-    "commons": "https://www.camara.leg.br/noticias/1205567-em-depoimento-na-cpmi-do-inss%2C-presidente-de-entidade-de-agricultores-nega-acusacoes-de-fraude",
-    "sourceLabel": "Câmara dos Deputados"
-  },
-  {
     "name": "Cármen Lúcia",
     "license": "CC BY 3.0 br",
     "author": "Marcelo Camargo/Agência Brasil",
@@ -486,13 +438,6 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Ciro_Nogueira_Filho_2013.jpg"
   },
   {
-    "name": "Ciro Soares",
-    "license": "Fonte pública — uso editorial",
-    "author": "Reprodução / ICL Notícias",
-    "commons": "https://iclnoticias.com.br/elo-entre-vorcaro-e-mendonca-ciro-soares/",
-    "sourceLabel": "ICL Notícias"
-  },
-  {
     "name": "Clariana Barão",
     "license": "CC BY-SA 4.0",
     "author": "LFLN",
@@ -517,28 +462,10 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Cleiton_Gontijo_de_Azevedo_-_2019.jpg"
   },
   {
-    "name": "Cleusa Santos",
-    "license": "CC BY 4.0",
-    "author": "Tribunal Superior Eleitoral do Brasil (TSE)",
-    "commons": "https://commons.wikimedia.org/wiki/File:2026_CLEUSA_SANTOS_CANDIDATA_VICE-PRESIDENTE_TSE_(280002551976).jpg"
-  },
-  {
-    "name": "Coronel Medina",
-    "license": "CC BY 4.0",
-    "author": "Tribunal Superior Eleitoral",
-    "commons": "https://commons.wikimedia.org/wiki/File:2026_CORONEL_MEDINA_CANDIDATO_VICE-PRESIDENTE_TSE_(280002540693).jpg"
-  },
-  {
     "name": "Cristiano Zanin",
     "license": "Public domain",
     "author": "Rosinei Coutinho/STF",
     "commons": "https://commons.wikimedia.org/wiki/File:17.06.2026_-_Cristiano_Zanin_(cropped).jpg"
-  },
-  {
-    "name": "Dalma Régina Florêncio de Morais (Tenente Dalma)",
-    "license": "CC BY 4.0",
-    "author": "Portal de Dados Abertos do Tribunal Superior Eleitoral do Brasil (TSE)",
-    "commons": "https://commons.wikimedia.org/wiki/File:Dalma_Regina_2024.jpg"
   },
   {
     "name": "Damares Alves",
@@ -631,12 +558,6 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 2.0",
     "author": "Agência Senado",
     "commons": "https://commons.wikimedia.org/wiki/File:2023-08-01_CPMI_do_8_de_Janeiro_03_(Duda_Salabert).jpg"
-  },
-  {
-    "name": "Edilson Damião",
-    "license": "CC BY 4.0",
-    "author": "Portal de Dados Abertos do Tribunal Superior Eleitoral do Brasil (TSE)",
-    "commons": "https://commons.wikimedia.org/wiki/File:FRR230001604254_div.jpg"
   },
   {
     "name": "Edinho Silva",
@@ -747,13 +668,6 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Elmar_Nascimento.png"
   },
   {
-    "name": "Eric Douglas Fidelis",
-    "license": "Fonte institucional",
-    "author": "Câmara dos Deputados",
-    "commons": "https://www.camara.leg.br/noticias/1223205-relator-da-cpmi-do-inss-acusa-advogado-de-intermediar-propina-em-fraudes-previdenciarias/",
-    "sourceLabel": "Câmara dos Deputados"
-  },
-  {
     "name": "Erika Hilton",
     "license": "CC BY-SA 4.0",
     "author": "Agência Senado from Brasilia, Brazil",
@@ -771,12 +685,6 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 4.0",
     "author": "Portal de Dados Abertos do Tribunal Superior Eleitoral do Brasil (TSE)",
     "commons": "https://commons.wikimedia.org/wiki/File:CE_2022_Evandro_Leit%C3%A3o.jpg"
-  },
-  {
-    "name": "Fabiana Torquato",
-    "license": "CC BY 4.0",
-    "author": "Tribunal Superior Eleitoral do Brasil (TSE)",
-    "commons": "https://commons.wikimedia.org/wiki/File:2026_FABIANA_TORQUATO_CANDIDATA_VICE-PRESIDENTE_TSE_(280002552485).jpg"
   },
   {
     "name": "Fabiano Zettel",
@@ -827,13 +735,6 @@ export const PHOTO_CREDITS = [
     "license": "CC BY-SA 2.0",
     "author": "Ubirajara Dettimar/Presidência da República",
     "commons": "https://commons.wikimedia.org/wiki/File:Foto_oficial_do_presidente_Fernando_Collor_de_Melo._(38405801411).jpg"
-  },
-  {
-    "name": "Fernando de Sousa Oliveira",
-    "license": "Fonte pública — uso editorial",
-    "author": "Reprodução / Metrópoles",
-    "commons": "https://www.metropoles.com/colunas/grande-angular/8-1-saiba-quem-e-delegado-da-pf-que-moraes-votou-para-absolver",
-    "sourceLabel": "Metrópoles"
   },
   {
     "name": "Fernando Haddad",
@@ -968,13 +869,6 @@ export const PHOTO_CREDITS = [
     "license": "CC BY 3.0",
     "author": "Vlog do Lisboa",
     "commons": "https://commons.wikimedia.org/wiki/File:Gustavo_Gayer_no_Vlog_do_Lisboa_-2021-02-13.png"
-  },
-  {
-    "name": "Gustavo Henrique Menezes Dutra",
-    "license": "Fonte pública — uso editorial",
-    "author": "Agência Senado",
-    "commons": "https://noticias.uol.com.br/politica/ultimas-noticias/2025/07/28/josias-veto-ao-uso-de-fardas-por-reus-militares-deveria-vir-do-exercito.htm",
-    "sourceLabel": "UOL"
   },
   {
     "name": "Gusttavo Lima",
@@ -1321,13 +1215,6 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Senadora_Leila_Barros.jpg"
   },
   {
-    "name": "Leonardo Augusto Furtado Palhares",
-    "license": "Fonte pública — uso editorial",
-    "author": "Carol Carquejeiro / Valor",
-    "commons": "https://valor.globo.com/legislacao/noticia/2012/02/02/rio-e-o-primeiro-estado-a-ter-lei-para-compras-coletivas.ghtml",
-    "sourceLabel": "Valor Econômico"
-  },
-  {
     "name": "Leonardo Avalanche",
     "license": "CC BY-SA 4.0",
     "author": "LFLN",
@@ -1388,13 +1275,6 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Luis_Roberto_Barroso_2014.jpg"
   },
   {
-    "name": "Luiz Antônio Bull",
-    "license": "Fonte pública — uso editorial",
-    "author": "Luiz Antônio Bull",
-    "commons": "https://x.com/luizlbull",
-    "sourceLabel": "Perfil público no X"
-  },
-  {
     "name": "Luiz Frias",
     "license": "CC BY 3.0 br",
     "author": "Ricardo Stuckert/PR",
@@ -1423,13 +1303,6 @@ export const PHOTO_CREDITS = [
     "license": "CC BY-SA 4.0",
     "author": "Senado Federal",
     "commons": "https://commons.wikimedia.org/wiki/File:Plen%C3%A1rio_do_Senado_-_54820218794.jpg"
-  },
-  {
-    "name": "Luiz Phillipi Machado de Moraes Mourão",
-    "license": "Fonte pública — uso editorial",
-    "author": "Reprodução",
-    "commons": "https://www.congressoemfoco.com.br/noticia/116957/coordenador-de-vigilancia-de-vorcaro-tenta-suicidio-em-sede-da-pf",
-    "sourceLabel": "Congresso em Foco"
   },
   {
     "name": "Luiza Erundina",
@@ -1539,13 +1412,6 @@ export const PHOTO_CREDITS = [
     "author": "Dados eleitorais do TSE via Radar do Voto",
     "commons": "https://radardovoto.com/pessoa/76570086/maria-elena-lourenco-passos",
     "sourceLabel": "Radar do Voto"
-  },
-  {
-    "name": "Marilson Roseno da Silva",
-    "license": "Fonte pública — uso editorial",
-    "author": "Reprodução",
-    "commons": "https://www.itatiaia.com.br/brasil/sudeste/mg/policial-federal-aposentado-preso-em-bh-era-do-braco-armado-de-daniel-vorcaro",
-    "sourceLabel": "Itatiaia"
   },
   {
     "name": "Marina Helena",
@@ -1951,13 +1817,6 @@ export const PHOTO_CREDITS = [
     "sourceLabel": "UOL"
   },
   {
-    "name": "Roberto Araújo",
-    "license": "Fonte pública — uso editorial",
-    "author": "Reprodução",
-    "commons": "https://www.jornaldacidadeonline.com.br/noticias/43571/enfim-a-jovem-pan-se-manifesta-detona-a-folha-e-garante-que-nao-vai-mudar-sua-posicao-veja-o-video",
-    "sourceLabel": "Jornal da Cidade Online"
-  },
-  {
     "name": "Roberto Campos Neto",
     "license": "Attribution",
     "author": "Pedro França/Agência Senado",
@@ -2202,13 +2061,6 @@ export const PHOTO_CREDITS = [
     "commons": "https://commons.wikimedia.org/wiki/File:Thammy_Miranda.jpg"
   },
   {
-    "name": "Thiago Miranda",
-    "license": "Fonte pública — uso editorial",
-    "author": "Reprodução",
-    "commons": "https://www.goias246.com.br/noticia/32580/ultimas/vorcaro-pagou-r-61-milhoes-para-filme-de-bolsonaro-flavio-cobrou-valor.html",
-    "sourceLabel": "Goiás 246"
-  },
-  {
     "name": "Thomas Traumann",
     "license": "CC BY 3.0 br",
     "author": "Antonio Cruz/Agência Brasil",
@@ -2244,12 +2096,6 @@ export const PHOTO_CREDITS = [
     "author": "Reprodução / RepórterMT",
     "commons": "https://www.reportermt.com/papo-reto/pre-candidato-a-vereador-usa-tornozeleira-com-bandeira-do-brasil-em-convencao-do-pl/210173",
     "sourceLabel": "RepórterMT"
-  },
-  {
-    "name": "Vanessa Portugal",
-    "license": "CC BY 4.0",
-    "author": "Tribunal Superior Eleitoral do Brasil (TSE)",
-    "commons": "https://commons.wikimedia.org/wiki/File:2026_VANESSA_PORTUGAL_CANDIDATA_VICE-PRESIDENTE_TSE_(280002541458).jpg"
   },
   {
     "name": "Vera Lúcia",

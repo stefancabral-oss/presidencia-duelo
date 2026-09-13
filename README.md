@@ -6,6 +6,16 @@ Além do duelo contínuo, a aba **Torneio** sorteia 12 pessoas do catálogo para
 
 O catálogo de duelo contém os **360 nomes aprovados** e perfis básicos. Chromas, versões históricas e suas artes serão modeladas em outra área do app; não fazem parte deste arquivo nem alteram o ranking atual.
 
+Os duelos podem ser filtrados por cinco assuntos. Uma mesma pessoa pode aparecer em mais de um deles:
+
+- **Política em Jogo:** catálogo completo, com 360 pessoas;
+- **Justiça & Escândalos:** 74 nomes ligados a tribunais, investigações ou casos nacionais;
+- **Direita x Esquerda:** 126 nomes; no duelo principal, cada confronto combina lados opostos;
+- **Corrida 2026:** as 12 chapas presidenciais cadastradas;
+- **Em Alta:** 62 nomes em evidência no debate político atual.
+
+O filtro não cria cadastros duplicados nem zera estatísticas: IDs, votos e Elo continuam compartilhados no mesmo histórico global. A seleção do último assunto fica salva apenas como preferência de interface.
+
 > **Não é pesquisa oficial.** Não mede intenção de voto real. É só entretenimento.
 
 ```
@@ -43,7 +53,7 @@ npm run dev --prefix back
 | Método | Rota | Descrição |
 |---|---|---|
 | `GET` | `/api/health` | Saúde do serviço |
-| `GET` | `/api/candidates` | 360 pessoas (`personId`, `id`, `name`, `party`, `vice`, `photo`, `initials`) |
+| `GET` | `/api/candidates` | 360 pessoas (`personId`, `id`, `name`, `party`, `vice`, `photo`, `initials`, `topics`, `politicalSide`) |
 | `GET` | `/api/ranking` | Ranking Elo agregado armazenado no PostgreSQL |
 | `POST` | `/api/vote` | Corpo `{ "winnerId", "loserId" }` — atualiza o Elo do servidor |
 

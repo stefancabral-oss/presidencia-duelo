@@ -46,6 +46,11 @@ Estado: revisão visual em andamento
 - A carta escolhida recebe realce enquanto o servidor confirma o voto, sem antecipar o resultado.
 - O ranking geral e pessoal ganhou pódio, busca por nome ou partido e exibição inicial limitada a 25 posições, com abertura opcional da lista completa.
 - A busca do ranking ignora acentos e foi validada no viewport móvel.
+- A Coleção recebeu um laboratório visual com quatro Chromas demonstrativas: Lula e Renan Santos em Suprema de três estrelas e Comemorativa de estrela prismática.
+- As quatro cartas usam hologramas distintos: feixes dourados, anéis metálicos, fragmentos prismáticos e aurora espectral.
+- Reflexo e perspectiva respondem ao ponteiro/toque; no celular, um botão solicita a permissão necessária para acompanhar a inclinação do aparelho.
+- O movimento é neutralizado quando `prefers-reduced-motion` está ativo e as demonstrações continuam separadas do inventário real.
+- A captura `chroma-collection-mobile-qa.png` registra a prévia no viewport de iPhone.
 
 ## Pendente
 
@@ -57,7 +62,8 @@ Estado: revisão visual em andamento
 - Resolver as 798 fontes ausentes antes de disponibilizar as respectivas Chromas.
 - Reset explícito do PostgreSQL e publicação da página temporária.
 - Teste visual em desktop após a entrada das fotografias finais.
+- Gate visual das quatro Chromas demonstrativas antes de convertê-las em itens equipáveis ou expandir o tratamento para o catálogo.
 
 ## Human gate
 
-Status: nova revisão visual solicitada pelo usuário em 14/09/2026; aguarda aprovação da anatomia premium atualizada antes de publicar.
+Status: usuário solicitou em 14/09/2026 que as Chromas fossem colocadas no app para avaliação; implementação demonstrativa pronta, aguardando avaliação visual em uso real.

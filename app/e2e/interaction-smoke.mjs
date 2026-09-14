@@ -115,6 +115,25 @@ try {
     throw new Error("O voto negativo não apareceu no resumo do ranking");
   }
 
+  await page.getByRole("button", { name: "Coleção" }).click();
+  await page.getByRole("heading", { name: "Coleção" }).waitFor();
+  const chromaCards = page.locator("[data-hologram]");
+  if (await chromaCards.count() !== 4) throw new Error("As quatro Chromas demonstrativas não foram renderizadas");
+  for (const variant of ["supreme-rays", "supreme-rings", "prism-shards", "prism-aurora"]) {
+    if (await page.locator(`.${variant}`).count() !== 1) throw new Error(`O holograma ${variant} não é exclusivo`);
+  }
+  await page.waitForFunction(() => [...document.querySelectorAll(".chroma-portrait img")].every((image) => image.complete && image.naturalWidth > 0));
+  const previewImagesReady = await page.locator(".chroma-portrait img").evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0));
+  if (!previewImagesReady) throw new Error("Os retratos demonstrativos das Chromas não carregaram");
+  const chromaBox = await chromaCards.first().boundingBox();
+  if (!chromaBox) throw new Error("A primeira Chroma não possui área visível");
+  await page.mouse.move(chromaBox.x + chromaBox.width * .82, chromaBox.y + chromaBox.height * .25);
+  const lightPosition = await chromaCards.first().evaluate((card) => card.style.getPropertyValue("--holo-x"));
+  if (lightPosition === "50.0%" || !lightPosition) throw new Error("O holograma não respondeu ao movimento do ponteiro");
+  if (process.env.POLIMATCH_E2E_COLLECTION_SCREENSHOT) {
+    await page.screenshot({ path: process.env.POLIMATCH_E2E_COLLECTION_SCREENSHOT, fullPage: true });
+  }
+
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.locator('[data-screen="topics"]').click();
   await page.getByRole("button", { name: /Eleições 2026/ }).click();

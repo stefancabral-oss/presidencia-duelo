@@ -3,6 +3,7 @@ import { createPlayer, loadCandidates, loadPlayerRanking, loadRanking, submitVot
 import { catalogForTopic, displayRanking, filterRanking, initials, nextBalancedPair, rankingForCatalog, rankingHighlights, shortName, voteFeedback } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
+import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
 
 const app = document.querySelector("#app");
 const state = {
@@ -29,6 +30,13 @@ const state = {
   error: "",
 };
 let resultTimer;
+
+const chromaPreviews = [
+  { person: "Lula", role: "Chroma Suprema", image: "/chromas/lula-malachite-preview.jpg", rarity: "★★★", rarityLabel: "Três estrelas douradas", variant: "supreme supreme-rays" },
+  { person: "Renan Santos", role: "Chroma Suprema", image: "/chromas/renan-santos-malachite-preview.jpg", rarity: "★★★", rarityLabel: "Três estrelas douradas", variant: "supreme supreme-rings" },
+  { person: "Lula", role: "Chroma Comemorativa", image: "/chromas/lula-malachite-preview.jpg", rarity: "★", rarityLabel: "Estrela prismática", variant: "commemorative prism-shards" },
+  { person: "Renan Santos", role: "Chroma Comemorativa", image: "/chromas/renan-santos-malachite-preview.jpg", rarity: "★", rarityLabel: "Estrela prismática", variant: "commemorative prism-aurora" },
+];
 
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>'"]/g, (character) => ({
@@ -131,7 +139,21 @@ function rankingScreen() {
 function collectionScreen() {
   const unique = [...new Map(state.collection.map((person) => [person.id, person])).values()];
   const cards = unique.map((person) => `<div class="ranking-row"><span>◆</span><span>${escapeHtml(shortName(person.name))}<br><small>Chroma possuída</small></span><strong>×${state.collection.filter(({ id }) => id === person.id).length}</strong></div>`).join("");
-  return `<main class="screen"><div><p class="eyebrow">Suas Chromas</p><h1>Coleção</h1><p class="lead">Aqui ficam as Chromas recebidas. Você poderá equipar uma por pessoa sem alterar votos, ranking ou pareamentos.</p></div><section class="panel ranking-list">${cards || '<p class="empty">Nenhuma Chroma recebida ainda. Os duelos continuam usando a carta padrão.</p>'}</section></main>`;
+  const previewCard = ({ person, role, image, rarity, rarityLabel, variant }) => `<article class="chroma-card ${variant}" data-hologram tabindex="0" aria-label="${escapeHtml(person)}, ${escapeHtml(role)}. Mova o dedo ou incline o celular para ver o holograma.">
+    <span class="chroma-frame" aria-hidden="true"></span>
+    <span class="chroma-brand" aria-hidden="true">◆ PoliMatch</span>
+    <span class="chroma-rarity" aria-label="${escapeHtml(rarityLabel)}"><b aria-hidden="true">${rarity}</b></span>
+    <span class="chroma-portrait"><img src="${escapeHtml(image)}" alt="Retrato de ${escapeHtml(person)}"></span>
+    <span class="chroma-nameplate"><strong>${escapeHtml(person)}</strong><small>${escapeHtml(role)}</small></span>
+    <span class="holo-foil" aria-hidden="true"></span><span class="holo-pattern" aria-hidden="true"></span><span class="holo-glint" aria-hidden="true"></span>
+  </article>`;
+  const supreme = chromaPreviews.filter(({ variant }) => variant.startsWith("supreme")).map(previewCard).join("");
+  const commemorative = chromaPreviews.filter(({ variant }) => variant.startsWith("commemorative")).map(previewCard).join("");
+  return `<main class="screen collection-screen"><div><p class="eyebrow">Laboratório de Chromas</p><h1>Coleção</h1><p class="lead">Mova o dedo sobre cada carta. No celular, ative a inclinação para o reflexo acompanhar o aparelho.</p><button class="motion-button" id="enable-chroma-motion" type="button">Ativar efeito ao inclinar</button><p class="motion-status" id="motion-status" role="status"></p></div>
+    <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Suprema</p><h2>Três estrelas douradas</h2></div><span class="tier-symbol gold-stars">★★★</span></div><p>Ouro em relevo, feixes direcionais e dois desenhos holográficos exclusivos.</p><div class="chroma-gallery">${supreme}</div></section>
+    <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Comemorativa</p><h2>Estrela prismática</h2></div><span class="tier-symbol prism-star">★</span></div><p>Cristal óptico, espectro colorido e refração diferente em cada pessoa.</p><div class="chroma-gallery">${commemorative}</div></section>
+    <section><p class="eyebrow">Sua coleção</p><section class="panel ranking-list">${cards || '<p class="empty">Demonstração visual: estas Chromas ainda não foram adicionadas ao seu inventário.</p>'}</section></section>
+  </main>`;
 }
 
 function nav() {
@@ -276,6 +298,17 @@ function bindEvents() {
   document.querySelectorAll("[data-profile]").forEach((button) => button.addEventListener("click", () => showProfile(button.dataset.profile)));
   document.querySelectorAll("[data-screen]").forEach((button) => button.addEventListener("click", () => { state.screen = button.dataset.screen; state.result = ""; render(); }));
   document.querySelectorAll("[data-ranking-view]").forEach((button) => button.addEventListener("click", () => { state.rankingView = button.dataset.rankingView; state.rankingQuery = ""; state.rankingExpanded = false; render(); }));
+  if (state.screen === "collection") installChromaMotion(document);
+  document.querySelector("#enable-chroma-motion")?.addEventListener("click", async (event) => {
+    const status = document.querySelector("#motion-status");
+    try {
+      const enabled = await enableDeviceTilt();
+      event.currentTarget.textContent = enabled ? "Inclinação ativada" : "Use o dedo para mover o brilho";
+      if (status) status.textContent = enabled ? "Mova o celular para testar os hologramas." : "Este aparelho não liberou o sensor; o efeito pelo toque continua ativo.";
+    } catch {
+      if (status) status.textContent = "A inclinação não foi autorizada; o efeito pelo toque continua ativo.";
+    }
+  });
 }
 
 async function ensurePlayer() {

@@ -1,8 +1,8 @@
 {
   "status": "release-approved",
   "checks": [
-    { "name": "app-unit", "command": "npm test --prefix app", "result": "13 passed" },
-    { "name": "app-build", "command": "npm run build --prefix app", "result": "passed; JS 7.06 kB gzip; CSS 3.90 kB gzip" },
+    { "name": "app-unit", "command": "npm test --prefix app", "result": "19 passed, including hologram pointer and orientation calculations" },
+    { "name": "app-build", "command": "npm run build --prefix app", "result": "passed; JS 9.43 kB gzip; CSS 8.61 kB gzip" },
     { "name": "backend-unit", "command": "npm test --prefix back", "result": "12 passed" },
     { "name": "postgres-integration", "command": "npm run test:integration --prefix back", "result": "passed against isolated PostgreSQL 16" },
     { "name": "mobile-browser", "command": "Playwright at 390x844 with isolated API responses", "result": "passed; fifth choice remains in duel, +Elo feedback is visible, long press opens profile without voting, zero console errors" },
@@ -13,6 +13,7 @@
     { "name": "photo-source-package", "command": "node back/scripts/validate-photo-package.mjs outputs/polimatch-fotos-fontes-125", "result": "passed; 125 people, 375 unique image files, zero missing files, zero checksum mismatches" },
     { "name": "photo-source-zip", "command": "unzip -t outputs/polimatch-fotos-fontes-125.zip", "result": "passed; no compressed-data errors" },
     { "name": "treated-photo-package", "command": "file, shasum and CSV audit over polimatch-fotos-tratadas", "result": "passed structurally; 125 PNG and 125 JPG at 1200x1500; 82 cleared; 43 held back" },
-    { "name": "responsive-duel-layout", "command": "Playwright WebKit and Chromium at 390x844 and 1280x900", "result": "passed; cards stacked on mobile and side by side on desktop; metal rail, facets, corners, atmospheric and varnish layers render on both cards; profile opens and closes; zero page errors" }
+    { "name": "responsive-duel-layout", "command": "Playwright WebKit and Chromium at 390x844 and 1280x900", "result": "passed; cards stacked on mobile and side by side on desktop; metal rail, facets, corners, atmospheric and varnish layers render on both cards; profile opens and closes; zero page errors" },
+    { "name": "chroma-motion-preview", "command": "Playwright WebKit and Chromium at 390x844", "result": "passed; four preview Chromas and their images render; each uses an exclusive hologram pattern; pointer movement changes the light position; zero page errors" }
   ]
 }

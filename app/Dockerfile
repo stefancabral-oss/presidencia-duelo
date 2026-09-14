@@ -5,6 +5,7 @@ COPY app/package*.json app/
 RUN npm ci --prefix app
 
 COPY app app
+COPY shared shared
 
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}

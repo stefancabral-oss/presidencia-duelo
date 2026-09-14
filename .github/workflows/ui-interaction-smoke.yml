@@ -25,21 +25,21 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install front
-        run: npm ci --prefix front
+      - name: Install app
+        run: npm ci --prefix app
 
       - name: Install Playwright
-        run: npm install --no-save playwright@1.55.0 --prefix front
+        run: npm install --no-save playwright@1.55.0 --prefix app
 
       - name: Install browser
-        run: npx --prefix front playwright install --with-deps ${{ matrix.browser }}
+        run: npx --prefix app playwright install --with-deps ${{ matrix.browser }}
 
-      - name: Build front
-        run: npm run build --prefix front
+      - name: Build app
+        run: npm run build --prefix app
 
       - name: Start preview
         run: |
-          npm run preview --prefix front -- --host 127.0.0.1 --port 4173 > /tmp/polimatch-vite.log 2>&1 &
+          npm run preview --prefix app -- --host 127.0.0.1 --port 4173 > /tmp/polimatch-vite.log 2>&1 &
           echo $! > /tmp/polimatch-vite.pid
 
       - name: Wait for preview
@@ -54,4 +54,4 @@ jobs:
       - name: Run browser interaction smoke
         env:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
-        run: node front/e2e/interaction-smoke.mjs
+        run: node app/e2e/interaction-smoke.mjs

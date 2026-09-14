@@ -43,6 +43,8 @@ export const approvedChromas = rawApprovedChromas.map(([personId, person, look, 
   lookName,
   image: `/chromas/approved/${personId}_${slug}.jpg`,
   aiEdited: true,
+  distinctPhotoVerified: false,
+  inventoryEligible: false,
 }));
 
 export const preservedChromaAlternatives = [

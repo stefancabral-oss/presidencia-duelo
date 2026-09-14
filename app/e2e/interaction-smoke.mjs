@@ -155,9 +155,9 @@ try {
   if (process.env.POLIMATCH_E2E_BATCH_SCREENSHOT) {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_BATCH_SCREENSHOT });
   }
-  await page.getByRole("button", { name: "Ver as 35 Chromas" }).click();
+  await page.getByRole("button", { name: "Ver os 35 estudos" }).click();
   const approvedCards = page.locator(".approved-chroma-card");
-  if (await approvedCards.count() !== 35) throw new Error("O lote completo de 35 Chromas não foi aberto");
+  if (await approvedCards.count() !== 35) throw new Error("O lote completo de 35 estudos não foi aberto");
   if (await page.locator('.approved-chroma-card[aria-label*="inteligência artificial"]').count() !== 35) throw new Error("A transparência sobre edição por IA não acompanha todas as artes");
   for (let index = 0; index < await approvedCards.count(); index += 1) {
     const approvedCard = approvedCards.nth(index);

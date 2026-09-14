@@ -77,17 +77,22 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .candidate-card.is-selected { transform: translateY(-4px) scale(1.015); border-color: #ffe88d; box-shadow: 0 20px 44px rgb(0 10 7 / 52%), 0 0 34px rgb(255 218 92 / 48%); }
 .candidate-card:disabled { cursor: wait; filter: saturate(.7) brightness(.82); transform: scale(.985); }
 .candidate-card.is-selected:disabled { filter: saturate(1.08) brightness(1.02); transform: translateY(-4px) scale(1.015); }
-.candidate-card::after { content: ""; position: absolute; inset: 5px; pointer-events: none; border: 1px solid rgb(255 255 255 / 18%); border-radius: 12px; }
-.card-brand, .card-rarity { position: absolute; z-index: 2; top: 11px; color: white; font-size: .52rem; font-weight: 900; text-shadow: 0 1px 5px rgb(0 0 0 / 70%); }
+.candidate-card::before { content: ""; position: absolute; z-index: 4; inset: 5px; pointer-events: none; border-radius: 12px; background: linear-gradient(112deg, transparent 4% 35%, rgb(255 255 255 / 3%) 39%, rgb(255 246 203 / 18%) 44%, rgb(255 255 255 / 4%) 49%, transparent 56% 100%), radial-gradient(ellipse at 18% 4%, rgb(255 255 255 / 18%), transparent 28%), repeating-linear-gradient(122deg, transparent 0 54px, rgb(232 206 126 / 2.8%) 55px 56px); background-position: 135% 0, 0 0, 0 0; background-size: 235% 100%, auto, auto; box-shadow: inset 0 1px rgb(255 255 255 / 24%), inset 0 -1px rgb(255 255 255 / 8%); opacity: .72; mix-blend-mode: screen; transition: background-position 500ms cubic-bezier(.22, 1, .36, 1), opacity 180ms ease; }
+.candidate-card:hover::before, .candidate-card.is-peeking::before { background-position: -20% 0, 0 0, 0 0; opacity: .9; }
+.candidate-card.is-selected::before { animation: varnish-confirm 640ms ease-out; }
+.candidate-card::after { content: ""; position: absolute; z-index: 5; inset: 5px; pointer-events: none; border: 1px solid rgb(255 255 255 / 18%); border-radius: 12px; box-shadow: inset 0 0 18px rgb(232 206 126 / 7%); }
+.card-brand, .card-rarity { position: absolute; z-index: 6; top: 11px; color: white; font-size: .52rem; font-weight: 900; text-shadow: 0 1px 5px rgb(0 0 0 / 70%); }
 .card-brand { left: 12px; }
 .card-rarity { right: 11px; width: 23px; height: 23px; display: grid; place-items: center; top: 9px; border: 1px solid rgb(231 199 98 / 75%); border-radius: 50%; color: var(--gold); background: rgb(2 31 24 / 78%); }
 .portrait { position: relative; min-height: 0; aspect-ratio: 4 / 5; overflow: hidden; display: grid; place-items: center; border-radius: 11px 11px 0 0; background: radial-gradient(circle at 50% 30%, #2f8d70, #063d30 72%); }
 .candidate-card .portrait { aspect-ratio: auto; }
+.candidate-card .portrait::after { content: ""; position: absolute; z-index: 2; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 48%, transparent 28%, rgb(2 55 41 / 7%) 50%, rgb(1 36 28 / 42%) 100%), linear-gradient(145deg, rgb(239 211 119 / 13%), transparent 27% 68%, rgb(0 25 19 / 24%)), repeating-linear-gradient(126deg, transparent 0 76px, rgb(232 206 126 / 3%) 77px 78px); box-shadow: inset 0 0 44px rgb(0 34 26 / 34%), inset 0 -22px 36px rgb(0 30 23 / 18%); mix-blend-mode: soft-light; }
 .portrait img { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; display: block; object-fit: cover; object-position: center top; }
 .portrait-fallback { position: absolute; inset: 0; display: grid; place-items: center; font-size: clamp(2rem, 10vw, 4rem); font-weight: 950; color: rgb(255 255 255 / 50%); }
 .candidate-copy { position: relative; z-index: 1; display: block; min-height: 0; padding: 9px 10px; border-radius: 0 0 11px 11px; background: linear-gradient(145deg, #fff, #efece4); }
 .candidate-copy strong { display: block; font-size: clamp(.85rem, 3.5vw, 1.08rem); line-height: 1.05; }
 .candidate-copy span { display: block; margin-top: 5px; color: #58645e; font-size: .69rem; line-height: 1.3; }
+@keyframes varnish-confirm { 0% { background-position: 150% 0, 0 0, 0 0; opacity: .68; } 46% { opacity: 1; } 100% { background-position: -30% 0, 0 0, 0 0; opacity: .78; } }
 .profile-button { min-height: 48px; padding: 7px 8px; border: 1px solid rgb(232 206 126 / 46%); border-radius: 13px; background: linear-gradient(180deg, rgb(8 72 56 / 78%), rgb(1 39 31 / 88%)); color: #f6df91; box-shadow: inset 0 1px rgb(255 255 255 / 9%), 0 8px 18px rgb(0 17 13 / 18%); font-size: .68rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; }
 .profile-button:hover { border-color: rgb(249 228 152 / 72%); box-shadow: inset 0 1px rgb(255 255 255 / 12%), 0 8px 22px rgb(0 17 13 / 24%), 0 0 14px rgb(212 175 55 / 10%); }
 .profile-button small { display: block; margin-top: 2px; color: #aabbb3; font-size: .52rem; font-weight: 700; letter-spacing: .02em; text-transform: none; }

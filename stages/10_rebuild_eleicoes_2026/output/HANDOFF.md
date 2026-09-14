@@ -37,6 +37,7 @@ Estado: versão de teste aprovada para publicação
 - O pacote de 125 fotos tratadas foi auditado: dimensões e arquivos estão íntegros, mas o relatório contém 17 revisões manuais, 20 flags técnicas e 19 flags de licença.
 - Somente 82 retratos sem qualquer flag foram integrados à prévia; 43 permanecem em fallback para impedir publicação acidental de pessoa errada, baixa qualidade ou licença pendente.
 - O duelo móvel foi reorganizado em duas cartas grandes empilhadas; em desktop, as duas cartas permanecem grandes e lado a lado.
+- Cada carta recebeu uma camada atmosférica entre retrato e moldura, integrando as bordas à malaquita, e uma última camada de verniz que cobre foto, placa e estrutura com reflexo controlado.
 - Capturas de QA em WebKit foram preservadas em `mobile-stacked-photo-qa.png` e `desktop-photo-qa.png`.
 - O primeiro preview de dez retratos em caricatura editorial foi registrado como direção operacional, aguardando os arquivos individuais.
 - O primeiro acesso ao duelo agora apresenta uma explicação curta e descontraída; depois de concluída, ela não reaparece no mesmo navegador.

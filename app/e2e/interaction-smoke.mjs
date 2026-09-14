@@ -122,9 +122,9 @@ try {
   for (const variant of ["supreme-rays", "supreme-rings", "prism-shards", "prism-aurora"]) {
     if (await page.locator(`.${variant}`).count() !== 1) throw new Error(`O holograma ${variant} não é exclusivo`);
   }
-  await page.waitForFunction(() => [...document.querySelectorAll(".chroma-portrait img")].every((image) => image.complete && image.naturalWidth > 0));
-  const previewImagesReady = await page.locator(".chroma-portrait img").evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0));
-  if (!previewImagesReady) throw new Error("Os retratos demonstrativos das Chromas não carregaram");
+  await page.waitForFunction(() => [...document.querySelectorAll(".chroma-art")].every((image) => image.complete && image.naturalWidth > 0));
+  const previewImagesReady = await page.locator(".chroma-art").evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0));
+  if (!previewImagesReady) throw new Error("As artes completas das Chromas não carregaram");
   const chromaBox = await chromaCards.first().boundingBox();
   if (!chromaBox) throw new Error("A primeira Chroma não possui área visível");
   await page.mouse.move(chromaBox.x + chromaBox.width * .82, chromaBox.y + chromaBox.height * .25);

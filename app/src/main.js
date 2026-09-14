@@ -32,10 +32,10 @@ const state = {
 let resultTimer;
 
 const chromaPreviews = [
-  { person: "Lula", role: "Chroma Suprema", image: "/chromas/lula-malachite-preview.jpg", rarity: "★★★", rarityLabel: "Três estrelas douradas", variant: "supreme supreme-rays" },
-  { person: "Renan Santos", role: "Chroma Suprema", image: "/chromas/renan-santos-malachite-preview.jpg", rarity: "★★★", rarityLabel: "Três estrelas douradas", variant: "supreme supreme-rings" },
-  { person: "Lula", role: "Chroma Comemorativa", image: "/chromas/lula-malachite-preview.jpg", rarity: "★", rarityLabel: "Estrela prismática", variant: "commemorative prism-shards" },
-  { person: "Renan Santos", role: "Chroma Comemorativa", image: "/chromas/renan-santos-malachite-preview.jpg", rarity: "★", rarityLabel: "Estrela prismática", variant: "commemorative prism-aurora" },
+  { person: "Lula", role: "Chroma Suprema", image: "/chromas/rendered/lula-supreme-3star-v1.jpg", variant: "supreme supreme-rays" },
+  { person: "Renan Santos", role: "Chroma Suprema", image: "/chromas/rendered/renan-santos-supreme-3star-v1.jpg", variant: "supreme supreme-rings" },
+  { person: "Lula", role: "Chroma Comemorativa", image: "/chromas/rendered/lula-commemorative-prism-v1.jpg", variant: "commemorative prism-shards" },
+  { person: "Renan Santos", role: "Chroma Comemorativa", image: "/chromas/rendered/renan-santos-commemorative-prism-v1.jpg", variant: "commemorative prism-aurora" },
 ];
 
 function escapeHtml(value = "") {
@@ -139,12 +139,8 @@ function rankingScreen() {
 function collectionScreen() {
   const unique = [...new Map(state.collection.map((person) => [person.id, person])).values()];
   const cards = unique.map((person) => `<div class="ranking-row"><span>◆</span><span>${escapeHtml(shortName(person.name))}<br><small>Chroma possuída</small></span><strong>×${state.collection.filter(({ id }) => id === person.id).length}</strong></div>`).join("");
-  const previewCard = ({ person, role, image, rarity, rarityLabel, variant }) => `<article class="chroma-card ${variant}" data-hologram tabindex="0" aria-label="${escapeHtml(person)}, ${escapeHtml(role)}. Mova o dedo ou incline o celular para ver o holograma.">
-    <span class="chroma-frame" aria-hidden="true"></span>
-    <span class="chroma-brand" aria-hidden="true">◆ PoliMatch</span>
-    <span class="chroma-rarity" aria-label="${escapeHtml(rarityLabel)}"><b aria-hidden="true">${rarity}</b></span>
-    <span class="chroma-portrait"><img src="${escapeHtml(image)}" alt="Retrato de ${escapeHtml(person)}"></span>
-    <span class="chroma-nameplate"><strong>${escapeHtml(person)}</strong><small>${escapeHtml(role)}</small></span>
+  const previewCard = ({ person, role, image, variant }) => `<article class="chroma-card ${variant}" data-hologram tabindex="0" aria-label="${escapeHtml(person)}, ${escapeHtml(role)}. Mova o dedo ou incline o celular para ver o holograma.">
+    <img class="chroma-art" src="${escapeHtml(image)}" alt="${escapeHtml(role)} de ${escapeHtml(person)}" width="530" height="742">
     <span class="holo-foil" aria-hidden="true"></span><span class="holo-pattern" aria-hidden="true"></span><span class="holo-glint" aria-hidden="true"></span>
   </article>`;
   const supreme = chromaPreviews.filter(({ variant }) => variant.startsWith("supreme")).map(previewCard).join("");

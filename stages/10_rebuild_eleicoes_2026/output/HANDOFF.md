@@ -48,9 +48,14 @@ Estado: revisão visual em andamento
 - A busca do ranking ignora acentos e foi validada no viewport móvel.
 - A Coleção recebeu um laboratório visual com quatro Chromas demonstrativas: Lula e Renan Santos em Suprema de três estrelas e Comemorativa de estrela prismática.
 - As quatro cartas usam hologramas distintos: feixes dourados, anéis metálicos, fragmentos prismáticos e aurora espectral.
-- Reflexo e perspectiva respondem ao ponteiro/toque; no celular, um botão solicita a permissão necessária para acompanhar a inclinação do aparelho.
+- O reflexo responde ao ponteiro/toque; no celular, um botão solicita a permissão necessária para acompanhar a inclinação do aparelho.
 - O movimento é neutralizado quando `prefers-reduced-motion` está ativo e as demonstrações continuam separadas do inventário real.
 - A captura `chroma-collection-mobile-qa.png` registra a prévia no viewport de iPhone.
+- A primeira tentativa de reproduzir o acabamento premium apenas com CSS foi rejeitada após comparação direta com os mockups aprovados.
+- O laboratório passou a usar quatro artes completas renderizadas: Lula e Renan Santos em Suprema de três estrelas e Comemorativa prismática; moldura, retrato, raridade e placa agora pertencem à própria arte.
+- O app aplica somente verniz e trajetórias leves de brilho sobre as artes, preservando rosto, nome e símbolos no Safari móvel.
+- As imagens de produção da prévia foram pré-dimensionadas em 530 × 742 e JPEG de alta qualidade para evitar moiré na redução do WebKit e manter carregamento móvel controlado.
+- A captura `chroma-collection-mobile-qa-v2.png` registra a nova composição no viewport de iPhone com as quatro artes completas.
 
 ## Pendente
 
@@ -66,4 +71,4 @@ Estado: revisão visual em andamento
 
 ## Human gate
 
-Status: usuário solicitou em 14/09/2026 que as Chromas fossem colocadas no app para avaliação; implementação demonstrativa pronta, aguardando avaliação visual em uso real.
+Status: usuário autorizou em 14/09/2026 a reconstrução após rejeitar a imitação em CSS; nova implementação demonstrativa pronta, aguardando avaliação visual em uso real. Não publicada.

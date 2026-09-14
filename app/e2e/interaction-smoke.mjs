@@ -6,20 +6,22 @@ if (!browserType) throw new Error(`Navegador não suportado: ${browserName}`);
 
 const candidates = [
   {
-    id: "ana-vilhena",
-    name: "Ana Vilhena",
-    displayName: "Ana Vilhena",
-    party: "Partido Exemplo",
-    role: "Pessoa pública",
-    bio: "Perfil editorial de teste.",
+    personId: 1,
+    id: "lula",
+    name: "Luiz Inácio Lula da Silva (Lula)",
+    displayName: "Lula",
+    party: "PT",
+    role: "Presidente da República",
+    bio: "Perfil editorial de teste do primeiro candidato.",
   },
   {
-    id: "henrique-tavares",
-    name: "Henrique Tavares",
-    displayName: "Henrique Tavares",
-    party: "Aliança Exemplo",
-    role: "Pessoa pública",
-    bio: "Perfil editorial de teste.",
+    personId: 3,
+    id: "renan-santos",
+    name: "Renan Santos",
+    displayName: "Renan Santos",
+    party: "Missão",
+    role: "Ativista e candidato à Presidência",
+    bio: "Perfil editorial de teste do segundo candidato.",
   },
 ];
 
@@ -69,6 +71,13 @@ try {
   await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /Eleições 2026/ }).click();
   await page.getByRole("button", { name: "Bora duelar" }).click();
+  const mobileCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
+    const box = card.getBoundingClientRect();
+    return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };
+  }));
+  if (mobileCards.length !== 2 || Math.abs(mobileCards[0].left - mobileCards[1].left) > 2 || mobileCards[1].top <= mobileCards[0].bottom) {
+    throw new Error("As cartas não ficaram empilhadas no viewport móvel");
+  }
   if (process.env.POLIMATCH_E2E_DUEL_SCREENSHOT) {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_DUEL_SCREENSHOT, fullPage: true });
   }
@@ -97,8 +106,19 @@ try {
   await page.getByText("1 duelo confirmado").waitFor();
   await page.getByText("Mais recusados").waitFor();
   const rejected = await page.locator(".ranking-highlight-rejected").innerText();
-  if (!rejected.includes("Henrique Tavares") || !rejected.includes("−1")) {
+  if (!rejected.includes("Renan Santos") || !rejected.includes("−1")) {
     throw new Error("O voto negativo não apareceu no resumo do ranking");
+  }
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.locator('[data-screen="topics"]').click();
+  await page.getByRole("button", { name: /Eleições 2026/ }).click();
+  const desktopCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
+    const box = card.getBoundingClientRect();
+    return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };
+  }));
+  if (desktopCards.length !== 2 || Math.abs(desktopCards[0].top - desktopCards[1].top) > 2 || desktopCards[1].left <= desktopCards[0].right) {
+    throw new Error("As cartas não ficaram lado a lado no viewport desktop");
   }
 
   if (process.env.POLIMATCH_E2E_SCREENSHOT) {

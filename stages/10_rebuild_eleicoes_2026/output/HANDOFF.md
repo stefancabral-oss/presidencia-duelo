@@ -34,6 +34,10 @@ Estado: versão de teste aprovada para publicação
 - Os 125 perfis editoriais foram convertidos para o catálogo canônico com 507 referências e estado `pending`.
 - As cinco partes de Chromas foram validadas: 1.500 registros, 12 por pessoa, todos mantidos como `draft` e separados da carta padrão.
 - O gate encontrou 702 Chromas com URL de fonte e 798 ainda dependentes de uma fonte verificável.
+- O pacote de 125 fotos tratadas foi auditado: dimensões e arquivos estão íntegros, mas o relatório contém 17 revisões manuais, 20 flags técnicas e 19 flags de licença.
+- Somente 82 retratos sem qualquer flag foram integrados à prévia; 43 permanecem em fallback para impedir publicação acidental de pessoa errada, baixa qualidade ou licença pendente.
+- O duelo móvel foi reorganizado em duas cartas grandes empilhadas; em desktop, as duas cartas permanecem grandes e lado a lado.
+- Capturas de QA em WebKit foram preservadas em `mobile-stacked-photo-qa.png` e `desktop-photo-qa.png`.
 - O primeiro preview de dez retratos em caricatura editorial foi registrado como direção operacional, aguardando os arquivos individuais.
 - O primeiro acesso ao duelo agora apresenta uma explicação curta e descontraída; depois de concluída, ela não reaparece no mesmo navegador.
 - O pareamento usa um baralho embaralhado por sessão, cobrindo o elenco antes de repetir pessoas e evitando que alguém reapareça imediatamente no duelo seguinte.
@@ -45,6 +49,7 @@ Estado: versão de teste aprovada para publicação
 
 - Gate visual do shell e do primeiro lote de retratos.
 - Tratamento visual e seleção final das fotografias entregues.
+- Corrigir ou liberar as 43 fotografias bloqueadas pela auditoria; Cármen Lúcia e Camilo Santana estão explicitamente com pessoa errada e Antonio Rueda depende de autorização.
 - Revisão humana das afirmações editoriais e correção dos 54 retratos principais fora do gate.
 - Receber os dez retratos individuais do primeiro lote; a colagem de preview não será cortada para produção.
 - Resolver as 798 fontes ausentes antes de disponibilizar as respectivas Chromas.

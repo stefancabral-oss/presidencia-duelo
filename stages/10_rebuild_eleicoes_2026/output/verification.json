@@ -11,6 +11,8 @@
     { "name": "content-catalog", "command": "npm run build:catalog --prefix back", "result": "passed; 125 candidates, 100 political profiles, 25 influencers, 507 profile sources" },
     { "name": "chroma-draft-catalog", "command": "npm run build:catalog --prefix back", "result": "passed; 1500 drafts, 12 per person, 702 source URLs, 798 sources still required" },
     { "name": "photo-source-package", "command": "node back/scripts/validate-photo-package.mjs outputs/polimatch-fotos-fontes-125", "result": "passed; 125 people, 375 unique image files, zero missing files, zero checksum mismatches" },
-    { "name": "photo-source-zip", "command": "unzip -t outputs/polimatch-fotos-fontes-125.zip", "result": "passed; no compressed-data errors" }
+    { "name": "photo-source-zip", "command": "unzip -t outputs/polimatch-fotos-fontes-125.zip", "result": "passed; no compressed-data errors" },
+    { "name": "treated-photo-package", "command": "file, shasum and CSV audit over polimatch-fotos-tratadas", "result": "passed structurally; 125 PNG and 125 JPG at 1200x1500; 82 cleared; 43 held back" },
+    { "name": "responsive-duel-layout", "command": "Playwright WebKit and Chromium at 390x844 and 1280x900", "result": "passed; cards stacked on mobile and side by side on desktop; profile opens and closes; zero page errors" }
   ]
 }

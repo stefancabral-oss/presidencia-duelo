@@ -2,6 +2,7 @@ import "./styles.css";
 import { createPlayer, loadCandidates, loadPlayerRanking, loadRanking, submitVote } from "./api.js";
 import { catalogForTopic, displayRanking, filterRanking, initials, nextBalancedPair, rankingForCatalog, rankingHighlights, shortName, voteFeedback } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
+import { candidatePhoto } from "./photos.js";
 
 const app = document.querySelector("#app");
 const state = {
@@ -58,7 +59,7 @@ function profileSection(title, content, className = "") {
 }
 
 function portrait(candidate) {
-  const photo = candidate.photo && !candidate.photo.startsWith("/candidates/") ? candidate.photo : "";
+  const photo = candidatePhoto(candidate);
   return `<div class="portrait">
     <span class="portrait-fallback">${escapeHtml(initials(candidate.name))}</span>
     ${photo ? `<img src="${escapeHtml(photo)}" alt="Foto de ${escapeHtml(candidate.name)}" onerror="this.remove()">` : ""}
@@ -99,7 +100,7 @@ function topicsScreen() {
 }
 
 function duelScreen() {
-  return `<main class="screen">
+  return `<main class="screen duel-screen">
     <div class="duel-head"><div><p class="eyebrow">Eleições 2026</p><h1>Quem você prefere?</h1></div><span class="progress-pill">${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}</span></div>
     ${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}
     <div class="arena">${card(state.pair[0])}<span class="versus">OU</span>${card(state.pair[1])}</div>

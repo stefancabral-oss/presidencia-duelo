@@ -1,7 +1,7 @@
 {
   "status": "visual-review-required",
   "checks": [
-    { "name": "app-unit", "command": "npm test --prefix app", "result": "21 passed, including 35 unique approved Chroma mappings, one preserved alternative, 125 stable portrait slots and remote-photo override" },
+    { "name": "app-unit", "command": "npm test --prefix app", "result": "23 passed, including final outlined brand asset integrity, PWA icon manifest, 35 unique approved Chroma mappings, one preserved alternative, 125 stable portrait slots and remote-photo override" },
     { "name": "app-build", "command": "npm run build --prefix app", "result": "passed; portrait gate reports 94 present and 31 pending; approved Chroma derivatives total approximately 4 MB; JS 10.84 kB gzip; CSS 9.08 kB gzip" },
     { "name": "backend-unit", "command": "npm test --prefix back", "result": "12 passed" },
     { "name": "postgres-integration", "command": "npm run test:integration --prefix back", "result": "passed against isolated PostgreSQL 16" },
@@ -17,6 +17,7 @@
     { "name": "chroma-motion-preview", "command": "Playwright WebKit and Chromium at 390x844", "result": "passed; four complete rendered Chroma artworks load; each keeps an exclusive light path; pointer movement changes the varnish position; zero page errors" },
     { "name": "chroma-safari-visual", "command": "WebKit screenshot at 390x844 after production build", "result": "passed technically; full artwork, names and rarity symbols remain legible without color corruption; screenshot saved as chroma-collection-mobile-qa-v2.png; human visual approval pending" },
     { "name": "basic-card-photo-slots", "command": "portrait validator plus Playwright WebKit and Chromium", "result": "passed; 125 deterministic replaceable slots, 94 photos present, 31 safe fallbacks, 35 user-edited portraits from Arquivo.zip applied, cache version per build, embedded card information and no external profile button; WebKit evidence saved as mobile-user-edited-photos-qa.png" },
-    { "name": "approved-chroma-batch", "command": "unit tests, production build and Playwright WebKit/Chromium with real scrolling", "result": "passed; 35 current-catalog portraits, six-card initial preview, complete expansion, all images decoded during scrolling, AI-edit disclosure, mobile stacked layout, desktop two-column layout and no page errors; evidence saved as chroma-approved-batch-mobile-qa.png and chroma-approved-batch-desktop-qa.png" }
+    { "name": "approved-chroma-batch", "command": "unit tests, production build and Playwright WebKit/Chromium with real scrolling", "result": "passed; 35 current-catalog portraits, six-card initial preview, complete expansion, all images decoded during scrolling, AI-edit disclosure, mobile stacked layout, desktop two-column layout and no page errors; evidence saved as chroma-approved-batch-mobile-qa.png and chroma-approved-batch-desktop-qa.png" },
+    { "name": "final-brand-kit", "command": "asset integrity tests, production build and Playwright WebKit at 390x844", "result": "passed; outlined production logo has no live text or external font dependency, manifest exposes official vector plus 192/512 icons, provisional brand diamonds were replaced in primary surfaces and no page errors occurred; evidence saved as final-brand-mobile-qa.png" }
   ]
 }

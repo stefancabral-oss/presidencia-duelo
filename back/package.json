@@ -3,9 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:catalog": "node scripts/build-content-catalog.mjs ../stages/10_rebuild_eleicoes_2026/input/polimatch-catalogo-125.json ../stages/10_rebuild_eleicoes_2026/input/polimatch-perfis-editoriais-125.json ../stages/10_rebuild_eleicoes_2026/output/chromas-catalog-draft.json ../shared/elections-2026.json ../stages/10_rebuild_eleicoes_2026/input/chromas-parte1-de-5.json ../stages/10_rebuild_eleicoes_2026/input/chromas-parte2-de-5.json ../stages/10_rebuild_eleicoes_2026/input/chromas-parte3-de-5.json ../stages/10_rebuild_eleicoes_2026/input/chromas-parte4-de-5.json ../stages/10_rebuild_eleicoes_2026/input/chromas-parte5-de-5.json",
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "test": "node --test src/*.test.js"
+    "test": "node --test src/*.test.js",
+    "test:integration": "node scripts/topic-store-smoke.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",

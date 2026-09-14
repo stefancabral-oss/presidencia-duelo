@@ -1,16 +1,48 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-import { decorateCandidate } from "../../shared/topics.js";
-import { enrichCandidateEditorial } from "../../shared/editorial.js";
-import PERSON_PROFILES from "../../shared/person-profiles.json" with { type: "json" };
+import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 
-const root = dirname(fileURLToPath(import.meta.url));
-const file = join(root, "../../shared/candidates.json");
+export const TOPICS = Object.freeze([
+  {
+    id: "eleicoes-2026",
+    name: "Eleições 2026",
+    description: "Pessoas que participam ou influenciam diretamente a disputa eleitoral de 2026.",
+    status: "pilot",
+    active: true,
+  },
+  {
+    id: "influenciadores",
+    name: "Influenciadores",
+    description: "Pessoas conhecidas que influenciam escolhas eleitorais.",
+    status: "coming-soon",
+    active: false,
+  },
+  {
+    id: "escandalos",
+    name: "Escândalos e acontecimentos",
+    description: "Curadorias especiais organizadas por caso e período.",
+    status: "coming-soon",
+    active: false,
+  },
+]);
 
-const profilesById = new Map(PERSON_PROFILES.map((profile) => [profile.id, profile]));
+export const CANDIDATES = Object.freeze(CATALOG.map((person) => Object.freeze({
+  ...person,
+  office: person.office || "",
+  party: person.party || "",
+  location: person.location || "",
+  bio: person.bio || person.summary || "",
+  facts: Object.freeze(Array.isArray(person.facts) ? person.facts : []),
+  sources: Object.freeze(Array.isArray(person.sources) ? person.sources : []),
+  reviewStatus: person.reviewStatus || "pending",
+  topicIds: person.group === "politica" ? ["eleicoes-2026"] : ["influenciadores"],
+})));
 
-export const CANDIDATES = JSON.parse(readFileSync(file, "utf8"))
-  .map((candidate) => enrichCandidateEditorial(candidate, profilesById.get(candidate.id)))
-  .map(decorateCandidate);
-export const CANDIDATE_IDS = new Set(CANDIDATES.map((c) => c.id));
+export const CANDIDATES_BY_ID = new Map(CANDIDATES.map((candidate) => [candidate.id, candidate]));
+export const TOPICS_BY_ID = new Map(TOPICS.map((topic) => [topic.id, topic]));
+
+export function candidatesForTopic(topicId) {
+  return CANDIDATES.filter((candidate) => candidate.topicIds.includes(topicId));
+}
+
+export function candidateBelongsToTopic(candidateId, topicId) {
+  return CANDIDATES_BY_ID.get(candidateId)?.topicIds.includes(topicId) === true;
+}

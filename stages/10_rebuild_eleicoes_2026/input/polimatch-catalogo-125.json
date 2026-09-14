@@ -1,0 +1,677 @@
+[
+  {
+    "nome": "Luiz Inácio Lula da Silva (Lula)",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Flávio Bolsonaro",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Renan Santos",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Ronaldo Caiado",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Augusto Cury",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Romeu Zema",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Pablo Marçal",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Geraldo Alckmin",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Gilberto Kassab",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Eduardo Girão",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Tarcísio de Freitas",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Fernando Haddad",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Jerônimo Rodrigues",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "ACM Neto",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Elmano de Freitas",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Ciro Gomes",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "João Campos",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Raquel Lyra",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Douglas Ruas",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Eduardo Paes",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Mateus Simões",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Ratinho Júnior",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Eduardo Leite",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Cláudio Castro",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Márcio França",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Alexandre Kalil",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Hana Ghassan",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Michelle Bolsonaro",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Helder Barbalho",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Mauro Mendes",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Gleisi Hoffmann",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Arthur Lira",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Marina Silva",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Simone Tebet",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Rui Costa",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Hugo Motta",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Davi Alcolumbre",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Renan Calheiros",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Nikolas Ferreira",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Carlos Portinho",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Carlos Fávaro",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Bia Kicis",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Erika Kokay",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Leila do Vôlei",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Cid Gomes",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Lindbergh Farias",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Janja",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Guilherme Boulos",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Wellington Dias",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Alexandre Padilha",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Anielle Franco",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Sônia Guajajara",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Alexandre de Moraes",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Gilmar Mendes",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Cármen Lúcia",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Dias Toffoli",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Luiz Fux",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Edson Fachin",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "André Mendonça",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Nunes Marques",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Cristiano Zanin",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Flávio Dino",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Jair Bolsonaro",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Eduardo Bolsonaro",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Carlos Bolsonaro",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Valdemar Costa Neto",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Edinho Silva",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Antonio Rueda",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Ciro Nogueira",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Marcos Pereira",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Baleia Rossi",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Rodrigo Pacheco",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Rogério Marinho",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Datena",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Reinaldo Azevedo",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "William Bonner",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Vera Magalhães",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Rachel Sheherazade",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Kim Kataguiri",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "André Janones",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Felipe Neto",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Jones Manoel",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Carla Zambelli",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Tabata Amaral",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Glauber Braga",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Sérgio Moro",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Gabriel Galípolo",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Roberto Campos Neto",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Armínio Fraga",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Paulo Guedes",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Silas Malafaia",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Edir Macedo",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Damares Alves",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Delegado Éder Mauro",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Deltan Dallagnol",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Randolfe Rodrigues",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Camilo Santana",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Ricardo Nunes",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Clécio Luís",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Jorginho Mello",
+    "grupo": "politica",
+    "origem": "lista_100"
+  },
+  {
+    "nome": "Anitta",
+    "grupo": "influencia_debate",
+    "area": "Música",
+    "por_que": "Posicionamentos eleitorais e sociais com alcance massivo (TikTok/Instagram); referência pop no debate.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Neymar Jr.",
+    "grupo": "influencia_debate",
+    "area": "Esporte",
+    "por_que": "Apoios e gestos públicos viram pauta nacional; reconhecimento quase universal fora da política.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Gusttavo Lima",
+    "grupo": "influencia_debate",
+    "area": "Música",
+    "por_que": "Sertanejo com peso eleitoral; pré-candidaturas e alinhamentos repercutem no Centro-Oeste/Sudeste.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Ludmilla",
+    "grupo": "influencia_debate",
+    "area": "Música",
+    "por_que": "Voz LGBTQIA+/periferia; apoios e críticas políticas amplificadas nas redes.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "José Aldo",
+    "grupo": "influencia_debate",
+    "area": "Luta (MMA)",
+    "por_que": "Ícone do UFC BR; declarações e campanhas atravessam o público masculino jovem.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Vitor Belfort",
+    "grupo": "influencia_debate",
+    "area": "Luta (MMA)",
+    "por_que": "Presença recorrente em atos e mídia alinhada a pautas conservadoras.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Popó (Acelino Freitas)",
+    "grupo": "influencia_debate",
+    "area": "Boxe / política",
+    "por_que": "Campeão + trajetória parlamentar; ponte esporte–urna.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Luciano Huck",
+    "grupo": "influencia_debate",
+    "area": "TV",
+    "por_que": "Audiência de massa e flertes históricos com presidenciável; agenda social na Globo.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Ratinho (apresentador)",
+    "grupo": "influencia_debate",
+    "area": "TV",
+    "por_que": "Opinião diária no SBT molda senso comum; pai do governador Ratinho Júnior.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Casimiro",
+    "grupo": "influencia_debate",
+    "area": "Streamer / esporte",
+    "por_que": "Gerações Z/Y; comentários políticos pontuais com viralização enorme.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Whindersson Nunes",
+    "grupo": "influencia_debate",
+    "area": "Humor / YouTube",
+    "por_que": "Humorista com base popular; posicionamentos geram onda nacional.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Bruno Gagliasso",
+    "grupo": "influencia_debate",
+    "area": "TV / cinema",
+    "por_que": "Ativismo e apoios eleitorais frequentes no entretenimento.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Wagner Moura",
+    "grupo": "influencia_debate",
+    "area": "Cinema",
+    "por_que": "Narcos/Elite Squad; voz progressista com repercussão internacional.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Gregório Duvivier",
+    "grupo": "influencia_debate",
+    "area": "Humor / Porta dos Fundos",
+    "por_que": "Sátira política contínua; alvo e ator do debate cultural.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Pabllo Vittar",
+    "grupo": "influencia_debate",
+    "area": "Música",
+    "por_que": "Símbolo LGBTQIA+; presença em campanhas e contrapúblicos.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Emicida",
+    "grupo": "influencia_debate",
+    "area": "Música",
+    "por_que": "Rap e intelectualidade negra; agenda de direitos e memória.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Lázaro Ramos",
+    "grupo": "influencia_debate",
+    "area": "TV / teatro",
+    "por_que": "Representatividade e falas públicas sobre raça e democracia.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Fernanda Torres",
+    "grupo": "influencia_debate",
+    "area": "Cinema / TV",
+    "por_que": "Projeção global recente; entrevistas viram pauta política-cultural.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Silvia Abravanel",
+    "grupo": "influencia_debate",
+    "area": "TV",
+    "por_que": "Herdeira SBT; candidatura 2026 citada na imprensa (inclusão/PCD).",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Geraldo Luís",
+    "grupo": "influencia_debate",
+    "area": "TV / jornalismo popular",
+    "por_que": "Apresentador popular com candidatura federal citada em 2026.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Antonia Fontenelle",
+    "grupo": "influencia_debate",
+    "area": "YouTube / atriz",
+    "por_que": "Influenciadora polarizante; filiação/candidatura reverbera na direita digital.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Monark (Bruno Aiub)",
+    "grupo": "influencia_debate",
+    "area": "Podcast / digital",
+    "por_que": "Marco da polarização pós-Flow; ainda referência (mesmo contestada) do debate.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Marta",
+    "grupo": "influencia_debate",
+    "area": "Futebol",
+    "por_que": "Maior jogadora BR; pautas de gênero/esporte com peso simbólico nacional.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Edmundo",
+    "grupo": "influencia_debate",
+    "area": "Futebol / TV",
+    "por_que": "Ex-jogador e comentarista; nome cotado em 2026 entre famosos na urna.",
+    "origem": "lista_25"
+  },
+  {
+    "nome": "Gracyanne Barbosa",
+    "grupo": "influencia_debate",
+    "area": "Fitness / digital",
+    "por_que": "Influência de massa + filiação partidária/Republicanos citada para 2026.",
+    "origem": "lista_25"
+  }
+]

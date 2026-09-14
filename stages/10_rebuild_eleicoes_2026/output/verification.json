@@ -1,0 +1,16 @@
+{
+  "status": "release-approved",
+  "checks": [
+    { "name": "app-unit", "command": "npm test --prefix app", "result": "13 passed" },
+    { "name": "app-build", "command": "npm run build --prefix app", "result": "passed; JS 7.06 kB gzip; CSS 3.90 kB gzip" },
+    { "name": "backend-unit", "command": "npm test --prefix back", "result": "12 passed" },
+    { "name": "postgres-integration", "command": "npm run test:integration --prefix back", "result": "passed against isolated PostgreSQL 16" },
+    { "name": "mobile-browser", "command": "Playwright at 390x844 with isolated API responses", "result": "passed; fifth choice remains in duel, +Elo feedback is visible, long press opens profile without voting, zero console errors" },
+    { "name": "mobile-onboarding", "command": "Playwright at 390x844 with isolated API responses", "result": "passed; coach receives focus, closes with one action, does not reappear, next pair has no repeated person, zero console errors" },
+    { "name": "mobile-ranking", "command": "Playwright at 390x844 with 30 isolated ranking records", "result": "passed; podium renders, initial list stops at 25, full-list action is available, accent-insensitive search returns the expected person, zero console errors" },
+    { "name": "content-catalog", "command": "npm run build:catalog --prefix back", "result": "passed; 125 candidates, 100 political profiles, 25 influencers, 507 profile sources" },
+    { "name": "chroma-draft-catalog", "command": "npm run build:catalog --prefix back", "result": "passed; 1500 drafts, 12 per person, 702 source URLs, 798 sources still required" },
+    { "name": "photo-source-package", "command": "node back/scripts/validate-photo-package.mjs outputs/polimatch-fotos-fontes-125", "result": "passed; 125 people, 375 unique image files, zero missing files, zero checksum mismatches" },
+    { "name": "photo-source-zip", "command": "unzip -t outputs/polimatch-fotos-fontes-125.zip", "result": "passed; no compressed-data errors" }
+  ]
+}

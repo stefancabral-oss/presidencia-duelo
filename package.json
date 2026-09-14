@@ -2,16 +2,13 @@
   "name": "presidencia-duelo",
   "private": true,
   "type": "module",
-  "description": "Monorepo PoliMatch — front (Vite), back (Express) e app (PWA)",
+  "description": "PoliMatch — app Eleições 2026 e API Express/PostgreSQL",
   "scripts": {
-    "dev:front": "npm run dev --prefix front",
     "dev:back": "npm run dev --prefix back",
     "dev:app": "npm run dev --prefix app",
-    "build:front": "npm run build --prefix front",
     "build:app": "npm run build --prefix app",
     "start:back": "npm start --prefix back",
-    "test": "npm test --prefix front && npm test --prefix back && npm test --prefix app",
-    "build": "npm run build --prefix front && npm run build --prefix app",
-    "test:e2e:pwa": "node front/e2e/pwa-online-smoke.mjs && POLIMATCH_E2E_BROWSER=webkit node front/e2e/pwa-online-smoke.mjs"
+    "test": "npm test --prefix back && npm test --prefix app",
+    "build": "npm run build --prefix app"
   }
 }

@@ -69,6 +69,9 @@ try {
   await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /Eleições 2026/ }).click();
   await page.getByRole("button", { name: "Bora duelar" }).click();
+  if (process.env.POLIMATCH_E2E_DUEL_SCREENSHOT) {
+    await page.screenshot({ path: process.env.POLIMATCH_E2E_DUEL_SCREENSHOT, fullPage: true });
+  }
 
   const firstCard = page.locator(".candidate-card").first();
   const box = await firstCard.boundingBox();
@@ -85,6 +88,15 @@ try {
   await page.getByRole("button", { name: "Ranking" }).click();
   await page.getByRole("heading", { name: "Ranking" }).waitFor();
   await page.getByText("1 duelo confirmado").waitFor();
+  await page.getByText("Mais recusados").waitFor();
+  const rejected = await page.locator(".ranking-highlight-rejected").innerText();
+  if (!rejected.includes("Henrique Tavares") || !rejected.includes("−1")) {
+    throw new Error("O voto negativo não apareceu no resumo do ranking");
+  }
+
+  if (process.env.POLIMATCH_E2E_SCREENSHOT) {
+    await page.screenshot({ path: process.env.POLIMATCH_E2E_SCREENSHOT, fullPage: true });
+  }
 
   if (pageErrors.length) throw new Error(`Erros na página: ${pageErrors.join(" | ")}`);
   console.log(`${browserName}: duelo, pressão longa e ranking validados`);

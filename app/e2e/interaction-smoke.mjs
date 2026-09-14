@@ -1,6 +1,7 @@
 import { chromium, webkit } from "playwright";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
+const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
 const browserType = { chromium, webkit }[browserName];
 if (!browserType) throw new Error(`Navegador não suportado: ${browserName}`);
 
@@ -72,7 +73,7 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
 });
 
 try {
-  await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
+  await page.goto(appUrl, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /Eleições 2026/ }).click();
   await page.getByRole("button", { name: "Bora duelar" }).click();
   const mobileCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
@@ -125,19 +126,42 @@ try {
 
   await page.getByRole("button", { name: "Coleção" }).click();
   await page.getByRole("heading", { name: "Coleção" }).waitFor();
-  const chromaCards = page.locator("[data-hologram]");
+  const chromaCards = page.locator(".featured-chroma-card[data-hologram]");
   if (await chromaCards.count() !== 4) throw new Error("As quatro Chromas demonstrativas não foram renderizadas");
   for (const variant of ["supreme-rays", "supreme-rings", "prism-shards", "prism-aurora"]) {
     if (await page.locator(`.${variant}`).count() !== 1) throw new Error(`O holograma ${variant} não é exclusivo`);
   }
-  await page.waitForFunction(() => [...document.querySelectorAll(".chroma-art")].every((image) => image.complete && image.naturalWidth > 0));
-  const previewImagesReady = await page.locator(".chroma-art").evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0));
+  await page.waitForFunction(() => [...document.querySelectorAll(".featured-chroma-card .chroma-art")].every((image) => image.complete && image.naturalWidth > 0));
+  const previewImagesReady = await page.locator(".featured-chroma-card .chroma-art").evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0));
   if (!previewImagesReady) throw new Error("As artes completas das Chromas não carregaram");
   const chromaBox = await chromaCards.first().boundingBox();
   if (!chromaBox) throw new Error("A primeira Chroma não possui área visível");
-  await page.mouse.move(chromaBox.x + chromaBox.width * .82, chromaBox.y + chromaBox.height * .25);
+  await chromaCards.first().scrollIntoViewIfNeeded();
+  const visibleChromaBox = await chromaCards.first().boundingBox();
+  if (!visibleChromaBox) throw new Error("A primeira Chroma não pode ser trazida à área visível");
+  await page.mouse.move(visibleChromaBox.x + visibleChromaBox.width * .82, visibleChromaBox.y + visibleChromaBox.height * .25);
   const lightPosition = await chromaCards.first().evaluate((card) => card.style.getPropertyValue("--holo-x"));
   if (lightPosition === "50.0%" || !lightPosition) throw new Error("O holograma não respondeu ao movimento do ponteiro");
+  const initialApprovedCards = page.locator(".approved-chroma-card");
+  if (await initialApprovedCards.count() !== 6) throw new Error("A seleção inicial do lote Chroma não possui seis cartas");
+  await initialApprovedCards.first().scrollIntoViewIfNeeded();
+  await initialApprovedCards.first().locator(".chroma-art").waitFor({ state: "visible" });
+  await initialApprovedCards.first().locator(".chroma-art").evaluate((image) => image.decode());
+  if (!await initialApprovedCards.first().locator(".chroma-art").evaluate((image) => image.complete && image.naturalWidth > 0)) throw new Error("A primeira arte aprovada não carregou");
+  if (process.env.POLIMATCH_E2E_BATCH_SCREENSHOT) {
+    await page.screenshot({ path: process.env.POLIMATCH_E2E_BATCH_SCREENSHOT });
+  }
+  await page.getByRole("button", { name: "Ver as 35 Chromas" }).click();
+  const approvedCards = page.locator(".approved-chroma-card");
+  if (await approvedCards.count() !== 35) throw new Error("O lote completo de 35 Chromas não foi aberto");
+  if (await page.locator('.approved-chroma-card[aria-label*="inteligência artificial"]').count() !== 35) throw new Error("A transparência sobre edição por IA não acompanha todas as artes");
+  for (let index = 0; index < await approvedCards.count(); index += 1) {
+    const approvedCard = approvedCards.nth(index);
+    await approvedCard.scrollIntoViewIfNeeded();
+    await approvedCard.locator(".chroma-art").evaluate((image) => image.decode());
+    const imageReady = await approvedCard.locator(".chroma-art").evaluate((image) => image.complete && image.naturalWidth > 0);
+    if (!imageReady) throw new Error(`A arte Chroma ${index + 1} não carregou durante a rolagem`);
+  }
   if (process.env.POLIMATCH_E2E_COLLECTION_SCREENSHOT) {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_COLLECTION_SCREENSHOT, fullPage: true });
   }
@@ -151,6 +175,21 @@ try {
   }));
   if (desktopCards.length !== 2 || Math.abs(desktopCards[0].top - desktopCards[1].top) > 2 || desktopCards[1].left <= desktopCards[0].right) {
     throw new Error("As cartas não ficaram lado a lado no viewport desktop");
+  }
+
+  await page.getByRole("button", { name: "Coleção" }).click();
+  const desktopApproved = page.locator(".approved-chroma-card");
+  await desktopApproved.first().scrollIntoViewIfNeeded();
+  await Promise.all([0, 1].map((index) => desktopApproved.nth(index).locator(".chroma-art").evaluate((image) => image.decode())));
+  const desktopApprovedBoxes = await desktopApproved.evaluateAll((cards) => cards.slice(0, 2).map((card) => {
+    const box = card.getBoundingClientRect();
+    return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };
+  }));
+  if (desktopApprovedBoxes.length !== 2 || Math.abs(desktopApprovedBoxes[0].top - desktopApprovedBoxes[1].top) > 2 || desktopApprovedBoxes[1].left <= desktopApprovedBoxes[0].right) {
+    throw new Error("As Chromas aprovadas não ficaram lado a lado no desktop");
+  }
+  if (process.env.POLIMATCH_E2E_BATCH_DESKTOP_SCREENSHOT) {
+    await page.screenshot({ path: process.env.POLIMATCH_E2E_BATCH_DESKTOP_SCREENSHOT });
   }
 
   if (process.env.POLIMATCH_E2E_SCREENSHOT) {

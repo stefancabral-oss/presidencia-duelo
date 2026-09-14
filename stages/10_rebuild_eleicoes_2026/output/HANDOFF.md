@@ -64,6 +64,13 @@ Estado: revisão visual em andamento
 - O lote pessoal `Arquivo.zip` substituiu os retratos de 35 pessoas do catálogo, preservando exatamente o tratamento escolhido pelo usuário em conversões JPG sRGB 800 × 1000, sem ampliação artificial.
 - O mapeamento auditável está em `docs/design/USER_EDITED_PHOTOS.md`; `Jair Bolsonaro Filho.tif` foi preservado sem aplicação porque retrata Jair Renan, ausente do catálogo, e a segunda alternativa de Flávio Bolsonaro permaneceu como opção não aplicada.
 - A captura WebKit `mobile-user-edited-photos-qa.png` comprova as fotos enviadas pelo usuário nos cards de Lula e Renan Santos, mantendo informação, malaquita e verniz separados da imagem-fonte.
+- O primeiro lote aprovado de retratos Chroma foi integrado ao laboratório da Coleção: 35 pessoas do catálogo, seis exemplos iniciais e abertura opcional da lista completa.
+- A carta básica continua sendo o padrão, e as novas artes permanecem fora do inventário, do sorteio e do equipamento nesta etapa.
+- Os mestres em PNG foram preservados fora do app; derivados móveis em JPEG 600 × 750 somam aproximadamente 4 MB e carregam sob demanda.
+- A segunda arte de Flávio Bolsonaro foi preservada como alternativa sem criar uma pessoa duplicada; Jair Renan permaneceu fora do app por não integrar o catálogo atual.
+- Cada retrato Chroma informa que é arte editada por IA e recebe moldura, placa, verniz e holograma como camadas independentes da interface.
+- WebKit e Chromium abriram as 35 imagens durante rolagem real; a prévia mantém uma carta grande por linha no celular e duas por linha no desktop.
+- As capturas `chroma-approved-batch-mobile-qa.png` e `chroma-approved-batch-desktop-qa.png` registram o lote dentro da Coleção.
 
 ## Pendente
 
@@ -75,9 +82,9 @@ Estado: revisão visual em andamento
 - Resolver as 798 fontes ausentes antes de disponibilizar as respectivas Chromas.
 - Reset explícito do PostgreSQL e publicação da página temporária.
 - Teste visual em desktop após a entrada das fotografias finais.
-- Gate visual das quatro Chromas demonstrativas antes de convertê-las em itens equipáveis ou expandir o tratamento para o catálogo.
+- Gate visual das quatro Chromas demonstrativas e do lote de 35 retratos antes de convertê-las em itens equipáveis.
 - Receber e aprovar o novo logo PoliMatch antes de substituir o símbolo provisório no shell e nas cartas.
 
 ## Human gate
 
-Status: usuário autorizou em 14/09/2026 a reconstrução após rejeitar a imitação em CSS; nova implementação demonstrativa pronta, aguardando avaliação visual em uso real. Não publicada.
+Status: usuário autorizou em 14/09/2026 seguir com as 35 artes usando o tamanho real de exibição como critério. Integração demonstrativa pronta, aguardando avaliação visual final no app. Não publicada.

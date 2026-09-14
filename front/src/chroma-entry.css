@@ -1,1 +1,0 @@
-.tabs.has-chroma-tab{grid-template-columns:repeat(6,minmax(0,1fr))}.chroma-tab .tab-icon{color:#d4af37}.chroma-tab:hover,.chroma-tab:focus-visible{color:#f7f3e8}@media(max-width:620px){.tabs.has-chroma-tab{gap:3px;padding:5px}.tabs.has-chroma-tab .tab{min-width:0;padding-inline:2px;font-size:.58rem}.tabs.has-chroma-tab .tab-icon{font-size:.95rem}}

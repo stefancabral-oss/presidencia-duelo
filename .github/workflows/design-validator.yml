@@ -21,15 +21,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: |
-            front/package-lock.json
-            app/package-lock.json
-      - name: Install front
-        run: npm ci --prefix front
-      - name: Test front including design validator
-        run: npm test --prefix front
-      - name: Build front
-        run: npm run build --prefix front
+          cache-dependency-path: app/package-lock.json
       - name: Install app
         run: npm ci --prefix app
       - name: Test app

@@ -4,27 +4,42 @@
 
 PoliMatch é um jogo casual de comparação entre personalidades públicas. Não é pesquisa eleitoral. O produto deve ser simples de jogar, visualmente próprio, colecionável e agradável no celular.
 
-## Decisões já aprovadas
+## Decisões atuais aprovadas
 
-- Frontend claro/porcelana como base.
-- Malaquita como estrutura e identidade.
-- Ouro usado com contenção.
-- Chromas são a principal fonte de cor, brilho e raridade.
-- Card mais alto, com proporção inspirada em TCG: imagem dominante e bloco inferior de informação.
-- Não usar botão separado "Escolher": votar tocando/clicando diretamente na carta.
-- Card precisa ter espaço para: nome, quem é, o que faz e descrição curta.
-- Ícones, labels e badges dentro do card devem ter escala consistente e não competir com o rosto.
-- Navegação e botões precisam ser exclusivos do PoliMatch, não componentes genéricos reaproveitados visualmente.
-- Som faz parte da UX: tap, escolha, troca de aba, modal, sucesso, erro, conquista, combo, zebra, chroma e mudança relevante de posição.
-- Haptics devem acompanhar eventos importantes quando suportados.
-- Gamificação pode incentivar continuidade, coleção, disputa, defesa de posição e recuperação, mas não deve favorecer ideologicamente uma pessoa/candidato.
-- O último colocado pode receber feedback de recuperação; o líder pode receber feedback de defesa de posição. A linguagem deve ser neutra e baseada em estado de jogo.
-- SSO real será feito depois. Nesta rodada, apenas preservar compatibilidade para futura autenticação.
+- O frontend anterior foi rejeitado e será substituído, não remendado.
+- A direção de arte `Malaquita 2026 / Digital First` enviada em 13/09/2026 está aprovada e é a referência visual oficial.
+- O shell usa malaquita escura; porcelana aparece em placas de nome e superfícies editoriais; ouro indica progresso e raridade.
+- Cards têm moldura facetada, fotografia dominante, marca pequena, raridade no canto e placa inferior clara.
+- Chromas ampliam luz, cor e materialidade progressivamente; o efeito prismático máximo é reservado à Chroma comemorativa.
+- O catálogo mestre tem 125 pessoas reconhecíveis: 100 nomes políticos em `Eleições 2026` e 25 influenciadores preparados para o assunto seguinte.
+- O núcleo é escolha binária rápida: duas pessoas, um toque, resultado e próximo duelo.
+- O menu de assuntos nasce pronto para expansão, mas somente `Eleições 2026` estará ativo na primeira edição.
+- `Influenciadores` será a segunda edição.
+- Escândalos e acontecimentos serão curadorias independentes, começando posteriormente por casos como Banco Master, Mensalão, INSS e 8 de Janeiro.
+- Cada pessoa terá perfil educativo, fontes e contexto suficientes para uma escolha informada.
+- Existirão ranking da edição e ranking pessoal. Ranking geral entre assuntos só será exibido quando houver mais de um assunto ativo.
+- Cards e Chromas são colecionáveis; Chromas são obtidas por sorte e não determinam o ranking.
+- Duelos usam carta padrão por default. Apenas o próprio jogador pode aplicar uma Chroma possuída àquela pessoa.
+- Novos debates e discussões podem lançar novas Chromas versionadas sem alterar votos ou rankings anteriores.
+- As fotografias serão curadas e tratadas com padrão profissional, sem alterar a identidade da pessoa.
+- A aprovação visual dos retratos começa por um lote de dez pessoas antes da escala fotográfica completa.
+- O app continua online-only: nenhuma escolha é confirmada antes do servidor.
+- Login social e publicação automática ficam fora do primeiro corte; compartilhamento será iniciado pelo usuário.
+
+## Referências visuais aprovadas
+
+- `stages/10_rebuild_eleicoes_2026/references/approved-art-direction/01_duelo_mobile.jpeg`
+- `stages/10_rebuild_eleicoes_2026/references/approved-art-direction/02_sistema_raridades.jpeg`
+- `stages/10_rebuild_eleicoes_2026/references/approved-art-direction/03_chroma_comemorativa.jpeg`
+
+Essas peças definem direção de arte, não dimensões literais da interface. A implementação deve preservar leitura, toque e dois cards completos em telas reais.
+
+As explorações posteriores estão documentadas em `stages/10_rebuild_eleicoes_2026/references/ART_DIRECTION.md`. Elas podem fornecer textura editorial e inspiração para a revelação, mas não substituem a fonte de verdade.
 
 ## Estado técnico atual
 
 - Frontend: Vite/JavaScript.
-- PWA em `app/`, front compartilhado em `front/`.
+- PWA e frontend consolidados em `app/`; o diretório duplicado `front/` foi removido nesta reconstrução.
 - Backend/API e ranking agregado já existem.
 - Produção usa Dokploy e o autodeploy não tem se mostrado confiável; publicação precisa ser confirmada manualmente.
 - Houve regressão anterior em que o PWA redirecionava para Ranking quando player-sync falhava; hotfix já foi aplicado.
@@ -32,13 +47,13 @@ PoliMatch é um jogo casual de comparação entre personalidades públicas. Não
 
 ## Objetivo deste programa ICM
 
-Construir um frontend novo, coerente e testável, substituindo a sensação de "site com cards" por um app de jogo/coleção premium.
+Construir do zero um frontend coerente e testável para `Eleições 2026`, preservando somente contratos sólidos do backend e removendo as camadas visuais anteriores.
 
 ## Fora de escopo desta rodada
 
 - SSO real e escolha de provedor OIDC.
 - Migração de banco motivada apenas por autenticação.
-- Mudança ideológica/editorial no catálogo.
+- Construção das edições `Influenciadores` e `Escândalos`.
 - Manipulação de ranking para favorecer qualquer pessoa.
 - Reescrita desnecessária do backend que não seja exigida pelo frontend.
 
@@ -46,12 +61,11 @@ Construir um frontend novo, coerente e testável, substituindo a sensação de "
 
 O programa só é considerado concluído quando:
 
-1. Duelo funciona sem regressão em iPhone e desktop.
-2. Cards respeitam proporções e hierarquia aprovadas.
-3. Sistema de botões é consistente em todas as telas.
-4. Som pode ser ligado/desligado e não é invasivo.
-5. Collection/Chroma tem destaque real.
-6. Ranking e Torneio usam o mesmo sistema visual.
-7. Testes críticos passam.
-8. Deploy é confirmado em produção.
-9. QA pós-deploy é executado.
+1. O usuário escolhe `Eleições 2026` e chega ao primeiro duelo sem ambiguidade.
+2. O duelo funciona sem regressão em iPhone e desktop.
+3. A pessoa pode entender quem é cada participante sem perder o duelo atual.
+4. O voto só produz resultado depois de confirmado pelo servidor.
+5. Ranking da edição, ranking pessoal e coleção têm papéis claramente separados.
+6. Cards básicos e revelação de Chroma passam por gate visual humano.
+7. O catálogo mestre contém exatamente 125 pessoas e cada assunto público expõe apenas perfis e fotografias aprovados para aquela curadoria.
+8. Testes críticos, build, deploy e QA pós-deploy são confirmados.

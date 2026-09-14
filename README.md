@@ -1,182 +1,120 @@
 # PoliMatch
 
-Monorepo do **PoliMatch**, jogo web casual com duas pessoas da vida pública brasileira lado a lado: você escolhe uma, surge o próximo par aleatório e o ranking Elo é preservado no navegador e no servidor.
+PoliMatch é um jogo web casual de comparação entre personalidades públicas. A pessoa escolhe uma das duas cartas, recebe o próximo duelo imediatamente e acompanha rankings geral e pessoal. É entretenimento: **não constitui pesquisa eleitoral**.
 
-Além do duelo contínuo, a aba **Torneio** sorteia 12 pessoas do catálogo para um mata-mata: oito disputam a primeira rodada e quatro avançam direto, seguindo por quartas, semifinais e final. São 11 escolhas até o resultado, que pode ser compartilhado. O torneio é salvo separadamente e não altera o Elo local nem o agregado da API.
+## Produto atual
 
-O catálogo de duelo contém os **360 nomes aprovados** e perfis básicos. Chromas, versões históricas e suas artes serão modeladas em outra área do app; não fazem parte deste arquivo nem alteram o ranking atual.
+- Interface reconstruída na direção `Malaquita 2026 / Digital First`.
+- Aplicação online-only: um voto só altera a tela depois da confirmação do servidor.
+- Duelo contínuo; o ranking abre apenas quando a pessoa pedir.
+- Toque na carta escolhe; pressão longa abre a ficha educativa sem votar.
+- Carta padrão neutra para todos.
+- Chromas são personalizações pessoais e futuras; não alteram Elo, pareamento ou voto.
 
-Os duelos podem ser filtrados por cinco assuntos. Uma mesma pessoa pode aparecer em mais de um deles:
+O catálogo mestre possui 125 pessoas:
 
-- **Política em Jogo:** catálogo completo, com 360 pessoas;
-- **Justiça & Escândalos:** 74 nomes ligados a tribunais, investigações ou casos nacionais;
-- **Direita x Esquerda:** 126 nomes; no duelo principal, cada confronto combina lados opostos;
-- **Corrida 2026:** as 12 chapas presidenciais cadastradas;
-- **Em Alta:** 62 nomes em evidência no debate político atual.
+- `Eleições 2026`: 100 nomes políticos no assunto ativo;
+- `Influenciadores`: 25 perfis preparados para a próxima área;
+- `Escândalos e acontecimentos`: estrutura anunciada, ainda sem curadoria ativa.
 
-O filtro não cria cadastros duplicados nem zera estatísticas: IDs, votos e Elo continuam compartilhados no mesmo histórico global. A seleção do último assunto fica salva apenas como preferência de interface.
+Os 125 perfis estão em revisão editorial. O catálogo de 1.500 Chromas contém 12 rascunhos por pessoa e permanece fora do fluxo público até passar por fonte, arte e aprovação.
 
-> **Não é pesquisa oficial.** Não mede intenção de voto real. É só entretenimento.
+## Estrutura
 
+```text
+app/       frontend Vite/PWA
+back/      API Express e persistência PostgreSQL
+shared/    catálogo canônico e cálculo Elo compartilhado
+stages/    contexto, entradas, auditorias e handoff do programa ICM
 ```
-/
-  README.md                 # este guia
-  CREDITS.md                # atribuição das fotos e fontes públicas
-  shared/                   # catálogo aprovado de pessoas + Elo compartilhado
-  front/                    # UI web (Vite + vanilla JS)
-  back/                     # API (Node + Express)
-  app/                      # PWA (wrapper do mesmo jogo + manifest/SW)
-```
 
-Os 360 perfis do catálogo têm fotos de fontes públicas e crédito registrado: 69 arquivos locais e 291 imagens servidas diretamente pelo Wikimedia Commons. Nenhuma face foi gerada por IA.
+O frontend antigo em `front/` foi removido na reconstrução. Seu histórico continua disponível no Git.
 
-## Requisitos
+## Desenvolvimento
 
-- Node.js 20+ (testado com 22)
-- npm
+Requisitos: Node.js 20+, npm e PostgreSQL para executar a API.
 
-```bash
-npm install --prefix front
-npm install --prefix back
+```sh
 npm install --prefix app
+npm install --prefix back
 ```
 
-## Como rodar cada parte
+API:
 
-### 1. API (`back`)
-
-```bash
-npm run dev --prefix back
-# http://localhost:3001
+```sh
+DATABASE_URL=postgresql://usuario:senha@localhost:5432/polimatch npm run dev:back
 ```
 
-| Método | Rota | Descrição |
+App:
+
+```sh
+npm run dev:app
+```
+
+Por padrão, o Vite abre o app em `http://localhost:5174` e encaminha `/api` para `http://localhost:3001`.
+
+## Testes e build
+
+```sh
+npm test
+npm run build
+```
+
+O app compilado fica em `app/dist`.
+
+## Catálogo editorial
+
+As fontes de edição estão em `stages/10_rebuild_eleicoes_2026/input/`. Para reconstruir deterministicamente o catálogo de pessoas e o rascunho de Chromas:
+
+```sh
+npm run build:catalog --prefix back
+```
+
+Saídas:
+
+- `shared/elections-2026.json`: 125 pessoas e seus perfis;
+- `stages/10_rebuild_eleicoes_2026/output/chromas-catalog-draft.json`: 1.500 Chromas bloqueadas como rascunho.
+
+Não edite essas saídas manualmente. Corrija a entrada e execute o importador novamente.
+
+## API
+
+| Método | Rota | Função |
 |---|---|---|
-| `GET` | `/api/health` | Saúde do serviço |
-| `GET` | `/api/candidates` | 360 pessoas (`personId`, `id`, `name`, `party`, `vice`, `photo`, `initials`, `topics`, `politicalSide`) |
-| `GET` | `/api/ranking` | Ranking Elo agregado armazenado no PostgreSQL |
-| `POST` | `/api/vote` | Corpo `{ "voteId", "winnerId", "loserId", "mode", "playerVersion" }`; com chave Bearer, atualiza também o ranking individual |
-| `POST` | `/api/player` | Cria uma identidade anônima e devolve sua chave de recuperação uma única vez |
-| `GET` | `/api/player/state` | Recupera o ranking individual; requer `Authorization: Bearer <chave>` |
-| `PUT` | `/api/player/state` | Migra um ranking local usando controle otimista de `version` |
+| `GET` | `/api/health` | saúde da API e do PostgreSQL |
+| `GET` | `/api/topics` | assuntos ativos e anunciados |
+| `GET` | `/api/candidates?topic=eleicoes-2026` | pessoas da curadoria |
+| `GET` | `/api/ranking?topic=eleicoes-2026` | ranking agregado |
+| `POST` | `/api/player` | cria identidade anônima e chave de recuperação |
+| `GET` | `/api/player/state?topic=eleicoes-2026` | ranking pessoal; exige chave Bearer |
+| `POST` | `/api/vote` | confirma um duelo global e pessoal numa transação |
 
-CORS está aberto para o front local. A API exige `DATABASE_URL` e grava o ranking e cada voto no PostgreSQL usando uma transação. No primeiro início, se o banco estiver vazio, `back/data/elo.json` é importado automaticamente uma única vez para preservar o agregado anterior.
-
-Votos com `voteId` formam uma trilha imutável. O backend também dispõe do serviço interno `store.reverseVote(voteId, reversalId, reason)`: ele registra uma reversão sem apagar o voto original e recompõe o Elo, em ordem, a partir do último ponto-base legado. Esse serviço não possui rota HTTP pública; uma futura ferramenta administrativa deve adicionar autenticação e autorização antes de expô-lo.
-
-O app instalado cria uma identidade anônima com uma chave aleatória de 256 bits. O PostgreSQL guarda somente o SHA-256 da chave e associa a identidade aos novos votos; o ranking agregado não depende nem revela o ranking individual. A migração de um ranking local para uma identidade remota ainda vazia usa `version` otimista, e qualquer navegador atrasado recebe `409 PLAYER_VERSION_CONFLICT` em vez de sobrescrever o estado mais recente.
-
-### 2. Front web (`front`)
-
-```bash
-npm run dev --prefix front
-# http://localhost:5173
-```
-
-O Vite faz proxy de `/api` para `http://localhost:3001`. Com a API ligada, o jogo lista candidatos pelo back e envia votos. **Se a API estiver fora, o front cai no JSON local + `localStorage`** — o duelo anônimo continua igual.
-
-No modo Duelo, também é possível votar rapidamente com **← / →** no desktop ou deslizando a área dos cards para a esquerda/direita no celular.
-
-Build estático:
-
-```bash
-npm run build --prefix front
-# pasta de publicação: front/dist
-```
-
-Para apontar o front compilado a uma API remota:
-
-```bash
-VITE_API_URL=https://sua-api.exemplo.com npm run build --prefix front
-```
-
-Se `VITE_API_URL` estiver vazio, as chamadas usam `/api` (útil atrás de um proxy reverso).
-
-### 3. App PWA (`app`)
-
-Casca instalável do **mesmo jogo** (`front/src/game.js` + fotos). Inclui `manifest.webmanifest` e service worker. Não é um app nativo iOS — é um PWA deployável como site estático.
-
-```bash
-npm run dev --prefix app
-# http://localhost:5174
-```
-
-O script `predev`/`prebuild` copia `front/public/candidates`, ícones, `CREDITS.md` e `og-cover.png` para `app/public/`.
-
-```bash
-npm run build --prefix app
-# pasta de publicação: app/dist
-```
-
-No celular: abra o `app` no navegador → “Adicionar à tela inicial”. O PWA exige conexão com a API: cada voto é confirmado no servidor antes de alterar o Elo no aparelho, mantendo o ranking individual e o agregado sincronizados. O service worker é registrado apenas em `http:` ou `https:` e nunca fornece uma versão jogável offline.
-
-O ranking agregado de **Pessoas** continua usando no PostgreSQL a chave histórica `presidentes`, preservando os votos já existentes. O pool legado de vices permanece compatível no backend, mas fica oculto nesta primeira versão do catálogo ampliado.
+O PostgreSQL guarda somente o hash da chave de recuperação. Votos possuem UUID idempotente e são imutáveis.
 
 ## Deploy no Dokploy
 
-### Front estático (ambiente de desenvolvimento)
+API:
 
-1. Build: `cd front && npm ci && npm run build`
-2. **Publish directory:** `front/dist`
-3. SPA: fallback para `index.html`
-4. Variável `VITE_API_URL` no build, apontando para o serviço da API
+- contexto: repositório inteiro;
+- Dockerfile: `back/Dockerfile`;
+- porta: `3001`;
+- variável obrigatória: `DATABASE_URL`;
+- healthcheck: `GET /api/health`.
 
-### API obrigatória para o PWA
+App:
 
-Crie um serviço **Application** usando o repositório inteiro como contexto:
+- contexto: repositório inteiro;
+- Dockerfile: `app/Dockerfile`;
+- porta: `80`;
+- build arg: `VITE_API_URL=https://api.polimatch.com.br`.
 
-1. Dockerfile: `back/Dockerfile`
-2. Porta: `3001`
-3. Healthcheck: `GET /api/health`
-4. Domínio sugerido: `api.seu-dominio.com`
-5. Variável de execução: `DATABASE_URL`, usando a URL interna de um PostgreSQL
-6. Mantenha o volume legado em `/repo/back/data` no primeiro deploy para importar o `elo.json`; depois da importação ele deixa de ser necessário
+O domínio público `polimatch.com.br` aponta para o app; `api.polimatch.com.br`, para a API. HTTPS é obrigatório para o PWA. A publicação só deve ocorrer depois do gate visual e fotográfico.
 
-Configure backups periódicos para o PostgreSQL antes de abrir o jogo ao público.
+## Fonte de verdade
 
-Se o front e a API ficarem no mesmo domínio, deixe `VITE_API_URL` vazio e encaminhe `/api` para o serviço Node.
+Decisões e estado da reconstrução:
 
-### App PWA online (serviço público principal)
-
-Crie outro serviço **Application**, também com o repositório inteiro como contexto:
-
-1. Dockerfile: `app/Dockerfile`
-2. Porta: `80`
-3. Build arg: `VITE_API_URL=https://api.seu-dominio.com`
-4. Aponte o domínio público do jogo para este serviço
-5. Ative HTTPS para permitir instalação e registro do service worker
-
-O domínio público `polimatch.com.br` deve apontar para este serviço `app`, não
-para o build de `front`. O `front` aceita fallback local para desenvolvimento;
-o `app` bloqueia o jogo quando API ou sincronização individual não estão
-disponíveis, evitando votos e estatísticas perdidos.
-
-Depois do deploy, valide `/manifest.webmanifest`, `/sw.js` e `/api/health`. O PWA mostra “Conexão necessária” se a API não responder e não altera estatísticas locais nesse estado.
-
-## Candidatos incluídos
-
-1. Lula (PT) — Geraldo Alckmin (PSB)
-2. Flávio Bolsonaro (PL) — Alfredo Gaspar (PL)
-3. Ronaldo Caiado (PSD) — Gilberto Kassab (PSD)
-4. Romeu Zema (Novo) — Eduardo Girão (Novo)
-5. Renan Santos (Missão) — Aroldo Medina (Missão)
-6. Augusto Cury (Avante) — Júlio Delgado (Avante)
-7. Rui Costa Pimenta (PCO) — Antônio Carlos (PCO)
-8. Samara Martins (UP) — Raquel Brício (UP)
-9. Hertz Dias (PSTU) — Vanessa Portugal (PSTU)
-10. Edmilson Costa (PCB) — Cleusa Santos (PCB)
-11. Wilson Grassi (Democrata) — Suêd Haidar (Democrata)
-12. Clariana Barão (DC) — Fabiana Torquato (DC)
-
-## Privacidade
-
-- Jogo anônimo: não pede nome, e-mail ou conta. A chave de recuperação funciona como uma senha e fica no `localStorage` deste navegador.
-- Com API: cada escolha atualiza, na mesma transação, o ranking agregado e o ranking individual anônimo no PostgreSQL.
-- Recuperação: em **Ranking → Seu ranking em qualquer aparelho**, copie a chave ou informe uma chave existente. Quem tiver essa chave pode ler e continuar esse ranking; não a publique.
-- Armazenamento: o servidor guarda o hash da chave, o estado Elo individual e a data do último acesso. Nesta versão, a identidade não expira automaticamente.
-- Conflitos: uma versão antiga nunca substitui silenciosamente a mais nova; o app pede nova sincronização.
-- Zerar ranking no UI limpa só o aparelho, não o banco do servidor.
-
-## Licença
-
-Código: use livremente. Fotos: veja `CREDITS.md` (licenças CC / Attribution).
+- `CONTEXT.md`
+- `stages/10_rebuild_eleicoes_2026/CONTEXT.md`
+- `stages/10_rebuild_eleicoes_2026/output/HANDOFF.md`
+- `stages/10_rebuild_eleicoes_2026/output/verification.json`

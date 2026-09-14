@@ -1,40 +1,27 @@
 import assert from "node:assert/strict";
-import { test } from "node:test";
-import { TOPIC_IDS, topicIdsForCandidate } from "../../shared/topics.js";
-import { CANDIDATES } from "./candidates.js";
+import test from "node:test";
+import { CANDIDATES, TOPICS, candidateBelongsToTopic, candidatesForTopic } from "./candidates.js";
 
-const APPROVED_RACE_2026_IDS = [
-  "caiado",
-  "clariana-barao",
-  "cury",
-  "edmilson-costa",
-  "flavio-bolsonaro",
-  "hertz-dias",
-  "lula",
-  "renan-santos",
-  "rui-costa-pimenta",
-  "samara-martins",
-  "wilson-grassi",
-  "zema",
-];
-
-test("API catalog exposes the five-topic metadata without changing candidate ids", () => {
-  assert.equal(CANDIDATES.length, 360);
-  assert.equal(new Set(CANDIDATES.map((candidate) => candidate.id)).size, 360);
-  assert.ok(CANDIDATES.every((candidate) => candidate.topics.includes(TOPIC_IDS.POLITICS)));
-  assert.deepEqual(
-    CANDIDATES
-      .filter((candidate) => candidate.topics.includes(TOPIC_IDS.RACE_2026))
-      .map((candidate) => candidate.id)
-      .sort(),
-    APPROVED_RACE_2026_IDS,
-  );
-  assert.ok(APPROVED_RACE_2026_IDS.length >= 12, "Corrida 2026 precisa suportar o torneio");
+test("the rebuild exposes one active topic and two announced expansions", () => {
+  assert.deepEqual(TOPICS.filter(({ active }) => active).map(({ id }) => id), ["eleicoes-2026"]);
+  assert.deepEqual(TOPICS.filter(({ active }) => !active).map(({ id }) => id), ["influenciadores", "escandalos"]);
 });
 
-test("party affiliation alone never adds a person to Corrida 2026", () => {
-  const unapproved = CANDIDATES.find((candidate) => candidate.id === "pessoa-3");
-  const withParty = { ...unapproved, party: "Partido Teste", corrida2026: false };
-  assert.equal(topicIdsForCandidate(withParty).includes(TOPIC_IDS.RACE_2026), false);
-  assert.equal(CANDIDATES.filter((candidate) => candidate.corrida2026 === true).length, 12);
+test("the curated 125-person catalog replaces the rejected 360-person catalog", () => {
+  assert.equal(CANDIDATES.length, 125);
+  assert.equal(candidatesForTopic("eleicoes-2026").length, 100);
+  assert.equal(candidatesForTopic("influenciadores").length, 25);
+  assert.equal(candidateBelongsToTopic("lula", "eleicoes-2026"), true);
+  assert.equal(candidateBelongsToTopic("lula", "influenciadores"), false);
+  assert.equal(candidateBelongsToTopic("anitta", "influenciadores"), true);
+});
+
+test("every candidate exposes a reviewable editorial profile", () => {
+  for (const candidate of CANDIDATES) {
+    assert.equal(typeof candidate.bio, "string");
+    assert.equal(Array.isArray(candidate.facts), true);
+    assert.equal(Array.isArray(candidate.sources), true);
+    assert.match(candidate.reviewStatus, /^(pending|reviewed|published)$/);
+    assert.equal(candidate.sources.length > 0, true);
+  }
 });

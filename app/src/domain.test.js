@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { catalogForTopic, displayRanking, filterRanking, nextBalancedPair, nextPair, rankingForCatalog, shortName, shuffledCandidates, voteFeedback } from "./domain.js";
+import { catalogForTopic, displayRanking, filterRanking, nextBalancedPair, nextPair, rankingForCatalog, rankingHighlights, shortName, shuffledCandidates, voteFeedback } from "./domain.js";
 
 const people = [
   { id: "a", name: "Ana Um" },
@@ -62,6 +62,17 @@ test("ranking search ignores accents and includes affiliation", () => {
   ];
   assert.deepEqual(filterRanking(ranking, "joao"), [ranking[0]]);
   assert.deepEqual(filterRanking(ranking, "uniao"), [ranking[1]]);
+});
+
+test("ranking highlights make both positive and negative choices visible", () => {
+  const ranking = [
+    { id: "a", elo: 1030, wins: 3, losses: 0, decisions: 3, winRate: 100 },
+    { id: "b", elo: 970, wins: 0, losses: 3, decisions: 3, winRate: 0 },
+    { id: "c", elo: 1000, wins: 1, losses: 1, decisions: 2, winRate: 50 },
+  ];
+  const highlights = rankingHighlights(ranking);
+  assert.deepEqual(highlights.chosen.map(({ id }) => id), ["a", "c"]);
+  assert.deepEqual(highlights.rejected.map(({ id }) => id), ["b", "c"]);
 });
 
 test("vote feedback exposes real Elo and zebra without blocking the next duel", () => {

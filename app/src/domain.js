@@ -71,6 +71,20 @@ export function filterRanking(ranking, query = "") {
     .some((value) => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalized)));
 }
 
+export function rankingHighlights(ranking, limit = 3) {
+  const played = ranking.filter(({ decisions = 0 }) => decisions > 0);
+  return {
+    chosen: [...played]
+      .filter(({ wins = 0 }) => wins > 0)
+      .sort((a, b) => b.wins - a.wins || b.winRate - a.winRate || b.elo - a.elo)
+      .slice(0, limit),
+    rejected: [...played]
+      .filter(({ losses = 0 }) => losses > 0)
+      .sort((a, b) => b.losses - a.losses || (b.losses / b.decisions) - (a.losses / a.decisions) || a.elo - b.elo)
+      .slice(0, limit),
+  };
+}
+
 export function initials(name = "") {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
 }

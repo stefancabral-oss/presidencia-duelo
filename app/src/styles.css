@@ -147,14 +147,17 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .nav-button { min-height: 51px; border: 0; border-radius: 14px; background: transparent; color: var(--muted); font-size: .72rem; font-weight: 850; cursor: pointer; }
 .nav-button.active { background: rgb(231 199 98 / 12%); color: var(--gold); box-shadow: inset 0 -2px var(--gold); }
 
-dialog { width: min(calc(100% - 20px), 520px); max-height: 88dvh; padding: 0; border: 0; border-radius: 24px; background: var(--paper); color: var(--ink); box-shadow: 0 32px 90px rgb(3 22 16 / 30%); }
+dialog { position: relative; width: min(calc(100% - 20px), 520px); height: min(88dvh, 760px); max-height: 88dvh; padding: 0; overflow: hidden; border: 0; border-radius: 24px; background: var(--paper); color: var(--ink); box-shadow: 0 32px 90px rgb(3 22 16 / 30%); }
+dialog[open] { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
 dialog::backdrop { background: rgb(4 24 17 / 68%); backdrop-filter: blur(5px); }
+.profile-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.dialog-close { position: absolute; z-index: 4; top: 12px; right: 12px; width: 46px; height: 46px; display: grid; place-items: center; padding: 0 0 3px; border: 1px solid rgb(255 255 255 / 55%); border-radius: 50%; background: rgb(0 43 36 / 88%); color: white; box-shadow: 0 8px 24px rgb(0 20 15 / 28%); font-size: 1.75rem; line-height: 1; cursor: pointer; backdrop-filter: blur(10px); }
 .profile-preview { width: min(100%, 360px); margin: 0 auto; padding: 12px 12px 0; }
 .profile-preview .portrait { max-height: 42dvh; border-radius: 18px; border: 1px solid rgb(231 199 98 / 55%); }
 .dialog-body { padding: 22px; }
 .dialog-body h2 { margin-bottom: 7px; font-size: 1.65rem; }
 .dialog-body p { color: #48574f; line-height: 1.5; }
-.profile-copy { max-height: 42dvh; overflow-y: auto; }
+.profile-copy { max-height: none; overflow: visible; }
 .profile-copy section { padding-top: 14px; border-top: 1px solid #e3dccb; }
 .profile-copy h3 { margin-bottom: 7px; color: #7d611d; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; }
 .profile-copy ul { margin: 0 0 16px; padding-left: 20px; color: #48574f; line-height: 1.5; }
@@ -162,7 +165,8 @@ dialog::backdrop { background: rgb(4 24 17 / 68%); backdrop-filter: blur(5px); }
 .profile-role { margin-bottom: 4px; }
 .profile-meta { margin-bottom: 18px; color: #7d611d !important; font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
 .review-note { font-size: .82rem; }
-.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); }
+.dialog-actions { position: relative; z-index: 3; display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid #ddd5c4; background: rgb(247 244 236 / 97%); box-shadow: 0 -10px 24px rgb(20 35 28 / 8%); }
+.dialog-actions > button { flex: 1 1 0; }
 .primary, .secondary { min-height: 44px; padding: 10px 16px; border-radius: 14px; font-weight: 900; cursor: pointer; }
 .primary { border: 1px solid var(--gold-structure); background: linear-gradient(135deg, #f9e498, var(--gold-structure), #a9852b); color: var(--ink); }
 .secondary { border: 1px solid var(--line); background: white; color: var(--green); }
@@ -188,6 +192,9 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   .candidate-copy { padding: 8px; }
   .arena { grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr); gap: 4px; }
   .versus { width: 28px; height: 28px; }
+  dialog { width: calc(100% - 18px); height: calc(100dvh - max(28px, env(safe-area-inset-top)) - max(18px, env(safe-area-inset-bottom))); max-height: none; margin-block: max(14px, env(safe-area-inset-top)) max(9px, env(safe-area-inset-bottom)); }
+  .profile-preview { width: min(100%, 330px); }
+  .profile-preview .portrait { max-height: 38dvh; }
 }
 
 @media (max-width: 350px) {

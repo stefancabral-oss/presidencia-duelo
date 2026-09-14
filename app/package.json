@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run portraits:check && vite build",
+    "portraits:check": "node scripts/validate-portrait-slots.mjs",
     "test": "node --test src/*.test.js",
     "preview": "vite preview"
   },

@@ -8,7 +8,7 @@ Transformar o PoliMatch de uma interface funcional de votação em um produto vi
 
 - A pessoa é o conteúdo principal da carta.
 - A fotografia ocupa aproximadamente 60–68% da leitura visual.
-- Informações secundárias saem da visão principal do duelo.
+- Nome, partido ou área, função atual e resumo curto permanecem dentro da placa da carta; biografia e fontes ficam na ficha completa.
 - O painel inferior usa porcelana clara para nome e identificação.
 - Malaquita escura é a base; ouro é usado apenas como metal/acento.
 - A progressão de raridade cresce sem alterar a anatomia central da carta.
@@ -55,8 +55,8 @@ No duelo, a ordem de importância é:
 1. rosto;
 2. nome;
 3. raridade;
-4. partido/identificação;
-5. ações de jogo.
+4. função e resumo curto;
+5. dica para abrir a ficha completa.
 
 Vice, Elo detalhado, taxa de vitória e demais informações ficam fora da área principal da carta e podem continuar acessíveis pela ficha/ranking.
 

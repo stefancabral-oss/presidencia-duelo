@@ -6,20 +6,26 @@ if (!browserType) throw new Error(`Navegador não suportado: ${browserName}`);
 
 const candidates = [
   {
-    id: "ana-vilhena",
-    name: "Ana Vilhena",
-    displayName: "Ana Vilhena",
-    party: "Partido Exemplo",
-    role: "Pessoa pública",
-    bio: "Perfil editorial de teste.",
+    personId: 1,
+    id: "lula",
+    name: "Luiz Inácio Lula da Silva (Lula)",
+    displayName: "Lula",
+    party: "PT",
+    role: "Presidente da República",
+    office: "Presidente da República",
+    summary: "Presidente do Brasil e possível candidato em 2026.",
+    bio: "Perfil editorial de teste do primeiro candidato.",
   },
   {
-    id: "henrique-tavares",
-    name: "Henrique Tavares",
-    displayName: "Henrique Tavares",
-    party: "Aliança Exemplo",
-    role: "Pessoa pública",
-    bio: "Perfil editorial de teste.",
+    personId: 3,
+    id: "renan-santos",
+    name: "Renan Santos",
+    displayName: "Renan Santos",
+    party: "Missão",
+    role: "Ativista e candidato à Presidência",
+    office: "Fundador do MBL",
+    summary: "Atuação política e liderança ligada ao Movimento Brasil Livre.",
+    bio: "Perfil editorial de teste do segundo candidato.",
   },
 ];
 
@@ -69,6 +75,22 @@ try {
   await page.goto("http://127.0.0.1:4173/", { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /Eleições 2026/ }).click();
   await page.getByRole("button", { name: "Bora duelar" }).click();
+  const mobileCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
+    const box = card.getBoundingClientRect();
+    return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };
+  }));
+  if (mobileCards.length !== 2 || Math.abs(mobileCards[0].left - mobileCards[1].left) > 2 || mobileCards[1].top <= mobileCards[0].bottom) {
+    throw new Error("As cartas não ficaram empilhadas no viewport móvel");
+  }
+  if (await page.locator(".basic-card").count() !== 2) throw new Error("A carta básica não foi aplicada aos dois perfis");
+  if (await page.locator(".candidate-summary").count() !== 2) throw new Error("O resumo deixou de fazer parte da carta básica");
+  if (await page.locator(".candidate-profile-hint").count() !== 2) throw new Error("A dica de segurar deixou de fazer parte da carta básica");
+  if (await page.locator(".profile-button").count()) throw new Error("Um botão externo voltou a ocupar espaço junto à carta");
+  for (const layer of [".card-material", ".card-facets", ".card-corners"]) {
+    if (await page.locator(`.candidate-card ${layer}`).count() !== 2) {
+      throw new Error(`A camada premium ${layer} não foi renderizada nas duas cartas`);
+    }
+  }
   if (process.env.POLIMATCH_E2E_DUEL_SCREENSHOT) {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_DUEL_SCREENSHOT, fullPage: true });
   }
@@ -97,8 +119,38 @@ try {
   await page.getByText("1 duelo confirmado").waitFor();
   await page.getByText("Mais recusados").waitFor();
   const rejected = await page.locator(".ranking-highlight-rejected").innerText();
-  if (!rejected.includes("Henrique Tavares") || !rejected.includes("−1")) {
+  if (!rejected.includes("Renan Santos") || !rejected.includes("−1")) {
     throw new Error("O voto negativo não apareceu no resumo do ranking");
+  }
+
+  await page.getByRole("button", { name: "Coleção" }).click();
+  await page.getByRole("heading", { name: "Coleção" }).waitFor();
+  const chromaCards = page.locator("[data-hologram]");
+  if (await chromaCards.count() !== 4) throw new Error("As quatro Chromas demonstrativas não foram renderizadas");
+  for (const variant of ["supreme-rays", "supreme-rings", "prism-shards", "prism-aurora"]) {
+    if (await page.locator(`.${variant}`).count() !== 1) throw new Error(`O holograma ${variant} não é exclusivo`);
+  }
+  await page.waitForFunction(() => [...document.querySelectorAll(".chroma-art")].every((image) => image.complete && image.naturalWidth > 0));
+  const previewImagesReady = await page.locator(".chroma-art").evaluateAll((images) => images.every((image) => image.complete && image.naturalWidth > 0));
+  if (!previewImagesReady) throw new Error("As artes completas das Chromas não carregaram");
+  const chromaBox = await chromaCards.first().boundingBox();
+  if (!chromaBox) throw new Error("A primeira Chroma não possui área visível");
+  await page.mouse.move(chromaBox.x + chromaBox.width * .82, chromaBox.y + chromaBox.height * .25);
+  const lightPosition = await chromaCards.first().evaluate((card) => card.style.getPropertyValue("--holo-x"));
+  if (lightPosition === "50.0%" || !lightPosition) throw new Error("O holograma não respondeu ao movimento do ponteiro");
+  if (process.env.POLIMATCH_E2E_COLLECTION_SCREENSHOT) {
+    await page.screenshot({ path: process.env.POLIMATCH_E2E_COLLECTION_SCREENSHOT, fullPage: true });
+  }
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.locator('[data-screen="topics"]').click();
+  await page.getByRole("button", { name: /Eleições 2026/ }).click();
+  const desktopCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
+    const box = card.getBoundingClientRect();
+    return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };
+  }));
+  if (desktopCards.length !== 2 || Math.abs(desktopCards[0].top - desktopCards[1].top) > 2 || desktopCards[1].left <= desktopCards[0].right) {
+    throw new Error("As cartas não ficaram lado a lado no viewport desktop");
   }
 
   if (process.env.POLIMATCH_E2E_SCREENSHOT) {

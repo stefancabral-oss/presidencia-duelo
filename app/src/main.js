@@ -2,6 +2,8 @@ import "./styles.css";
 import { createPlayer, loadCandidates, loadPlayerRanking, loadRanking, submitVote } from "./api.js";
 import { catalogForTopic, displayRanking, filterRanking, initials, nextBalancedPair, rankingForCatalog, rankingHighlights, shortName, voteFeedback } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
+import { candidatePhoto } from "./photos.js";
+import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
 
 const app = document.querySelector("#app");
 const state = {
@@ -29,6 +31,13 @@ const state = {
 };
 let resultTimer;
 
+const chromaPreviews = [
+  { person: "Lula", role: "Chroma Suprema", image: "/chromas/rendered/lula-supreme-3star-v1.jpg", variant: "supreme supreme-rays" },
+  { person: "Renan Santos", role: "Chroma Suprema", image: "/chromas/rendered/renan-santos-supreme-3star-v1.jpg", variant: "supreme supreme-rings" },
+  { person: "Lula", role: "Chroma Comemorativa", image: "/chromas/rendered/lula-commemorative-prism-v1.jpg", variant: "commemorative prism-shards" },
+  { person: "Renan Santos", role: "Chroma Comemorativa", image: "/chromas/rendered/renan-santos-commemorative-prism-v1.jpg", variant: "commemorative prism-aurora" },
+];
+
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>'"]/g, (character) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
@@ -41,6 +50,14 @@ function candidateRole(candidate) {
 
 function candidateSummary(candidate) {
   return candidate.bio || candidate.summary || "Conteúdo editorial em revisão antes da publicação.";
+}
+
+function candidateCardSummary(candidate) {
+  return candidate.summary || candidate.relevance2026 || "Perfil em revisão editorial.";
+}
+
+function candidateAffiliation(candidate) {
+  return candidate.party || candidate.affiliation || candidate.area || "Pessoa pública";
 }
 
 function safeUrl(value = "") {
@@ -58,7 +75,7 @@ function profileSection(title, content, className = "") {
 }
 
 function portrait(candidate) {
-  const photo = candidate.photo && !candidate.photo.startsWith("/candidates/") ? candidate.photo : "";
+  const photo = candidatePhoto(candidate);
   return `<div class="portrait">
     <span class="portrait-fallback">${escapeHtml(initials(candidate.name))}</span>
     ${photo ? `<img src="${escapeHtml(photo)}" alt="Foto de ${escapeHtml(candidate.name)}" onerror="this.remove()">` : ""}
@@ -67,16 +84,21 @@ function portrait(candidate) {
 
 function card(candidate) {
   return `<div class="candidate-wrap">
-    <button class="candidate-card${state.selectedId === candidate.id ? " is-selected" : ""}" type="button" data-vote="${escapeHtml(candidate.id)}" ${state.busy ? 'disabled aria-busy="true"' : ""} aria-label="${escapeHtml(candidate.name)}, carta padrão. Toque para escolher; segure para saber quem é.">
+    <button class="candidate-card basic-card${state.selectedId === candidate.id ? " is-selected" : ""}" type="button" data-vote="${escapeHtml(candidate.id)}" ${state.busy ? 'disabled aria-busy="true"' : ""} aria-label="${escapeHtml(candidate.name)}, carta básica. Toque para escolher; segure para saber quem é.">
+      <span class="card-material" aria-hidden="true"></span>
+      <span class="card-facets" aria-hidden="true"></span>
       <span class="card-brand" aria-hidden="true">◆ PoliMatch</span>
       <span class="card-rarity" aria-hidden="true">●</span>
       ${portrait(candidate)}
       <span class="candidate-copy">
         <strong>${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong>
-        <span>${escapeHtml(candidateRole(candidate))}</span>
+        <span class="candidate-affiliation">${escapeHtml(candidateAffiliation(candidate))}</span>
+        <span class="candidate-office">${escapeHtml(candidate.office || candidateRole(candidate))}</span>
+        <small class="candidate-summary">${escapeHtml(candidateCardSummary(candidate))}</small>
+        <small class="candidate-profile-hint"><span aria-hidden="true">ⓘ</span> Segure para conhecer</small>
       </span>
+      <span class="card-corners" aria-hidden="true"></span>
     </button>
-    <button class="profile-button" type="button" data-profile="${escapeHtml(candidate.id)}"><span aria-hidden="true">ⓘ</span> Quem é? <small>Segure a carta</small></button>
   </div>`;
 }
 
@@ -99,7 +121,7 @@ function topicsScreen() {
 }
 
 function duelScreen() {
-  return `<main class="screen">
+  return `<main class="screen duel-screen">
     <div class="duel-head"><div><p class="eyebrow">Eleições 2026</p><h1>Quem você prefere?</h1></div><span class="progress-pill">${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}</span></div>
     ${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}
     <div class="arena">${card(state.pair[0])}<span class="versus">OU</span>${card(state.pair[1])}</div>
@@ -127,7 +149,17 @@ function rankingScreen() {
 function collectionScreen() {
   const unique = [...new Map(state.collection.map((person) => [person.id, person])).values()];
   const cards = unique.map((person) => `<div class="ranking-row"><span>◆</span><span>${escapeHtml(shortName(person.name))}<br><small>Chroma possuída</small></span><strong>×${state.collection.filter(({ id }) => id === person.id).length}</strong></div>`).join("");
-  return `<main class="screen"><div><p class="eyebrow">Suas Chromas</p><h1>Coleção</h1><p class="lead">Aqui ficam as Chromas recebidas. Você poderá equipar uma por pessoa sem alterar votos, ranking ou pareamentos.</p></div><section class="panel ranking-list">${cards || '<p class="empty">Nenhuma Chroma recebida ainda. Os duelos continuam usando a carta padrão.</p>'}</section></main>`;
+  const previewCard = ({ person, role, image, variant }) => `<article class="chroma-card ${variant}" data-hologram tabindex="0" aria-label="${escapeHtml(person)}, ${escapeHtml(role)}. Mova o dedo ou incline o celular para ver o holograma.">
+    <img class="chroma-art" src="${escapeHtml(image)}" alt="${escapeHtml(role)} de ${escapeHtml(person)}" width="530" height="742">
+    <span class="holo-foil" aria-hidden="true"></span><span class="holo-pattern" aria-hidden="true"></span><span class="holo-glint" aria-hidden="true"></span>
+  </article>`;
+  const supreme = chromaPreviews.filter(({ variant }) => variant.startsWith("supreme")).map(previewCard).join("");
+  const commemorative = chromaPreviews.filter(({ variant }) => variant.startsWith("commemorative")).map(previewCard).join("");
+  return `<main class="screen collection-screen"><div><p class="eyebrow">Laboratório de Chromas</p><h1>Coleção</h1><p class="lead">Mova o dedo sobre cada carta. No celular, ative a inclinação para o reflexo acompanhar o aparelho.</p><button class="motion-button" id="enable-chroma-motion" type="button">Ativar efeito ao inclinar</button><p class="motion-status" id="motion-status" role="status"></p></div>
+    <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Suprema</p><h2>Três estrelas douradas</h2></div><span class="tier-symbol gold-stars">★★★</span></div><p>Ouro em relevo, feixes direcionais e dois desenhos holográficos exclusivos.</p><div class="chroma-gallery">${supreme}</div></section>
+    <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Comemorativa</p><h2>Estrela prismática</h2></div><span class="tier-symbol prism-star">★</span></div><p>Cristal óptico, espectro colorido e refração diferente em cada pessoa.</p><div class="chroma-gallery">${commemorative}</div></section>
+    <section><p class="eyebrow">Sua coleção</p><section class="panel ranking-list">${cards || '<p class="empty">Demonstração visual: estas Chromas ainda não foram adicionadas ao seu inventário.</p>'}</section></section>
+  </main>`;
 }
 
 function nav() {
@@ -272,6 +304,17 @@ function bindEvents() {
   document.querySelectorAll("[data-profile]").forEach((button) => button.addEventListener("click", () => showProfile(button.dataset.profile)));
   document.querySelectorAll("[data-screen]").forEach((button) => button.addEventListener("click", () => { state.screen = button.dataset.screen; state.result = ""; render(); }));
   document.querySelectorAll("[data-ranking-view]").forEach((button) => button.addEventListener("click", () => { state.rankingView = button.dataset.rankingView; state.rankingQuery = ""; state.rankingExpanded = false; render(); }));
+  if (state.screen === "collection") installChromaMotion(document);
+  document.querySelector("#enable-chroma-motion")?.addEventListener("click", async (event) => {
+    const status = document.querySelector("#motion-status");
+    try {
+      const enabled = await enableDeviceTilt();
+      event.currentTarget.textContent = enabled ? "Inclinação ativada" : "Use o dedo para mover o brilho";
+      if (status) status.textContent = enabled ? "Mova o celular para testar os hologramas." : "Este aparelho não liberou o sensor; o efeito pelo toque continua ativo.";
+    } catch {
+      if (status) status.textContent = "A inclinação não foi autorizada; o efeito pelo toque continua ativo.";
+    }
+  });
 }
 
 async function ensurePlayer() {

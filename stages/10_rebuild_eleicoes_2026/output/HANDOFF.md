@@ -2,7 +2,7 @@
 
 ## Status
 
-Estado: versão de teste aprovada para publicação
+Estado: revisão visual em andamento
 
 ## Entregue
 
@@ -34,23 +34,50 @@ Estado: versão de teste aprovada para publicação
 - Os 125 perfis editoriais foram convertidos para o catálogo canônico com 507 referências e estado `pending`.
 - As cinco partes de Chromas foram validadas: 1.500 registros, 12 por pessoa, todos mantidos como `draft` e separados da carta padrão.
 - O gate encontrou 702 Chromas com URL de fonte e 798 ainda dependentes de uma fonte verificável.
+- O pacote de 125 fotos tratadas foi auditado: dimensões e arquivos estão íntegros, mas o relatório contém 17 revisões manuais, 20 flags técnicas e 19 flags de licença.
+- Somente 82 retratos sem qualquer flag foram integrados à prévia; 43 permanecem em fallback para impedir publicação acidental de pessoa errada, baixa qualidade ou licença pendente.
+- O duelo móvel foi reorganizado em duas cartas grandes empilhadas; em desktop, as duas cartas permanecem grandes e lado a lado.
+- Cada carta recebeu uma camada atmosférica entre retrato e moldura, integrando as bordas à malaquita, e uma última camada de verniz que cobre foto, placa e estrutura com reflexo controlado.
+- Após o feedback de que a primeira composição ainda parecia uma foto com borda, a carta básica foi reconstruída como um objeto em camadas: aro metálico externo, trilhos internos, cantos facetados, retrato rebaixado, placa de nome encaixada e verniz superficial. O tratamento continua deliberadamente abaixo das Chromas em intensidade.
+- Capturas de QA em WebKit foram preservadas em `mobile-stacked-photo-qa.png` e `desktop-photo-qa.png`.
 - O primeiro preview de dez retratos em caricatura editorial foi registrado como direção operacional, aguardando os arquivos individuais.
 - O primeiro acesso ao duelo agora apresenta uma explicação curta e descontraída; depois de concluída, ela não reaparece no mesmo navegador.
 - O pareamento usa um baralho embaralhado por sessão, cobrindo o elenco antes de repetir pessoas e evitando que alguém reapareça imediatamente no duelo seguinte.
 - A carta escolhida recebe realce enquanto o servidor confirma o voto, sem antecipar o resultado.
 - O ranking geral e pessoal ganhou pódio, busca por nome ou partido e exibição inicial limitada a 25 posições, com abertura opcional da lista completa.
 - A busca do ranking ignora acentos e foi validada no viewport móvel.
+- A Coleção recebeu um laboratório visual com quatro Chromas demonstrativas: Lula e Renan Santos em Suprema de três estrelas e Comemorativa de estrela prismática.
+- As quatro cartas usam hologramas distintos: feixes dourados, anéis metálicos, fragmentos prismáticos e aurora espectral.
+- O reflexo responde ao ponteiro/toque; no celular, um botão solicita a permissão necessária para acompanhar a inclinação do aparelho.
+- O movimento é neutralizado quando `prefers-reduced-motion` está ativo e as demonstrações continuam separadas do inventário real.
+- A captura `chroma-collection-mobile-qa.png` registra a prévia no viewport de iPhone.
+- A primeira tentativa de reproduzir o acabamento premium apenas com CSS foi rejeitada após comparação direta com os mockups aprovados.
+- O laboratório passou a usar quatro artes completas renderizadas: Lula e Renan Santos em Suprema de três estrelas e Comemorativa prismática; moldura, retrato, raridade e placa agora pertencem à própria arte.
+- O app aplica somente verniz e trajetórias leves de brilho sobre as artes, preservando rosto, nome e símbolos no Safari móvel.
+- As imagens de produção da prévia foram pré-dimensionadas em 530 × 742 e JPEG de alta qualidade para evitar moiré na redução do WebKit e manter carregamento móvel controlado.
+- A captura `chroma-collection-mobile-qa-v2.png` registra a nova composição no viewport de iPhone com as quatro artes completas.
+- A carta básica passou a incorporar nome, partido ou área, função atual, resumo curto e a dica `Segure para conhecer` dentro da própria placa; o botão externo de perfil foi removido.
+- Os 125 perfis possuem slots estáveis de retrato em `app/public/portraits/001.jpg` até `125.jpg`; substituir o JPG e gerar uma nova build não exige alterar o componente ou o catálogo.
+- A versão dos retratos muda automaticamente a cada build, evitando que Safari ou CDN mantenham uma fotografia anterior em cache.
+- O validador `portraits:check` reconhece atualmente 94 retratos presentes e 31 espaços aguardando imagem; ausência ou falha mantém o fallback por iniciais.
+- O padrão de entrega das fotos foi documentado em `docs/design/PHOTO_SLOTS.md` e a captura `mobile-basic-card-photo-slots-qa.png` registra a carta básica no viewport de iPhone.
+- O lote pessoal `Arquivo.zip` substituiu os retratos de 35 pessoas do catálogo, preservando exatamente o tratamento escolhido pelo usuário em conversões JPG sRGB 800 × 1000, sem ampliação artificial.
+- O mapeamento auditável está em `docs/design/USER_EDITED_PHOTOS.md`; `Jair Bolsonaro Filho.tif` foi preservado sem aplicação porque retrata Jair Renan, ausente do catálogo, e a segunda alternativa de Flávio Bolsonaro permaneceu como opção não aplicada.
+- A captura WebKit `mobile-user-edited-photos-qa.png` comprova as fotos enviadas pelo usuário nos cards de Lula e Renan Santos, mantendo informação, malaquita e verniz separados da imagem-fonte.
 
 ## Pendente
 
 - Gate visual do shell e do primeiro lote de retratos.
 - Tratamento visual e seleção final das fotografias entregues.
+- Corrigir ou liberar os 31 espaços ainda sem fotografia; Cármen Lúcia e Camilo Santana seguem explicitamente com pessoa errada e Antonio Rueda depende de autorização.
 - Revisão humana das afirmações editoriais e correção dos 54 retratos principais fora do gate.
 - Receber os dez retratos individuais do primeiro lote; a colagem de preview não será cortada para produção.
 - Resolver as 798 fontes ausentes antes de disponibilizar as respectivas Chromas.
 - Reset explícito do PostgreSQL e publicação da página temporária.
 - Teste visual em desktop após a entrada das fotografias finais.
+- Gate visual das quatro Chromas demonstrativas antes de convertê-las em itens equipáveis ou expandir o tratamento para o catálogo.
+- Receber e aprovar o novo logo PoliMatch antes de substituir o símbolo provisório no shell e nas cartas.
 
 ## Human gate
 
-Status: aprovado pelo usuário em 14/09/2026 ao solicitar push e deploy desta versão de teste.
+Status: usuário autorizou em 14/09/2026 a reconstrução após rejeitar a imitação em CSS; nova implementação demonstrativa pronta, aguardando avaliação visual em uso real. Não publicada.

@@ -46,6 +46,10 @@ function escapeHtml(value = "") {
   })[character]);
 }
 
+function brandSymbol(className = "brand-symbol") {
+  return `<img class="${escapeHtml(className)}" src="/brand/symbol-24.svg" alt="" width="24" height="24" aria-hidden="true">`;
+}
+
 function candidateRole(candidate) {
   return candidate.role || candidate.area || candidate.affiliation || candidate.party || "Pessoa pública";
 }
@@ -89,7 +93,7 @@ function card(candidate) {
     <button class="candidate-card basic-card${state.selectedId === candidate.id ? " is-selected" : ""}" type="button" data-vote="${escapeHtml(candidate.id)}" ${state.busy ? 'disabled aria-busy="true"' : ""} aria-label="${escapeHtml(candidate.name)}, carta básica. Toque para escolher; segure para saber quem é.">
       <span class="card-material" aria-hidden="true"></span>
       <span class="card-facets" aria-hidden="true"></span>
-      <span class="card-brand" aria-hidden="true">◆ PoliMatch</span>
+      <span class="card-brand" aria-hidden="true">${brandSymbol("card-brand-symbol")}<b>PoliMatch</b></span>
       <span class="card-rarity" aria-hidden="true">●</span>
       ${portrait(candidate)}
       <span class="candidate-copy">
@@ -105,7 +109,7 @@ function card(candidate) {
 }
 
 function header() {
-  return `<header class="topbar"><p class="brand"><span class="brand-mark" aria-hidden="true">◆</span>PoliMatch</p><span class="edition">Malaquita 2026</span></header>`;
+  return `<header class="topbar"><p class="brand">${brandSymbol()}<span>PoliMatch</span></p><span class="edition">Malaquita 2026</span></header>`;
 }
 
 function topicsScreen() {
@@ -150,14 +154,14 @@ function rankingScreen() {
 
 function collectionScreen() {
   const unique = [...new Map(state.collection.map((person) => [person.id, person])).values()];
-  const cards = unique.map((person) => `<div class="ranking-row"><span>◆</span><span>${escapeHtml(shortName(person.name))}<br><small>Chroma possuída</small></span><strong>×${state.collection.filter(({ id }) => id === person.id).length}</strong></div>`).join("");
+  const cards = unique.map((person) => `<div class="ranking-row">${brandSymbol("collection-symbol")}<span>${escapeHtml(shortName(person.name))}<br><small>Chroma possuída</small></span><strong>×${state.collection.filter(({ id }) => id === person.id).length}</strong></div>`).join("");
   const previewCard = ({ person, role, image, variant }) => `<article class="chroma-card featured-chroma-card ${variant}" data-hologram tabindex="0" aria-label="${escapeHtml(person)}, ${escapeHtml(role)}. Mova o dedo ou incline o celular para ver o holograma.">
     <img class="chroma-art" src="${escapeHtml(image)}" alt="${escapeHtml(role)} de ${escapeHtml(person)}" width="530" height="742">
     <span class="holo-foil" aria-hidden="true"></span><span class="holo-pattern" aria-hidden="true"></span><span class="holo-glint" aria-hidden="true"></span>
   </article>`;
   const batchCard = ({ personId, person, look, lookName, image }) => `<article class="chroma-card approved-chroma-card look-${look.toLowerCase()}" data-hologram tabindex="0" aria-label="${escapeHtml(person)}, prévia Chroma ${escapeHtml(lookName)}. Arte editada por inteligência artificial.">
     <img class="chroma-art approved-chroma-art" src="${escapeHtml(image)}" alt="Retrato Chroma de ${escapeHtml(person)}, arte editada por inteligência artificial" width="600" height="750" loading="lazy" decoding="async">
-    <span class="approved-chroma-brand" aria-hidden="true"><b>◆</b> PoliMatch</span><span class="approved-chroma-rarity" aria-hidden="true">★</span>
+    <span class="approved-chroma-brand" aria-hidden="true">${brandSymbol("approved-brand-symbol")}<b>PoliMatch</b></span><span class="approved-chroma-rarity" aria-hidden="true">★</span>
     <span class="approved-chroma-frame" aria-hidden="true"></span>
     <span class="approved-chroma-copy"><strong>${escapeHtml(person)}</strong><small>${escapeHtml(lookName)}</small><em>#${escapeHtml(personId)} · ARTE EDITADA POR IA</em></span>
     <span class="holo-foil" aria-hidden="true"></span><span class="holo-pattern" aria-hidden="true"></span><span class="holo-glint" aria-hidden="true"></span>
@@ -191,7 +195,7 @@ function connectionScreen() {
 
 function coachOverlay() {
   if (!state.showCoach) return "";
-  return `<div class="coach-overlay" role="dialog" aria-modal="true" aria-labelledby="coach-title"><section class="coach-card"><span class="coach-icon" aria-hidden="true">◆</span><p class="eyebrow">Primeiro duelo</p><h2 id="coach-title">É só escolher.</h2><p>Toque em quem você prefere. Segure uma carta para conhecer melhor a pessoa. Se não souber, pode trocar a dupla.</p><button class="primary" id="dismiss-coach" type="button">Bora duelar</button></section></div>`;
+  return `<div class="coach-overlay" role="dialog" aria-modal="true" aria-labelledby="coach-title"><section class="coach-card"><span class="coach-icon" aria-hidden="true">${brandSymbol("coach-symbol")}</span><p class="eyebrow">Primeiro duelo</p><h2 id="coach-title">É só escolher.</h2><p>Toque em quem você prefere. Segure uma carta para conhecer melhor a pessoa. Se não souber, pode trocar a dupla.</p><button class="primary" id="dismiss-coach" type="button">Bora duelar</button></section></div>`;
 }
 
 function render() {

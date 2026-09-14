@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="24" height="24" xmlns:c2pa="http://c2pa.org/manifest">
+<defs><mask id="mk24"><rect width="200" height="200" fill="#fff"/>
+<path d="M 46,152 L 46,56 L 100,126 L 154,56 L 154,152" fill="none" stroke="#000" stroke-width="34" stroke-linejoin="miter"/>
+</mask></defs>
+<g mask="url(#mk24)">
+<rect x="16" y="26" width="84" height="150" rx="16" fill="#12866B" transform="rotate(-8 100 110)"/>
+<rect x="100" y="26" width="84" height="150" rx="16" fill="#12866B" transform="rotate(8 100 110)"/>
+</g></svg>

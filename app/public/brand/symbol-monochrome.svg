@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" color="#04352B" xmlns:c2pa="http://c2pa.org/manifest">
+<g id="sym-mono">
+<defs><mask id="mk-mono"><rect x="0" y="0" width="200" height="200" fill="#fff"/><path d="M 52,146 L 52,64 L 100,122 L 148,64 L 148,146" fill="none" stroke="#000" stroke-width="22" stroke-linejoin="miter"/></mask></defs>
+<g mask="url(#mk-mono)">
+<rect x="26" y="30" width="74" height="140" rx="11" ry="11" fill="currentColor" transform="rotate(-9 100 108)"/>
+<rect x="100" y="30" width="74" height="140" rx="11" ry="11" fill="currentColor" transform="rotate(9 100 108)"/>
+</g>
+</g>
+</svg>

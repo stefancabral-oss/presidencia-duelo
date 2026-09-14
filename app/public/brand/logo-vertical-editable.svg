@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 478.30 415.29" width="478" height="415" xmlns:c2pa="http://c2pa.org/manifest">
+<svg x="71.75" y="0.00" width="334.81" height="293.99" viewBox="14.7 31 170.6 149.8" overflow="visible"><g id="sym-v">
+<defs><clipPath id="cl-v"><rect x="26" y="30" width="74" height="140" rx="11" ry="11" transform="rotate(-9 100 108)"/><rect x="100" y="30" width="74" height="140" rx="11" ry="11" transform="rotate(9 100 108)"/></clipPath></defs>
+<rect x="26" y="30" width="74" height="140" rx="11" ry="11" fill="#0B4A3C" transform="rotate(-9 100 108)"/>
+<rect x="100" y="30" width="74" height="140" rx="11" ry="11" fill="#12866B" transform="rotate(9 100 108)"/>
+<defs><mask id="mg-v"><rect width="200" height="200" fill="#fff"/><g fill="#000"><rect x="100" y="30" width="74" height="140" rx="11" ry="11" transform="rotate(9 100 108)"/></g></mask><mask id="mgb-v"><rect width="200" height="200" fill="#fff"/><g fill="#000"><rect x="26" y="30" width="74" height="140" rx="11" ry="11" transform="rotate(-9 100 108)"/></g></mask></defs>
+<g fill="none" stroke="#D6B566" stroke-width="1.8"><g mask="url(#mg-v)"><rect x="26" y="30" width="74" height="140" rx="11" ry="11" transform="rotate(-9 100 108)"/></g><g mask="url(#mgb-v)"><rect x="100" y="30" width="74" height="140" rx="11" ry="11" transform="rotate(9 100 108)"/></g></g>
+<g clip-path="url(#cl-v)"><path d="M 52,146 L 52,64 L 100,122 L 148,64 L 148,146" fill="none" stroke="#EDECE8" stroke-width="22" stroke-linejoin="miter" stroke-linecap="butt"/></g>
+</g></svg>
+<text x="0" y="412.3890855803048" font-family="Poppins, 'Poppins SemiBold', system-ui, sans-serif" font-weight="600" font-size="100.0" fill="#04352B" letter-spacing="-1.20" xml:space="preserve">Poli<tspan dx="-3.00">M</tspan><tspan dx="1.20">atch</tspan></text>
+</svg>

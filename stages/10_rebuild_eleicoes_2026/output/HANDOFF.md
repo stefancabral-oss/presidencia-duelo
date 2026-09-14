@@ -71,6 +71,10 @@ Estado: revisão visual em andamento
 - Cada retrato Chroma informa que é arte editada por IA e recebe moldura, placa, verniz e holograma como camadas independentes da interface.
 - WebKit e Chromium abriram as 35 imagens durante rolagem real; a prévia mantém uma carta grande por linha no celular e duas por linha no desktop.
 - As capturas `chroma-approved-batch-mobile-qa.png` e `chroma-approved-batch-desktop-qa.png` registram o lote dentro da Coleção.
+- O kit final da marca substituiu os losangos provisórios: o símbolo oficial de duas cartas agora aparece no cabeçalho, nas cartas, no onboarding, no favicon e no ícone instalável do PWA.
+- Assinaturas outline, editáveis, símbolo flat, monocromático, versão de 24 px, ícone mestre e apresentação volumétrica foram preservados em `app/public/brand/`.
+- Os ícones PWA em 192 e 512 px foram derivados do mestre oficial de 1024 px; o manifesto expõe versões vetorial e raster.
+- A captura WebKit `final-brand-mobile-qa.png` comprova a leitura do novo símbolo no cabeçalho e dentro das cartas.
 
 ## Pendente
 
@@ -83,7 +87,7 @@ Estado: revisão visual em andamento
 - Reset explícito do PostgreSQL e publicação da página temporária.
 - Teste visual em desktop após a entrada das fotografias finais.
 - Gate visual das quatro Chromas demonstrativas e do lote de 35 retratos antes de convertê-las em itens equipáveis.
-- Receber e aprovar o novo logo PoliMatch antes de substituir o símbolo provisório no shell e nas cartas.
+- Confirmar a publicação do novo logo PoliMatch em produção após o deploy manual no Dokploy.
 
 ## Human gate
 

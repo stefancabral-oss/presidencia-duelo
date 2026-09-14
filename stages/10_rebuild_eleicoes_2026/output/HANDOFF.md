@@ -59,14 +59,17 @@ Estado: revisão visual em andamento
 - A carta básica passou a incorporar nome, partido ou área, função atual, resumo curto e a dica `Segure para conhecer` dentro da própria placa; o botão externo de perfil foi removido.
 - Os 125 perfis possuem slots estáveis de retrato em `app/public/portraits/001.jpg` até `125.jpg`; substituir o JPG e gerar uma nova build não exige alterar o componente ou o catálogo.
 - A versão dos retratos muda automaticamente a cada build, evitando que Safari ou CDN mantenham uma fotografia anterior em cache.
-- O validador `portraits:check` reconhece atualmente 82 retratos presentes e 43 espaços aguardando imagem; ausência ou falha mantém o fallback por iniciais.
+- O validador `portraits:check` reconhece atualmente 94 retratos presentes e 31 espaços aguardando imagem; ausência ou falha mantém o fallback por iniciais.
 - O padrão de entrega das fotos foi documentado em `docs/design/PHOTO_SLOTS.md` e a captura `mobile-basic-card-photo-slots-qa.png` registra a carta básica no viewport de iPhone.
+- O lote pessoal `Arquivo.zip` substituiu os retratos de 35 pessoas do catálogo, preservando exatamente o tratamento escolhido pelo usuário em conversões JPG sRGB 800 × 1000, sem ampliação artificial.
+- O mapeamento auditável está em `docs/design/USER_EDITED_PHOTOS.md`; `Jair Bolsonaro Filho.tif` foi preservado sem aplicação porque retrata Jair Renan, ausente do catálogo, e a segunda alternativa de Flávio Bolsonaro permaneceu como opção não aplicada.
+- A captura WebKit `mobile-user-edited-photos-qa.png` comprova as fotos enviadas pelo usuário nos cards de Lula e Renan Santos, mantendo informação, malaquita e verniz separados da imagem-fonte.
 
 ## Pendente
 
 - Gate visual do shell e do primeiro lote de retratos.
 - Tratamento visual e seleção final das fotografias entregues.
-- Corrigir ou liberar as 43 fotografias bloqueadas pela auditoria; Cármen Lúcia e Camilo Santana estão explicitamente com pessoa errada e Antonio Rueda depende de autorização.
+- Corrigir ou liberar os 31 espaços ainda sem fotografia; Cármen Lúcia e Camilo Santana seguem explicitamente com pessoa errada e Antonio Rueda depende de autorização.
 - Revisão humana das afirmações editoriais e correção dos 54 retratos principais fora do gate.
 - Receber os dez retratos individuais do primeiro lote; a colagem de preview não será cortada para produção.
 - Resolver as 798 fontes ausentes antes de disponibilizar as respectivas Chromas.

@@ -81,7 +81,14 @@ try {
   await page.waitForTimeout(520);
   await page.mouse.up();
   await page.locator("dialog[open]").waitFor();
-  await page.getByRole("button", { name: "Voltar ao duelo" }).click();
+  const closeSummary = page.getByRole("button", { name: "Fechar resumo" });
+  await closeSummary.waitFor();
+  if (!await closeSummary.isVisible()) throw new Error("O fechamento do resumo não está visível");
+  if (process.env.POLIMATCH_E2E_PROFILE_SCREENSHOT) {
+    await page.screenshot({ path: process.env.POLIMATCH_E2E_PROFILE_SCREENSHOT, fullPage: true });
+  }
+  await closeSummary.click();
+  await page.locator("dialog[open]").waitFor({ state: "hidden" });
 
   await firstCard.click();
   await page.getByText(/confirmado · \+16 Elo/).waitFor();

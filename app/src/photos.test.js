@@ -1,16 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { APPROVED_PHOTO_COUNT, candidatePhoto } from "./photos.js";
+import { PHOTO_SLOT_COUNT, candidatePhoto, portraitSlot } from "./photos.js";
 
-test("only technically and editorially cleared treated photos are bundled", () => {
-  assert.equal(APPROVED_PHOTO_COUNT, 82);
-  assert.equal(candidatePhoto({ personId: 1 }), "/portraits/001.jpg");
-  assert.equal(candidatePhoto({ personId: 55 }), "");
-  assert.equal(candidatePhoto({ personId: 68 }), "");
-  assert.equal(candidatePhoto({ personId: 97 }), "");
+test("all 125 people have a stable replaceable portrait slot", () => {
+  assert.equal(PHOTO_SLOT_COUNT, 125);
+  assert.equal(portraitSlot(1), "/portraits/001.jpg?v=test");
+  assert.equal(portraitSlot(55), "/portraits/055.jpg?v=test");
+  assert.equal(portraitSlot(125), "/portraits/125.jpg?v=test");
+  assert.equal(portraitSlot(126), "");
 });
 
-test("a future reviewed photo from the API can override the bundled portrait", () => {
+test("a reviewed remote photo can override the local slot", () => {
   assert.equal(candidatePhoto({ personId: 55, photo: "https://cdn.example/carmen.jpg" }), "https://cdn.example/carmen.jpg");
-  assert.equal(candidatePhoto({ personId: 1, photo: "/candidates/legacy.jpg" }), "/portraits/001.jpg");
+  assert.equal(candidatePhoto({ personId: 1, photo: "/candidates/legacy.jpg" }), "/portraits/001.jpg?v=test");
 });

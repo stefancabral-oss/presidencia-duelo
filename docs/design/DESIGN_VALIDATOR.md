@@ -29,12 +29,12 @@ A direção aprovada é:
 ### Cards
 
 - [ ] Proporção vertical TCG.
-- [ ] Duas cartas lado a lado continuam legíveis em iPhone.
+- [ ] Duas cartas ficam empilhadas e legíveis em iPhone; no desktop, permanecem lado a lado.
 - [ ] Imagem ocupa aproximadamente 60–70% da carta.
 - [ ] Espaço interno para nome, papel/cargo, resumo e meta.
 - [ ] Ícones e badges não competem com o rosto.
 - [ ] Não existe botão separado “Escolher”. O card inteiro é a ação.
-- [ ] `Ver ficha` é secundário e não rouba foco.
+- [ ] A ficha abre ao segurar; a dica fica dentro da placa e nenhum botão externo rouba foco.
 
 ### Hierarquia
 

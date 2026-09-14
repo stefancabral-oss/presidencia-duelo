@@ -56,6 +56,11 @@ Estado: revisão visual em andamento
 - O app aplica somente verniz e trajetórias leves de brilho sobre as artes, preservando rosto, nome e símbolos no Safari móvel.
 - As imagens de produção da prévia foram pré-dimensionadas em 530 × 742 e JPEG de alta qualidade para evitar moiré na redução do WebKit e manter carregamento móvel controlado.
 - A captura `chroma-collection-mobile-qa-v2.png` registra a nova composição no viewport de iPhone com as quatro artes completas.
+- A carta básica passou a incorporar nome, partido ou área, função atual, resumo curto e a dica `Segure para conhecer` dentro da própria placa; o botão externo de perfil foi removido.
+- Os 125 perfis possuem slots estáveis de retrato em `app/public/portraits/001.jpg` até `125.jpg`; substituir o JPG e gerar uma nova build não exige alterar o componente ou o catálogo.
+- A versão dos retratos muda automaticamente a cada build, evitando que Safari ou CDN mantenham uma fotografia anterior em cache.
+- O validador `portraits:check` reconhece atualmente 82 retratos presentes e 43 espaços aguardando imagem; ausência ou falha mantém o fallback por iniciais.
+- O padrão de entrega das fotos foi documentado em `docs/design/PHOTO_SLOTS.md` e a captura `mobile-basic-card-photo-slots-qa.png` registra a carta básica no viewport de iPhone.
 
 ## Pendente
 
@@ -68,6 +73,7 @@ Estado: revisão visual em andamento
 - Reset explícito do PostgreSQL e publicação da página temporária.
 - Teste visual em desktop após a entrada das fotografias finais.
 - Gate visual das quatro Chromas demonstrativas antes de convertê-las em itens equipáveis ou expandir o tratamento para o catálogo.
+- Receber e aprovar o novo logo PoliMatch antes de substituir o símbolo provisório no shell e nas cartas.
 
 ## Human gate
 

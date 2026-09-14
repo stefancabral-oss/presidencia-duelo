@@ -52,6 +52,14 @@ function candidateSummary(candidate) {
   return candidate.bio || candidate.summary || "Conteúdo editorial em revisão antes da publicação.";
 }
 
+function candidateCardSummary(candidate) {
+  return candidate.summary || candidate.relevance2026 || "Perfil em revisão editorial.";
+}
+
+function candidateAffiliation(candidate) {
+  return candidate.party || candidate.affiliation || candidate.area || "Pessoa pública";
+}
+
 function safeUrl(value = "") {
   try {
     const url = new URL(value);
@@ -76,7 +84,7 @@ function portrait(candidate) {
 
 function card(candidate) {
   return `<div class="candidate-wrap">
-    <button class="candidate-card${state.selectedId === candidate.id ? " is-selected" : ""}" type="button" data-vote="${escapeHtml(candidate.id)}" ${state.busy ? 'disabled aria-busy="true"' : ""} aria-label="${escapeHtml(candidate.name)}, carta padrão. Toque para escolher; segure para saber quem é.">
+    <button class="candidate-card basic-card${state.selectedId === candidate.id ? " is-selected" : ""}" type="button" data-vote="${escapeHtml(candidate.id)}" ${state.busy ? 'disabled aria-busy="true"' : ""} aria-label="${escapeHtml(candidate.name)}, carta básica. Toque para escolher; segure para saber quem é.">
       <span class="card-material" aria-hidden="true"></span>
       <span class="card-facets" aria-hidden="true"></span>
       <span class="card-brand" aria-hidden="true">◆ PoliMatch</span>
@@ -84,11 +92,13 @@ function card(candidate) {
       ${portrait(candidate)}
       <span class="candidate-copy">
         <strong>${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong>
-        <span>${escapeHtml(candidateRole(candidate))}</span>
+        <span class="candidate-affiliation">${escapeHtml(candidateAffiliation(candidate))}</span>
+        <span class="candidate-office">${escapeHtml(candidate.office || candidateRole(candidate))}</span>
+        <small class="candidate-summary">${escapeHtml(candidateCardSummary(candidate))}</small>
+        <small class="candidate-profile-hint"><span aria-hidden="true">ⓘ</span> Segure para conhecer</small>
       </span>
       <span class="card-corners" aria-hidden="true"></span>
     </button>
-    <button class="profile-button" type="button" data-profile="${escapeHtml(candidate.id)}"><span aria-hidden="true">ⓘ</span> Quem é? <small>Segure a carta</small></button>
   </div>`;
 }
 

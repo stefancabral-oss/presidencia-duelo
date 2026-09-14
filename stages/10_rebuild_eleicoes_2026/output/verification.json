@@ -1,8 +1,8 @@
 {
   "status": "visual-review-required",
   "checks": [
-    { "name": "app-unit", "command": "npm test --prefix app", "result": "19 passed, including hologram pointer and orientation calculations" },
-    { "name": "app-build", "command": "npm run build --prefix app", "result": "passed; JS 9.37 kB gzip; CSS 8.00 kB gzip" },
+    { "name": "app-unit", "command": "npm test --prefix app", "result": "19 passed, including 125 stable portrait slots and remote-photo override" },
+    { "name": "app-build", "command": "npm run build --prefix app", "result": "passed; portrait gate reports 82 present and 43 pending; JS 9.22 kB gzip; CSS 8.06 kB gzip" },
     { "name": "backend-unit", "command": "npm test --prefix back", "result": "12 passed" },
     { "name": "postgres-integration", "command": "npm run test:integration --prefix back", "result": "passed against isolated PostgreSQL 16" },
     { "name": "mobile-browser", "command": "Playwright at 390x844 with isolated API responses", "result": "passed; fifth choice remains in duel, +Elo feedback is visible, long press opens profile without voting, zero console errors" },
@@ -13,8 +13,9 @@
     { "name": "photo-source-package", "command": "node back/scripts/validate-photo-package.mjs outputs/polimatch-fotos-fontes-125", "result": "passed; 125 people, 375 unique image files, zero missing files, zero checksum mismatches" },
     { "name": "photo-source-zip", "command": "unzip -t outputs/polimatch-fotos-fontes-125.zip", "result": "passed; no compressed-data errors" },
     { "name": "treated-photo-package", "command": "file, shasum and CSV audit over polimatch-fotos-tratadas", "result": "passed structurally; 125 PNG and 125 JPG at 1200x1500; 82 cleared; 43 held back" },
-    { "name": "responsive-duel-layout", "command": "Playwright WebKit and Chromium at 390x844 and 1280x900", "result": "passed; cards stacked on mobile and side by side on desktop; metal rail, facets, corners, atmospheric and varnish layers render on both cards; profile opens and closes; zero page errors" },
+    { "name": "responsive-duel-layout", "command": "Playwright WebKit and Chromium at 390x844 and 1280x900", "result": "passed; basic cards stack on mobile and remain side by side on desktop; photo, name, affiliation, office, summary and hold hint stay inside each card; long press opens and closes the profile; zero page errors" },
     { "name": "chroma-motion-preview", "command": "Playwright WebKit and Chromium at 390x844", "result": "passed; four complete rendered Chroma artworks load; each keeps an exclusive light path; pointer movement changes the varnish position; zero page errors" },
-    { "name": "chroma-safari-visual", "command": "WebKit screenshot at 390x844 after production build", "result": "passed technically; full artwork, names and rarity symbols remain legible without color corruption; screenshot saved as chroma-collection-mobile-qa-v2.png; human visual approval pending" }
+    { "name": "chroma-safari-visual", "command": "WebKit screenshot at 390x844 after production build", "result": "passed technically; full artwork, names and rarity symbols remain legible without color corruption; screenshot saved as chroma-collection-mobile-qa-v2.png; human visual approval pending" },
+    { "name": "basic-card-photo-slots", "command": "portrait validator plus Playwright WebKit and Chromium", "result": "passed; 125 deterministic replaceable slots, 82 photos present, 43 safe fallbacks, cache version per build, embedded card information and no external profile button" }
   ]
 }

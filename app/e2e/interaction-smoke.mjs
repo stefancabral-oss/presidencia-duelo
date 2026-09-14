@@ -12,6 +12,8 @@ const candidates = [
     displayName: "Lula",
     party: "PT",
     role: "Presidente da República",
+    office: "Presidente da República",
+    summary: "Presidente do Brasil e possível candidato em 2026.",
     bio: "Perfil editorial de teste do primeiro candidato.",
   },
   {
@@ -21,6 +23,8 @@ const candidates = [
     displayName: "Renan Santos",
     party: "Missão",
     role: "Ativista e candidato à Presidência",
+    office: "Fundador do MBL",
+    summary: "Atuação política e liderança ligada ao Movimento Brasil Livre.",
     bio: "Perfil editorial de teste do segundo candidato.",
   },
 ];
@@ -78,6 +82,10 @@ try {
   if (mobileCards.length !== 2 || Math.abs(mobileCards[0].left - mobileCards[1].left) > 2 || mobileCards[1].top <= mobileCards[0].bottom) {
     throw new Error("As cartas não ficaram empilhadas no viewport móvel");
   }
+  if (await page.locator(".basic-card").count() !== 2) throw new Error("A carta básica não foi aplicada aos dois perfis");
+  if (await page.locator(".candidate-summary").count() !== 2) throw new Error("O resumo deixou de fazer parte da carta básica");
+  if (await page.locator(".candidate-profile-hint").count() !== 2) throw new Error("A dica de segurar deixou de fazer parte da carta básica");
+  if (await page.locator(".profile-button").count()) throw new Error("Um botão externo voltou a ocupar espaço junto à carta");
   for (const layer of [".card-material", ".card-facets", ".card-corners"]) {
     if (await page.locator(`.candidate-card ${layer}`).count() !== 2) {
       throw new Error(`A camada premium ${layer} não foi renderizada nas duas cartas`);

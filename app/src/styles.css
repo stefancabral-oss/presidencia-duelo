@@ -72,7 +72,7 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .arena { width: min(100%, 860px); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr); align-items: center; gap: 12px; }
 .versus { position: relative; z-index: 3; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid rgb(231 199 98 / 70%); border-radius: 50%; background: #082f25; color: var(--gold); box-shadow: 0 0 18px rgb(231 199 98 / 30%); font-size: .68rem; font-weight: 950; }
 .candidate-wrap { min-width: 0; display: grid; gap: 7px; }
-.candidate-card { position: relative; isolation: isolate; width: 100%; height: clamp(390px, 43vw, 510px); min-width: 0; display: grid; grid-template-rows: minmax(0, 1fr) 72px; padding: 12px 12px 11px; overflow: hidden; border: 1px solid #e9cf78; border-radius: 21px; background: linear-gradient(135deg, #f9e49b 0, #8e691b 4%, #f7dc80 8%, #5e4310 12%, #0b5d49 17%, #04382d 70%, #c9a544 94%, #6e5015 100%); color: var(--ink); text-align: left; cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 52%), inset 0 0 0 4px rgb(35 23 2 / 42%), inset 0 0 0 6px rgb(255 227 128 / 42%), 0 4px 0 #4b350d, 0 18px 38px rgb(0 12 9 / 48%), 0 0 24px rgb(231 199 98 / 14%); transition: transform 160ms ease, box-shadow 160ms ease; }
+.candidate-card { position: relative; isolation: isolate; width: 100%; height: clamp(510px, 47vw, 580px); min-width: 0; display: grid; grid-template-rows: minmax(0, 1fr) 148px; padding: 12px 12px 11px; overflow: hidden; border: 1px solid #e9cf78; border-radius: 21px; background: linear-gradient(135deg, #f9e49b 0, #8e691b 4%, #f7dc80 8%, #5e4310 12%, #0b5d49 17%, #04382d 70%, #c9a544 94%, #6e5015 100%); color: var(--ink); text-align: left; cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 52%), inset 0 0 0 4px rgb(35 23 2 / 42%), inset 0 0 0 6px rgb(255 227 128 / 42%), 0 4px 0 #4b350d, 0 18px 38px rgb(0 12 9 / 48%), 0 0 24px rgb(231 199 98 / 14%); transition: transform 160ms ease, box-shadow 160ms ease; }
 .candidate-card.is-peeking { z-index: 4; transform: scale(1.035); box-shadow: 0 22px 46px rgb(0 10 7 / 52%), 0 0 28px rgb(231 199 98 / 24%); }
 .candidate-card.is-selected { transform: translateY(-4px) scale(1.015); border-color: #ffe88d; box-shadow: 0 20px 44px rgb(0 10 7 / 52%), 0 0 34px rgb(255 218 92 / 48%); }
 .candidate-card:disabled { cursor: wait; filter: saturate(.7) brightness(.82); transform: scale(.985); }
@@ -95,15 +95,16 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .candidate-card .portrait::after { content: ""; position: absolute; z-index: 3; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 42%, transparent 34%, rgb(1 34 27 / 12%) 63%, rgb(0 20 15 / 52%) 100%), linear-gradient(180deg, rgb(255 241 190 / 7%), transparent 30% 72%, rgb(0 20 15 / 25%)); box-shadow: inset 0 0 42px rgb(0 25 19 / 28%), inset 0 -24px 36px rgb(0 24 18 / 22%); }
 .portrait img { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; display: block; object-fit: cover; object-position: center top; }
 .portrait-fallback { position: absolute; inset: 0; display: grid; place-items: center; font-size: clamp(2rem, 10vw, 4rem); font-weight: 950; color: rgb(255 255 255 / 50%); }
-.candidate-copy { position: relative; z-index: 4; display: block; min-height: 0; margin-top: -1px; padding: 11px 12px 9px; border: 1px solid rgb(255 255 255 / 78%); border-top-color: #c9ad59; border-radius: 2px 2px 10px 10px; background: linear-gradient(118deg, #fffefa 0 38%, #eee9dd 65%, #fffdf8 100%); box-shadow: 0 0 0 3px rgb(1 29 23 / 72%), 0 0 0 4px rgb(239 209 111 / 35%), inset 0 1px white, inset 0 -10px 22px rgb(182 160 99 / 8%), 0 6px 15px rgb(0 13 10 / 30%); }
+.candidate-copy { position: relative; z-index: 4; min-height: 0; margin-top: -1px; padding: 9px 12px 8px; display: grid; align-content: start; border: 1px solid rgb(255 255 255 / 78%); border-top-color: #c9ad59; border-radius: 2px 2px 10px 10px; background: linear-gradient(118deg, #fffefa 0 38%, #eee9dd 65%, #fffdf8 100%); box-shadow: 0 0 0 3px rgb(1 29 23 / 72%), 0 0 0 4px rgb(239 209 111 / 35%), inset 0 1px white, inset 0 -10px 22px rgb(182 160 99 / 8%), 0 6px 15px rgb(0 13 10 / 30%); }
 .candidate-copy::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(112deg, transparent 0 62%, rgb(255 255 255 / 55%) 63% 70%, transparent 71%); opacity: .55; }
-.candidate-copy strong, .candidate-copy span { position: relative; z-index: 1; }
-.candidate-copy strong { display: block; font-size: clamp(.9rem, 3.5vw, 1.12rem); line-height: 1.04; letter-spacing: -.025em; }
-.candidate-copy span { display: block; margin-top: 6px; color: #526159; font-size: .68rem; line-height: 1.25; letter-spacing: .015em; }
+.candidate-copy > * { position: relative; z-index: 1; }
+.candidate-copy > strong { display: block; overflow: hidden; font-size: clamp(1.05rem, 3.8vw, 1.35rem); line-height: 1.03; letter-spacing: -.03em; text-overflow: ellipsis; white-space: nowrap; }
+.candidate-copy .candidate-affiliation { display: block; margin-top: 4px; overflow: hidden; color: #9a761f; font-size: .66rem; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; text-overflow: ellipsis; white-space: nowrap; }
+.candidate-copy .candidate-office { display: -webkit-box; margin-top: 4px; overflow: hidden; color: #1e3f34; font-size: .72rem; font-weight: 850; line-height: 1.18; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+.candidate-summary { display: -webkit-box; margin-top: 5px; overflow: hidden; color: #53615a; font-size: .64rem; font-weight: 650; line-height: 1.25; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.candidate-profile-hint { align-self: end; margin-top: 7px; padding-top: 6px; border-top: 1px solid rgb(151 126 62 / 25%); color: #87681c; font-size: .57rem; font-weight: 900; letter-spacing: .055em; text-align: center; text-transform: uppercase; }
+.candidate-profile-hint span { margin-right: 3px; font-size: .72rem; }
 @keyframes varnish-confirm { 0% { background-position: 150% 0, 0 0, 0 0; opacity: .68; } 46% { opacity: 1; } 100% { background-position: -30% 0, 0 0, 0 0; opacity: .78; } }
-.profile-button { min-height: 48px; padding: 7px 8px; border: 1px solid rgb(232 206 126 / 46%); border-radius: 13px; background: linear-gradient(180deg, rgb(8 72 56 / 78%), rgb(1 39 31 / 88%)); color: #f6df91; box-shadow: inset 0 1px rgb(255 255 255 / 9%), 0 8px 18px rgb(0 17 13 / 18%); font-size: .68rem; font-weight: 900; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; }
-.profile-button:hover { border-color: rgb(249 228 152 / 72%); box-shadow: inset 0 1px rgb(255 255 255 / 12%), 0 8px 22px rgb(0 17 13 / 24%), 0 0 14px rgb(212 175 55 / 10%); }
-.profile-button small { display: block; margin-top: 2px; color: #aabbb3; font-size: .52rem; font-weight: 700; letter-spacing: .02em; text-transform: none; }
 .skip-button { justify-self: center; min-height: 46px; padding: 9px 18px; border: 1px solid rgb(255 255 255 / 14%); border-radius: 999px; background: rgb(0 35 28 / 42%); color: #d5ded9; box-shadow: inset 0 1px rgb(255 255 255 / 5%); font-size: .78rem; font-weight: 750; cursor: pointer; }
 .skip-button::after { content: "  ››"; color: var(--gold); letter-spacing: -.12em; }
 
@@ -244,7 +245,7 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
 @media (max-width: 430px) {
   .app-shell { padding-inline: 9px; }
   .soon-grid { grid-template-columns: 1fr; }
-  .candidate-copy { padding: 8px; }
+  .candidate-copy { padding: 9px 11px 8px; }
   dialog { width: calc(100% - 18px); height: calc(100dvh - max(28px, env(safe-area-inset-top)) - max(18px, env(safe-area-inset-bottom))); max-height: none; margin-block: max(14px, env(safe-area-inset-top)) max(9px, env(safe-area-inset-bottom)); }
   .profile-preview { width: min(100%, 330px); }
   .profile-preview .portrait { max-height: 38dvh; }
@@ -256,14 +257,13 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
 @media (max-width: 699px) {
   .arena { width: min(100%, 410px); grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 36px auto; gap: 10px; }
   .versus { justify-self: center; width: 36px; height: 36px; }
-  .candidate-card { height: clamp(390px, 118vw, 485px); }
+  .candidate-card { height: clamp(500px, 134vw, 560px); }
   .candidate-copy strong { font-size: clamp(1.1rem, 5vw, 1.35rem); }
-  .candidate-copy span { font-size: .78rem; }
   .app-shell:has(.duel-screen) .bottom-nav { position: static; left: auto; width: 100%; margin-top: 16px; transform: none; }
 }
 
 @media (max-width: 350px) {
-  .candidate-card { height: 390px; }
+  .candidate-card { height: 500px; }
   .pulse-grid { grid-template-columns: 1fr; }
   .section-title > small { display: none; }
 }

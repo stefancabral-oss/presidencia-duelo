@@ -229,6 +229,31 @@ dialog::backdrop { background: rgb(4 24 17 / 68%); backdrop-filter: blur(5px); }
 .prism-shards .holo-pattern { opacity: .05; background: linear-gradient(128deg, transparent 0 18%, rgb(79 255 217 / 23%) 18.5% 23%, transparent 23.5% 48%, rgb(120 161 255 / 25%) 48.5% 55%, transparent 55.5% 73%, rgb(245 103 255 / 21%) 73.5% 80%, transparent 80.5%), linear-gradient(42deg, transparent 0 28%, rgb(255 227 99 / 18%) 28.5% 34%, transparent 34.5% 68%, rgb(255 114 149 / 19%) 68.5% 74%, transparent 74.5%); background-position: var(--holo-x) var(--holo-y); background-size: 125% 125%; }
 .prism-aurora .holo-pattern { opacity: .05; background: repeating-linear-gradient(118deg, transparent 0 12%, rgb(80 255 221 / 20%) 15%, rgb(104 165 255 / 22%) 20%, rgb(232 112 255 / 19%) 25%, transparent 31% 43%); background-position: var(--holo-x) var(--holo-y); background-size: 185% 185%; filter: blur(.5px); }
 
+.approved-batch { overflow: hidden; background: radial-gradient(circle at 88% 4%, rgb(214 181 102 / 15%), transparent 24%), linear-gradient(145deg, rgb(6 62 48 / 82%), rgb(1 25 20 / 96%)); }
+.batch-count { min-width: 46px; color: #f4dd9b; text-align: center; font-variant-numeric: tabular-nums; }
+.approved-chroma-gallery { margin-top: 18px; }
+.approved-chroma-card { border: 1px solid #d6b566; border-radius: 24px; background: linear-gradient(145deg, #e3c46a 0 1.2%, #0a5a46 1.5% 3.1%, #d6b566 3.3% 4.1%, #052e25 4.4% 95.6%, #d6b566 95.9% 96.7%, #0a5a46 96.9% 98.5%, #7a6212 98.8%); box-shadow: 0 5px 0 #5c4810, 0 28px 52px rgb(0 11 8 / 62%), inset 0 0 0 2px rgb(255 242 189 / 20%), 0 0 0 1px rgb(227 196 106 / 22%); }
+.approved-chroma-card::before { content: ""; position: absolute; z-index: 1; inset: 3.1%; border: 1px solid rgb(227 196 106 / 68%); border-radius: 17px; background: linear-gradient(115deg, rgb(255 255 255 / 8%), transparent 19% 78%, rgb(214 181 102 / 10%)); box-shadow: inset 0 0 0 3px rgb(2 35 27 / 75%), inset 0 0 22px rgb(227 196 106 / 10%); pointer-events: none; }
+.approved-chroma-card::after { content: ""; position: absolute; z-index: 8; inset: 0; border-radius: inherit; background: radial-gradient(circle at var(--holo-x) var(--holo-y), rgb(255 255 255 / 14%) 0 2%, transparent 21%), linear-gradient(108deg, transparent 17%, rgb(255 255 255 / 8%) 34%, transparent 47% 70%, rgb(227 196 106 / 8%) 82%, transparent 91%); background-position: center, var(--holo-x) var(--holo-y); background-size: auto, 180% 180%; mix-blend-mode: screen; opacity: .62; pointer-events: none; }
+.approved-chroma-art { inset: 4.2% 4.2% 17.5%; width: 91.6%; height: 78.3%; border-radius: 14px 14px 4px 4px; object-position: center top; box-shadow: inset 0 -20px 28px rgb(0 26 19 / 28%); }
+.approved-chroma-brand, .approved-chroma-rarity { position: absolute; z-index: 6; top: 5.6%; color: #fffdf3; filter: drop-shadow(0 2px 4px rgb(0 18 13 / 75%)); }
+.approved-chroma-brand { left: 7.2%; font-size: .72rem; font-weight: 900; letter-spacing: -.02em; }
+.approved-chroma-brand b { color: #e3c46a; }
+.approved-chroma-rarity { right: 7.2%; display: grid; place-items: center; width: 32px; aspect-ratio: 1; border: 1px solid #e3c46a; border-radius: 10px; background: rgb(0 35 27 / 78%); color: #f5d77d; box-shadow: inset 0 0 0 2px rgb(255 255 255 / 7%), 0 4px 12px rgb(0 18 13 / 30%); }
+.approved-chroma-frame { position: absolute; z-index: 5; inset: 3.1%; border: 1px solid rgb(255 239 178 / 55%); border-radius: 17px; box-shadow: inset 0 0 0 4px rgb(3 54 42 / 55%), inset 0 0 0 5px rgb(214 181 102 / 34%); pointer-events: none; }
+.approved-chroma-copy { position: absolute; z-index: 6; left: 4.2%; right: 4.2%; bottom: 4.2%; min-height: 15%; display: grid; align-content: center; gap: 2px; padding: 10px 14px; border-top: 1px solid rgb(122 98 18 / 42%); border-radius: 3px 3px 13px 13px; background: linear-gradient(135deg, #fffef8, #eee9dc 68%, #dcd4bf); color: #042d24; box-shadow: inset 0 1px white, 0 -7px 18px rgb(0 22 16 / 20%); }
+.approved-chroma-copy strong { overflow: hidden; font-size: clamp(.96rem, 3.4vw, 1.18rem); line-height: 1.05; letter-spacing: -.035em; text-overflow: ellipsis; white-space: nowrap; }
+.approved-chroma-copy small { color: #52675e; font-size: .63rem; font-weight: 800; line-height: 1.2; }
+.approved-chroma-copy em { margin-top: 2px; color: #7a6212; font-size: .48rem; font-style: normal; font-weight: 900; letter-spacing: .1em; }
+.approved-chroma-card .holo-foil { z-index: 3; opacity: .09; background-image: conic-gradient(from 210deg at var(--holo-x) var(--holo-y), transparent, rgb(227 196 106 / 25%), rgb(87 227 191 / 14%), rgb(255 255 255 / 28%), transparent 42%); }
+.approved-chroma-card .holo-pattern { z-index: 4; opacity: .08; background: repeating-linear-gradient(124deg, transparent 0 13%, rgb(227 196 106 / 28%) 13.5% 14%, transparent 14.5% 29%); background-position: var(--holo-x) var(--holo-y); background-size: 165% 165%; }
+.approved-chroma-card .holo-glint { z-index: 7; opacity: .18; }
+.approved-chroma-card.look-l02 .holo-pattern, .approved-chroma-card.look-l06 .holo-pattern, .approved-chroma-card.look-l10 .holo-pattern { background-image: radial-gradient(circle at var(--holo-x) var(--holo-y), transparent 0 27%, rgb(227 196 106 / 22%) 28% 29%, transparent 30% 48%, rgb(85 225 190 / 16%) 49% 50%, transparent 51%); }
+.approved-chroma-card.look-l03 .holo-pattern, .approved-chroma-card.look-l07 .holo-pattern, .approved-chroma-card.look-l11 .holo-pattern { background-image: linear-gradient(113deg, transparent 0 26%, rgb(255 243 190 / 22%) 27% 29%, transparent 30% 61%, rgb(227 196 106 / 18%) 62% 64%, transparent 65%); }
+.approved-chroma-card.look-l04 .holo-pattern, .approved-chroma-card.look-l08 .holo-pattern, .approved-chroma-card.look-l12 .holo-pattern { background-image: conic-gradient(from 35deg at var(--holo-x) var(--holo-y), transparent, rgb(81 245 208 / 18%), transparent 18%, rgb(227 196 106 / 20%), transparent 37%); }
+.batch-toggle { width: 100%; margin-top: 20px; }
+.batch-disclosure { margin: 12px 2px 0 !important; color: #829b90 !important; font-size: .64rem !important; text-align: center; }
+
 .connection { min-height: 70dvh; display: grid; place-items: center; text-align: center; }
 .connection .panel { max-width: 460px; }
 .connection p { color: var(--muted); line-height: 1.5; }

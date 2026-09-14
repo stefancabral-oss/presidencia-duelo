@@ -78,6 +78,11 @@ try {
   if (mobileCards.length !== 2 || Math.abs(mobileCards[0].left - mobileCards[1].left) > 2 || mobileCards[1].top <= mobileCards[0].bottom) {
     throw new Error("As cartas não ficaram empilhadas no viewport móvel");
   }
+  for (const layer of [".card-material", ".card-facets", ".card-corners"]) {
+    if (await page.locator(`.candidate-card ${layer}`).count() !== 2) {
+      throw new Error(`A camada premium ${layer} não foi renderizada nas duas cartas`);
+    }
+  }
   if (process.env.POLIMATCH_E2E_DUEL_SCREENSHOT) {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_DUEL_SCREENSHOT, fullPage: true });
   }

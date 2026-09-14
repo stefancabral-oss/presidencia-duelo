@@ -69,6 +69,8 @@ function portrait(candidate) {
 function card(candidate) {
   return `<div class="candidate-wrap">
     <button class="candidate-card${state.selectedId === candidate.id ? " is-selected" : ""}" type="button" data-vote="${escapeHtml(candidate.id)}" ${state.busy ? 'disabled aria-busy="true"' : ""} aria-label="${escapeHtml(candidate.name)}, carta padrão. Toque para escolher; segure para saber quem é.">
+      <span class="card-material" aria-hidden="true"></span>
+      <span class="card-facets" aria-hidden="true"></span>
       <span class="card-brand" aria-hidden="true">◆ PoliMatch</span>
       <span class="card-rarity" aria-hidden="true">●</span>
       ${portrait(candidate)}
@@ -76,6 +78,7 @@ function card(candidate) {
         <strong>${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong>
         <span>${escapeHtml(candidateRole(candidate))}</span>
       </span>
+      <span class="card-corners" aria-hidden="true"></span>
     </button>
     <button class="profile-button" type="button" data-profile="${escapeHtml(candidate.id)}"><span aria-hidden="true">ⓘ</span> Quem é? <small>Segure a carta</small></button>
   </div>`;

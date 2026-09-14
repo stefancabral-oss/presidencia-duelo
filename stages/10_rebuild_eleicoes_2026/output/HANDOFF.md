@@ -2,7 +2,7 @@
 
 ## Status
 
-Estado: versão de teste aprovada para publicação
+Estado: revisão visual em andamento
 
 ## Entregue
 
@@ -38,6 +38,7 @@ Estado: versão de teste aprovada para publicação
 - Somente 82 retratos sem qualquer flag foram integrados à prévia; 43 permanecem em fallback para impedir publicação acidental de pessoa errada, baixa qualidade ou licença pendente.
 - O duelo móvel foi reorganizado em duas cartas grandes empilhadas; em desktop, as duas cartas permanecem grandes e lado a lado.
 - Cada carta recebeu uma camada atmosférica entre retrato e moldura, integrando as bordas à malaquita, e uma última camada de verniz que cobre foto, placa e estrutura com reflexo controlado.
+- Após o feedback de que a primeira composição ainda parecia uma foto com borda, a carta básica foi reconstruída como um objeto em camadas: aro metálico externo, trilhos internos, cantos facetados, retrato rebaixado, placa de nome encaixada e verniz superficial. O tratamento continua deliberadamente abaixo das Chromas em intensidade.
 - Capturas de QA em WebKit foram preservadas em `mobile-stacked-photo-qa.png` e `desktop-photo-qa.png`.
 - O primeiro preview de dez retratos em caricatura editorial foi registrado como direção operacional, aguardando os arquivos individuais.
 - O primeiro acesso ao duelo agora apresenta uma explicação curta e descontraída; depois de concluída, ela não reaparece no mesmo navegador.
@@ -59,4 +60,4 @@ Estado: versão de teste aprovada para publicação
 
 ## Human gate
 
-Status: aprovado pelo usuário em 14/09/2026 ao solicitar push e deploy desta versão de teste.
+Status: nova revisão visual solicitada pelo usuário em 14/09/2026; aguarda aprovação da anatomia premium atualizada antes de publicar.

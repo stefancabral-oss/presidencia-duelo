@@ -7,7 +7,13 @@ test("approved Chroma batch maps exactly 35 current catalog people", () => {
   assert.equal(new Set(approvedChromas.map(({ personId }) => personId)).size, 35);
   assert.ok(approvedChromas.every(({ image }) => /^\/chromas\/approved\/\d{3}_[a-z0-9-]+\.jpg$/.test(image)));
   assert.ok(approvedChromas.every(({ aiEdited }) => aiEdited));
+  assert.ok(approvedChromas.every(({ distinctPhotoVerified }) => !distinctPhotoVerified));
+  assert.ok(approvedChromas.every(({ inventoryEligible }) => !inventoryEligible));
   assert.ok(!approvedChromas.some(({ personId }) => personId === "126"));
+});
+
+test("a Chroma can only enter inventory after a different source photo is verified", () => {
+  assert.ok(approvedChromas.every(({ distinctPhotoVerified, inventoryEligible }) => distinctPhotoVerified || !inventoryEligible));
 });
 
 test("second Flávio art remains recorded without becoming another person", () => {

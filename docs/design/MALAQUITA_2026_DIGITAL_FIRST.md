@@ -42,7 +42,9 @@ Regras:
 - moldura iridescente;
 - tratamento visual comemorativo;
 - linguagem ilustrativa como direção final de arte;
-- enquanto ilustrações individuais não existirem, as fotografias oficiais do catálogo recebem tratamento prismático controlado sem substituir o arquivo original.
+- toda Chroma parte de uma fotografia diferente da carta básica: nova pose, novo enquadramento ou outro momento verificável da pessoa;
+- tratamento, fundo ou filtro sobre a mesma fotografia da carta básica é apenas estudo visual e nunca pode entrar no inventário;
+- a origem distinta precisa estar registrada e aprovada antes de sorteio, compra ou equipamento da Chroma.
 
 ## Fotografia
 

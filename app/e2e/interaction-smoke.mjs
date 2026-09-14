@@ -80,11 +80,15 @@ try {
     const box = card.getBoundingClientRect();
     return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };
   }));
-  if (mobileCards.length !== 2 || Math.abs(mobileCards[0].left - mobileCards[1].left) > 2 || mobileCards[1].top <= mobileCards[0].bottom) {
-    throw new Error("As cartas não ficaram empilhadas no viewport móvel");
+  if (mobileCards.length !== 2 || Math.abs(mobileCards[0].top - mobileCards[1].top) > 2 || mobileCards[1].left <= mobileCards[0].right) {
+    throw new Error("As duas cartas não ficaram lado a lado no viewport móvel");
+  }
+  if (mobileCards.some(({ top, right, bottom, left }) => top < 0 || left < 0 || right > 390 || bottom > 844)) {
+    throw new Error("Uma das cartas ficou cortada no viewport móvel");
   }
   if (await page.locator(".basic-card").count() !== 2) throw new Error("A carta básica não foi aplicada aos dois perfis");
   if (await page.locator(".candidate-summary").count() !== 2) throw new Error("O resumo deixou de fazer parte da carta básica");
+  if (await page.locator(".candidate-summary").first().isVisible()) throw new Error("O resumo extenso deveria ficar reservado ao perfil no celular");
   if (await page.locator(".candidate-profile-hint").count() !== 2) throw new Error("A dica de segurar deixou de fazer parte da carta básica");
   if (await page.locator(".profile-button").count()) throw new Error("Um botão externo voltou a ocupar espaço junto à carta");
   for (const layer of [".card-material", ".card-facets", ".card-corners"]) {

@@ -30,6 +30,31 @@ const CUES = Object.freeze({
     { frequency: 659, endFrequency: 988, delay: .065, duration: .17, gain: .029, type: "triangle" },
     { frequency: 1047, endFrequency: 1568, delay: .15, duration: .24, gain: .022, type: "sine" },
   ],
+  overtake: [
+    { frequency: 440, endFrequency: 659, delay: 0, duration: .1, gain: .026, type: "triangle" },
+    { frequency: 587, endFrequency: 784, delay: .065, duration: .15, gain: .022, type: "sine" },
+  ],
+  top10: [
+    { frequency: 494, endFrequency: 659, delay: 0, duration: .11, gain: .027, type: "sine" },
+    { frequency: 659, endFrequency: 988, delay: .075, duration: .19, gain: .024, type: "triangle" },
+  ],
+  podium: [
+    { frequency: 523, endFrequency: 784, delay: 0, duration: .12, gain: .029, type: "sine" },
+    { frequency: 659, endFrequency: 1047, delay: .07, duration: .19, gain: .026, type: "triangle" },
+    { frequency: 988, endFrequency: 1319, delay: .15, duration: .22, gain: .02, type: "sine" },
+  ],
+  leader: [
+    { frequency: 523, endFrequency: 1047, delay: 0, duration: .16, gain: .03, type: "triangle" },
+    { frequency: 784, endFrequency: 1568, delay: .1, duration: .24, gain: .022, type: "sine" },
+  ],
+  leaderDefense: [
+    { frequency: 784, endFrequency: 988, delay: 0, duration: .11, gain: .027, type: "sine" },
+    { frequency: 988, endFrequency: 1175, delay: .08, duration: .18, gain: .022, type: "triangle" },
+  ],
+  recovery: [
+    { frequency: 262, endFrequency: 523, delay: 0, duration: .14, gain: .028, type: "triangle" },
+    { frequency: 392, endFrequency: 659, delay: .09, duration: .19, gain: .022, type: "sine" },
+  ],
   shuffle: [
     { frequency: 330, endFrequency: 415, delay: 0, duration: .055, gain: .018, type: "triangle" },
     { frequency: 392, endFrequency: 494, delay: .045, duration: .055, gain: .019, type: "triangle" },

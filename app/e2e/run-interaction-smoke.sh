@@ -4,7 +4,7 @@ set -eu
 preview_url="${POLIMATCH_E2E_URL:-http://127.0.0.1:4177/}"
 preview_log="${TMPDIR:-/tmp}/polimatch-sound-preview.log"
 
-npm run preview --prefix app -- --host 127.0.0.1 --port 4177 >"$preview_log" 2>&1 &
+npm run preview --prefix app -- --host 127.0.0.1 --port 4177 --strictPort >"$preview_log" 2>&1 &
 preview_pid=$!
 trap 'kill "$preview_pid" 2>/dev/null || true' EXIT INT TERM
 

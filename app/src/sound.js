@@ -54,7 +54,7 @@ export function soundEnabledFromStorage(storage) {
     const legacy = storage?.getItem(LEGACY_STORAGE_KEY);
     if (legacy === "0" || legacy === "1") {
       const migrated = legacy === "1" ? "on" : "off";
-      storage?.setItem(STORAGE_KEY, migrated);
+      try { storage?.setItem(STORAGE_KEY, migrated); } catch {}
       return migrated === "on";
     }
     return true;

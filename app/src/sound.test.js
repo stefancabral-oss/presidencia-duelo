@@ -42,6 +42,14 @@ test("a mute preference from the previous interface is migrated", () => {
   assert.equal(storage.getItem("polimatch:sound"), "off");
 });
 
+test("a legacy mute remains active when its migration cannot be written", () => {
+  const storage = {
+    getItem(key) { return key === "polimatch-sound-enabled-v1" ? "0" : null; },
+    setItem() { throw new Error("storage is read-only"); },
+  };
+  assert.equal(soundEnabledFromStorage(storage), false);
+});
+
 test("muted sound never creates an audio context", () => {
   let contextCalls = 0;
   const sound = createSoundController({

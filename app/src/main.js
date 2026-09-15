@@ -1,6 +1,6 @@
 import "./styles.css";
 import { createPlayer, loadCandidates, loadPlayerRanking, loadRanking, submitRoundVote } from "./api.js";
-import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, roundFeedbackFromRankings, roundOutcome, shortName } from "./domain.js";
+import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, roundOutcome, shortName } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
 import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
@@ -240,9 +240,9 @@ function collectionScreen() {
 
 function nav() {
   return `<nav class="bottom-nav" aria-label="Navegação principal">
-    <button class="nav-button ${state.screen === "topics" || state.screen === "duel" ? "active" : ""}" data-screen="topics">Duelos</button>
+    <button class="nav-button ${state.screen === "topics" ? "active" : ""}" data-screen="topics">Início</button>
+    <button class="nav-button ${state.screen === "duel" ? "active" : ""}" data-screen="duel">Duelo</button>
     <button class="nav-button ${state.screen === "ranking" ? "active" : ""}" data-screen="ranking">Ranking</button>
-    <button class="nav-button ${state.screen === "collection" ? "active" : ""}" data-screen="collection">Coleção</button>
   </nav>`;
 }
 
@@ -330,19 +330,12 @@ async function vote(winnerId) {
       recoveryKey: state.recoveryKey,
       version: state.playerVersion,
     });
-    const previousRanking = state.ranking;
     state.ranking = rankingForCatalog(response, state.candidates);
     state.personalRanking = rankingForCatalog(response.player, state.candidates);
     state.playerVersion = response.player?.version ?? state.playerVersion;
     state.globalDuels = Number(response.duels) || state.globalDuels;
     state.personalDuels = Number(response.player?.duels) || state.personalDuels + 1;
-    const feedback = response.vote?.feedback || roundFeedbackFromRankings(
-      previousRanking,
-      state.ranking,
-      state.round.map(({ id }) => id),
-      winner.id,
-      { rankingEvent: response.vote?.rankingEvent, zebra: response.vote?.zebra },
-    );
+    const feedback = response.vote?.feedback || null;
     const outcome = roundOutcome(feedback, state.round, winner.id);
     state.roundOutcome = outcome;
     state.result = outcome.outcomes.length
@@ -425,7 +418,16 @@ function bindEvents() {
     },
   }));
   document.querySelectorAll("[data-profile]").forEach((button) => button.addEventListener("click", () => showProfile(button.dataset.profile)));
-  document.querySelectorAll("[data-screen]").forEach((button) => button.addEventListener("click", () => { sound.play("navigation"); state.screen = button.dataset.screen; state.result = ""; render(); }));
+  document.querySelectorAll("[data-screen]").forEach((button) => button.addEventListener("click", () => {
+    if (button.dataset.screen === "duel") {
+      enterDuel();
+      return;
+    }
+    sound.play("navigation");
+    state.screen = button.dataset.screen;
+    state.result = "";
+    render();
+  }));
   document.querySelectorAll("[data-ranking-view]").forEach((button) => button.addEventListener("click", () => { sound.play("navigation"); state.rankingView = button.dataset.rankingView; state.rankingQuery = ""; state.rankingExpanded = false; render(); }));
   if (state.screen === "collection") installChromaMotion(document);
   document.querySelector("#enable-chroma-motion")?.addEventListener("click", async (event) => {

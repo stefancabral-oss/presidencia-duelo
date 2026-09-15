@@ -1,3 +1,5 @@
+import { eloTier as sharedEloTier } from "../../shared/elo.js";
+
 export function catalogForTopic(candidates, ids = []) {
   if (!ids.length) return [...candidates];
   const byId = new Map(candidates.map((candidate) => [candidate.id, candidate]));
@@ -100,46 +102,7 @@ export function shortName(name = "") {
   return `${parts[0]} ${parts.at(-1)}`;
 }
 
-export function eloTier(elo) {
-  const score = Number(elo);
-  if (score < 900) return { id: "recovery", label: "Zona de recuperação", level: 0 };
-  if (score < 980) return { id: "pressure", label: "Sob pressão", level: 1 };
-  if (score < 1050) return { id: "contender", label: "No páreo", level: 2 };
-  if (score < 1125) return { id: "rising", label: "Em ascensão", level: 3 };
-  if (score < 1225) return { id: "seeded", label: "Cabeça de chave", level: 4 };
-  return { id: "elite", label: "Elite", level: 5 };
-}
-
-export function roundFeedbackFromRankings(beforeRanking = [], afterRanking = [], candidateIds = [], winnerId = "", { rankingEvent = "confirm", zebra = false } = {}) {
-  const before = new Map(beforeRanking.map((candidate) => [candidate.id, candidate]));
-  const after = new Map(afterRanking.map((candidate) => [candidate.id, candidate]));
-  const outcomes = candidateIds.flatMap((id) => {
-    const previous = before.get(id);
-    const current = after.get(id);
-    if (!previous || !current || !Number.isFinite(Number(previous.elo)) || !Number.isFinite(Number(current.elo))) return [];
-    const previousTier = eloTier(previous.elo);
-    const tier = eloTier(current.elo);
-    return [{
-      id,
-      result: id === winnerId ? "winner" : "loser",
-      delta: Number(current.elo) - Number(previous.elo),
-      elo: Number(current.elo),
-      previousTier,
-      tier,
-      tierChange: tier.level > previousTier.level ? "up" : tier.level < previousTier.level ? "down" : null,
-    }];
-  });
-  const winner = outcomes.find((outcome) => outcome.id === winnerId);
-  const dropped = outcomes.filter((outcome) => outcome.tierChange === "down");
-  let primaryEvent = rankingEvent || "confirm";
-  if (zebra) primaryEvent = "zebra";
-  else if (!["leader", "leaderDefense", "podium", "top10"].includes(primaryEvent)) {
-    if (winner?.tierChange === "up") primaryEvent = "tierUp";
-    else if (dropped.some(({ tier }) => tier.id === "recovery")) primaryEvent = "lowElo";
-    else if (dropped.length) primaryEvent = "tierDown";
-  }
-  return outcomes.length ? { rankingEvent, primaryEvent, zebra: Boolean(zebra), outcomes } : null;
-}
+export const eloTier = sharedEloTier;
 
 export function roundOutcome(feedback, candidates = [], winnerId = "") {
   const byId = new Map(candidates.map((candidate) => [candidate.id, candidate]));

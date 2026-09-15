@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { catalogForTopic, displayRanking, eloTier, filterRanking, hapticPattern, nextBalancedGroup, nextBalancedPair, nextPair, rankingForCatalog, rankingHighlights, roundFeedbackFromRankings, roundOutcome, shortName, shuffledCandidates, voteFeedback } from "./domain.js";
+import { catalogForTopic, displayRanking, eloTier, filterRanking, hapticPattern, nextBalancedGroup, nextBalancedPair, nextPair, rankingForCatalog, rankingHighlights, roundOutcome, shortName, shuffledCandidates, voteFeedback } from "./domain.js";
 
 const people = [
   { id: "a", name: "Ana Um" },
@@ -116,20 +116,6 @@ test("round outcome keeps victory and defeat feedback tied to real server deltas
   assert.equal(view.outcomes[0].shortMessage, "Subiu · Em ascensão");
   assert.equal(view.outcomes[1].shortMessage, "Levou a pior");
   assert.deepEqual(hapticPattern("tierDown"), [34, 38, 18]);
-});
-
-test("round feedback derives exact deltas and tiers from existing ranking snapshots", () => {
-  const feedback = roundFeedbackFromRankings(
-    [{ id: "a", elo: 1040 }, { id: "b", elo: 985 }, { id: "c", elo: 910 }, { id: "d", elo: 905 }],
-    [{ id: "a", elo: 1088 }, { id: "b", elo: 969 }, { id: "c", elo: 894 }, { id: "d", elo: 889 }],
-    ["a", "b", "c", "d"],
-    "a",
-  );
-  assert.equal(feedback.primaryEvent, "tierUp");
-  assert.deepEqual(feedback.outcomes.map(({ delta }) => delta), [48, -16, -16, -16]);
-  assert.equal(feedback.outcomes[0].tierChange, "up");
-  assert.equal(feedback.outcomes[1].tierChange, "down");
-  assert.equal(feedback.outcomes[2].tier.id, "recovery");
 });
 
 test("primary ranking achievements keep message, sound and haptic semantics aligned", () => {

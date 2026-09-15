@@ -22,6 +22,7 @@ PoliMatch é um jogo casual de comparação entre personalidades públicas. Não
 - Cards e Chromas são colecionáveis; Chromas são obtidas por sorte e não determinam o ranking.
 - Duelos usam carta padrão por default. Apenas o próprio jogador pode aplicar uma Chroma possuída àquela pessoa.
 - Novos debates e discussões podem lançar novas Chromas versionadas sem alterar votos ou rankings anteriores.
+- Por decisão do usuário em 15/09/2026, a navegação pública mostra `Início`, `Duelo` e `Ranking`; a Coleção/Chromas fica temporariamente sem entrada no menu, com implementação e assets preservados.
 - As fotografias serão curadas e tratadas com padrão profissional, sem alterar a identidade da pessoa.
 - A aprovação visual dos retratos começa por um lote de dez pessoas antes da escala fotográfica completa.
 - O app continua online-only: nenhuma escolha é confirmada antes do servidor.

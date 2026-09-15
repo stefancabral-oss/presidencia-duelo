@@ -7,6 +7,7 @@ import {
   normalizeVoteId,
   rankingEventFromSnapshots,
   rankingFromRows,
+  roundFeedbackFromSnapshots,
   recoveryKeyHash,
   validateTopic,
   validateRoundVote,
@@ -100,6 +101,18 @@ test("ranking sound events are derived from transactional before/after snapshots
     "confirm",
   );
   assert.equal(rankingEventFromSnapshots(played, played, "p2", { zebra: true }), "zebra");
+});
+
+test("round feedback exposes real gains, losses and Elo tier crossings", () => {
+  const before = [{ id: "a", elo: 1040 }, { id: "b", elo: 985 }, { id: "c", elo: 910 }, { id: "d", elo: 905 }];
+  const after = [{ id: "a", elo: 1088 }, { id: "b", elo: 969 }, { id: "c", elo: 894 }, { id: "d", elo: 889 }];
+  const feedback = roundFeedbackFromSnapshots(before, after, ["a", "b", "c", "d"], "a", "confirm");
+  assert.equal(feedback.primaryEvent, "tierUp");
+  assert.deepEqual(feedback.outcomes.map(({ delta }) => delta), [48, -16, -16, -16]);
+  assert.equal(feedback.outcomes[0].tier.label, "Em ascensão");
+  assert.equal(feedback.outcomes[0].tierChange, "up");
+  assert.equal(feedback.outcomes[1].tierChange, "down");
+  assert.equal(feedback.outcomes[2].tier.id, "recovery");
 });
 
 test("clean-start migration is one-time and explicitly removes legacy gameplay tables", async () => {

@@ -1,6 +1,7 @@
 {
   "stage": "ICM 03",
-  "status": "awaiting-human-gate",
+  "status": "approved",
+  "human_gate": "approved-2026-09-15",
   "release": "082c80eca21ebd3a9af7c4ea55261034c7c8705b",
   "issue": 158,
   "pull_request": 159,

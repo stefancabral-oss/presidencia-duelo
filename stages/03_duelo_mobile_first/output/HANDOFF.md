@@ -27,7 +27,7 @@
 
 ### Status
 
-- Estado: implementação concluída; aguardando human gate.
+- Estado: aprovado no human gate; pronto para integração e deploy.
 - Branch: `fix/desktop-duel-158`.
 - PR: #159.
 
@@ -47,4 +47,4 @@
 
 ### Gate humano
 
-- Validar visualmente a nova composição em PC/iMac antes de liberar o deploy.
+- Aprovado pelo usuário em 15/09/2026 para integração e deploy.

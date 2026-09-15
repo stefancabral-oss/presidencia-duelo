@@ -3,6 +3,16 @@ export const ELO_START = 1000;
 /** Underdog win: loser was this many Elo points (or more) ahead before the duel. */
 export const ZEBRA_THRESHOLD = 50;
 
+export function eloTier(elo) {
+  const score = Number(elo);
+  if (score < 900) return { id: "recovery", label: "Zona de recuperação", level: 0 };
+  if (score < 980) return { id: "pressure", label: "Sob pressão", level: 1 };
+  if (score < 1050) return { id: "contender", label: "No páreo", level: 2 };
+  if (score < 1125) return { id: "rising", label: "Em ascensão", level: 3 };
+  if (score < 1225) return { id: "seeded", label: "Cabeça de chave", level: 4 };
+  return { id: "elite", label: "Elite", level: 5 };
+}
+
 export function expectedScore(ra, rb) {
   return 1 / (1 + 10 ** ((rb - ra) / 400));
 }

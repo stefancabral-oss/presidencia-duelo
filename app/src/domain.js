@@ -68,23 +68,6 @@ export function displayRanking(ranking, { personal = false } = {}) {
   return [...ranked, ...unplayed.map((person) => ({ ...person, displayRank: null }))];
 }
 
-export function rankingSoundEvent(beforeRanking, afterRanking, winnerId, { zebra = false } = {}) {
-  if (zebra) return "zebra";
-  const before = displayRanking(beforeRanking).find(({ id }) => id === winnerId);
-  const after = displayRanking(afterRanking).find(({ id }) => id === winnerId);
-  const beforeRank = before?.displayRank ?? Infinity;
-  const afterRank = after?.displayRank ?? Infinity;
-  if (!Number.isFinite(afterRank)) return "confirm";
-  if (afterRank === 1) return beforeRank === 1 ? "leaderDefense" : "leader";
-  if (afterRank <= 3 && beforeRank > 3) return "podium";
-  if (afterRank <= 10 && beforeRank > 10) return "top10";
-  const previousPlayed = displayRanking(beforeRanking).filter(({ displayRank }) => Number.isFinite(displayRank));
-  const previousLastRank = Math.max(0, ...previousPlayed.map(({ displayRank }) => displayRank));
-  if (beforeRank === previousLastRank && afterRank < beforeRank) return "recovery";
-  if (afterRank < beforeRank) return "overtake";
-  return "confirm";
-}
-
 export function filterRanking(ranking, query = "") {
   const normalized = String(query).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
   if (!normalized) return ranking;

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { catalogForTopic, displayRanking, filterRanking, nextBalancedGroup, nextBalancedPair, nextPair, rankingForCatalog, rankingHighlights, rankingSoundEvent, shortName, shuffledCandidates, voteFeedback } from "./domain.js";
+import { catalogForTopic, displayRanking, filterRanking, nextBalancedGroup, nextBalancedPair, nextPair, rankingForCatalog, rankingHighlights, shortName, shuffledCandidates, voteFeedback } from "./domain.js";
 
 const people = [
   { id: "a", name: "Ana Um" },
@@ -65,18 +65,6 @@ test("personal ranking hides people the player has not compared", () => {
 test("untested people have no false ordinal position in the general ranking", () => {
   const ranking = [{ id: "a", elo: 1000, wins: 0, losses: 0, decisions: 0 }];
   assert.equal(displayRanking(ranking)[0].displayRank, null);
-});
-
-test("ranking sound events distinguish rare progress from ordinary confirmation", () => {
-  const before = [
-    { id: "a", elo: 1030, wins: 2, losses: 0, decisions: 2 },
-    { id: "b", elo: 1010, wins: 1, losses: 1, decisions: 2 },
-    { id: "c", elo: 990, wins: 0, losses: 2, decisions: 2 },
-  ];
-  assert.equal(rankingSoundEvent(before, [{ ...before[1], elo: 1040 }, before[0], before[2]], "b"), "leader");
-  assert.equal(rankingSoundEvent(before, [{ ...before[0], elo: 1040 }, before[1], before[2]], "a"), "leaderDefense");
-  assert.equal(rankingSoundEvent(before, before, "b", { zebra: true }), "zebra");
-  assert.equal(rankingSoundEvent(before, before, "b"), "confirm");
 });
 
 test("ranking search ignores accents and includes affiliation", () => {

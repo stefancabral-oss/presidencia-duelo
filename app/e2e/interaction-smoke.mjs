@@ -85,8 +85,8 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
       duels: 1,
       ranking: ranking(1),
       player: { version: 1, duels: 1, ranking: ranking(1) },
-      round: { winnerDelta: 45, zebra: false, comparisons: 3 },
-      vote: { winnerDelta: 45, zebra: false, comparisons: 3 },
+      round: { winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "leader" },
+      vote: { winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "leader" },
     };
   } else {
     await route.fulfill({ status: 404, json: { error: "mock não encontrado" } });

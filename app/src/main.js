@@ -1,6 +1,6 @@
 import "./styles.css";
 import { createPlayer, loadCandidates, loadPlayerRanking, loadRanking, submitRoundVote } from "./api.js";
-import { catalogForTopic, displayRanking, filterRanking, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, rankingSoundEvent, shortName, voteFeedback } from "./domain.js";
+import { catalogForTopic, displayRanking, filterRanking, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, shortName, voteFeedback } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
 import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
@@ -318,7 +318,6 @@ async function vote(winnerId) {
   state.result = "Confirmando sua escolha…";
   render();
   try {
-    const previousRanking = state.ranking;
     const response = await submitRoundVote(winner.id, state.round.map(({ id }) => id), "eleicoes-2026", {
       recoveryKey: state.recoveryKey,
       version: state.playerVersion,
@@ -338,7 +337,7 @@ async function vote(winnerId) {
     state.busy = false;
     state.selectedId = "";
     render();
-    sound.play(rankingSoundEvent(previousRanking, state.ranking, winner.id, { zebra: response.vote?.zebra }));
+    sound.play(response.vote?.rankingEvent || (response.vote?.zebra ? "zebra" : "confirm"));
     try { navigator.vibrate?.(response.vote?.zebra ? [24, 35, 48] : 24); } catch {}
     resultTimer = setTimeout(() => {
       if (state.busy || !state.result.includes("confirmado")) return;

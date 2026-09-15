@@ -63,8 +63,12 @@ export function soundEnabledFromStorage(storage) {
   }
 }
 
-export function createSoundController({ windowObject = globalThis.window, storage = windowObject?.localStorage, contextFactory } = {}) {
-  let enabled = soundEnabledFromStorage(storage);
+export function createSoundController({ windowObject = globalThis.window, storage, contextFactory } = {}) {
+  let resolvedStorage = storage;
+  if (resolvedStorage === undefined) {
+    try { resolvedStorage = windowObject?.localStorage; } catch {}
+  }
+  let enabled = soundEnabledFromStorage(resolvedStorage);
   let context;
   const lastPlayedAt = new Map();
 
@@ -77,7 +81,7 @@ export function createSoundController({ windowObject = globalThis.window, storag
 
   function setEnabled(nextEnabled) {
     enabled = Boolean(nextEnabled);
-    try { storage?.setItem(STORAGE_KEY, enabled ? "on" : "off"); } catch {}
+    try { resolvedStorage?.setItem(STORAGE_KEY, enabled ? "on" : "off"); } catch {}
     return enabled;
   }
 

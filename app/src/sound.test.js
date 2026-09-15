@@ -92,3 +92,11 @@ test("unsupported browsers fail silently without interrupting the interaction", 
   assert.equal(sound.play("navigation"), false);
   assert.equal(sound.play("unknown"), false);
 });
+
+test("a blocked localStorage getter does not prevent the app from creating sound controls", () => {
+  const windowObject = {};
+  Object.defineProperty(windowObject, "localStorage", { get() { throw new Error("blocked"); } });
+  const sound = createSoundController({ windowObject });
+  assert.equal(sound.enabled, true);
+  assert.equal(sound.play("navigation"), false);
+});

@@ -9,6 +9,7 @@ Estado: rodada principal de quatro cartas e endurecimento técnico publicados; g
 - Correções da revisão: https://github.com/stefancabral-oss/presidencia-duelo/issues/145
 - Pull Request das correções: https://github.com/stefancabral-oss/presidencia-duelo/pull/146
 - Identidade sonora: https://github.com/stefancabral-oss/presidencia-duelo/issues/151
+- Pull Request da identidade sonora: https://github.com/stefancabral-oss/presidencia-duelo/pull/152
 - Commit das correções validadas e publicado: `86e071b`
 - Commit da implementação principal publicado: `bceac93`
 - Evidência pública sanitizada: `four-card-production-verification.md`

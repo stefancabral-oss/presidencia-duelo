@@ -112,4 +112,6 @@ Estado: rodada principal de quatro cartas publicada; endurecimento da revisão e
 
 ## Human gate
 
-Status: usuário autorizou em 15/09/2026 a liberação dos 54 perfis e pediu a substituição do duelo binário por uma rodada de quatro cartas; implementação vinculada à Issue #143 aguarda PR e publicação.
+Status da entrega principal: usuário autorizou os 54 perfis e a rodada de quatro cartas; Issue #143 e PR #144 foram implementados, mesclados e publicados em 15/09/2026.
+
+Status do endurecimento: as correções de auditoria e responsividade da Issue #145 estão no PR #146 e permanecem pendentes de mesclagem e republicação até o novo gate técnico terminar.

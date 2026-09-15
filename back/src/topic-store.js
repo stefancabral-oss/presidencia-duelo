@@ -194,6 +194,19 @@ async function createCleanSchema(client) {
     ALTER TABLE votes
       ADD COLUMN IF NOT EXISTS round_id uuid REFERENCES choice_rounds(round_id) ON DELETE RESTRICT;
 
+    DROP TRIGGER IF EXISTS votes_are_immutable ON votes;
+
+    UPDATE votes AS comparison
+    SET round_id = round.round_id
+    FROM choice_rounds AS round
+    WHERE comparison.round_id IS NULL
+      AND comparison.topic_id = round.topic_id
+      AND comparison.winner_id = round.winner_id
+      AND comparison.player_id IS NOT DISTINCT FROM round.player_id
+      AND comparison.created_at = round.created_at
+      AND comparison.loser_id = ANY(round.candidate_ids)
+      AND comparison.loser_id <> round.winner_id;
+
     CREATE TABLE IF NOT EXISTS chroma_catalog (
       id text PRIMARY KEY,
       candidate_id text NOT NULL,

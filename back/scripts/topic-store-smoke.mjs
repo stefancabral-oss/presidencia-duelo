@@ -120,4 +120,16 @@ assert.equal(Number(audit.rows[0].winner_snapshots), 1);
 await auditPool.end();
 await restartedStore.close();
 
-console.log("Smoke PostgreSQL aprovado: reset único, jogador antigo, backfill, rodada de quatro idempotente e rankings persistentes.");
+const precedingRelease = new pg.Pool({ connectionString });
+await precedingRelease.query("ALTER TABLE votes DROP COLUMN round_id");
+await precedingRelease.end();
+
+const upgradedStore = createTopicStore(connectionString);
+await upgradedStore.init();
+const upgradedAuditPool = new pg.Pool({ connectionString });
+const upgradedAudit = await upgradedAuditPool.query("SELECT count(*) AS linked_comparisons FROM votes WHERE round_id = $1", [roundId]);
+assert.equal(Number(upgradedAudit.rows[0].linked_comparisons), 3);
+await upgradedAuditPool.end();
+await upgradedStore.close();
+
+console.log("Smoke PostgreSQL aprovado: reset único, jogador antigo, backfill, rodada de quatro idempotente, vínculo retroativo e rankings persistentes.");

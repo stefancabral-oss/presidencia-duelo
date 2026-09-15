@@ -87,9 +87,22 @@ Não edite essas saídas manualmente. Corrija a entrada e execute o importador n
 | `GET` | `/api/ranking?topic=eleicoes-2026` | ranking agregado |
 | `POST` | `/api/player` | cria identidade anônima e chave de recuperação |
 | `GET` | `/api/player/state?topic=eleicoes-2026` | ranking pessoal; exige chave Bearer |
-| `POST` | `/api/vote` | confirma um duelo global e pessoal numa transação |
+| `POST` | `/api/round-vote` | confirma uma escolha entre quatro pessoas numa transação; exige `roundId`, `winnerId`, quatro `candidateIds` únicos e `playerVersion` |
+| `POST` | `/api/vote` | endpoint binário aposentado; responde `410 ROUND_V4_REQUIRED` para impedir contagem incompatível por clientes antigos |
 
-O PostgreSQL guarda somente o hash da chave de recuperação. Votos possuem UUID idempotente e são imutáveis.
+Exemplo do corpo atual:
+
+```json
+{
+  "roundId": "550e8400-e29b-41d4-a716-446655440000",
+  "winnerId": "lula",
+  "candidateIds": ["lula", "jair-bolsonaro", "anitta", "neymar-jr"],
+  "topicId": "eleicoes-2026",
+  "playerVersion": 3
+}
+```
+
+O PostgreSQL guarda somente o hash da chave de recuperação. A rodada é idempotente e imutável; ela avança a escolha uma vez e mantém três comparações Elo vinculadas ao mesmo `roundId`.
 
 ## Deploy no Dokploy
 

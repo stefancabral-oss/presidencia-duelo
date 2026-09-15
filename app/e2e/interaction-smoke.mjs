@@ -3,6 +3,7 @@ import { chromium, webkit } from "playwright";
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
 const browserType = { chromium, webkit }[browserName];
+const googleEnabled = process.env.POLIMATCH_E2E_GOOGLE === "1";
 if (!browserType) throw new Error(`Navegador não suportado: ${browserName}`);
 
 const candidates = [
@@ -72,6 +73,13 @@ const page = await context.newPage();
 const pageErrors = [];
 page.on("pageerror", (error) => pageErrors.push(error.message));
 
+if (googleEnabled) {
+  await page.route("https://accounts.google.com/gsi/client", (route) => route.fulfill({
+    contentType: "application/javascript",
+    body: `window.google={accounts:{id:{initialize(options){window.__polimatchGoogleCallback=options.callback},renderButton(element){const button=document.createElement('button');button.type='button';button.textContent='Continuar com Google';button.addEventListener('click',()=>window.__polimatchGoogleCallback({credential:'mock-google-id-token'}));element.replaceChildren(button)}}}};`,
+  }));
+}
+
 await page.route(/\/api(?:\/|$)/, async (route) => {
   const request = route.request();
   const path = new URL(request.url()).pathname;
@@ -80,6 +88,7 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
   else if (path === "/api/ranking") body = { duels: 0, ranking: ranking() };
   else if (path === "/api/player" && request.method() === "POST") body = { recoveryKey: "e2e-recovery-key" };
   else if (path === "/api/player/state") body = { version: 0, duels: 0, ranking: ranking() };
+  else if (path === "/api/auth/google" && request.method() === "POST") body = { sessionToken: `pms_${"s".repeat(43)}`, account: { displayName: "Bia", avatarUrl: "" }, player: { version: 0, duels: 0, ranking: ranking(), account: { displayName: "Bia", avatarUrl: "" } } };
   else if (path === "/api/round-vote") {
     const payload = request.postDataJSON();
     const feedback = {
@@ -128,6 +137,24 @@ try {
   const primaryNavLabels = await page.locator(".bottom-nav .nav-button").allTextContents();
   if (primaryNavLabels.join("|") !== "Início|Duelo|Ranking") throw new Error("A navegação principal não apresenta Início, Duelo e Ranking nesta ordem");
   if (await page.getByRole("button", { name: "Coleção" }).count()) throw new Error("Coleção/Chromas ainda aparece na navegação pública");
+  await page.getByRole("button", { name: "Salvar seu jogo com Google" }).click();
+  await page.getByRole("heading", { name: "Entrou, salvou, jogou." }).waitFor();
+  if (!await page.getByText("Sem cadastro, sem senha nova").isVisible()) throw new Error("O acesso opcional ficou burocrático ou sem contexto");
+  if (process.env.POLIMATCH_E2E_AUTH_SCREENSHOT) {
+    await page.waitForTimeout(280);
+    await page.screenshot({ path: process.env.POLIMATCH_E2E_AUTH_SCREENSHOT });
+  }
+  if (googleEnabled) {
+    await page.getByRole("button", { name: "Continuar com Google" }).click();
+    await page.getByRole("heading", { name: "Tudo certo, Bia!" }).waitFor();
+    const storedToken = await page.evaluate(() => localStorage.getItem("polimatch:v3:recovery-key"));
+    if (!storedToken?.startsWith("pms_") || storedToken.includes("mock-google-id-token")) throw new Error("O frontend persistiu a credencial Google em vez da sessão própria");
+    await page.getByRole("button", { name: "Voltar ao jogo" }).click();
+    if (!await page.getByRole("button", { name: "Abrir sua conta" }).isVisible()) throw new Error("A conta salva não apareceu no cabeçalho");
+  } else {
+    await page.getByRole("button", { name: "Continuar jogando" }).click();
+  }
+  if (await page.locator(".auth-overlay").count()) throw new Error("A entrada com Google bloqueou quem prefere continuar anonimamente");
   await page.getByRole("button", { name: "Duelo" }).click();
   await page.getByRole("heading", { name: "Quem você prefere?" }).waitFor();
   await page.getByRole("button", { name: "Começar rodada" }).click();

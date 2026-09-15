@@ -1,11 +1,13 @@
 import cors from "cors";
 import express from "express";
 import { CANDIDATES, TOPICS, candidatesForTopic } from "./candidates.js";
+import { createGoogleIdentityVerifier } from "./google-auth.js";
 import { createTopicStore } from "./topic-store.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 const store = createTopicStore();
+const googleIdentity = createGoogleIdentityVerifier();
 
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: "32kb" }));
@@ -34,6 +36,7 @@ app.get("/api/health", async (_req, res) => {
         .filter(({ active }) => active)
         .reduce((total, topic) => total + candidatesForTopic(topic.id).length, 0),
       activeTopics: TOPICS.filter(({ active }) => active).length,
+      googleLogin: googleIdentity.configured,
     });
   } catch {
     res.status(503).json({ ok: false, error: "banco indisponível" });
@@ -96,6 +99,28 @@ app.get("/api/player/state", async (req, res) => {
       recoveryKeyFrom(req),
       String(req.query.topic || "eleicoes-2026"),
     ));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.post("/api/auth/google", async (req, res) => {
+  try {
+    const identity = await googleIdentity.verify(req.body?.credential);
+    res.json(await store.signInWithGoogle({
+      identity,
+      currentToken: recoveryKeyFrom(req),
+      topicId: String(req.body?.topicId || "eleicoes-2026"),
+    }));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
+app.post("/api/auth/logout", async (req, res) => {
+  try {
+    await store.signOut(recoveryKeyFrom(req));
+    res.status(204).end();
   } catch (err) {
     sendError(res, err);
   }

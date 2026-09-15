@@ -1,11 +1,12 @@
 import "./styles.css";
-import { createPlayer, loadCandidates, loadPlayerRanking, loadRanking, submitRoundVote } from "./api.js";
+import { createPlayer, endSession, exchangeGoogleCredential, loadCandidates, loadPlayerRanking, loadRanking, submitRoundVote } from "./api.js";
 import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, roundOutcome, shortName } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
 import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
 import { approvedBasicCards } from "./approved-chromas.js";
 import { createSoundController } from "./sound.js";
+import { googleClientId, mountGoogleButton } from "./google-login.js";
 
 const app = document.querySelector("#app");
 const sound = createSoundController();
@@ -25,6 +26,10 @@ const state = {
   chromaBatchExpanded: false,
   recoveryKey: "",
   playerVersion: 0,
+  account: null,
+  authOpen: false,
+  authBusy: false,
+  authError: "",
   collection: [],
   result: "",
   roundOutcome: null,
@@ -120,7 +125,32 @@ function card(candidate) {
 
 function header() {
   const soundLabel = state.soundEnabled ? "Desativar efeitos sonoros" : "Ativar efeitos sonoros";
-  return `<header class="topbar"><p class="brand">${brandSymbol()}<span>PoliMatch</span></p><div class="topbar-actions"><span class="edition">Malaquita 2026</span><button class="sound-toggle${state.soundEnabled ? " is-on" : ""}" id="sound-toggle" type="button" aria-label="${soundLabel}" aria-pressed="${state.soundEnabled}"><span aria-hidden="true">${state.soundEnabled ? "♪" : "♪̸"}</span></button></div></header>`;
+  const accountLabel = state.account?.displayName ? `Olá, ${escapeHtml(state.account.displayName.split(" ")[0])}` : "Salvar jogo";
+  const avatar = safeUrl(state.account?.avatarUrl) ? `<img src="${escapeHtml(state.account.avatarUrl)}" alt="" referrerpolicy="no-referrer">` : brandSymbol("account-symbol");
+  return `<header class="topbar"><p class="brand">${brandSymbol()}<span>PoliMatch</span></p><div class="topbar-actions"><span class="edition">Malaquita 2026</span><button class="account-button${state.account ? " is-signed-in" : ""}" id="account-button" type="button" aria-label="${state.account ? "Abrir sua conta" : "Salvar seu jogo com Google"}">${avatar}<span>${accountLabel}</span></button><button class="sound-toggle${state.soundEnabled ? " is-on" : ""}" id="sound-toggle" type="button" aria-label="${soundLabel}" aria-pressed="${state.soundEnabled}"><span aria-hidden="true">${state.soundEnabled ? "♪" : "♪̸"}</span></button></div></header>`;
+}
+
+function authOverlay() {
+  if (!state.authOpen) return "";
+  const configured = Boolean(googleClientId());
+  const signedIn = Boolean(state.account);
+  return `<div class="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+    <section class="auth-card">
+      <button class="auth-close" id="close-auth" type="button" aria-label="Fechar">×</button>
+      <span class="auth-mark" aria-hidden="true">${brandSymbol("auth-symbol")}</span>
+      <p class="eyebrow">${signedIn ? "Seu jogo está salvo" : "Leve seu ranking com você"}</p>
+      <h2 id="auth-title">${signedIn ? `Tudo certo, ${escapeHtml(state.account.displayName?.split(" ")[0] || "jogador")}!` : "Entrou, salvou, jogou."}</h2>
+      <p>${signedIn ? "Suas escolhas ficam ligadas a esta conta e podem continuar em outro aparelho." : "Use o Google para guardar suas escolhas. Sem cadastro, sem senha nova e sem interromper a diversão."}</p>
+      ${state.authError ? `<p class="auth-error" role="alert">${escapeHtml(state.authError)}</p>` : ""}
+      ${signedIn
+        ? `<button class="auth-secondary" id="logout" type="button" ${state.authBusy ? "disabled" : ""}>Sair desta conta</button>`
+        : configured
+          ? `<div class="google-button-wrap${state.authBusy ? " is-busy" : ""}" id="google-button"><span>${state.authBusy ? "Confirmando…" : "Carregando Google…"}</span></div>`
+          : `<p class="auth-config-note">O acesso com Google está sendo preparado. Você pode continuar jogando normalmente.</p>`}
+      <button class="auth-continue" id="continue-anonymous" type="button">${signedIn ? "Voltar ao jogo" : "Continuar jogando"}</button>
+      <small>O Google confirma sua identidade; sua senha nunca passa pelo PoliMatch.</small>
+    </section>
+  </div>`;
 }
 
 function topicsScreen() {
@@ -260,7 +290,7 @@ function render() {
     app.innerHTML = `<div class="app-shell">${header()}${state.error ? connectionScreen() : '<main class="connection"><p>Preparando o duelo…</p></main>'}</div>`;
   } else {
     const screen = state.screen === "duel" ? duelScreen() : state.screen === "ranking" ? rankingScreen() : state.screen === "collection" ? collectionScreen() : topicsScreen();
-    app.innerHTML = `<div class="app-shell">${header()}${screen}${nav()}</div><dialog id="modal"></dialog>${coachOverlay()}`;
+    app.innerHTML = `<div class="app-shell">${header()}${screen}${nav()}</div><dialog id="modal"></dialog>${coachOverlay()}${authOverlay()}`;
   }
   bindEvents();
 }
@@ -368,6 +398,17 @@ async function vote(winnerId) {
 }
 
 function bindEvents() {
+  document.querySelector("#account-button")?.addEventListener("click", () => {
+    sound.play("navigation");
+    state.authOpen = true;
+    state.authError = "";
+    render();
+  });
+  const closeAuth = () => { state.authOpen = false; state.authError = ""; render(); };
+  document.querySelector("#close-auth")?.addEventListener("click", closeAuth);
+  document.querySelector("#continue-anonymous")?.addEventListener("click", closeAuth);
+  document.querySelector(".auth-overlay")?.addEventListener("click", (event) => { if (event.target === event.currentTarget) closeAuth(); });
+  document.querySelector("#logout")?.addEventListener("click", signOut);
   document.querySelector("#sound-toggle")?.addEventListener("click", () => {
     if (state.soundEnabled) {
       sound.play("soundOff");
@@ -440,6 +481,67 @@ function bindEvents() {
       if (status) status.textContent = "A inclinação não foi autorizada; o efeito pelo toque continua ativo.";
     }
   });
+  if (state.authOpen && !state.account && !state.authBusy) mountAuthButton();
+}
+
+async function mountAuthButton() {
+  const element = document.querySelector("#google-button");
+  if (!element || !googleClientId()) return;
+  try {
+    await mountGoogleButton(element, { callback: handleGoogleCredential });
+  } catch (error) {
+    if (!state.authOpen) return;
+    state.authError = error.message || "Não foi possível abrir o Google agora.";
+    render();
+  }
+}
+
+async function handleGoogleCredential(response) {
+  if (!response?.credential || state.authBusy) return;
+  state.authBusy = true;
+  state.authError = "";
+  render();
+  try {
+    const result = await exchangeGoogleCredential(response.credential, state.recoveryKey);
+    localStorage.setItem("polimatch:v3:recovery-key", result.sessionToken);
+    state.recoveryKey = result.sessionToken;
+    state.account = result.account;
+    state.personalRanking = rankingForCatalog(result.player, state.candidates);
+    state.playerVersion = result.player.version;
+    state.personalDuels = Number(result.player.duels) || 0;
+    state.authBusy = false;
+    sound.play("confirm");
+    render();
+  } catch (error) {
+    state.authBusy = false;
+    state.authError = error.message || "Não foi possível salvar seu jogo agora.";
+    sound.play("error");
+    render();
+  }
+}
+
+async function signOut() {
+  if (state.authBusy) return;
+  state.authBusy = true;
+  render();
+  try { await endSession(state.recoveryKey); } catch {}
+  localStorage.removeItem("polimatch:v3:recovery-key");
+  try {
+    const player = await ensurePlayer();
+    state.recoveryKey = player.recoveryKey;
+    state.account = null;
+    state.personalRanking = rankingForCatalog(player.personal, state.candidates);
+    state.playerVersion = player.personal.version;
+    state.personalDuels = Number(player.personal.duels) || 0;
+    state.authBusy = false;
+    state.authOpen = false;
+    state.result = "Você saiu. Um jogo novo começou neste aparelho.";
+    render();
+  } catch (error) {
+    state.authBusy = false;
+    state.authError = error.message || "Não foi possível sair agora.";
+    render();
+  }
 }
 
 async function ensurePlayer() {
@@ -473,6 +575,7 @@ async function initialize() {
     state.recoveryKey = player.recoveryKey;
     state.playerVersion = player.personal.version;
     state.personalRanking = rankingForCatalog(player.personal, state.candidates);
+    state.account = player.personal.account || null;
     state.personalDuels = Number(player.personal.duels) || 0;
     const firstMatch = nextBalancedGroup(state.candidates);
     state.round = firstMatch.group;

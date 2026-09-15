@@ -3,7 +3,7 @@
 - Verificação: 2026-09-15T03:20:00-03:00 a 2026-09-15T03:29:07-03:00
 - Commit de produto publicado: `86e071bffc8b567376eb75cd5f80782a2a8eded8`
 - Pull Request: https://github.com/stefancabral-oss/presidencia-duelo/pull/146
-- Aplicações: API e PWA com estado `done` no painel de produção, ambas apontando para o commit acima.
+- Aplicações: API e PWA com estado `done` no painel de produção, ambas apontando para o commit acima. A captura textual sanitizada está em `four-card-deployments-sanitized.txt`.
 - O painel foi verificado sem registrar URLs privadas de webhook ou credenciais neste artefato.
 
 ## Saúde pública da API
@@ -39,6 +39,8 @@ HTTP 410
 
 URL verificada com cache busting: `https://polimatch.com.br/?release=86e071b`.
 
-No navegador de produção, a ação `Começar agora` abriu a tela `Escolha uma entre quatro`. O DOM acessível continha exatamente quatro botões de carta, cada um com imagem e instrução de toque/pressão longa, além da ação separada `Nenhuma destas · trocar as quatro`. Nenhuma escolha foi confirmada durante a verificação para não alterar o ranking público.
+No navegador de produção, a ação `Começar agora` abriu a tela `Escolha uma entre quatro`. O DOM acessível continha exatamente quatro botões de carta, cada um com imagem e instrução de toque/pressão longa, além da ação separada `Nenhuma destas · trocar as quatro`.
+
+Nenhuma escolha foi confirmada durante a verificação. Um teste transacional de produção criaria um jogador e um voto técnico permanentes, alterando o placar público; essa mutação não foi autorizada especificamente. O mesmo caminho de escrita foi validado contra PostgreSQL isolado pelo teste `postgres-integration`, incluindo uma rodada, três comparações vinculadas, uma única progressão de versão e repetição idempotente. Portanto, este registro comprova o commit implantado e a disponibilidade pública, mas não afirma ter executado escrita em produção.
 
 Evidência visual equivalente do layout validado em Chromium e WebKit: `four-card-round-mobile-qa.png`.

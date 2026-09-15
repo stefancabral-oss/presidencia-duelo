@@ -11,6 +11,7 @@ Estado: rodada principal de quatro cartas e endurecimento técnico publicados; g
 - Commit das correções validadas e publicado: `86e071b`
 - Commit da implementação principal publicado: `bceac93`
 - Evidência pública sanitizada: `four-card-production-verification.md`
+- Captura sanitizada do painel: `four-card-deployments-sanitized.txt`
 
 ## Entregue
 
@@ -115,4 +116,4 @@ Estado: rodada principal de quatro cartas e endurecimento técnico publicados; g
 
 Status da entrega principal: usuário autorizou os 54 perfis e a rodada de quatro cartas; Issue #143 e PR #144 foram implementados, mesclados e publicados em 15/09/2026.
 
-Status do endurecimento: as correções de auditoria e responsividade da Issue #145 foram aprovadas, mescladas no PR #146 e publicadas em 15/09/2026 no commit `86e071b`. O gate técnico terminou com CI, PostgreSQL real, Chromium e WebKit aprovados; a API pública confirmou 54 perfis jogáveis e a interface pública exibiu quatro cartas na mesma rodada.
+Status do endurecimento: as correções de auditoria e responsividade da Issue #145 foram aprovadas, mescladas no PR #146 e publicadas em 15/09/2026 no commit `86e071b`. CI, PostgreSQL isolado real, Chromium e WebKit foram aprovados; a API pública confirmou 54 perfis jogáveis e a interface pública exibiu quatro cartas na mesma rodada. A escrita em produção não foi exercitada para não criar um voto técnico permanente no ranking público sem autorização específica.

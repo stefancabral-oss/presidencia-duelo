@@ -251,6 +251,35 @@ try {
   if (Math.max(...desktopWidths) - Math.min(...desktopWidths) > 2 || Math.max(...desktopHeights) - Math.min(...desktopHeights) > 2) {
     throw new Error("As quatro cartas não receberam a mesma exposição no desktop");
   }
+  if (desktopCards.some(({ top, right, bottom, left }) => top < 0 || left < 0 || right > 1280 || bottom > 900)) {
+    throw new Error("Uma das cartas escapou do viewport desktop");
+  }
+  const desktopRatio = desktopWidths[0] / desktopHeights[0];
+  if (desktopRatio < .69 || desktopRatio > .73) {
+    throw new Error("As cartas desktop perderam a proporção 5 por 7");
+  }
+  const desktopHeaderLeft = await page.locator(".duel-head").evaluate((element) => element.getBoundingClientRect().left);
+  const desktopInstructionLeft = await page.locator(".round-instruction").evaluate((element) => element.getBoundingClientRect().left);
+  if (Math.abs(desktopHeaderLeft - desktopInstructionLeft) > 2) {
+    throw new Error("A instrução desktop ficou desconectada do cabeçalho");
+  }
+  if (await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)) {
+    throw new Error("O duelo criou overflow horizontal no desktop");
+  }
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const imacCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
+    const box = card.getBoundingClientRect();
+    return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };
+  }));
+  if (imacCards.length !== 4
+    || imacCards.some(({ top, right, bottom, left }) => top < 0 || left < 0 || right > 1440 || bottom > 900)
+    || imacCards.slice(1).some((card, index) => card.left <= imacCards[index].right)) {
+    throw new Error("As quatro cartas não ficaram integralmente visíveis no viewport de iMac");
+  }
+  if (await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)) {
+    throw new Error("O duelo criou overflow horizontal no iMac");
+  }
 
   if (process.env.POLIMATCH_E2E_SCREENSHOT) {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_SCREENSHOT, fullPage: true });

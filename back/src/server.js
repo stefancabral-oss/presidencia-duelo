@@ -8,8 +8,14 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 const store = createTopicStore();
 const googleIdentity = createGoogleIdentityVerifier();
+const configuredOrigins = new Set(String(process.env.APP_ORIGINS || "https://polimatch.com.br,https://www.polimatch.com.br").split(",").map((origin) => origin.trim()).filter(Boolean));
 
-app.use(cors({ origin: true }));
+app.use(cors({
+  origin(origin, callback) {
+    const allowed = !origin || configuredOrigins.has(origin) || /^http:\/\/(?:127\.0\.0\.1|localhost):\d+$/.test(origin);
+    callback(null, allowed);
+  },
+}));
 app.use(express.json({ limit: "32kb" }));
 
 function recoveryKeyFrom(req) {

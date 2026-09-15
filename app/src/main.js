@@ -408,7 +408,9 @@ function bindEvents() {
   document.querySelector("#close-auth")?.addEventListener("click", closeAuth);
   document.querySelector("#continue-anonymous")?.addEventListener("click", closeAuth);
   document.querySelector(".auth-overlay")?.addEventListener("click", (event) => { if (event.target === event.currentTarget) closeAuth(); });
+  document.querySelector(".auth-overlay")?.addEventListener("keydown", (event) => { if (event.key === "Escape") closeAuth(); });
   document.querySelector("#logout")?.addEventListener("click", signOut);
+  if (state.authOpen) document.querySelector("#close-auth")?.focus();
   document.querySelector("#sound-toggle")?.addEventListener("click", () => {
     if (state.soundEnabled) {
       sound.play("soundOff");

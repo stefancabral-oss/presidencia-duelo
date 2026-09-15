@@ -118,6 +118,7 @@ API:
 - porta: `3001`;
 - variável obrigatória: `DATABASE_URL`;
 - para ativar o login: `GOOGLE_CLIENT_ID=<OAuth Web Client ID>`;
+- origens permitidas, se houver ambiente adicional: `APP_ORIGINS=https://polimatch.com.br,https://staging.exemplo`;
 - healthcheck: `GET /api/health`.
 
 App:

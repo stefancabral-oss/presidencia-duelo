@@ -141,6 +141,7 @@ export function hapticPattern(event) {
   return ({
     zebra: [20, 28, 20, 28, 52],
     leader: [18, 24, 48],
+    leaderDefense: [28, 22, 28],
     podium: [16, 22, 38],
     top10: [14, 20, 30],
     tierUp: [16, 24, 42],

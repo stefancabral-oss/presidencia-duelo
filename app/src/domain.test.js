@@ -125,5 +125,6 @@ test("primary ranking achievements keep message, sound and haptic semantics alig
   }, people, "a");
   assert.match(view.message, /liderança/i);
   assert.equal(view.primaryEvent, "leader");
+  assert.deepEqual(hapticPattern("leaderDefense"), [28, 22, 28]);
   assert.equal(roundOutcome(null, people, "a").primaryEvent, null);
 });

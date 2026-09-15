@@ -122,6 +122,7 @@ await restartedStore.close();
 
 const precedingRelease = new pg.Pool({ connectionString });
 await precedingRelease.query("ALTER TABLE votes DROP COLUMN round_id");
+await precedingRelease.query("DELETE FROM schema_migrations WHERE id = '2026-09-15-link-four-card-comparisons'");
 await precedingRelease.end();
 
 const upgradedStore = createTopicStore(connectionString);
@@ -129,6 +130,8 @@ await upgradedStore.init();
 const upgradedAuditPool = new pg.Pool({ connectionString });
 const upgradedAudit = await upgradedAuditPool.query("SELECT count(*) AS linked_comparisons FROM votes WHERE round_id = $1", [roundId]);
 assert.equal(Number(upgradedAudit.rows[0].linked_comparisons), 3);
+const migrationAudit = await upgradedAuditPool.query("SELECT count(*) AS applied FROM schema_migrations WHERE id = '2026-09-15-link-four-card-comparisons'");
+assert.equal(Number(migrationAudit.rows[0].applied), 1);
 await upgradedAuditPool.end();
 await upgradedStore.close();
 

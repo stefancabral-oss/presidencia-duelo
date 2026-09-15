@@ -194,11 +194,22 @@ async function createCleanSchema(client) {
     ALTER TABLE votes
       ADD COLUMN IF NOT EXISTS round_id uuid REFERENCES choice_rounds(round_id) ON DELETE RESTRICT;
 
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id text PRIMARY KEY,
+      applied_at timestamptz NOT NULL DEFAULT now()
+    );
+
     DROP TRIGGER IF EXISTS votes_are_immutable ON votes;
 
+    WITH migration AS (
+      INSERT INTO schema_migrations (id)
+      VALUES ('2026-09-15-link-four-card-comparisons')
+      ON CONFLICT DO NOTHING
+      RETURNING id
+    )
     UPDATE votes AS comparison
     SET round_id = round.round_id
-    FROM choice_rounds AS round
+    FROM choice_rounds AS round, migration
     WHERE comparison.round_id IS NULL
       AND comparison.topic_id = round.topic_id
       AND comparison.winner_id = round.winner_id

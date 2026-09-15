@@ -72,7 +72,7 @@ test("four-card choices keep one immutable round and three auditable comparisons
   assert.match(source, /CREATE TABLE IF NOT EXISTS choice_rounds/);
   assert.match(source, /CHECK \(array_length\(candidate_ids, 1\) = 4\)/);
   assert.match(source, /ADD COLUMN IF NOT EXISTS round_id uuid REFERENCES choice_rounds\(round_id\)/);
-  assert.match(source, /UPDATE votes AS comparison[\s\S]*comparison\.created_at = round\.created_at/);
+  assert.match(source, /INSERT INTO schema_migrations \(id\)[\s\S]*ON CONFLICT DO NOTHING[\s\S]*UPDATE votes AS comparison[\s\S]*comparison\.created_at = round\.created_at/);
   assert.match(source, /comparisons: 3/);
   assert.match(source, /INSERT INTO choice_rounds[\s\S]*INSERT INTO votes/);
   assert.match(source, /const winnerRatingBeforeRound = globalRatings\.get\(winnerId\)/);

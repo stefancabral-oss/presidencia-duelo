@@ -52,6 +52,7 @@ test("clean-start migration is one-time and explicitly removes legacy gameplay t
   assert.match(source, /DROP TABLE IF EXISTS votes CASCADE/);
   assert.match(source, /DROP TABLE IF EXISTS player_states CASCADE/);
   assert.match(source, /INSERT INTO schema_migrations \(id\)/);
+  assert.match(source, /INSERT INTO player_stats[\s\S]*unnest\(\$2::text\[\]\)[\s\S]*ON CONFLICT DO NOTHING/);
 });
 
 test("Chromas are personal inventory and equipment, separate from ranking", async () => {

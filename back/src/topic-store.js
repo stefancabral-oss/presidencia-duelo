@@ -215,13 +215,23 @@ async function createCleanSchema(client) {
 
   for (const topic of TOPICS_BY_ID.values()) {
     if (!topic.active) continue;
+    const playableCandidates = candidatesForTopic(topic.id);
     await client.query("INSERT INTO ranking_pools (topic_id) VALUES ($1) ON CONFLICT DO NOTHING", [topic.id]);
-    for (const candidate of candidatesForTopic(topic.id)) {
+    for (const candidate of playableCandidates) {
       await client.query(
         "INSERT INTO ranking_stats (topic_id, candidate_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
         [topic.id, candidate.id],
       );
     }
+    await client.query(
+      `INSERT INTO player_stats (player_id, topic_id, candidate_id)
+       SELECT player_pools.player_id, player_pools.topic_id, playable.candidate_id
+       FROM player_pools
+       CROSS JOIN unnest($2::text[]) AS playable(candidate_id)
+       WHERE player_pools.topic_id = $1
+       ON CONFLICT DO NOTHING`,
+      [topic.id, playableCandidates.map(({ id }) => id)],
+    );
   }
 
   if (!applied.rowCount) {

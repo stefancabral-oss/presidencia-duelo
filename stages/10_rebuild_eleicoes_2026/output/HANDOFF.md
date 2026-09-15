@@ -2,11 +2,11 @@
 
 ## Status
 
-Estado: envio autorizado; PR em validação
+Estado: hotfix de compatibilidade em validação
 
-- Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/137
-- Pull Request: https://github.com/stefancabral-oss/presidencia-duelo/pull/138
-- Commit da entrega: `31f252254d455eb3c019bca6213a2f05e223cd1c`
+- Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/141
+- Pull Request: https://github.com/stefancabral-oss/presidencia-duelo/pull/142
+- Commit da entrega: `3be8dc5a21edba15ea41fbdac4e6142425be1448`
 
 ## Entregue
 
@@ -102,4 +102,4 @@ Estado: envio autorizado; PR em validação
 
 ## Human gate
 
-Status: usuário autorizou em 15/09/2026 a liberação de todos os 54 perfis com fotografia aprovada, inclusive influenciadores. Issue #139 em validação.
+Status: usuário autorizou em 15/09/2026 a liberação dos 54 perfis; o hotfix de compatibilidade para jogadores anteriores está no PR #142.

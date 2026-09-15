@@ -1,0 +1,19 @@
+SANITIZED DOKPLOY DEPLOYMENT CAPTURE
+Observed: 2026-09-15T03:20:00-03:00
+Private webhook URLs and account details removed.
+
+Application: API - Polimatch
+Environment: production
+Deployment: 1
+State: done
+Commit: 86e071bffc8b567376eb75cd5f80782a2a8eded8
+Duration: 6s
+
+Application: PWA - Polimatch
+Environment: production
+Deployment: 1
+State: done
+Commit: 86e071bffc8b567376eb75cd5f80782a2a8eded8
+Duration: 13s
+
+Source PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/146

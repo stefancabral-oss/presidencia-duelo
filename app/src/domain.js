@@ -29,19 +29,24 @@ export function shuffledCandidates(candidates, random = Math.random) {
 }
 
 export function nextBalancedPair(candidates, queue = [], previousPair = [], random = Math.random) {
-  if (candidates.length < 2) throw new Error("São necessárias pelo menos duas pessoas");
+  const next = nextBalancedGroup(candidates, queue, previousPair, 2, random);
+  return { pair: next.group, queue: next.queue };
+}
+
+export function nextBalancedGroup(candidates, queue = [], previousGroup = [], size = 4, random = Math.random) {
+  if (candidates.length < size) throw new Error(`São necessárias pelo menos ${size} pessoas`);
   const availableIds = new Set(candidates.map(({ id }) => id));
   const seen = new Set();
   let remaining = queue.filter(({ id }) => availableIds.has(id) && !seen.has(id) && seen.add(id));
-  if (remaining.length < 2) {
+  if (remaining.length < size) {
     const preserved = new Set(remaining.map(({ id }) => id));
     remaining = [...remaining, ...shuffledCandidates(candidates.filter(({ id }) => !preserved.has(id)), random)];
   }
-  const previous = new Set(previousPair);
+  const previous = new Set(previousGroup);
   const fresh = remaining.filter(({ id }) => !previous.has(id));
   const repeated = remaining.filter(({ id }) => previous.has(id));
-  const ordered = fresh.length >= 2 ? [...fresh, ...repeated] : remaining;
-  return { pair: ordered.slice(0, 2), queue: ordered.slice(2) };
+  const ordered = fresh.length >= size ? [...fresh, ...repeated] : remaining;
+  return { group: ordered.slice(0, size), queue: ordered.slice(size) };
 }
 
 export function rankingForCatalog(snapshot, candidates) {
@@ -100,7 +105,7 @@ export function voteFeedback(name, { winnerDelta, zebra, winRate } = {}) {
   const delta = Number(winnerDelta);
   if (Number.isFinite(delta)) parts.push(`${delta >= 0 ? "+" : ""}${delta} Elo`);
   const rate = Number(winRate);
-  if (Number.isFinite(rate)) parts.push(`${rate}% nos duelos`);
+  if (Number.isFinite(rate)) parts.push(`${rate}% nas comparações`);
   if (zebra) parts.push("Zebra!");
   return parts.join(" · ");
 }

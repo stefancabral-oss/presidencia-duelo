@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { catalogForTopic, displayRanking, filterRanking, nextBalancedPair, nextPair, rankingForCatalog, rankingHighlights, shortName, shuffledCandidates, voteFeedback } from "./domain.js";
+import { catalogForTopic, displayRanking, filterRanking, nextBalancedGroup, nextBalancedPair, nextPair, rankingForCatalog, rankingHighlights, shortName, shuffledCandidates, voteFeedback } from "./domain.js";
 
 const people = [
   { id: "a", name: "Ana Um" },
@@ -26,6 +26,18 @@ test("balanced pairs consume the shuffled deck before repeating people", () => {
   assert.equal(first.queue.length, 1);
   assert.equal(new Set(second.pair.map(({ id }) => id)).size, 2);
   assert.equal(second.pair.some(({ id }) => id === "c"), true);
+});
+
+test("balanced groups expose four distinct people and avoid the previous round", () => {
+  const roster = [
+    { id: "a" }, { id: "b" }, { id: "c" }, { id: "d" },
+    { id: "e" }, { id: "f" }, { id: "g" }, { id: "h" },
+  ];
+  const first = nextBalancedGroup(roster, roster, [], 4);
+  const second = nextBalancedGroup(roster, first.queue, first.group.map(({ id }) => id), 4, () => 0);
+  assert.deepEqual(first.group.map(({ id }) => id), ["a", "b", "c", "d"]);
+  assert.deepEqual(second.group.map(({ id }) => id), ["e", "f", "g", "h"]);
+  assert.equal(new Set(second.group.map(({ id }) => id)).size, 4);
 });
 
 test("shuffle preserves every candidate exactly once", () => {
@@ -78,6 +90,6 @@ test("ranking highlights make both positive and negative choices visible", () =>
 test("vote feedback exposes real Elo and zebra without blocking the next duel", () => {
   assert.equal(
     voteFeedback("Ana", { winnerDelta: 18, winRate: 63, zebra: true }),
-    "Ana confirmado · +18 Elo · 63% nos duelos · Zebra!",
+    "Ana confirmado · +18 Elo · 63% nas comparações · Zebra!",
   );
 });

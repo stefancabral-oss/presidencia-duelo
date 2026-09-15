@@ -8,6 +8,7 @@ import {
   rankingFromRows,
   recoveryKeyHash,
   validateTopic,
+  validateRoundVote,
   validateVote,
 } from "./topic-store.js";
 
@@ -17,6 +18,16 @@ test("only active curated topics accept votes", () => {
   assert.throws(() => validateVote("eleicoes-2026", "lula", "lula"), /voto inválido/);
   assert.throws(() => validateVote("eleicoes-2026", "lula", "acm-neto"), /voto inválido/);
   assert.doesNotThrow(() => validateVote("eleicoes-2026", "lula", "jair-bolsonaro"));
+});
+
+test("four-card rounds require four unique playable candidates and the winner", () => {
+  assert.deepEqual(
+    validateRoundVote("eleicoes-2026", "lula", ["lula", "jair-bolsonaro", "anitta", "neymar-jr"]),
+    { topic: "eleicoes-2026", candidateIds: ["lula", "jair-bolsonaro", "anitta", "neymar-jr"] },
+  );
+  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["lula", "lula", "anitta", "neymar-jr"]), /rodada inválida/);
+  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["jair-bolsonaro", "anitta", "neymar-jr", "ludmilla"]), /rodada inválida/);
+  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["lula", "jair-bolsonaro", "anitta", "acm-neto"]), /rodada inválida/);
 });
 
 test("vote ids remain idempotent UUIDs", () => {
@@ -50,9 +61,18 @@ test("clean-start migration is one-time and explicitly removes legacy gameplay t
   assert.equal(CLEAN_START_MIGRATION, "20260913_eleicoes_2026_clean_start");
   assert.match(source, /SELECT 1 FROM schema_migrations WHERE id = \$1/);
   assert.match(source, /DROP TABLE IF EXISTS votes CASCADE/);
+  assert.match(source, /DROP TABLE IF EXISTS choice_rounds CASCADE/);
   assert.match(source, /DROP TABLE IF EXISTS player_states CASCADE/);
   assert.match(source, /INSERT INTO schema_migrations \(id\)/);
   assert.match(source, /INSERT INTO player_stats[\s\S]*unnest\(\$2::text\[\]\)[\s\S]*ON CONFLICT DO NOTHING/);
+});
+
+test("four-card choices keep one immutable round and three auditable comparisons", async () => {
+  const source = await readFile(new URL("./topic-store.js", import.meta.url), "utf8");
+  assert.match(source, /CREATE TABLE IF NOT EXISTS choice_rounds/);
+  assert.match(source, /CHECK \(array_length\(candidate_ids, 1\) = 4\)/);
+  assert.match(source, /comparisons: 3/);
+  assert.match(source, /INSERT INTO votes[\s\S]*INSERT INTO choice_rounds/);
 });
 
 test("Chromas are personal inventory and equipment, separate from ranking", async () => {

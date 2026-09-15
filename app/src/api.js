@@ -63,3 +63,20 @@ export function submitVote(winnerId, loserId, topicId = "eleicoes-2026", player 
     }),
   });
 }
+
+export function submitRoundVote(winnerId, candidateIds, topicId = "eleicoes-2026", player = {}) {
+  return requestJson("/api/round-vote", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(player.recoveryKey ? { Authorization: `Bearer ${player.recoveryKey}` } : {}),
+    },
+    body: JSON.stringify({
+      roundId: crypto.randomUUID(),
+      winnerId,
+      candidateIds,
+      topicId,
+      playerVersion: player.version,
+    }),
+  });
+}

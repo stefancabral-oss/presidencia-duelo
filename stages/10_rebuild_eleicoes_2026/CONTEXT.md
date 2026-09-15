@@ -14,7 +14,8 @@ Substituir o frontend anterior por uma fundação limpa para a edição `Eleiç�
 - Aplicação online-only.
 - Direção visual aprovada: `Malaquita 2026 / Digital First`, conforme imagens em `references/approved-art-direction/`.
 - Especificação mobile externa incorporada com ressalvas em `references/UI_MOBILE_ADOPTION.md`; a fonte integral está em `references/source-ui-mobile-v1.md`.
-- Chromas são opcionais, pessoais e equipáveis; o duelo é contínuo e o ranking só abre quando o usuário pedir.
+- Chromas são opcionais, pessoais e equipáveis; as rodadas de quatro são contínuas e o ranking só abre quando o usuário pedir.
+- A rodada principal mostra quatro cartas com a mesma exposição. O usuário escolhe uma; a escolha compara a vencedora com as outras três e abre uma nova rodada com quatro opções.
 
 ## Escopo desta etapa
 
@@ -39,8 +40,8 @@ Substituir o frontend anterior por uma fundação limpa para a edição `Eleiç�
 1. Nenhum CSS ou componente visual legado é importado pelo app novo.
 2. O shell reproduz a direção malaquita escura, detalhes dourados e cards premium aprovados.
 3. A tela de assuntos apresenta `Eleições 2026` e sinaliza expansões futuras.
-4. Um duelo pode ser compreendido e votado por toque na carta.
-5. A ficha educativa abre e fecha sem perder o duelo.
+4. Uma rodada de quatro pode ser compreendida e votada com um único toque na carta preferida.
+5. As quatro cartas cabem simultaneamente na tela móvel; a ficha educativa abre e fecha sem perder a rodada.
 6. Ranking e coleção são navegáveis.
 7. Falha de API não aceita voto e apresenta uma ação clara.
 8. Build e testes essenciais passam.

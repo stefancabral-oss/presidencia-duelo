@@ -7,7 +7,8 @@ Estado: rodada principal de quatro cartas publicada; endurecimento da revisão e
 - Issue principal: https://github.com/stefancabral-oss/presidencia-duelo/issues/143
 - Pull Request principal: https://github.com/stefancabral-oss/presidencia-duelo/pull/144
 - Correções da revisão: https://github.com/stefancabral-oss/presidencia-duelo/issues/145
-- Pull Request das correções: a criar após o commit validado
+- Pull Request das correções: https://github.com/stefancabral-oss/presidencia-duelo/pull/146
+- Commit das correções validadas: `5c7b1f8`
 - Commit da implementação principal: `cc6fea7`
 
 ## Entregue

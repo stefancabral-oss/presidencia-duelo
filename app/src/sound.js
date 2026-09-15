@@ -1,4 +1,6 @@
 const STORAGE_KEY = "polimatch:sound";
+const LEGACY_STORAGE_KEY = "polimatch-sound-enabled-v1";
+const CUE_COOLDOWN_MS = 90;
 
 const CUES = Object.freeze({
   enter: [
@@ -23,6 +25,11 @@ const CUES = Object.freeze({
     { frequency: 659, endFrequency: 784, delay: .07, duration: .14, gain: .03, type: "sine" },
     { frequency: 784, endFrequency: 1047, delay: .14, duration: .2, gain: .024, type: "triangle" },
   ],
+  zebra: [
+    { frequency: 523, endFrequency: 784, delay: 0, duration: .12, gain: .032, type: "sine" },
+    { frequency: 659, endFrequency: 988, delay: .065, duration: .17, gain: .029, type: "triangle" },
+    { frequency: 1047, endFrequency: 1568, delay: .15, duration: .24, gain: .022, type: "sine" },
+  ],
   shuffle: [
     { frequency: 330, endFrequency: 415, delay: 0, duration: .055, gain: .018, type: "triangle" },
     { frequency: 392, endFrequency: 494, delay: .045, duration: .055, gain: .019, type: "triangle" },
@@ -42,7 +49,15 @@ const CUES = Object.freeze({
 
 export function soundEnabledFromStorage(storage) {
   try {
-    return storage?.getItem(STORAGE_KEY) !== "off";
+    const stored = storage?.getItem(STORAGE_KEY);
+    if (stored) return stored !== "off";
+    const legacy = storage?.getItem(LEGACY_STORAGE_KEY);
+    if (legacy === "0" || legacy === "1") {
+      const migrated = legacy === "1" ? "on" : "off";
+      storage?.setItem(STORAGE_KEY, migrated);
+      return migrated === "on";
+    }
+    return true;
   } catch {
     return true;
   }
@@ -51,6 +66,7 @@ export function soundEnabledFromStorage(storage) {
 export function createSoundController({ windowObject = globalThis.window, storage = windowObject?.localStorage, contextFactory } = {}) {
   let enabled = soundEnabledFromStorage(storage);
   let context;
+  const lastPlayedAt = new Map();
 
   function getContext() {
     if (context) return context;
@@ -70,6 +86,10 @@ export function createSoundController({ windowObject = globalThis.window, storag
     try {
       const audioContext = getContext();
       if (!audioContext) return false;
+      const now = windowObject?.performance?.now?.() ?? Date.now();
+      const previous = lastPlayedAt.get(name) ?? -Infinity;
+      if (now - previous < CUE_COOLDOWN_MS) return false;
+      lastPlayedAt.set(name, now);
       if (audioContext.state === "suspended") audioContext.resume?.().catch?.(() => {});
       const start = audioContext.currentTime + .008;
       for (const note of CUES[name]) {

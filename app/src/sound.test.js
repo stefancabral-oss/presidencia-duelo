@@ -36,6 +36,12 @@ test("sound is enabled by default and remembers an explicit mute", () => {
   assert.equal(soundEnabledFromStorage(storage), false);
 });
 
+test("a mute preference from the previous interface is migrated", () => {
+  const storage = memoryStorage({ "polimatch-sound-enabled-v1": "0" });
+  assert.equal(soundEnabledFromStorage(storage), false);
+  assert.equal(storage.getItem("polimatch:sound"), "off");
+});
+
 test("muted sound never creates an audio context", () => {
   let contextCalls = 0;
   const sound = createSoundController({
@@ -59,6 +65,18 @@ test("every product cue is short, synthesized and playable from one shared conte
   assert.equal(contextCalls, 1);
   assert.ok(context.starts.length >= soundCueNames.length);
   assert.ok(context.starts.every((start) => start >= 4 && start < 4.2));
+});
+
+test("rapid repetitions of the same cue are throttled before scheduling oscillators", () => {
+  const context = fakeAudioContext();
+  const sound = createSoundController({
+    storage: memoryStorage(),
+    windowObject: { performance: { now: () => 1000 } },
+    contextFactory: () => context,
+  });
+  assert.equal(sound.play("navigation"), true);
+  assert.equal(sound.play("navigation"), false);
+  assert.equal(context.starts.length, 1);
 });
 
 test("unsupported browsers fail silently without interrupting the interaction", () => {

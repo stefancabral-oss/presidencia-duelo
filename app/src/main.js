@@ -273,9 +273,13 @@ function showProfile(id) {
   }).join("");
   const canVote = state.screen === "duel" && state.round.some((candidate) => candidate.id === person.id) && !state.busy;
   modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar resumo">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2>${escapeHtml(person.name)}</h2><p class="profile-role"><strong>${escapeHtml(candidateRole(person))}</strong></p>${metadata.length ? `<p class="profile-meta">${metadata.map(escapeHtml).join(" · ")}</p>` : ""}${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions">${canVote ? `<button class="primary" id="vote-from-profile" data-candidate="${escapeHtml(person.id)}" type="button">Escolher esta pessoa</button>` : ""}<button class="secondary" id="close-modal" type="button">Voltar ao duelo</button></div>`;
+  let silentClose = false;
   modal.showModal();
-  modal.addEventListener("close", () => document.querySelectorAll(".candidate-card.is-peeking").forEach((cardElement) => cardElement.classList.remove("is-peeking")), { once: true });
-  const closeProfile = () => { sound.play("dismiss"); modal.close(); };
+  modal.addEventListener("close", () => {
+    if (!silentClose) sound.play("dismiss");
+    document.querySelectorAll(".candidate-card.is-peeking").forEach((cardElement) => cardElement.classList.remove("is-peeking"));
+  }, { once: true });
+  const closeProfile = () => modal.close();
   modal.querySelector("#close-modal").addEventListener("click", closeProfile);
   modal.querySelector("#close-modal-top").addEventListener("click", closeProfile);
   modal.onclick = (event) => {
@@ -283,6 +287,7 @@ function showProfile(id) {
   };
   modal.querySelector("#close-modal-top").focus();
   modal.querySelector("#vote-from-profile")?.addEventListener("click", () => {
+    silentClose = true;
     modal.close();
     vote(person.id);
   });
@@ -332,7 +337,7 @@ async function vote(winnerId) {
     state.busy = false;
     state.selectedId = "";
     render();
-    sound.play("confirm");
+    sound.play(response.vote?.zebra ? "zebra" : "confirm");
     try { navigator.vibrate?.(response.vote?.zebra ? [24, 35, 48] : 24); } catch {}
     resultTimer = setTimeout(() => {
       if (state.busy || !state.result.includes("confirmado")) return;
@@ -358,6 +363,7 @@ function bindEvents() {
       sound.play("soundOn");
     }
     render();
+    document.querySelector("#sound-toggle")?.focus();
   });
   document.querySelector("#retry")?.addEventListener("click", () => { sound.play("navigation"); initialize(); });
   document.querySelector("#start-election")?.addEventListener("click", enterDuel);

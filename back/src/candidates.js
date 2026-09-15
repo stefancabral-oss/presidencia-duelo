@@ -5,7 +5,7 @@ export const TOPICS = Object.freeze([
   {
     id: "eleicoes-2026",
     name: "Eleições 2026",
-    description: "Pessoas que participam ou influenciam diretamente a disputa eleitoral de 2026.",
+    description: "Políticos e influenciadores com fotografia aprovada que participam ou influenciam a conversa pública de 2026.",
     status: "pilot",
     active: true,
   },
@@ -36,7 +36,9 @@ export const CANDIDATES = Object.freeze(CATALOG.map((person) => Object.freeze({
   facts: Object.freeze(Array.isArray(person.facts) ? person.facts : []),
   sources: Object.freeze(Array.isArray(person.sources) ? person.sources : []),
   reviewStatus: person.reviewStatus || "pending",
-  topicIds: person.group === "politica" ? ["eleicoes-2026"] : ["influenciadores"],
+  topicIds: person.group === "politica"
+    ? ["eleicoes-2026"]
+    : ["eleicoes-2026", "influenciadores"],
 })));
 
 export const CANDIDATES_BY_ID = new Map(CANDIDATES.map((candidate) => [candidate.id, candidate]));

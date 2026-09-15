@@ -123,6 +123,7 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .duel-head h1 { margin: 3px 0 0; font-size: clamp(1.7rem, 7vw, 2.7rem); }
 .progress-pill { flex: 0 0 auto; padding: 8px 11px; border: 1px solid rgb(231 199 98 / 30%); border-radius: 999px; background: rgb(4 48 37 / 76%); color: var(--gold); font-size: .72rem; font-weight: 900; }
 .round-instruction { margin: -8px 0 0; color: #9fb2aa; font-size: .72rem; text-align: center; }
+.round-instruction.is-result { color: #f0d478; font-weight: 850; letter-spacing: .01em; animation: outcome-copy-in 220ms ease-out; }
 .arena { width: min(100%, 920px); margin: 0 auto; display: grid; align-items: stretch; gap: 12px; }
 .arena-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .versus { position: relative; z-index: 3; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid rgb(231 199 98 / 70%); border-radius: 50%; background: #082f25; color: var(--gold); box-shadow: 0 0 18px rgb(231 199 98 / 30%); font-size: .68rem; font-weight: 950; }
@@ -132,6 +133,8 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .candidate-card.is-selected { transform: translateY(-4px) scale(1.015); border-color: #ffe88d; box-shadow: 0 20px 44px rgb(0 10 7 / 52%), 0 0 34px rgb(255 218 92 / 48%); }
 .candidate-card:disabled { cursor: wait; filter: saturate(.7) brightness(.82); transform: scale(.985); }
 .candidate-card.is-selected:disabled { filter: saturate(1.08) brightness(1.02); transform: translateY(-4px) scale(1.015); }
+.candidate-card.is-round-winner:disabled { filter: saturate(1.12) brightness(1.04); animation: card-rank-rise 760ms cubic-bezier(.2,.85,.25,1) both; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 60%), inset 0 0 0 5px rgb(255 226 125 / 52%), 0 20px 44px rgb(0 10 7 / 58%), 0 0 38px rgb(231 199 98 / 58%); }
+.candidate-card.is-round-loser:disabled { filter: saturate(.45) brightness(.67); animation: card-rank-drop 720ms cubic-bezier(.25,.8,.3,1) both; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 20%), inset 0 0 0 5px rgb(111 38 32 / 34%), 0 10px 24px rgb(0 8 6 / 46%); }
 .card-brand { display: flex; align-items: center; gap: 4px; }
 .card-brand-symbol { width: 17px; height: 17px; display: block; }
 .card-brand b { font: inherit; }
@@ -162,7 +165,17 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .candidate-summary { display: -webkit-box; margin-top: 5px; overflow: hidden; color: #53615a; font-size: .64rem; font-weight: 650; line-height: 1.25; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .candidate-profile-hint { align-self: end; margin-top: 7px; padding-top: 6px; border-top: 1px solid rgb(151 126 62 / 25%); color: #87681c; font-size: .57rem; font-weight: 900; letter-spacing: .055em; text-align: center; text-transform: uppercase; }
 .candidate-profile-hint span { margin-right: 3px; font-size: .72rem; }
+.candidate-card[class*="is-round-"] .candidate-copy > :not(strong):not(.card-outcome) { display: none; }
+.card-outcome { display: grid; grid-template-columns: auto minmax(0,1fr); align-items: center; gap: 8px; margin-top: 9px; padding-top: 8px; border-top: 1px solid rgb(76 67 42 / 22%); animation: outcome-stamp-in 300ms 80ms cubic-bezier(.2,.85,.25,1) both; }
+.card-outcome b { font-family: Georgia, serif; font-size: 1.05rem; white-space: nowrap; }
+.card-outcome small { min-width: 0; font-size: .62rem; font-weight: 900; line-height: 1.15; text-transform: uppercase; letter-spacing: .045em; }
+.card-outcome.gain b, .card-outcome.gain small { color: #075f45; }
+.card-outcome.loss b, .card-outcome.loss small { color: #8d332d; }
 @keyframes varnish-confirm { 0% { background-position: 150% 0, 0 0, 0 0; opacity: .68; } 46% { opacity: 1; } 100% { background-position: -30% 0, 0 0, 0 0; opacity: .78; } }
+@keyframes card-rank-rise { 0% { transform: scale(.985); } 38% { transform: translateY(-7px) scale(1.025); } 62% { transform: translateY(-4px) scale(1.012); } 100% { transform: translateY(-5px) scale(1.018); } }
+@keyframes card-rank-drop { 0% { transform: scale(.985); } 34% { transform: translateY(4px) scale(.966); } 58% { transform: translateY(2px) scale(.974); } 100% { transform: translateY(3px) scale(.97); } }
+@keyframes outcome-stamp-in { from { opacity: 0; transform: translateY(7px); } }
+@keyframes outcome-copy-in { from { opacity: 0; transform: translateY(-3px); } }
 .skip-button { justify-self: center; min-height: 46px; padding: 9px 18px; border: 1px solid rgb(255 255 255 / 14%); border-radius: 999px; background: rgb(0 35 28 / 42%); color: #d5ded9; box-shadow: inset 0 1px rgb(255 255 255 / 5%); font-size: .78rem; font-weight: 750; cursor: pointer; }
 .skip-button::after { content: "  ››"; color: var(--gold); letter-spacing: -.12em; }
 
@@ -386,6 +399,11 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   .candidate-copy .candidate-affiliation { margin-top: 3px; color: #f2d87e; font-size: .49rem; }
   .candidate-copy .candidate-office { display: -webkit-box; margin-top: 3px; overflow: hidden; color: #d4dfda; font-size: .46rem; line-height: 1.08; text-shadow: 0 1px 4px rgb(0 0 0 / 82%); -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
   .candidate-summary, .candidate-profile-hint { display: none; }
+  .candidate-card[class*="is-round-"] .candidate-copy { min-height: 74px; padding-top: 22px; }
+  .candidate-card[class*="is-round-"] .candidate-copy > strong { -webkit-line-clamp: 1; }
+  .card-outcome { gap: 5px; margin-top: 4px; padding-top: 4px; border-top-color: rgb(255 255 255 / 18%); }
+  .card-outcome b { color: #f4dc88 !important; font-family: Inter, sans-serif; font-size: .66rem; }
+  .card-outcome small { color: #e4ece8 !important; font-size: .43rem; line-height: 1.05; }
   .skip-button { min-height: 36px; padding: 6px 14px; font-size: .67rem; }
 }
 

@@ -52,14 +52,14 @@ const candidates = [
   },
 ];
 
-function ranking(decisions = 0) {
-  return candidates.map((candidate, index) => ({
+function ranking(decisions = 0, winnerId = "") {
+  return candidates.map((candidate) => ({
     ...candidate,
-    elo: decisions ? (index ? 1484 : 1516) : 1500,
-    wins: decisions && !index ? 3 : 0,
-    losses: decisions && index ? 1 : 0,
-    decisions: decisions ? (!index ? 3 : 1) : 0,
-    winRate: decisions && !index ? 100 : 0,
+    elo: decisions ? (candidate.id === winnerId ? 1085 : 1025) : 1040,
+    wins: decisions && candidate.id === winnerId ? 3 : 0,
+    losses: decisions && candidate.id !== winnerId ? 1 : 0,
+    decisions: decisions ? (candidate.id === winnerId ? 3 : 1) : 0,
+    winRate: decisions && candidate.id === winnerId ? 100 : 0,
   }));
 }
 
@@ -81,12 +81,29 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
   else if (path === "/api/player" && request.method() === "POST") body = { recoveryKey: "e2e-recovery-key" };
   else if (path === "/api/player/state") body = { version: 0, duels: 0, ranking: ranking() };
   else if (path === "/api/round-vote") {
+    const payload = request.postDataJSON();
+    const feedback = {
+      primaryEvent: "tierUp",
+      rankingEvent: "overtake",
+      zebra: false,
+      outcomes: payload.candidateIds.map((id) => ({
+        id,
+        result: id === payload.winnerId ? "winner" : "loser",
+        delta: id === payload.winnerId ? 45 : -15,
+        elo: id === payload.winnerId ? 1055 : 985,
+        previousTier: { id: "contender", label: "No páreo", level: 2 },
+        tier: id === payload.winnerId
+          ? { id: "rising", label: "Em ascensão", level: 3 }
+          : { id: "contender", label: "No páreo", level: 2 },
+        tierChange: id === payload.winnerId ? "up" : null,
+      })),
+    };
     body = {
       duels: 1,
-      ranking: ranking(1),
-      player: { version: 1, duels: 1, ranking: ranking(1) },
-      round: { winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "leader" },
-      vote: { winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "leader" },
+      ranking: ranking(1, payload.winnerId),
+      player: { version: 1, duels: 1, ranking: ranking(1, payload.winnerId) },
+      round: { winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "overtake" },
+      vote: { winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "overtake", feedback },
     };
   } else {
     await route.fulfill({ status: 404, json: { error: "mock não encontrado" } });
@@ -190,14 +207,28 @@ try {
   await page.keyboard.press("Escape");
   await page.locator("dialog[open]").waitFor({ state: "hidden" });
 
+  const selectedWinnerId = await firstCard.getAttribute("data-vote");
   await firstCard.click();
-  await page.getByText(/confirmado · \+45 Elo/).waitFor();
+  await page.getByText(/subiu de patente/i).waitFor();
+  if (!await page.locator("#skip-round").isDisabled()) throw new Error("A troca de rodada permaneceu ativa durante o resultado");
+  if (await page.locator(".card-outcome").count() !== 4) throw new Error("O resultado visual não apareceu nas quatro cartas");
+  if (await page.locator(".candidate-card.is-round-winner").count() !== 1 || await page.locator(".candidate-card.is-round-loser").count() !== 3) {
+    throw new Error("Vitória e derrotas não receberam tratamentos visuais distintos");
+  }
+  if (!await page.locator(".candidate-card.is-round-winner").getByText("+45 Elo").isVisible()) throw new Error("O ganho real de Elo não apareceu na carta escolhida");
+  if (await page.locator(".candidate-card.is-round-loser").getByText("-15 Elo").count() !== 3) throw new Error("As perdas reais de Elo não apareceram nas outras cartas");
+  if (process.env.POLIMATCH_E2E_OUTCOME_SCREENSHOT) {
+    await page.waitForTimeout(180);
+    await page.screenshot({ path: process.env.POLIMATCH_E2E_OUTCOME_SCREENSHOT });
+  }
+  await page.locator(".card-outcome").first().waitFor({ state: "hidden", timeout: 2500 });
   await page.getByRole("button", { name: "Ranking" }).click();
   await page.getByRole("heading", { name: "Ranking" }).waitFor();
   await page.getByText("1 escolha confirmada").waitFor();
   await page.getByText("Mais derrotas").waitFor();
   const rejected = await page.locator(".ranking-highlight-rejected").innerText();
-  if (!["Renan Santos", "Anitta", "Neymar Jr."].every((name) => rejected.includes(name)) || !rejected.includes("−1")) {
+  const expectedRejected = candidates.filter(({ id }) => id !== selectedWinnerId).map(({ displayName }) => displayName);
+  if (!expectedRejected.every((name) => rejected.includes(name)) || !rejected.includes("−1")) {
     throw new Error("As três comparações negativas não apareceram no resumo do ranking");
   }
 

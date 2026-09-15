@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { catalogForTopic, displayRanking, filterRanking, nextBalancedGroup, nextBalancedPair, nextPair, rankingForCatalog, rankingHighlights, shortName, shuffledCandidates, voteFeedback } from "./domain.js";
+import { catalogForTopic, displayRanking, eloTier, filterRanking, hapticPattern, nextBalancedGroup, nextBalancedPair, nextPair, rankingForCatalog, rankingHighlights, roundOutcome, shortName, shuffledCandidates, voteFeedback } from "./domain.js";
 
 const people = [
   { id: "a", name: "Ana Um" },
@@ -92,4 +92,39 @@ test("vote feedback exposes real Elo and zebra without blocking the next duel", 
     voteFeedback("Ana", { winnerDelta: 18, winRate: 63, zebra: true }),
     "Ana confirmado · +18 Elo · 63% nas comparações · Zebra!",
   );
+});
+
+test("Elo tiers change only at deliberate progression thresholds", () => {
+  assert.equal(eloTier(1000).label, "No páreo");
+  assert.equal(eloTier(1049).id, "contender");
+  assert.equal(eloTier(1050).id, "rising");
+  assert.equal(eloTier(979).id, "pressure");
+  assert.equal(eloTier(899).id, "recovery");
+});
+
+test("round outcome keeps victory and defeat feedback tied to real server deltas", () => {
+  const feedback = {
+    primaryEvent: "tierUp",
+    outcomes: [
+      { id: "a", result: "winner", delta: 48, elo: 1060, tier: { id: "rising", label: "Em ascensão", level: 3 }, tierChange: "up" },
+      { id: "b", result: "loser", delta: -16, elo: 984, tier: { id: "contender", label: "No páreo", level: 2 } },
+    ],
+  };
+  const view = roundOutcome(feedback, people, "a");
+  assert.equal(view.primaryEvent, "tierUp");
+  assert.match(view.message, /subiu de patente/i);
+  assert.equal(view.outcomes[0].shortMessage, "Subiu · Em ascensão");
+  assert.equal(view.outcomes[1].shortMessage, "Levou a pior");
+  assert.deepEqual(hapticPattern("tierDown"), [34, 38, 18]);
+});
+
+test("primary ranking achievements keep message, sound and haptic semantics aligned", () => {
+  const view = roundOutcome({
+    primaryEvent: "leader",
+    outcomes: [{ id: "a", result: "winner", delta: 48, elo: 1060, tier: eloTier(1060), tierChange: "up" }],
+  }, people, "a");
+  assert.match(view.message, /liderança/i);
+  assert.equal(view.primaryEvent, "leader");
+  assert.deepEqual(hapticPattern("leaderDefense"), [28, 22, 28]);
+  assert.equal(roundOutcome(null, people, "a").primaryEvent, null);
 });

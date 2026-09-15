@@ -1,3 +1,5 @@
+import { eloTier as sharedEloTier } from "../../shared/elo.js";
+
 export function catalogForTopic(candidates, ids = []) {
   if (!ids.length) return [...candidates];
   const byId = new Map(candidates.map((candidate) => [candidate.id, candidate]));
@@ -98,6 +100,56 @@ export function shortName(name = "") {
   const parts = name.trim().split(/\s+/);
   if (parts.length <= 2) return name;
   return `${parts[0]} ${parts.at(-1)}`;
+}
+
+export const eloTier = sharedEloTier;
+
+export function roundOutcome(feedback, candidates = [], winnerId = "") {
+  const byId = new Map(candidates.map((candidate) => [candidate.id, candidate]));
+  const outcomes = Array.isArray(feedback?.outcomes) ? feedback.outcomes.map((outcome) => {
+    const candidate = byId.get(outcome.id) || {};
+    const tier = outcome.tier || eloTier(outcome.elo);
+    const winner = outcome.id === winnerId || outcome.result === "winner";
+    const tierChanged = outcome.tierChange === "up" || outcome.tierChange === "down";
+    return {
+      ...outcome,
+      name: candidate.displayName || shortName(candidate.name || outcome.id),
+      winner,
+      tone: winner ? "gain" : "loss",
+      shortMessage: tierChanged
+        ? `${outcome.tierChange === "up" ? "Subiu" : "Caiu"} · ${tier.label}`
+        : winner ? "Levou a rodada" : "Levou a pior",
+    };
+  }) : [];
+  const winner = outcomes.find((outcome) => outcome.winner);
+  const dropped = outcomes.find((outcome) => outcome.tierChange === "down");
+  const primaryEvent = feedback ? feedback.primaryEvent || feedback.rankingEvent || "confirm" : null;
+  let message = winner ? `${winner.name} levou +${winner.delta} Elo. Os outros três sentiram.` : "Escolha confirmada.";
+  if (feedback?.zebra && winner) message = `${winner.name} virou o jogo. Zebra na mesa.`;
+  else if (primaryEvent === "leader" && winner) message = `${winner.name} tomou a liderança. Agora segura.`;
+  else if (primaryEvent === "leaderDefense" && winner) message = `${winner.name} segurou a liderança. Por enquanto.`;
+  else if (primaryEvent === "podium" && winner) message = `${winner.name} entrou no pódio. Chegou chegando.`;
+  else if (primaryEvent === "top10" && winner) message = `${winner.name} invadiu o Top 10.`;
+  else if (primaryEvent === "overtake" && winner) message = `${winner.name} passou alguém no ranking. Sem pedir licença.`;
+  else if (primaryEvent === "recovery" && winner) message = `${winner.name} saiu da lanterna. Respirou.`;
+  else if (winner?.tierChange === "up") message = `${winner.name} subiu de patente: ${winner.tier.label}.`;
+  else if (dropped) message = `${dropped.name} escorregou para ${dropped.tier.label}. O ranking não perdoa.`;
+  return { outcomes, message, primaryEvent };
+}
+
+export function hapticPattern(event) {
+  return ({
+    zebra: [20, 28, 20, 28, 52],
+    leader: [18, 24, 48],
+    leaderDefense: [28, 22, 28],
+    podium: [16, 22, 38],
+    top10: [14, 20, 30],
+    tierUp: [16, 24, 42],
+    tierDown: [34, 38, 18],
+    lowElo: [48, 30, 24],
+    overtake: [15, 18, 28],
+    recovery: [24, 22, 35],
+  })[event] || 16;
 }
 
 export function voteFeedback(name, { winnerDelta, zebra, winRate } = {}) {

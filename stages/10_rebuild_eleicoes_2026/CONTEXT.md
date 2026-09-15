@@ -10,7 +10,7 @@ Substituir o frontend anterior por uma fundação limpa para a edição `Eleiç�
 - Catálogo com 125 pessoas após curadoria: 100 nomes políticos e 25 influenciadores; a edição principal expõe somente quem já tem fotografia aprovada, independentemente do grupo.
 - Gate visual antes da publicação das fotografias tratadas.
 - Menu preparado para assuntos futuros.
-- Duelo, educação, ranking e coleção formam o núcleo.
+- Início, duelo, educação e ranking formam a navegação pública atual; a coleção permanece preservada, mas sem acesso público por enquanto.
 - Aplicação online-only.
 - Direção visual aprovada: `Malaquita 2026 / Digital First`, conforme imagens em `references/approved-art-direction/`.
 - Especificação mobile externa incorporada com ressalvas em `references/UI_MOBILE_ADOPTION.md`; a fonte integral está em `references/source-ui-mobile-v1.md`.
@@ -23,7 +23,7 @@ Substituir o frontend anterior por uma fundação limpa para a edição `Eleiç�
 - Remover importações e camadas visuais do frontend anterior.
 - Criar shell novo e independente.
 - Implementar a navegação mínima da edição.
-- Criar estados de assunto, duelo, perfil, ranking e coleção com o catálogo novo.
+- Criar estados de início, duelo, perfil, ranking e coleção com o catálogo novo, mantendo a coleção temporariamente fora da navegação pública.
 - Importar 100 nomes políticos e preparar 25 influenciadores; por decisão posterior do usuário, incluir na edição principal todos os perfis que já tenham fotografia aprovada.
 - Preservar as 1.500 Chromas recebidas como rascunho separado da carta padrão.
 - Manter acessibilidade e responsividade desde a fundação.
@@ -42,7 +42,7 @@ Substituir o frontend anterior por uma fundação limpa para a edição `Eleiç�
 3. A tela de assuntos apresenta `Eleições 2026` e sinaliza expansões futuras.
 4. Uma rodada de quatro pode ser compreendida e votada com um único toque na carta preferida.
 5. As quatro cartas cabem simultaneamente na tela móvel; a ficha educativa abre e fecha sem perder a rodada.
-6. Ranking e coleção são navegáveis.
+6. A navegação pública apresenta Início, Duelo e Ranking; Duelo abre diretamente a rodada, e Coleção/Chromas não aparece por enquanto.
 7. Falha de API não aceita voto e apresenta uma ação clara.
 8. Build e testes essenciais passam.
 

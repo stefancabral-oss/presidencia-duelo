@@ -3,6 +3,7 @@
   "status": "awaiting-human-gate",
   "release": "082c80eca21ebd3a9af7c4ea55261034c7c8705b",
   "issue": 158,
+  "pull_request": 159,
   "branch": "fix/desktop-duel-158",
   "checks": [
     "direct-card-vote",

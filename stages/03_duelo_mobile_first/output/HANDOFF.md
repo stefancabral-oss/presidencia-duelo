@@ -29,7 +29,7 @@
 
 - Estado: implementação concluída; aguardando human gate.
 - Branch: `fix/desktop-duel-158`.
-- PR: pendente.
+- PR: #159.
 
 ### Entregue
 

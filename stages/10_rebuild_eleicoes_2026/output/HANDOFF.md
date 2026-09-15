@@ -2,7 +2,11 @@
 
 ## Status
 
-Estado: revisão visual em andamento
+Estado: envio autorizado; PR em validação
+
+- Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/137
+- Pull Request: https://github.com/stefancabral-oss/presidencia-duelo/pull/138
+- Commit da entrega: `31f252254d455eb3c019bca6213a2f05e223cd1c`
 
 ## Entregue
 

@@ -1,1 +1,21 @@
-{"stage":"ICM 03","status":"approved","release":"082c80eca21ebd3a9af7c4ea55261034c7c8705b","checks":["direct-card-vote","legacy-state","online-vote","chromium","webkit"],"known_failures":[]}
+{
+  "stage": "ICM 03",
+  "status": "awaiting-human-gate",
+  "release": "082c80eca21ebd3a9af7c4ea55261034c7c8705b",
+  "issue": 158,
+  "branch": "fix/desktop-duel-158",
+  "checks": [
+    "direct-card-vote",
+    "legacy-state",
+    "online-vote",
+    "53-unit-tests",
+    "production-build",
+    "chromium",
+    "webkit",
+    "desktop-1280x900",
+    "imac-1440x900",
+    "desktop-5x7-ratio",
+    "no-horizontal-overflow"
+  ],
+  "known_failures": []
+}

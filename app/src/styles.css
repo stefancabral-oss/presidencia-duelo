@@ -407,6 +407,22 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   .skip-button { min-height: 36px; padding: 6px 14px; font-size: .67rem; }
 }
 
+@media (min-width: 1000px) {
+  .app-shell:has(.duel-screen) { width: min(100%, 1320px); padding-inline: 24px; }
+  .app-shell:has(.duel-screen) .topbar { margin-bottom: 13px; }
+  .duel-screen { gap: 11px; }
+  .duel-head { align-items: end; }
+  .duel-head h1 { font-size: clamp(2.35rem, 3.5vw, 3.15rem); }
+  .round-instruction { margin: -3px 0 3px; padding-left: 1px; text-align: left; }
+  .arena { width: 100%; gap: 16px; }
+  .candidate-card { height: auto; aspect-ratio: 5 / 7; grid-template-rows: minmax(0, 1fr) 108px; }
+  .candidate-copy { padding: 8px 12px; }
+  .candidate-copy > strong { font-size: 1.02rem; }
+  .candidate-summary { -webkit-line-clamp: 1; }
+  .candidate-profile-hint { margin-top: 4px; padding-top: 4px; }
+  .skip-button { margin-top: 2px; }
+}
+
 @media (max-width: 350px) {
   .home-hero { padding-inline: 16px; }
   .home-hero h1 { font-size: 2.4rem; }

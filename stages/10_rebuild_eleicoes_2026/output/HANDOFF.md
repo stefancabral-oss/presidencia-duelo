@@ -6,7 +6,7 @@ Estado: hotfix de compatibilidade em validação
 
 - Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/141
 - Pull Request: https://github.com/stefancabral-oss/presidencia-duelo/pull/142
-- Commit da entrega: `3be8dc5a21edba15ea41fbdac4e6142425be1448`
+- Commit da entrega: `d37f3ae5670e51eb999eec007433bc3895ccd71e`
 
 ## Entregue
 

@@ -394,7 +394,7 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   .home-hero h1 { font-size: 2.4rem; }
   .home-trust { display: grid; }
   .home-deck { gap: 6px; }
-  .candidate-card { height: clamp(142px, calc((100dvh - 246px) / 2), 225px); }
+  .candidate-card { height: clamp(142px, calc((100dvh - 258px) / 2), 225px); }
   .arena { gap: 5px; }
   .pulse-grid { grid-template-columns: 1fr; }
   .section-title > small { display: none; }

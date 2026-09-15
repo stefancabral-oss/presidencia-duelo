@@ -3,7 +3,9 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   CLEAN_START_MIGRATION,
+  accessTokenHash,
   createRecoveryKey,
+  createSessionToken,
   normalizeVoteId,
   rankingEventFromSnapshots,
   rankingFromRows,
@@ -43,6 +45,24 @@ test("player recovery credentials are random and stored as hashes", () => {
   assert.match(key, /^pm2_/);
   assert.equal(recoveryKeyHash(key).length, 64);
   assert.equal(recoveryKeyHash(key).includes(key), false);
+});
+
+test("signed-in sessions are opaque, random and stored only as hashes", () => {
+  const token = createSessionToken(() => Buffer.alloc(32, 9));
+  assert.match(token, /^pms_/);
+  assert.equal(accessTokenHash(token).length, 64);
+  assert.equal(accessTokenHash(token).includes(token), false);
+  assert.throws(() => accessTokenHash("google-id-token"), /sessão inválida/);
+});
+
+test("Google identities and revocable sessions are separate from anonymous progress", async () => {
+  const source = await readFile(new URL("./topic-store.js", import.meta.url), "utf8");
+  assert.match(source, /CREATE TABLE IF NOT EXISTS player_identities/);
+  assert.match(source, /PRIMARY KEY \(provider, subject\)/);
+  assert.match(source, /CREATE TABLE IF NOT EXISTS player_sessions/);
+  assert.match(source, /session_hash char\(64\) PRIMARY KEY/);
+  assert.match(source, /SELECT player_id FROM player_identities WHERE provider = 'google' AND subject = \$1/);
+  assert.doesNotMatch(source, /credential[^\n]*INSERT INTO/i);
 });
 
 test("topic ranking exposes only candidates from that curation", () => {

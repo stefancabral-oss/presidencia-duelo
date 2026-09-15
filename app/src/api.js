@@ -17,8 +17,14 @@ export async function requestJson(path, options = {}) {
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const response = await fetch(apiUrl(path), { ...options, signal: controller.signal });
-    if (!response.ok) throw new ApiError(`Servidor respondeu ${response.status}`);
-    return await response.json();
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      const error = new ApiError(body.error || `Servidor respondeu ${response.status}`);
+      error.code = body.code;
+      error.status = response.status;
+      throw error;
+    }
+    return response.status === 204 ? null : await response.json();
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new ApiError(controller.signal.aborted ? "O servidor demorou para responder" : "Sem conexão com o servidor", error);
@@ -44,6 +50,24 @@ export function createPlayer() {
 export function loadPlayerRanking(recoveryKey, topicId = "eleicoes-2026") {
   return requestJson(`/api/player/state?topic=${encodeURIComponent(topicId)}`, {
     headers: { Authorization: `Bearer ${recoveryKey}` },
+  });
+}
+
+export function exchangeGoogleCredential(credential, currentToken, topicId = "eleicoes-2026") {
+  return requestJson("/api/auth/google", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
+    },
+    body: JSON.stringify({ credential, topicId }),
+  });
+}
+
+export function endSession(accessToken) {
+  return requestJson("/api/auth/logout", {
+    method: "POST",
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
   });
 }
 

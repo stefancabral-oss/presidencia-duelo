@@ -5,8 +5,8 @@
 - Estado: `pronto para configuração e gate`
 - Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/160
 - Branch: `feat/google-login-160`
-- PR: a preencher após publicação da branch
-- Último commit: a preencher após commit
+- PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/161
+- Commit da implementação: `d4469e6`
 
 ## Entregue
 

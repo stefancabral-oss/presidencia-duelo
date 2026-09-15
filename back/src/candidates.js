@@ -1,4 +1,5 @@
 import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
+import { curatedPortraitPath, hasCuratedPortrait } from "../../shared/curated-portraits.js";
 
 export const TOPICS = Object.freeze([
   {
@@ -26,6 +27,8 @@ export const TOPICS = Object.freeze([
 
 export const CANDIDATES = Object.freeze(CATALOG.map((person) => Object.freeze({
   ...person,
+  photo: curatedPortraitPath(person.personId),
+  photoApproved: hasCuratedPortrait(person.personId),
   office: person.office || "",
   party: person.party || "",
   location: person.location || "",
@@ -40,9 +43,10 @@ export const CANDIDATES_BY_ID = new Map(CANDIDATES.map((candidate) => [candidate
 export const TOPICS_BY_ID = new Map(TOPICS.map((topic) => [topic.id, topic]));
 
 export function candidatesForTopic(topicId) {
-  return CANDIDATES.filter((candidate) => candidate.topicIds.includes(topicId));
+  return CANDIDATES.filter((candidate) => candidate.photoApproved && candidate.topicIds.includes(topicId));
 }
 
 export function candidateBelongsToTopic(candidateId, topicId) {
-  return CANDIDATES_BY_ID.get(candidateId)?.topicIds.includes(topicId) === true;
+  const candidate = CANDIDATES_BY_ID.get(candidateId);
+  return candidate?.photoApproved === true && candidate.topicIds.includes(topicId);
 }

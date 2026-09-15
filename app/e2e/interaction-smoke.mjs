@@ -74,7 +74,7 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
 
 try {
   await page.goto(appUrl, { waitUntil: "networkidle" });
-  await page.getByRole("button", { name: /Eleições 2026/ }).click();
+  await page.getByRole("button", { name: /Começar agora|Continuar escolhendo/ }).click();
   await page.getByRole("button", { name: "Bora duelar" }).click();
   const mobileCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
     const box = card.getBoundingClientRect();
@@ -155,10 +155,13 @@ try {
   if (process.env.POLIMATCH_E2E_BATCH_SCREENSHOT) {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_BATCH_SCREENSHOT });
   }
-  await page.getByRole("button", { name: "Ver os 35 estudos" }).click();
+  await page.getByRole("button", { name: "Ver as 35 cartas básicas" }).click();
   const approvedCards = page.locator(".approved-chroma-card");
-  if (await approvedCards.count() !== 35) throw new Error("O lote completo de 35 estudos não foi aberto");
-  if (await page.locator('.approved-chroma-card[aria-label*="inteligência artificial"]').count() !== 35) throw new Error("A transparência sobre edição por IA não acompanha todas as artes");
+  if (await approvedCards.count() !== 35) throw new Error("O lote completo de 35 cartas básicas não foi aberto");
+  const aiDisclosures = page.locator(".approved-chroma-card .approved-chroma-copy em");
+  if (await aiDisclosures.count() !== 35 || !(await aiDisclosures.allTextContents()).every((text) => text.includes("ARTE EDITADA POR IA"))) {
+    throw new Error("A transparência sobre edição por IA não acompanha todas as artes");
+  }
   for (let index = 0; index < await approvedCards.count(); index += 1) {
     const approvedCard = approvedCards.nth(index);
     await approvedCard.scrollIntoViewIfNeeded();
@@ -172,7 +175,7 @@ try {
 
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.locator('[data-screen="topics"]').click();
-  await page.getByRole("button", { name: /Eleições 2026/ }).click();
+  await page.getByRole("button", { name: /Começar agora|Continuar escolhendo/ }).click();
   const desktopCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
     const box = card.getBoundingClientRect();
     return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };

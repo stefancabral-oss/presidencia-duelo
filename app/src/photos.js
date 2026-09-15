@@ -1,3 +1,5 @@
+import { curatedPortraitPath } from "../../shared/curated-portraits.js";
+
 const PHOTO_SLOT_MIN = 1;
 const PHOTO_SLOT_MAX = 125;
 const ASSET_VERSION = typeof __POLIMATCH_ASSET_VERSION__ === "undefined" ? "test" : __POLIMATCH_ASSET_VERSION__;
@@ -11,7 +13,6 @@ export function portraitSlot(personId) {
 }
 
 export function candidatePhoto(candidate = {}) {
-  const suppliedPhoto = String(candidate.photo || "").trim();
-  if (/^https?:\/\//i.test(suppliedPhoto)) return suppliedPhoto;
-  return portraitSlot(candidate.personId);
+  const approvedPhoto = curatedPortraitPath(candidate.personId);
+  return approvedPhoto ? `${approvedPhoto}?v=${encodeURIComponent(ASSET_VERSION)}` : "";
 }

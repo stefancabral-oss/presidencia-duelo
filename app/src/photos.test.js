@@ -10,7 +10,8 @@ test("all 125 people have a stable replaceable portrait slot", () => {
   assert.equal(portraitSlot(126), "");
 });
 
-test("a reviewed remote photo can override the local slot", () => {
-  assert.equal(candidatePhoto({ personId: 55, photo: "https://cdn.example/carmen.jpg" }), "https://cdn.example/carmen.jpg");
-  assert.equal(candidatePhoto({ personId: 1, photo: "/candidates/legacy.jpg" }), "/portraits/001.jpg?v=test");
+test("only a portrait explicitly supplied by the curator is shown", () => {
+  assert.equal(candidatePhoto({ personId: 55, photo: "https://cdn.example/carmen.jpg" }), "");
+  assert.equal(candidatePhoto({ personId: 1, photo: "/candidates/legacy.jpg" }), "/chromas/approved/001_luiz-inacio-lula-da-silva.jpg?v=test");
+  assert.equal(candidatePhoto({ personId: 101 }), "/portraits/101.jpg?v=test");
 });

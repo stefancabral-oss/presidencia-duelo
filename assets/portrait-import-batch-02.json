@@ -1,0 +1,37 @@
+[
+  {
+    "personId": 28,
+    "id": "michelle-bolsonaro",
+    "name": "Michelle Bolsonaro",
+    "source": "Michele Bolsonaro.png",
+    "focalPoint": [0.5, 0.44]
+  },
+  {
+    "personId": 90,
+    "id": "paulo-guedes",
+    "name": "Paulo Guedes",
+    "source": "Paulo Guedes.png",
+    "focalPoint": [0.32, 0.45]
+  },
+  {
+    "personId": 47,
+    "id": "janja",
+    "name": "Janja",
+    "source": "Janja.png",
+    "focalPoint": [0.46, 0.42]
+  },
+  {
+    "personId": 53,
+    "id": "alexandre-de-moraes",
+    "name": "Alexandre de Moraes",
+    "source": "Alexandre de Moraes.png",
+    "focalPoint": [0.52, 0.43]
+  },
+  {
+    "personId": 59,
+    "id": "andre-mendonca",
+    "name": "André Mendonça",
+    "source": "André Mendonça.png",
+    "focalPoint": [0.58, 0.43]
+  }
+]

@@ -1,4 +1,4 @@
-const rawApprovedChromas = [
+const rawApprovedBasicCards = [
   ["001", "Luiz Inácio Lula da Silva", "L01", "Rim Dourado Clássico", "luiz-inacio-lula-da-silva"],
   ["002", "Flávio Bolsonaro", "L02", "Névoa Esmeralda", "flavio-bolsonaro"],
   ["003", "Renan Santos", "L04", "Vitral de Luz", "renan-santos"],
@@ -36,15 +36,14 @@ const rawApprovedChromas = [
   ["098", "Ricardo Nunes", "L12", "Tempestade Suave", "ricardo-nunes"],
 ];
 
-export const approvedChromas = rawApprovedChromas.map(([personId, person, look, lookName, slug]) => ({
+export const approvedBasicCards = rawApprovedBasicCards.map(([personId, person, look, lookName, slug]) => ({
   personId,
   person,
   look,
   lookName,
   image: `/chromas/approved/${personId}_${slug}.jpg`,
   aiEdited: true,
-  distinctPhotoVerified: false,
-  inventoryEligible: false,
+  edition: "basic",
 }));
 
 export const preservedChromaAlternatives = [

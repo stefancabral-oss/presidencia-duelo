@@ -4,7 +4,7 @@ import { catalogForTopic, displayRanking, filterRanking, initials, nextBalancedP
 import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
 import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
-import { approvedChromas } from "./approved-chromas.js";
+import { approvedBasicCards } from "./approved-chromas.js";
 
 const app = document.querySelector("#app");
 const state = {
@@ -113,16 +113,62 @@ function header() {
 }
 
 function topicsScreen() {
-  return `<main class="screen">
-    <div><p class="eyebrow">Escolha um assunto</p><h1>O que está em jogo?</h1><p class="lead">Compare pessoas, entenda quem são e acompanhe a preferência do público.</p></div>
-    <button class="topic-card" type="button" id="start-election">
-      <strong>Eleições 2026</strong>
-      <span>100 nomes políticos na curadoria inicial.</span>
-      <small>${state.personalDuels ? "CONTINUAR DUELANDO" : "COMEÇAR DUELOS"} →</small>
-    </button>
-    <p class="eyebrow">Em breve</p>
-    <div class="soon-grid"><div class="soon-card"><strong>Influenciadores</strong><span>25 perfis já catalogados para a próxima etapa.</span></div><div class="soon-card"><strong>Escândalos e acontecimentos</strong><span>Curadorias especiais por caso.</span></div></div>
-    <p class="legal-note">Votação lúdica. Não constitui pesquisa eleitoral.</p>
+  const approvedCandidates = state.candidates.filter((candidate) => candidatePhoto(candidate));
+  const featuredSlots = [47, 28, 1, 63];
+  const featuredCandidates = featuredSlots.map((personId) => approvedCandidates.find((candidate) => Number(candidate.personId) === personId)).filter(Boolean);
+  const preview = featuredCandidates.map((candidate, index) => {
+    const photo = candidatePhoto(candidate);
+    return `<article class="home-preview-card home-preview-card-${index + 1}" aria-hidden="true">
+      ${photo ? `<img src="${escapeHtml(photo)}" alt="" width="240" height="300">` : ""}
+      <span><strong>${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong><small>${escapeHtml(candidateAffiliation(candidate))}</small></span>
+    </article>`;
+  }).join("");
+  const approvedCount = approvedCandidates.length;
+  return `<main class="screen home-screen">
+    <section class="home-hero">
+      <div class="home-hero-copy">
+        <p class="eyebrow">Sua opinião em movimento</p>
+        <h1>Quem representa o Brasil que você imagina?</h1>
+        <p class="lead">Escolha entre pessoas públicas, conheça cada perfil e veja seu ranking ganhar forma — uma decisão por vez.</p>
+        <div class="home-actions">
+          <button class="primary home-primary" type="button" id="start-election">${state.personalDuels ? "Continuar escolhendo" : "Começar agora"}<span aria-hidden="true">→</span></button>
+          <button class="home-ranking-link" type="button" id="open-ranking">Ver ranking do público</button>
+        </div>
+        <div class="home-trust" aria-label="Informações da edição">
+          <span><strong>${approvedCount}</strong> perfis com foto aprovada</span>
+          <span><strong>${state.globalDuels}</strong> escolhas confirmadas</span>
+        </div>
+      </div>
+      <div class="home-deck" aria-label="Prévia das cartas básicas">
+        <span class="home-deck-glow" aria-hidden="true"></span>
+        ${preview}
+        <p><span aria-hidden="true">◆</span> Cartas básicas · Edição 2026</p>
+      </div>
+    </section>
+
+    <section class="home-topic" aria-labelledby="home-topic-title">
+      <div class="home-topic-heading">
+        <div><p class="eyebrow">Edição disponível</p><h2 id="home-topic-title">Eleições 2026</h2></div>
+        <span class="home-live"><i aria-hidden="true"></i> no ar</span>
+      </div>
+      <p>Compare apenas pessoas que já passaram pelo gate de fotografia. Segure qualquer carta para conhecer o perfil completo antes de escolher.</p>
+      <button class="home-topic-cta" type="button" id="start-election-secondary"><span>Entrar na rodada</span><b aria-hidden="true">→</b></button>
+    </section>
+
+    <section class="home-how" aria-labelledby="home-how-title">
+      <div><p class="eyebrow">Como funciona</p><h2 id="home-how-title">Rápido de jogar. Fácil de entender.</h2></div>
+      <ol>
+        <li><span>01</span><strong>Observe as cartas</strong><small>As opções mudam a cada rodada.</small></li>
+        <li><span>02</span><strong>Escolha sua preferida</strong><small>Um toque confirma a sua decisão.</small></li>
+        <li><span>03</span><strong>Acompanhe o ranking</strong><small>Veja seu retrato pessoal e o placar do público.</small></li>
+      </ol>
+    </section>
+
+    <section class="home-next" aria-label="Próximas edições">
+      <p class="eyebrow">A seguir</p>
+      <div><strong>Influenciadores</strong><span>14 perfis já preparados</span><small>Em breve</small></div>
+    </section>
+    <p class="legal-note home-legal">Experiência lúdica de opinião. Não constitui pesquisa eleitoral.</p>
   </main>`;
 }
 
@@ -159,24 +205,24 @@ function collectionScreen() {
     <img class="chroma-art" src="${escapeHtml(image)}" alt="${escapeHtml(role)} de ${escapeHtml(person)}" width="530" height="742">
     <span class="holo-foil" aria-hidden="true"></span><span class="holo-pattern" aria-hidden="true"></span><span class="holo-glint" aria-hidden="true"></span>
   </article>`;
-  const batchCard = ({ personId, person, look, lookName, image }) => `<article class="chroma-card approved-chroma-card look-${look.toLowerCase()}" data-hologram tabindex="0" aria-label="${escapeHtml(person)}, estudo visual ${escapeHtml(lookName)}. Arte editada por inteligência artificial, fora do inventário.">
-    <img class="chroma-art approved-chroma-art" src="${escapeHtml(image)}" alt="Estudo visual de ${escapeHtml(person)}, arte editada por inteligência artificial" width="600" height="750" loading="lazy" decoding="async">
-    <span class="approved-chroma-brand" aria-hidden="true">${brandSymbol("approved-brand-symbol")}<b>PoliMatch</b></span><span class="approved-chroma-rarity" aria-hidden="true">★</span>
+  const batchCard = ({ personId, person, look, lookName, image }) => `<article class="chroma-card approved-chroma-card look-${look.toLowerCase()}" data-hologram tabindex="0" aria-label="${escapeHtml(person)}, carta básica com acabamento ${escapeHtml(lookName)}.">
+    <img class="chroma-art approved-chroma-art" src="${escapeHtml(image)}" alt="Carta básica de ${escapeHtml(person)}" width="600" height="750" loading="lazy" decoding="async">
+    <span class="approved-chroma-brand" aria-hidden="true">${brandSymbol("approved-brand-symbol")}<b>PoliMatch</b></span>
     <span class="approved-chroma-frame" aria-hidden="true"></span>
     <span class="approved-chroma-copy"><strong>${escapeHtml(person)}</strong><small>${escapeHtml(lookName)}</small><em>#${escapeHtml(personId)} · ARTE EDITADA POR IA</em></span>
     <span class="holo-foil" aria-hidden="true"></span><span class="holo-pattern" aria-hidden="true"></span><span class="holo-glint" aria-hidden="true"></span>
   </article>`;
   const supreme = chromaPreviews.filter(({ variant }) => variant.startsWith("supreme")).map(previewCard).join("");
   const commemorative = chromaPreviews.filter(({ variant }) => variant.startsWith("commemorative")).map(previewCard).join("");
-  const batchLimit = state.chromaBatchExpanded ? approvedChromas.length : 6;
-  const approved = approvedChromas.slice(0, batchLimit).map(batchCard).join("");
+  const batchLimit = state.chromaBatchExpanded ? approvedBasicCards.length : 6;
+  const approved = approvedBasicCards.slice(0, batchLimit).map(batchCard).join("");
   const batchButton = state.chromaBatchExpanded
     ? `<button class="secondary batch-toggle" id="collapse-chroma-batch" type="button">Mostrar apenas os primeiros</button>`
-    : `<button class="primary batch-toggle" id="expand-chroma-batch" type="button">Ver os 35 estudos</button>`;
+    : `<button class="primary batch-toggle" id="expand-chroma-batch" type="button">Ver as 35 cartas básicas</button>`;
   return `<main class="screen collection-screen"><div><p class="eyebrow">Laboratório de Chromas</p><h1>Coleção</h1><p class="lead">Mova o dedo sobre cada carta. No celular, ative a inclinação para o reflexo acompanhar o aparelho.</p><button class="motion-button" id="enable-chroma-motion" type="button">Ativar efeito ao inclinar</button><p class="motion-status" id="motion-status" role="status"></p></div>
     <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Suprema</p><h2>Três estrelas douradas</h2></div><span class="tier-symbol gold-stars">★★★</span></div><p>Ouro em relevo, feixes direcionais e dois desenhos holográficos exclusivos.</p><div class="chroma-gallery">${supreme}</div></section>
     <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Comemorativa</p><h2>Estrela prismática</h2></div><span class="tier-symbol prism-star">★</span></div><p>Cristal óptico, espectro colorido e refração diferente em cada pessoa.</p><div class="chroma-gallery">${commemorative}</div></section>
-    <section class="chroma-tier approved-batch"><div class="chroma-tier-heading"><div><p class="eyebrow">Estudos de acabamento</p><h2>35 protótipos visuais</h2></div><span class="tier-symbol batch-count">35</span></div><p>Estudos de moldura, luz e textura. Não são Chromas colecionáveis: cada Chroma definitiva deverá usar uma fotografia diferente da carta básica.</p><div class="chroma-gallery approved-chroma-gallery">${approved}</div>${batchButton}<p class="batch-disclosure">Protótipos editados com inteligência artificial. Permanecem fora do inventário, do sorteio e dos duelos.</p></section>
+    <section class="chroma-tier approved-batch"><div class="chroma-tier-heading"><div><p class="eyebrow">Cartas básicas</p><h2>35 acabamentos aprovados</h2></div><span class="tier-symbol batch-count">35</span></div><p>São as cartas básicas atuais. As futuras Chromas serão colecionáveis e sempre usarão outra fotografia da pessoa.</p><div class="chroma-gallery approved-chroma-gallery">${approved}</div>${batchButton}<p class="batch-disclosure">Imagens tratadas para compor a edição básica do PoliMatch.</p></section>
     <section><p class="eyebrow">Sua coleção</p><section class="panel ranking-list">${cards || '<p class="empty">Demonstração visual: estas Chromas ainda não foram adicionadas ao seu inventário.</p>'}</section></section>
   </main>`;
 }
@@ -295,6 +341,8 @@ async function vote(winnerId) {
 function bindEvents() {
   document.querySelector("#retry")?.addEventListener("click", initialize);
   document.querySelector("#start-election")?.addEventListener("click", enterDuel);
+  document.querySelector("#start-election-secondary")?.addEventListener("click", enterDuel);
+  document.querySelector("#open-ranking")?.addEventListener("click", () => { state.screen = "ranking"; state.result = ""; render(); });
   document.querySelector("#continue-duels")?.addEventListener("click", () => { state.result = ""; enterDuel(); });
   document.querySelector("#skip-pair")?.addEventListener("click", () => { state.result = ""; chooseNextPair(); render(); });
   document.querySelector("#dismiss-coach")?.addEventListener("click", () => {

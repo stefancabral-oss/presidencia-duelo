@@ -15,6 +15,7 @@ test("only active curated topics accept votes", () => {
   assert.equal(validateTopic("eleicoes-2026"), "eleicoes-2026");
   assert.throws(() => validateTopic("influenciadores"), /indisponível/);
   assert.throws(() => validateVote("eleicoes-2026", "lula", "lula"), /voto inválido/);
+  assert.throws(() => validateVote("eleicoes-2026", "lula", "acm-neto"), /voto inválido/);
   assert.doesNotThrow(() => validateVote("eleicoes-2026", "lula", "jair-bolsonaro"));
 });
 
@@ -38,7 +39,7 @@ test("topic ranking exposes only candidates from that curation", () => {
     { candidate_id: "not-in-topic", rating: 4000, wins: 999, losses: 0, zebras: 0 },
   ]);
   assert.equal(result.topicId, "eleicoes-2026");
-  assert.equal(result.ranking.length, 100);
+  assert.equal(result.ranking.length, 40);
   assert.equal(result.ranking[0].id, "lula");
   assert.equal(result.ranking[0].decisions, 1);
   assert.equal(result.ranking.find(({ id }) => id === "tarcisio-de-freitas").decisions, 0);

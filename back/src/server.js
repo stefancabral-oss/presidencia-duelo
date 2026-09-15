@@ -101,20 +101,11 @@ app.get("/api/player/state", async (req, res) => {
   }
 });
 
-app.post("/api/vote", async (req, res) => {
-  const { voteId, winnerId, loserId, topicId, playerVersion } = req.body || {};
-  try {
-    res.json(await store.vote({
-      voteId,
-      winnerId: String(winnerId || ""),
-      loserId: String(loserId || ""),
-      topicId: String(topicId || "eleicoes-2026"),
-      recoveryKey: recoveryKeyFrom(req),
-      playerVersion,
-    }));
-  } catch (err) {
-    sendError(res, err);
-  }
+app.post("/api/vote", (_req, res) => {
+  res.status(410).json({
+    error: "duelos binários foram substituídos por rodadas de quatro; atualize o aplicativo",
+    code: "ROUND_V4_REQUIRED",
+  });
 });
 
 app.post("/api/round-vote", async (req, res) => {

@@ -122,6 +122,7 @@ try {
   if (await page.locator(".basic-card").count() !== 4) throw new Error("A carta básica não foi aplicada aos quatro perfis");
   if (await page.locator(".candidate-summary").count() !== 4) throw new Error("O resumo deixou de fazer parte da carta básica");
   if (await page.locator(".candidate-summary").first().isVisible()) throw new Error("O resumo extenso deveria ficar reservado ao perfil no celular");
+  if (!await page.locator(".candidate-office").first().isVisible()) throw new Error("A função da pessoa precisa permanecer visível no celular");
   if (await page.locator(".candidate-profile-hint").count() !== 4) throw new Error("A dica de segurar deixou de fazer parte da carta básica");
   if (await page.locator(".profile-button").count()) throw new Error("Um botão externo voltou a ocupar espaço junto à carta");
   for (const layer of [".card-material", ".card-facets", ".card-corners"]) {
@@ -132,6 +133,20 @@ try {
   if (process.env.POLIMATCH_E2E_DUEL_SCREENSHOT) {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_DUEL_SCREENSHOT, fullPage: true });
   }
+
+  await page.setViewportSize({ width: 320, height: 568 });
+  const shortMobileCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
+    const box = card.getBoundingClientRect();
+    return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };
+  }));
+  if (shortMobileCards.length !== 4 || shortMobileCards.some(({ top, right, bottom, left }) => top < 0 || left < 0 || right > 320 || bottom > 568)) {
+    throw new Error("As quatro cartas não cabem juntas no viewport móvel curto de 320 por 568");
+  }
+  const shortNavBox = await page.locator(".bottom-nav").boundingBox();
+  if (!shortNavBox || Math.max(...shortMobileCards.map(({ bottom }) => bottom)) >= shortNavBox.y) {
+    throw new Error("A navegação inferior cobriu as cartas no viewport móvel curto");
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
 
   const firstCard = page.locator(".candidate-card").first();
   const box = await firstCard.boundingBox();
@@ -155,7 +170,7 @@ try {
   await page.getByRole("button", { name: "Ranking" }).click();
   await page.getByRole("heading", { name: "Ranking" }).waitFor();
   await page.getByText("1 escolha confirmada").waitFor();
-  await page.getByText("Mais recusados").waitFor();
+  await page.getByText("Mais derrotas").waitFor();
   const rejected = await page.locator(".ranking-highlight-rejected").innerText();
   if (!["Renan Santos", "Anitta", "Neymar Jr."].every((name) => rejected.includes(name)) || !rejected.includes("−1")) {
     throw new Error("As três comparações negativas não apareceram no resumo do ranking");

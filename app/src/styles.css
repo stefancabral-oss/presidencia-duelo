@@ -367,7 +367,7 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   .arena { width: 100%; gap: 7px; }
   .arena-four { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
   .candidate-wrap { gap: 0; }
-  .candidate-card { height: clamp(218px, 29dvh, 246px); display: block; padding: 6px; border-radius: 15px; }
+  .candidate-card { height: clamp(150px, calc((100dvh - 250px) / 2), 246px); display: block; padding: 6px; border-radius: 15px; }
   .candidate-card::before, .candidate-card::after { inset: 5px; border-radius: 11px; }
   .card-material { inset: 5px; border-radius: 11px; }
   .card-facets { inset: 6px; border-radius: 10px; }
@@ -376,11 +376,12 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   .card-brand-symbol { width: 11px; height: 11px; }
   .card-rarity { top: 9px; right: 10px; width: 19px; height: 19px; font-size: .48rem; }
   .candidate-card .portrait { position: absolute; inset: 6px; border-radius: 8px; }
-  .candidate-copy { position: absolute; z-index: 5; left: 6px; right: 6px; bottom: 6px; min-height: 64px; margin: 0; padding: 25px 8px 7px; display: block; border: 0; border-radius: 0 0 8px 8px; background: linear-gradient(180deg, transparent, rgb(0 25 19 / 88%) 38%, rgb(0 22 17 / 97%)); color: white; box-shadow: none; }
+  .candidate-copy { position: absolute; z-index: 5; left: 6px; right: 6px; bottom: 6px; min-height: 76px; margin: 0; padding: 25px 8px 7px; display: block; border: 0; border-radius: 0 0 8px 8px; background: linear-gradient(180deg, transparent, rgb(0 25 19 / 88%) 34%, rgb(0 22 17 / 97%)); color: white; box-shadow: none; }
   .candidate-copy::after { display: none; }
   .candidate-copy > strong { display: -webkit-box; min-height: auto; overflow: hidden; color: white; font-size: clamp(.76rem, 3.45vw, .92rem); line-height: 1.02; white-space: normal; text-shadow: 0 2px 7px rgb(0 0 0 / 80%); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .candidate-copy .candidate-affiliation { margin-top: 3px; color: #f2d87e; font-size: .49rem; }
-  .candidate-copy .candidate-office, .candidate-summary, .candidate-profile-hint { display: none; }
+  .candidate-copy .candidate-office { display: -webkit-box; margin-top: 3px; overflow: hidden; color: #d4dfda; font-size: .46rem; line-height: 1.08; text-shadow: 0 1px 4px rgb(0 0 0 / 82%); -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+  .candidate-summary, .candidate-profile-hint { display: none; }
   .skip-button { min-height: 36px; padding: 6px 14px; font-size: .67rem; }
 }
 
@@ -389,10 +390,22 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   .home-hero h1 { font-size: 2.4rem; }
   .home-trust { display: grid; }
   .home-deck { gap: 6px; }
-  .candidate-card { height: clamp(205px, 28dvh, 225px); }
+  .candidate-card { height: clamp(142px, calc((100dvh - 246px) / 2), 225px); }
   .arena { gap: 5px; }
   .pulse-grid { grid-template-columns: 1fr; }
   .section-title > small { display: none; }
+}
+
+@media (max-height: 640px) and (min-width: 700px) {
+  .app-shell:has(.duel-screen) { padding-top: 6px; padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  .app-shell:has(.duel-screen) .topbar { margin-bottom: 7px; padding-bottom: 6px; }
+  .duel-screen { gap: 5px; }
+  .duel-head h1 { font-size: 1.55rem; }
+  .round-instruction { margin: -4px 0 0; }
+  .candidate-card { height: clamp(170px, calc(100dvh - 205px), 260px); grid-template-rows: minmax(0, 1fr) 82px; padding: 7px; }
+  .candidate-copy { padding: 6px 8px; }
+  .candidate-summary, .candidate-profile-hint { display: none; }
+  .skip-button { min-height: 34px; padding-block: 5px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

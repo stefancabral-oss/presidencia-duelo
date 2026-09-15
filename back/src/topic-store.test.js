@@ -71,8 +71,17 @@ test("four-card choices keep one immutable round and three auditable comparisons
   const source = await readFile(new URL("./topic-store.js", import.meta.url), "utf8");
   assert.match(source, /CREATE TABLE IF NOT EXISTS choice_rounds/);
   assert.match(source, /CHECK \(array_length\(candidate_ids, 1\) = 4\)/);
+  assert.match(source, /ADD COLUMN IF NOT EXISTS round_id uuid REFERENCES choice_rounds\(round_id\)/);
+  assert.match(source, /INSERT INTO schema_migrations \(id\)[\s\S]*ON CONFLICT DO NOTHING[\s\S]*UPDATE votes AS comparison[\s\S]*comparison\.created_at = round\.created_at/);
   assert.match(source, /comparisons: 3/);
-  assert.match(source, /INSERT INTO votes[\s\S]*INSERT INTO choice_rounds/);
+  assert.match(source, /INSERT INTO choice_rounds[\s\S]*INSERT INTO votes/);
+  assert.match(source, /const winnerRatingBeforeRound = globalRatings\.get\(winnerId\)/);
+});
+
+test("the public API retires binary votes after the four-card launch", async () => {
+  const source = await readFile(new URL("./server.js", import.meta.url), "utf8");
+  assert.match(source, /app\.post\("\/api\/vote"[\s\S]*status\(410\)/);
+  assert.match(source, /ROUND_V4_REQUIRED/);
 });
 
 test("Chromas are personal inventory and equipment, separate from ranking", async () => {

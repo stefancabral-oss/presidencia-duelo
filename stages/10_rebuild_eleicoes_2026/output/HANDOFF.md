@@ -2,11 +2,14 @@
 
 ## Status
 
-Estado: rodada principal de quatro cartas em validação
+Estado: rodada principal de quatro cartas publicada; endurecimento da revisão em validação
 
-- Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/143
-- Pull Request: https://github.com/stefancabral-oss/presidencia-duelo/pull/144
-- Commit da implementação validada: `cc6fea7`
+- Issue principal: https://github.com/stefancabral-oss/presidencia-duelo/issues/143
+- Pull Request principal: https://github.com/stefancabral-oss/presidencia-duelo/pull/144
+- Correções da revisão: https://github.com/stefancabral-oss/presidencia-duelo/issues/145
+- Pull Request das correções: https://github.com/stefancabral-oss/presidencia-duelo/pull/146
+- Commit das correções validadas: `5c7b1f8`
+- Commit da implementação principal: `cc6fea7`
 
 ## Entregue
 
@@ -91,6 +94,8 @@ Estado: rodada principal de quatro cartas em validação
 - O backend preserva uma rodada imutável e três comparações auditáveis, com idempotência por `roundId`; os indicadores de uso e a versão pessoal avançam apenas uma vez por escolha.
 - O texto essencial passou a ficar sobre a própria foto no celular. A pressão longa continua abrindo o perfil completo sem criar botões que disputem espaço com a carta.
 - Chromium e WebKit validaram as quatro cartas inteiras em 390 × 844, dimensões iguais, pressão longa, escolha, ranking e disposição em quatro colunas a 1280 × 900.
+- A revisão posterior ao PR principal congelou o Elo no snapshot anterior à rodada, ligou as três comparações ao mesmo `roundId`, aposentou votos binários de clientes antigos e corrigiu a nomenclatura do ranking para vitórias e derrotas em comparações.
+- O layout passou a responder também à altura útil: as quatro cartas permanecem inteiras em 320 × 568 e a função de cada pessoa continua visível sobre a fotografia.
 
 ## Pendente
 
@@ -107,4 +112,6 @@ Estado: rodada principal de quatro cartas em validação
 
 ## Human gate
 
-Status: usuário autorizou em 15/09/2026 a liberação dos 54 perfis e pediu a substituição do duelo binário por uma rodada de quatro cartas; implementação vinculada à Issue #143 aguarda PR e publicação.
+Status da entrega principal: usuário autorizou os 54 perfis e a rodada de quatro cartas; Issue #143 e PR #144 foram implementados, mesclados e publicados em 15/09/2026.
+
+Status do endurecimento: as correções de auditoria e responsividade da Issue #145 estão no PR #146 e permanecem pendentes de mesclagem e republicação até o novo gate técnico terminar.

@@ -105,10 +105,34 @@ assert.equal(repeatedRound.round.status, "alreadyProcessed");
 assert.equal(repeatedRound.duels, 3);
 
 const auditPool = new pg.Pool({ connectionString });
-const audit = await auditPool.query("SELECT (SELECT count(*) FROM votes) AS comparisons, (SELECT count(*) FROM choice_rounds) AS rounds");
+const audit = await auditPool.query(
+  `SELECT
+    (SELECT count(*) FROM votes) AS comparisons,
+    (SELECT count(*) FROM choice_rounds) AS rounds,
+    (SELECT count(*) FROM votes WHERE round_id = $1) AS linked_comparisons,
+    (SELECT count(DISTINCT winner_rating_before) FROM votes WHERE round_id = $1) AS winner_snapshots`,
+  [roundId],
+);
 assert.equal(Number(audit.rows[0].comparisons), 5);
 assert.equal(Number(audit.rows[0].rounds), 1);
+assert.equal(Number(audit.rows[0].linked_comparisons), 3);
+assert.equal(Number(audit.rows[0].winner_snapshots), 1);
 await auditPool.end();
 await restartedStore.close();
 
-console.log("Smoke PostgreSQL aprovado: reset único, jogador antigo, backfill, rodada de quatro idempotente e rankings persistentes.");
+const precedingRelease = new pg.Pool({ connectionString });
+await precedingRelease.query("ALTER TABLE votes DROP COLUMN round_id");
+await precedingRelease.query("DELETE FROM schema_migrations WHERE id = '2026-09-15-link-four-card-comparisons'");
+await precedingRelease.end();
+
+const upgradedStore = createTopicStore(connectionString);
+await upgradedStore.init();
+const upgradedAuditPool = new pg.Pool({ connectionString });
+const upgradedAudit = await upgradedAuditPool.query("SELECT count(*) AS linked_comparisons FROM votes WHERE round_id = $1", [roundId]);
+assert.equal(Number(upgradedAudit.rows[0].linked_comparisons), 3);
+const migrationAudit = await upgradedAuditPool.query("SELECT count(*) AS applied FROM schema_migrations WHERE id = '2026-09-15-link-four-card-comparisons'");
+assert.equal(Number(migrationAudit.rows[0].applied), 1);
+await upgradedAuditPool.end();
+await upgradedStore.close();
+
+console.log("Smoke PostgreSQL aprovado: reset único, jogador antigo, backfill, rodada de quatro idempotente, vínculo retroativo e rankings persistentes.");

@@ -10,6 +10,7 @@ Estado: rodada principal de quatro cartas e endurecimento técnico publicados; g
 - Pull Request das correções: https://github.com/stefancabral-oss/presidencia-duelo/pull/146
 - Identidade sonora: https://github.com/stefancabral-oss/presidencia-duelo/issues/151
 - Pull Request da identidade sonora: https://github.com/stefancabral-oss/presidencia-duelo/pull/152
+- Navegação Início/Duelo: https://github.com/stefancabral-oss/presidencia-duelo/issues/154
 - Commit das correções validadas e publicado: `86e071b`
 - Commit da implementação principal publicado: `bceac93`
 - Evidência pública sanitizada: `four-card-production-verification.md`
@@ -101,6 +102,8 @@ Estado: rodada principal de quatro cartas e endurecimento técnico publicados; g
 - Chromium e WebKit validaram as quatro cartas inteiras em 390 × 844, dimensões iguais, pressão longa, escolha, ranking e disposição em quatro colunas a 1280 × 900.
 - A revisão posterior ao PR principal congelou o Elo no snapshot anterior à rodada, ligou as três comparações ao mesmo `roundId`, aposentou votos binários de clientes antigos e corrigiu a nomenclatura do ranking para vitórias e derrotas em comparações.
 - O layout passou a responder também à altura útil: as quatro cartas permanecem inteiras em 320 × 568 e a função de cada pessoa continua visível sobre a fotografia.
+- A navegação pública foi separada em `Início`, `Duelo` e `Ranking`; tocar em `Duelo` abre diretamente a rodada e `Início` retorna à apresentação do produto.
+- Coleção/Chromas foi removida temporariamente da navegação pública por decisão do usuário, preservando código, catálogo e assets para retomada futura.
 
 ## Pendente
 
@@ -120,3 +123,5 @@ Estado: rodada principal de quatro cartas e endurecimento técnico publicados; g
 Status da entrega principal: usuário autorizou os 54 perfis e a rodada de quatro cartas; Issue #143 e PR #144 foram implementados, mesclados e publicados em 15/09/2026.
 
 Status do endurecimento: as correções de auditoria e responsividade da Issue #145 foram aprovadas, mescladas no PR #146 e publicadas em 15/09/2026 no commit `86e071b`. CI, PostgreSQL isolado real, Chromium e WebKit foram aprovados; a API pública confirmou 54 perfis jogáveis e a interface pública exibiu quatro cartas na mesma rodada. A escrita em produção não foi exercitada para não criar um voto técnico permanente no ranking público sem autorização específica.
+
+Status da navegação: a Issue #154 separa `Início` e `Duelo` e oculta Coleção/Chromas do menu público. A implementação está em revisão humana e ainda não foi publicada.

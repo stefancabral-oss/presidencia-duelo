@@ -23,7 +23,7 @@ assert.equal(firstMigration.resetApplied, true);
 
 const initial = await firstStore.ranking("eleicoes-2026");
 assert.equal(initial.duels, 0);
-assert.equal(initial.ranking.length, 100);
+assert.equal(initial.ranking.length, 54);
 
 const { recoveryKey } = await firstStore.createPlayer();
 const personalBefore = await firstStore.playerRanking(recoveryKey, "eleicoes-2026");
@@ -56,11 +56,26 @@ assert.equal(repeated.vote.status, "alreadyProcessed");
 assert.equal(repeated.duels, 1);
 await firstStore.close();
 
+const legacyPlayer = new pg.Pool({ connectionString });
+await legacyPlayer.query("DELETE FROM player_stats WHERE candidate_id IN ('anitta', 'neymar-jr')");
+await legacyPlayer.end();
+
 const restartedStore = createTopicStore(connectionString);
 const secondMigration = await restartedStore.init();
 assert.equal(secondMigration.resetApplied, false);
 const afterRestart = await restartedStore.ranking("eleicoes-2026");
 assert.equal(afterRestart.duels, 1);
+const influencerVote = await restartedStore.vote({
+  topicId: "eleicoes-2026",
+  winnerId: "anitta",
+  loserId: "neymar-jr",
+  voteId: randomUUID(),
+  recoveryKey,
+  playerVersion: 1,
+});
+assert.equal(influencerVote.vote.status, "created");
+assert.equal(influencerVote.player.version, 2);
+assert.equal(influencerVote.player.ranking.length, 54);
 await restartedStore.close();
 
-console.log("Smoke PostgreSQL aprovado: reset único, jogador, voto idempotente e rankings persistentes.");
+console.log("Smoke PostgreSQL aprovado: reset único, jogador antigo, backfill, voto idempotente e rankings persistentes.");

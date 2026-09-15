@@ -80,7 +80,8 @@ Estado: envio autorizado; PR em validação
 - Os ícones PWA em 192 e 512 px foram derivados do mestre oficial de 1024 px; o manifesto expõe versões vetorial e raster.
 - A captura WebKit `final-brand-mobile-qa.png` comprova a leitura do novo símbolo no cabeçalho e dentro das cartas.
 - O catálogo público passou a expor somente pessoas com fotografia enviada ou aprovada pelo curador: 40 perfis políticos no assunto ativo e 14 influenciadores já preparados, mantendo os demais registros guardados e inativos.
-- Por decisão do usuário em 15/09/2026, os 14 influenciadores preparados também passaram a integrar as rodadas, a coleção e o ranking da edição principal; o conjunto jogável agora soma 54 perfis com fotografia aprovada.
+- Por decisão do usuário em 15/09/2026, os 14 influenciadores preparados também passaram a integrar as rodadas e o ranking da edição principal; o conjunto jogável agora soma 54 perfis com fotografia aprovada.
+- A inicialização da API preenche de forma idempotente as estatísticas pessoais ausentes, permitindo que jogadores anteriores votem nos perfis recém-liberados sem perder o histórico.
 - Dois lotes recentes foram importados com trilha auditável: 15 novas fotografias públicas e as substituições de Michelle Bolsonaro, Paulo Guedes, Janja, Alexandre de Moraes e André Mendonça; Gabriela Prioli permanece em reserva porque seu assunto ainda não está ativo.
 - A página inicial foi reconstruída com o fluxo de design do Sites: proposta do produto, chamadas claras para rodada e ranking, edição ativa, explicação em três passos e próxima edição.
 - A vitrine principal usa quatro cartas básicas com exposição rigorosamente igual para Janja, Michelle Bolsonaro, Lula e Jair Bolsonaro; nenhuma delas é apresentada como Chroma especial.

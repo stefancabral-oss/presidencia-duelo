@@ -222,6 +222,15 @@ async function createCleanSchema(client) {
         [topic.id, candidate.id],
       );
     }
+    await client.query(
+      `INSERT INTO player_stats (player_id, topic_id, candidate_id)
+       SELECT player_pools.player_id, player_pools.topic_id, ranking_stats.candidate_id
+       FROM player_pools
+       JOIN ranking_stats ON ranking_stats.topic_id = player_pools.topic_id
+       WHERE player_pools.topic_id = $1
+       ON CONFLICT DO NOTHING`,
+      [topic.id],
+    );
   }
 
   if (!applied.rowCount) {

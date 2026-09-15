@@ -35,6 +35,9 @@ Estado: rodada principal de quatro cartas e endurecimento técnico publicados; g
 - Smoke real em PostgreSQL temporário comprovou reset único, persistência após reinício, voto idempotente e rankings geral/pessoal.
 - O duelo é contínuo; nenhuma quantidade de escolhas redireciona automaticamente para o ranking.
 - A interface possui sons neutros para entrada, navegação, perfil, escolha, confirmação, troca de rodada e erro; todos são sintetizados localmente, só começam após interação e podem ser desligados por um controle persistente no cabeçalho.
+- Após a rejeição do primeiro timbre, a linguagem sonora foi refeita com impactos graves, atrito curto e brilho metálico discreto; sinais próprios distinguem subida de faixa, queda de faixa e Elo baixo.
+- A confirmação mantém as quatro cartas por um instante: a vencedora sobe e acende, as três derrotadas afundam e perdem saturação, todas com o delta real de Elo dentro da área de texto.
+- Ultrapassagens e mudanças de patamar usam microtextos com humor leve, mantendo neutralidade entre todas as pessoas.
 - A ficha educativa aceita biografia, dados-chave e fontes revisáveis; campos ausentes aparecem como revisão pendente, sem conteúdo inventado.
 - Rankings não atribuem posição ou `0%` enganoso a pessoas que ainda não participaram de duelos.
 - Teste mobile real em 390 × 844 validou cinco escolhas contínuas sem abertura automática do ranking, feedback de `+Elo`, pressão longa abrindo a ficha sem votar e ausência de erros no navegador.
@@ -120,3 +123,5 @@ Estado: rodada principal de quatro cartas e endurecimento técnico publicados; g
 Status da entrega principal: usuário autorizou os 54 perfis e a rodada de quatro cartas; Issue #143 e PR #144 foram implementados, mesclados e publicados em 15/09/2026.
 
 Status do endurecimento: as correções de auditoria e responsividade da Issue #145 foram aprovadas, mescladas no PR #146 e publicadas em 15/09/2026 no commit `86e071b`. CI, PostgreSQL isolado real, Chromium e WebKit foram aprovados; a API pública confirmou 54 perfis jogáveis e a interface pública exibiu quatro cartas na mesma rodada. A escrita em produção não foi exercitada para não criar um voto técnico permanente no ranking público sem autorização específica.
+
+Status sonoro: o primeiro pacote foi publicado no PR #152, mas o usuário pediu uma direção menos infantil. A revisão tátil e os eventos visuais de Elo passaram por 53 testes, build e smoke em Chromium/WebKit; aguardam publicação e escuta humana antes do encerramento da Issue #151.

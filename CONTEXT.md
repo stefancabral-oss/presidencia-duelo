@@ -25,7 +25,9 @@ PoliMatch é um jogo casual de comparação entre personalidades públicas. Não
 - As fotografias serão curadas e tratadas com padrão profissional, sem alterar a identidade da pessoa.
 - A aprovação visual dos retratos começa por um lote de dez pessoas antes da escala fotográfica completa.
 - O app continua online-only: nenhuma escolha é confirmada antes do servidor.
-- A identidade sonora usa efeitos curtos, neutros e sintetizados localmente após interação do usuário; nunca varia por pessoa e oferece controle persistente para desligar.
+- A identidade sonora usa impactos graves, atrito curto e brilho metálico discreto, sintetizados localmente após interação do usuário; nunca varia por pessoa e oferece controle persistente para desligar.
+- O resultado da rodada permanece por um instante nas quatro cartas: a escolhida sobe e acende, as outras três descem e perdem saturação, sempre com os deltas reais de Elo e sem cobrir os rostos.
+- Faixas de Elo e eventos de ultrapassagem, subida, queda e baixa pontuação recebem respostas visuais, sonoras e hápticas próprias. O texto pode provocar com humor leve, mas nunca julga ideologia ou dignidade da pessoa.
 - Login social e publicação automática ficam fora do primeiro corte; compartilhamento será iniciado pelo usuário.
 
 ## Referências visuais aprovadas

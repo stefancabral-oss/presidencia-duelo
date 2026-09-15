@@ -1,1 +1,1 @@
-{"stage":"ICM 04","status":"approved","checks":["sound-toggle","haptic-fallback","duplicate-throttle","neutral-ranking-events"],"known_failures":[]}
+{"stage":"ICM 04","status":"ready-for-human-gate","checks":["sound-toggle","haptic-fallback","duplicate-throttle","neutral-ranking-events","tactile-texture","elo-tier-transitions","winner-loser-visual-feedback","chromium-webkit-smoke"],"known_failures":[]}

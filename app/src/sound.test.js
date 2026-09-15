@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createSoundController, soundCueNames, soundEnabledFromStorage } from "./sound.js";
+import { createSoundController, soundCueNames, soundEnabledFromStorage, soundTextureCueNames } from "./sound.js";
 
 function memoryStorage(initial = {}) {
   const values = new Map(Object.entries(initial));
@@ -12,17 +12,29 @@ function memoryStorage(initial = {}) {
 
 function fakeAudioContext() {
   const starts = [];
+  const noiseStarts = [];
   const parameter = { setValueAtTime() {}, exponentialRampToValueAtTime() {} };
   return {
     state: "running",
     currentTime: 4,
     destination: {},
     starts,
+    noiseStarts,
+    sampleRate: 1000,
     createOscillator() {
       return { frequency: parameter, connect() {}, start(at) { starts.push(at); }, stop() {} };
     },
     createGain() {
       return { gain: parameter, connect() {} };
+    },
+    createBuffer(_channels, length) {
+      return { getChannelData() { return new Float32Array(length); } };
+    },
+    createBufferSource() {
+      return { connect() {}, start(at) { noiseStarts.push(at); }, stop() {} };
+    },
+    createBiquadFilter() {
+      return { frequency: parameter, Q: parameter, connect() {}, type: "bandpass" };
     },
   };
 }
@@ -72,6 +84,7 @@ test("every product cue is short, synthesized and playable from one shared conte
   for (const cue of soundCueNames) assert.equal(sound.play(cue), true, cue);
   assert.equal(contextCalls, 1);
   assert.ok(context.starts.length >= soundCueNames.length);
+  assert.equal(context.noiseStarts.length, soundTextureCueNames.length);
   assert.ok(context.starts.every((start) => start >= 4 && start < 4.2));
 });
 

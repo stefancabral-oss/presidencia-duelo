@@ -1,6 +1,6 @@
 import "./styles.css";
 import { createPlayer, loadCandidates, loadPlayerRanking, loadRanking, submitRoundVote } from "./api.js";
-import { catalogForTopic, displayRanking, filterRanking, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, shortName, voteFeedback } from "./domain.js";
+import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, roundFeedbackFromRankings, roundOutcome, shortName } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
 import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
@@ -27,6 +27,7 @@ const state = {
   playerVersion: 0,
   collection: [],
   result: "",
+  roundOutcome: null,
   selectedId: "",
   showCoach: false,
   busy: false,
@@ -35,6 +36,7 @@ const state = {
   soundEnabled: sound.enabled,
 };
 let resultTimer;
+let roundAdvanceTimer;
 
 const chromaPreviews = [
   { person: "Lula", role: "Chroma Suprema", image: "/chromas/rendered/lula-supreme-3star-v1.jpg", variant: "supreme supreme-rays" },
@@ -92,8 +94,12 @@ function portrait(candidate) {
 }
 
 function card(candidate) {
+  const outcome = state.roundOutcome?.outcomes.find(({ id }) => id === candidate.id);
+  const outcomeClass = outcome ? ` is-round-${outcome.winner ? "winner" : "loser"}` : "";
+  const delta = Number(outcome?.delta);
+  const outcomeStamp = outcome ? `<span class="card-outcome ${outcome.tone}" aria-live="polite"><b>${Number.isFinite(delta) ? `${delta > 0 ? "+" : ""}${delta} Elo` : outcome.winner ? "Escolhida" : "Não foi desta vez"}</b><small>${escapeHtml(outcome.shortMessage)}</small></span>` : "";
   return `<div class="candidate-wrap">
-    <button class="candidate-card basic-card${state.selectedId === candidate.id ? " is-selected" : ""}" type="button" data-vote="${escapeHtml(candidate.id)}" ${state.busy ? 'disabled aria-busy="true"' : ""} aria-label="${escapeHtml(candidate.name)}, carta básica. Toque para escolher; segure para saber quem é.">
+    <button class="candidate-card basic-card${state.selectedId === candidate.id ? " is-selected" : ""}${outcomeClass}" type="button" data-vote="${escapeHtml(candidate.id)}" ${state.busy ? 'disabled aria-busy="true"' : ""} aria-label="${escapeHtml(candidate.name)}, carta básica. Toque para escolher; segure para saber quem é.">
       <span class="card-material" aria-hidden="true"></span>
       <span class="card-facets" aria-hidden="true"></span>
       <span class="card-brand" aria-hidden="true">${brandSymbol("card-brand-symbol")}<b>PoliMatch</b></span>
@@ -105,6 +111,7 @@ function card(candidate) {
         <span class="candidate-office">${escapeHtml(candidate.office || candidateRole(candidate))}</span>
         <small class="candidate-summary">${escapeHtml(candidateCardSummary(candidate))}</small>
         <small class="candidate-profile-hint"><span aria-hidden="true">ⓘ</span> Segure para conhecer</small>
+        ${outcomeStamp}
       </span>
       <span class="card-corners" aria-hidden="true"></span>
     </button>
@@ -179,10 +186,9 @@ function topicsScreen() {
 function duelScreen() {
   return `<main class="screen duel-screen">
     <div class="duel-head"><div><p class="eyebrow">Escolha uma entre quatro</p><h1>Quem você prefere?</h1></div><span class="progress-pill">${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}</span></div>
-    ${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}
-    <p class="round-instruction">Toque na sua preferida. Segure para conhecer o perfil.</p>
+    <p class="round-instruction${state.result ? " is-result" : ""}" role="status">${escapeHtml(state.result || "Toque na sua preferida. Segure para conhecer o perfil.")}</p>
     <div class="arena arena-four">${state.round.map(card).join("")}</div>
-    <button class="skip-button" type="button" id="skip-round">Nenhuma destas · trocar as quatro</button>
+    <button class="skip-button" type="button" id="skip-round" ${state.busy ? "disabled" : ""}>Nenhuma destas · trocar as quatro</button>
   </main>`;
 }
 
@@ -315,6 +321,8 @@ async function vote(winnerId) {
   state.busy = true;
   state.selectedId = winner.id;
   clearTimeout(resultTimer);
+  clearTimeout(roundAdvanceTimer);
+  state.roundOutcome = null;
   state.result = "Confirmando sua escolha…";
   render();
   try {
@@ -322,31 +330,44 @@ async function vote(winnerId) {
       recoveryKey: state.recoveryKey,
       version: state.playerVersion,
     });
+    const previousRanking = state.ranking;
     state.ranking = rankingForCatalog(response, state.candidates);
     state.personalRanking = rankingForCatalog(response.player, state.candidates);
     state.playerVersion = response.player?.version ?? state.playerVersion;
     state.globalDuels = Number(response.duels) || state.globalDuels;
     state.personalDuels = Number(response.player?.duels) || state.personalDuels + 1;
-    const ranked = state.ranking.find(({ id }) => id === winner.id);
-    state.result = voteFeedback(winner.displayName || shortName(winner.name), {
-      winnerDelta: response.vote?.winnerDelta,
-      zebra: response.vote?.zebra,
-      winRate: ranked?.winRate,
-    });
-    chooseNextRound();
-    state.busy = false;
-    state.selectedId = "";
+    const feedback = response.vote?.feedback || roundFeedbackFromRankings(
+      previousRanking,
+      state.ranking,
+      state.round.map(({ id }) => id),
+      winner.id,
+      { rankingEvent: response.vote?.rankingEvent, zebra: response.vote?.zebra },
+    );
+    const outcome = roundOutcome(feedback, state.round, winner.id);
+    state.roundOutcome = outcome;
+    state.result = outcome.outcomes.length
+      ? outcome.message
+      : `${winner.displayName || shortName(winner.name)} confirmado · +${Number(response.vote?.winnerDelta) || 0} Elo`;
     render();
-    sound.play(response.vote?.rankingEvent || (response.vote?.zebra ? "zebra" : "confirm"));
-    try { navigator.vibrate?.(response.vote?.zebra ? [24, 35, 48] : 24); } catch {}
-    resultTimer = setTimeout(() => {
-      if (state.busy || !state.result.includes("confirmado")) return;
-      state.result = "";
+    const feedbackEvent = outcome.primaryEvent || response.vote?.rankingEvent || (response.vote?.zebra ? "zebra" : "confirm");
+    sound.play(feedbackEvent);
+    try { navigator.vibrate?.(hapticPattern(feedbackEvent)); } catch {}
+    roundAdvanceTimer = setTimeout(() => {
+      chooseNextRound();
+      state.busy = false;
+      state.selectedId = "";
+      state.roundOutcome = null;
       render();
-    }, 2400);
+      resultTimer = setTimeout(() => {
+        if (state.busy) return;
+        state.result = "";
+        render();
+      }, 1800);
+    }, 1050);
   } catch (error) {
     state.busy = false;
     state.selectedId = "";
+    state.roundOutcome = null;
     state.result = "Não foi possível confirmar. Seu voto não foi contado.";
     render();
     sound.play("error");
@@ -370,7 +391,13 @@ function bindEvents() {
   document.querySelector("#start-election-secondary")?.addEventListener("click", enterDuel);
   document.querySelector("#open-ranking")?.addEventListener("click", () => { sound.play("navigation"); state.screen = "ranking"; state.result = ""; render(); });
   document.querySelector("#continue-duels")?.addEventListener("click", () => { state.result = ""; enterDuel(); });
-  document.querySelector("#skip-round")?.addEventListener("click", () => { sound.play("shuffle"); state.result = ""; chooseNextRound(); render(); });
+  document.querySelector("#skip-round")?.addEventListener("click", () => {
+    if (state.busy) return;
+    sound.play("shuffle");
+    state.result = "";
+    chooseNextRound();
+    render();
+  });
   document.querySelector("#dismiss-coach")?.addEventListener("click", () => {
     sound.play("navigation");
     localStorage.setItem("polimatch:v4:round-coach", "seen");

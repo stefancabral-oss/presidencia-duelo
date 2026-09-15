@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import pg from "pg";
-import { isZebra, ratingDeltas } from "../../shared/elo.js";
+import { eloTier, isZebra, ratingDeltas } from "../../shared/elo.js";
 import { CANDIDATES, TOPICS_BY_ID, candidateBelongsToTopic, candidatesForTopic } from "./candidates.js";
 
 const { Pool } = pg;
@@ -131,6 +131,30 @@ export function rankingEventFromSnapshots(beforeRanking, afterRanking, winnerId,
   return "confirm";
 }
 
+export function roundFeedbackFromSnapshots(beforeRanking, afterRanking, candidateIds, winnerId, rankingEvent, { zebra = false } = {}) {
+  const before = new Map(beforeRanking.map((candidate) => [candidate.id, candidate]));
+  const after = new Map(afterRanking.map((candidate) => [candidate.id, candidate]));
+  const outcomes = candidateIds.map((id) => {
+    const previous = before.get(id);
+    const current = after.get(id);
+    if (!previous || !current) throw new Error("ranking incompleto para feedback da rodada");
+    const previousTier = eloTier(previous.elo);
+    const tier = eloTier(current.elo);
+    const tierChange = tier.level > previousTier.level ? "up" : tier.level < previousTier.level ? "down" : null;
+    return { id, result: id === winnerId ? "winner" : "loser", delta: current.elo - previous.elo, elo: current.elo, previousTier, tier, tierChange };
+  });
+  const winner = outcomes.find((outcome) => outcome.id === winnerId);
+  const dropped = outcomes.filter((outcome) => outcome.tierChange === "down");
+  let primaryEvent = rankingEvent || "confirm";
+  if (zebra) primaryEvent = "zebra";
+  else if (!["leader", "leaderDefense", "podium", "top10"].includes(primaryEvent)) {
+    if (winner?.tierChange === "up") primaryEvent = "tierUp";
+    else if (dropped.some(({ tier }) => tier.id === "recovery")) primaryEvent = "lowElo";
+    else if (dropped.length) primaryEvent = "tierDown";
+  }
+  return { rankingEvent: rankingEvent || "confirm", primaryEvent, zebra: Boolean(zebra), outcomes };
+}
+
 async function createCleanSchema(client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -221,12 +245,16 @@ async function createCleanSchema(client) {
       winner_delta integer NOT NULL,
       zebra boolean NOT NULL DEFAULT false,
       ranking_event text NOT NULL DEFAULT 'confirm',
+      feedback jsonb NOT NULL DEFAULT '{}'::jsonb,
       created_at timestamptz NOT NULL DEFAULT now(),
       CHECK (array_length(candidate_ids, 1) = 4)
     );
 
     ALTER TABLE choice_rounds
       ADD COLUMN IF NOT EXISTS ranking_event text NOT NULL DEFAULT 'confirm';
+
+    ALTER TABLE choice_rounds
+      ADD COLUMN IF NOT EXISTS feedback jsonb NOT NULL DEFAULT '{}'::jsonb;
 
     ALTER TABLE votes
       ADD COLUMN IF NOT EXISTS round_id uuid REFERENCES choice_rounds(round_id) ON DELETE RESTRICT;
@@ -540,7 +568,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
         const player = recoveryKey ? await findPlayer(client, recoveryKey) : null;
         await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [roundId]);
         const previous = await client.query(
-          "SELECT topic_id, winner_id, candidate_ids, player_id, winner_delta, zebra, ranking_event FROM choice_rounds WHERE round_id = $1",
+          "SELECT topic_id, winner_id, candidate_ids, player_id, winner_delta, zebra, ranking_event, feedback FROM choice_rounds WHERE round_id = $1",
           [roundId],
         );
         if (previous.rowCount) {
@@ -560,6 +588,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
             winnerDelta: Number(row.winner_delta),
             zebra: Boolean(row.zebra),
             rankingEvent: row.ranking_event || "confirm",
+            feedback: row.feedback?.outcomes ? row.feedback : null,
             comparisons: 3,
           };
           return { ...global, round, vote: round, player: personal };
@@ -615,9 +644,10 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
 
         const global = await selectRanking(client, topic);
         const rankingEvent = rankingEventFromSnapshots(globalBeforeRound.ranking, global.ranking, winnerId, { zebra });
+        const feedback = roundFeedbackFromSnapshots(globalBeforeRound.ranking, global.ranking, roundCandidates, winnerId, rankingEvent, { zebra });
         await client.query(
-          "INSERT INTO choice_rounds (round_id, player_id, topic_id, winner_id, candidate_ids, winner_delta, zebra, ranking_event) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-          [roundId, player?.id || null, topic, winnerId, sortedCandidates, winnerDelta, zebra, rankingEvent],
+          "INSERT INTO choice_rounds (round_id, player_id, topic_id, winner_id, candidate_ids, winner_delta, zebra, ranking_event, feedback) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)",
+          [roundId, player?.id || null, topic, winnerId, sortedCandidates, winnerDelta, zebra, rankingEvent, JSON.stringify(feedback)],
         );
         for (const comparison of comparisons) {
           await client.query(
@@ -628,7 +658,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
         }
         const personal = player ? await selectRanking(client, topic, { playerId: player.id }) : null;
         await client.query("COMMIT");
-        const round = { id: roundId, status: "created", winnerDelta, zebra, rankingEvent, comparisons: 3 };
+        const round = { id: roundId, status: "created", winnerDelta, zebra, rankingEvent, feedback, comparisons: 3 };
         return { ...global, round, vote: round, player: personal };
       } catch (error) {
         await client.query("ROLLBACK");

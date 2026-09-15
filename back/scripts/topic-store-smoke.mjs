@@ -92,6 +92,10 @@ assert.equal(round.duels, 3);
 assert.equal(round.player.version, 3);
 assert.equal(round.player.duels, 3);
 assert.equal(round.ranking.find(({ id }) => id === "anitta").wins, 4);
+assert.equal(round.round.feedback.outcomes.length, 4);
+assert.equal(round.round.feedback.outcomes.filter(({ result }) => result === "winner").length, 1);
+assert.equal(round.round.feedback.outcomes.filter(({ result }) => result === "loser").length, 3);
+assert.ok(round.round.feedback.outcomes.every(({ delta, tier }) => Number.isInteger(delta) && tier?.id));
 
 const repeatedRound = await restartedStore.roundVote({
   topicId: "eleicoes-2026",
@@ -103,6 +107,7 @@ const repeatedRound = await restartedStore.roundVote({
 });
 assert.equal(repeatedRound.round.status, "alreadyProcessed");
 assert.equal(repeatedRound.duels, 3);
+assert.deepEqual(repeatedRound.round.feedback, round.round.feedback);
 
 const auditPool = new pg.Pool({ connectionString });
 const audit = await auditPool.query(
@@ -110,13 +115,15 @@ const audit = await auditPool.query(
     (SELECT count(*) FROM votes) AS comparisons,
     (SELECT count(*) FROM choice_rounds) AS rounds,
     (SELECT count(*) FROM votes WHERE round_id = $1) AS linked_comparisons,
-    (SELECT count(DISTINCT winner_rating_before) FROM votes WHERE round_id = $1) AS winner_snapshots`,
+    (SELECT count(DISTINCT winner_rating_before) FROM votes WHERE round_id = $1) AS winner_snapshots,
+    (SELECT jsonb_array_length(feedback->'outcomes') FROM choice_rounds WHERE round_id = $1) AS feedback_outcomes`,
   [roundId],
 );
 assert.equal(Number(audit.rows[0].comparisons), 5);
 assert.equal(Number(audit.rows[0].rounds), 1);
 assert.equal(Number(audit.rows[0].linked_comparisons), 3);
 assert.equal(Number(audit.rows[0].winner_snapshots), 1);
+assert.equal(Number(audit.rows[0].feedback_outcomes), 4);
 await auditPool.end();
 await restartedStore.close();
 

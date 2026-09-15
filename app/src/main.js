@@ -5,8 +5,10 @@ import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
 import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
 import { approvedBasicCards } from "./approved-chromas.js";
+import { createSoundController } from "./sound.js";
 
 const app = document.querySelector("#app");
+const sound = createSoundController();
 const state = {
   screen: "topics",
   candidates: [],
@@ -30,6 +32,7 @@ const state = {
   busy: false,
   ready: false,
   error: "",
+  soundEnabled: sound.enabled,
 };
 let resultTimer;
 
@@ -109,7 +112,8 @@ function card(candidate) {
 }
 
 function header() {
-  return `<header class="topbar"><p class="brand">${brandSymbol()}<span>PoliMatch</span></p><span class="edition">Malaquita 2026</span></header>`;
+  const soundLabel = state.soundEnabled ? "Desativar efeitos sonoros" : "Ativar efeitos sonoros";
+  return `<header class="topbar"><p class="brand">${brandSymbol()}<span>PoliMatch</span></p><div class="topbar-actions"><span class="edition">Malaquita 2026</span><button class="sound-toggle${state.soundEnabled ? " is-on" : ""}" id="sound-toggle" type="button" aria-label="${soundLabel}" aria-pressed="${state.soundEnabled}"><span aria-hidden="true">${state.soundEnabled ? "♪" : "♪̸"}</span></button></div></header>`;
 }
 
 function topicsScreen() {
@@ -258,6 +262,7 @@ function render() {
 function showProfile(id) {
   const person = state.candidates.find((candidate) => candidate.id === id);
   if (!person) return;
+  sound.play("profile");
   const modal = document.querySelector("#modal");
   const metadata = [person.office, person.party, person.location].filter(Boolean);
   const facts = (person.facts || []).map((fact) => `<li>${escapeHtml(fact)}</li>`).join("");
@@ -268,15 +273,21 @@ function showProfile(id) {
   }).join("");
   const canVote = state.screen === "duel" && state.round.some((candidate) => candidate.id === person.id) && !state.busy;
   modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar resumo">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2>${escapeHtml(person.name)}</h2><p class="profile-role"><strong>${escapeHtml(candidateRole(person))}</strong></p>${metadata.length ? `<p class="profile-meta">${metadata.map(escapeHtml).join(" · ")}</p>` : ""}${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions">${canVote ? `<button class="primary" id="vote-from-profile" data-candidate="${escapeHtml(person.id)}" type="button">Escolher esta pessoa</button>` : ""}<button class="secondary" id="close-modal" type="button">Voltar ao duelo</button></div>`;
+  let silentClose = false;
   modal.showModal();
-  modal.addEventListener("close", () => document.querySelectorAll(".candidate-card.is-peeking").forEach((cardElement) => cardElement.classList.remove("is-peeking")), { once: true });
-  modal.querySelector("#close-modal").addEventListener("click", () => modal.close());
-  modal.querySelector("#close-modal-top").addEventListener("click", () => modal.close());
+  modal.addEventListener("close", () => {
+    if (!silentClose) sound.play("dismiss");
+    document.querySelectorAll(".candidate-card.is-peeking").forEach((cardElement) => cardElement.classList.remove("is-peeking"));
+  }, { once: true });
+  const closeProfile = () => modal.close();
+  modal.querySelector("#close-modal").addEventListener("click", closeProfile);
+  modal.querySelector("#close-modal-top").addEventListener("click", closeProfile);
   modal.onclick = (event) => {
     if (event.target === modal) modal.close();
   };
   modal.querySelector("#close-modal-top").focus();
   modal.querySelector("#vote-from-profile")?.addEventListener("click", () => {
+    silentClose = true;
     modal.close();
     vote(person.id);
   });
@@ -290,6 +301,7 @@ function chooseNextRound() {
 }
 
 function enterDuel() {
+  sound.play("enter");
   state.screen = "duel";
   state.showCoach = localStorage.getItem("polimatch:v4:round-coach") !== "seen";
   render();
@@ -299,6 +311,7 @@ async function vote(winnerId) {
   if (state.busy) return;
   const winner = state.round.find(({ id }) => id === winnerId);
   if (!winner || state.round.length !== 4) return;
+  sound.play("choose");
   state.busy = true;
   state.selectedId = winner.id;
   clearTimeout(resultTimer);
@@ -324,6 +337,7 @@ async function vote(winnerId) {
     state.busy = false;
     state.selectedId = "";
     render();
+    sound.play(response.vote?.rankingEvent || (response.vote?.zebra ? "zebra" : "confirm"));
     try { navigator.vibrate?.(response.vote?.zebra ? [24, 35, 48] : 24); } catch {}
     resultTimer = setTimeout(() => {
       if (state.busy || !state.result.includes("confirmado")) return;
@@ -335,17 +349,30 @@ async function vote(winnerId) {
     state.selectedId = "";
     state.result = "Não foi possível confirmar. Seu voto não foi contado.";
     render();
+    sound.play("error");
   }
 }
 
 function bindEvents() {
-  document.querySelector("#retry")?.addEventListener("click", initialize);
+  document.querySelector("#sound-toggle")?.addEventListener("click", () => {
+    if (state.soundEnabled) {
+      sound.play("soundOff");
+      state.soundEnabled = sound.setEnabled(false);
+    } else {
+      state.soundEnabled = sound.setEnabled(true);
+      sound.play("soundOn");
+    }
+    render();
+    document.querySelector("#sound-toggle")?.focus();
+  });
+  document.querySelector("#retry")?.addEventListener("click", () => { sound.play("navigation"); initialize(); });
   document.querySelector("#start-election")?.addEventListener("click", enterDuel);
   document.querySelector("#start-election-secondary")?.addEventListener("click", enterDuel);
-  document.querySelector("#open-ranking")?.addEventListener("click", () => { state.screen = "ranking"; state.result = ""; render(); });
+  document.querySelector("#open-ranking")?.addEventListener("click", () => { sound.play("navigation"); state.screen = "ranking"; state.result = ""; render(); });
   document.querySelector("#continue-duels")?.addEventListener("click", () => { state.result = ""; enterDuel(); });
-  document.querySelector("#skip-round")?.addEventListener("click", () => { state.result = ""; chooseNextRound(); render(); });
+  document.querySelector("#skip-round")?.addEventListener("click", () => { sound.play("shuffle"); state.result = ""; chooseNextRound(); render(); });
   document.querySelector("#dismiss-coach")?.addEventListener("click", () => {
+    sound.play("navigation");
     localStorage.setItem("polimatch:v4:round-coach", "seen");
     state.showCoach = false;
     render();
@@ -371,8 +398,8 @@ function bindEvents() {
     },
   }));
   document.querySelectorAll("[data-profile]").forEach((button) => button.addEventListener("click", () => showProfile(button.dataset.profile)));
-  document.querySelectorAll("[data-screen]").forEach((button) => button.addEventListener("click", () => { state.screen = button.dataset.screen; state.result = ""; render(); }));
-  document.querySelectorAll("[data-ranking-view]").forEach((button) => button.addEventListener("click", () => { state.rankingView = button.dataset.rankingView; state.rankingQuery = ""; state.rankingExpanded = false; render(); }));
+  document.querySelectorAll("[data-screen]").forEach((button) => button.addEventListener("click", () => { sound.play("navigation"); state.screen = button.dataset.screen; state.result = ""; render(); }));
+  document.querySelectorAll("[data-ranking-view]").forEach((button) => button.addEventListener("click", () => { sound.play("navigation"); state.rankingView = button.dataset.rankingView; state.rankingQuery = ""; state.rankingExpanded = false; render(); }));
   if (state.screen === "collection") installChromaMotion(document);
   document.querySelector("#enable-chroma-motion")?.addEventListener("click", async (event) => {
     const status = document.querySelector("#motion-status");

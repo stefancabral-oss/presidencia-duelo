@@ -5,6 +5,7 @@ import {
   CLEAN_START_MIGRATION,
   createRecoveryKey,
   normalizeVoteId,
+  rankingEventFromSnapshots,
   rankingFromRows,
   recoveryKeyHash,
   validateTopic,
@@ -54,6 +55,51 @@ test("topic ranking exposes only candidates from that curation", () => {
   assert.equal(result.ranking[0].id, "lula");
   assert.equal(result.ranking[0].decisions, 1);
   assert.equal(result.ranking.find(({ id }) => id === "tarcisio-de-freitas").decisions, 0);
+});
+
+test("ranking sound events are derived from transactional before/after snapshots", () => {
+  const candidate = (id, elo, decisions = 1, wins = 1, losses = 0) => ({ id, elo, decisions, wins, losses });
+
+  assert.equal(
+    rankingEventFromSnapshots(
+      [candidate("a", 1040), candidate("b", 1020)],
+      [candidate("b", 1060, 2, 2), candidate("a", 1040)],
+      "b",
+    ),
+    "leader",
+  );
+  assert.equal(
+    rankingEventFromSnapshots(
+      [candidate("a", 1040), candidate("b", 1020)],
+      [candidate("a", 1080, 2, 2), candidate("b", 1020)],
+      "a",
+    ),
+    "leaderDefense",
+  );
+  assert.equal(
+    rankingEventFromSnapshots(
+      [candidate("a", 1040), candidate("b", 1020), candidate("c", 1000), candidate("d", 980)],
+      [candidate("a", 1040), candidate("c", 1030, 2, 2), candidate("b", 1020), candidate("d", 980)],
+      "c",
+    ),
+    "overtake",
+  );
+  assert.equal(
+    rankingEventFromSnapshots(
+      [candidate("a", 1040), candidate("b", 1020), candidate("c", 1000)],
+      [candidate("a", 1040), candidate("c", 1030, 2, 2), candidate("b", 1020)],
+      "c",
+    ),
+    "recovery",
+  );
+
+  const played = Array.from({ length: 11 }, (_, index) => candidate(`p${index + 1}`, 1200 - index * 10));
+  const newcomer = candidate("new", 1000, 0, 0, 0);
+  assert.equal(
+    rankingEventFromSnapshots([...played, newcomer], [...played, candidate("new", 900)], "new"),
+    "confirm",
+  );
+  assert.equal(rankingEventFromSnapshots(played, played, "p2", { zebra: true }), "zebra");
 });
 
 test("clean-start migration is one-time and explicitly removes legacy gameplay tables", async () => {

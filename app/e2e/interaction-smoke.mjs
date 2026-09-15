@@ -85,8 +85,8 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
       duels: 1,
       ranking: ranking(1),
       player: { version: 1, duels: 1, ranking: ranking(1) },
-      round: { winnerDelta: 45, zebra: false, comparisons: 3 },
-      vote: { winnerDelta: 45, zebra: false, comparisons: 3 },
+      round: { winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "leader" },
+      vote: { winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "leader" },
     };
   } else {
     await route.fulfill({ status: 404, json: { error: "mock não encontrado" } });
@@ -97,6 +97,17 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
 
 try {
   await page.goto(appUrl, { waitUntil: "networkidle" });
+  const soundToggle = page.getByRole("button", { name: "Desativar efeitos sonoros" });
+  await soundToggle.waitFor();
+  if (await soundToggle.getAttribute("aria-pressed") !== "true") throw new Error("O som não iniciou disponível para a primeira interação");
+  await soundToggle.click();
+  const enableSound = page.getByRole("button", { name: "Ativar efeitos sonoros" });
+  if (await enableSound.getAttribute("aria-pressed") !== "false") throw new Error("O controle não desligou os efeitos sonoros");
+  if (!await enableSound.evaluate((button) => button === document.activeElement)) throw new Error("O controle de som perdeu foco depois de desligado");
+  if (await page.evaluate(() => localStorage.getItem("polimatch:sound")) !== "off") throw new Error("A preferência de som desligado não foi persistida");
+  await enableSound.click();
+  if (!await page.getByRole("button", { name: "Desativar efeitos sonoros" }).evaluate((button) => button === document.activeElement)) throw new Error("O controle de som perdeu foco depois de ligado");
+  if (await page.evaluate(() => localStorage.getItem("polimatch:sound")) !== "on") throw new Error("A preferência de som ligado não foi persistida");
   await page.getByRole("button", { name: /Começar agora|Continuar escolhendo/ }).click();
   await page.getByRole("button", { name: "Começar rodada" }).click();
   const mobileCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
@@ -163,6 +174,16 @@ try {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_PROFILE_SCREENSHOT, fullPage: true });
   }
   await closeSummary.click();
+  await page.locator("dialog[open]").waitFor({ state: "hidden" });
+
+  const reopenBox = await firstCard.boundingBox();
+  if (!reopenBox) throw new Error("Não foi possível reabrir o perfil por pressão longa");
+  await page.mouse.move(reopenBox.x + reopenBox.width / 2, reopenBox.y + reopenBox.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(520);
+  await page.mouse.up();
+  await page.locator("dialog[open]").waitFor();
+  await page.keyboard.press("Escape");
   await page.locator("dialog[open]").waitFor({ state: "hidden" });
 
   await firstCard.click();

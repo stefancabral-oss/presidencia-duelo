@@ -98,6 +98,39 @@ export function rankingFromRows(topicId, duels, rows) {
   return { topicId, duels: Number(duels) || 0, ranking };
 }
 
+function rankedPosition(ranking, candidateId) {
+  const played = ranking.filter(({ decisions }) => decisions > 0);
+  let previousScore = null;
+  let position = 0;
+  for (const [index, candidate] of played.entries()) {
+    const score = `${candidate.elo}:${candidate.wins}:${candidate.losses}`;
+    if (score !== previousScore) position = index + 1;
+    previousScore = score;
+    if (candidate.id === candidateId) return position;
+  }
+  return null;
+}
+
+export function rankingEventFromSnapshots(beforeRanking, afterRanking, winnerId, { zebra = false } = {}) {
+  if (zebra) return "zebra";
+  const beforeRank = rankedPosition(beforeRanking, winnerId);
+  const afterRank = rankedPosition(afterRanking, winnerId);
+  if (!Number.isFinite(afterRank)) return "confirm";
+  if (afterRank === 1) return beforeRank === 1 ? "leaderDefense" : "leader";
+  if (afterRank <= 3 && (!Number.isFinite(beforeRank) || beforeRank > 3)) return "podium";
+  if (afterRank <= 10 && (!Number.isFinite(beforeRank) || beforeRank > 10)) return "top10";
+  if (!Number.isFinite(beforeRank)) return "confirm";
+  const previousLastRank = Math.max(
+    0,
+    ...beforeRanking
+      .filter(({ decisions }) => decisions > 0)
+      .map(({ id }) => rankedPosition(beforeRanking, id)),
+  );
+  if (beforeRank === previousLastRank && afterRank < beforeRank) return "recovery";
+  if (afterRank < beforeRank) return "overtake";
+  return "confirm";
+}
+
 async function createCleanSchema(client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -187,9 +220,13 @@ async function createCleanSchema(client) {
       candidate_ids text[] NOT NULL,
       winner_delta integer NOT NULL,
       zebra boolean NOT NULL DEFAULT false,
+      ranking_event text NOT NULL DEFAULT 'confirm',
       created_at timestamptz NOT NULL DEFAULT now(),
       CHECK (array_length(candidate_ids, 1) = 4)
     );
+
+    ALTER TABLE choice_rounds
+      ADD COLUMN IF NOT EXISTS ranking_event text NOT NULL DEFAULT 'confirm';
 
     ALTER TABLE votes
       ADD COLUMN IF NOT EXISTS round_id uuid REFERENCES choice_rounds(round_id) ON DELETE RESTRICT;
@@ -503,7 +540,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
         const player = recoveryKey ? await findPlayer(client, recoveryKey) : null;
         await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [roundId]);
         const previous = await client.query(
-          "SELECT topic_id, winner_id, candidate_ids, player_id, winner_delta, zebra FROM choice_rounds WHERE round_id = $1",
+          "SELECT topic_id, winner_id, candidate_ids, player_id, winner_delta, zebra, ranking_event FROM choice_rounds WHERE round_id = $1",
           [roundId],
         );
         if (previous.rowCount) {
@@ -522,12 +559,14 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
             status: "alreadyProcessed",
             winnerDelta: Number(row.winner_delta),
             zebra: Boolean(row.zebra),
+            rankingEvent: row.ranking_event || "confirm",
             comparisons: 3,
           };
           return { ...global, round, vote: round, player: personal };
         }
 
         await client.query("SELECT duels FROM ranking_pools WHERE topic_id = $1 FOR UPDATE", [topic]);
+        const globalBeforeRound = await selectRanking(client, topic);
         const globalRows = await client.query(
           "SELECT candidate_id, rating FROM ranking_stats WHERE topic_id = $1 AND candidate_id = ANY($2::text[]) FOR UPDATE",
           [topic, roundCandidates],
@@ -574,9 +613,11 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
           await client.query("UPDATE anonymous_players SET last_seen_at = now() WHERE id = $1", [player.id]);
         }
 
+        const global = await selectRanking(client, topic);
+        const rankingEvent = rankingEventFromSnapshots(globalBeforeRound.ranking, global.ranking, winnerId, { zebra });
         await client.query(
-          "INSERT INTO choice_rounds (round_id, player_id, topic_id, winner_id, candidate_ids, winner_delta, zebra) VALUES ($1, $2, $3, $4, $5, $6, $7)",
-          [roundId, player?.id || null, topic, winnerId, sortedCandidates, winnerDelta, zebra],
+          "INSERT INTO choice_rounds (round_id, player_id, topic_id, winner_id, candidate_ids, winner_delta, zebra, ranking_event) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+          [roundId, player?.id || null, topic, winnerId, sortedCandidates, winnerDelta, zebra, rankingEvent],
         );
         for (const comparison of comparisons) {
           await client.query(
@@ -585,10 +626,9 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
             [randomUUID(), roundId, player?.id || null, topic, winnerId, comparison.loserId, comparison.winnerRating, comparison.loserRating, comparison.winnerDelta, comparison.loserDelta, comparison.zebra],
           );
         }
-        const global = await selectRanking(client, topic);
         const personal = player ? await selectRanking(client, topic, { playerId: player.id }) : null;
         await client.query("COMMIT");
-        const round = { id: roundId, status: "created", winnerDelta, zebra, comparisons: 3 };
+        const round = { id: roundId, status: "created", winnerDelta, zebra, rankingEvent, comparisons: 3 };
         return { ...global, round, vote: round, player: personal };
       } catch (error) {
         await client.query("ROLLBACK");

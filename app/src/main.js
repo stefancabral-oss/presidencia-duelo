@@ -4,7 +4,7 @@ import { catalogForTopic, displayRanking, filterRanking, initials, nextBalancedP
 import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
 import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
-import { approvedChromas } from "./approved-chromas.js";
+import { approvedBasicCards } from "./approved-chromas.js";
 
 const app = document.querySelector("#app");
 const state = {
@@ -159,24 +159,24 @@ function collectionScreen() {
     <img class="chroma-art" src="${escapeHtml(image)}" alt="${escapeHtml(role)} de ${escapeHtml(person)}" width="530" height="742">
     <span class="holo-foil" aria-hidden="true"></span><span class="holo-pattern" aria-hidden="true"></span><span class="holo-glint" aria-hidden="true"></span>
   </article>`;
-  const batchCard = ({ personId, person, look, lookName, image }) => `<article class="chroma-card approved-chroma-card look-${look.toLowerCase()}" data-hologram tabindex="0" aria-label="${escapeHtml(person)}, estudo visual ${escapeHtml(lookName)}. Arte editada por inteligência artificial, fora do inventário.">
-    <img class="chroma-art approved-chroma-art" src="${escapeHtml(image)}" alt="Estudo visual de ${escapeHtml(person)}, arte editada por inteligência artificial" width="600" height="750" loading="lazy" decoding="async">
-    <span class="approved-chroma-brand" aria-hidden="true">${brandSymbol("approved-brand-symbol")}<b>PoliMatch</b></span><span class="approved-chroma-rarity" aria-hidden="true">★</span>
+  const batchCard = ({ personId, person, look, lookName, image }) => `<article class="chroma-card approved-chroma-card look-${look.toLowerCase()}" data-hologram tabindex="0" aria-label="${escapeHtml(person)}, carta básica com acabamento ${escapeHtml(lookName)}.">
+    <img class="chroma-art approved-chroma-art" src="${escapeHtml(image)}" alt="Carta básica de ${escapeHtml(person)}" width="600" height="750" loading="lazy" decoding="async">
+    <span class="approved-chroma-brand" aria-hidden="true">${brandSymbol("approved-brand-symbol")}<b>PoliMatch</b></span>
     <span class="approved-chroma-frame" aria-hidden="true"></span>
     <span class="approved-chroma-copy"><strong>${escapeHtml(person)}</strong><small>${escapeHtml(lookName)}</small><em>#${escapeHtml(personId)} · ARTE EDITADA POR IA</em></span>
     <span class="holo-foil" aria-hidden="true"></span><span class="holo-pattern" aria-hidden="true"></span><span class="holo-glint" aria-hidden="true"></span>
   </article>`;
   const supreme = chromaPreviews.filter(({ variant }) => variant.startsWith("supreme")).map(previewCard).join("");
   const commemorative = chromaPreviews.filter(({ variant }) => variant.startsWith("commemorative")).map(previewCard).join("");
-  const batchLimit = state.chromaBatchExpanded ? approvedChromas.length : 6;
-  const approved = approvedChromas.slice(0, batchLimit).map(batchCard).join("");
+  const batchLimit = state.chromaBatchExpanded ? approvedBasicCards.length : 6;
+  const approved = approvedBasicCards.slice(0, batchLimit).map(batchCard).join("");
   const batchButton = state.chromaBatchExpanded
     ? `<button class="secondary batch-toggle" id="collapse-chroma-batch" type="button">Mostrar apenas os primeiros</button>`
-    : `<button class="primary batch-toggle" id="expand-chroma-batch" type="button">Ver os 35 estudos</button>`;
+    : `<button class="primary batch-toggle" id="expand-chroma-batch" type="button">Ver as 35 cartas básicas</button>`;
   return `<main class="screen collection-screen"><div><p class="eyebrow">Laboratório de Chromas</p><h1>Coleção</h1><p class="lead">Mova o dedo sobre cada carta. No celular, ative a inclinação para o reflexo acompanhar o aparelho.</p><button class="motion-button" id="enable-chroma-motion" type="button">Ativar efeito ao inclinar</button><p class="motion-status" id="motion-status" role="status"></p></div>
     <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Suprema</p><h2>Três estrelas douradas</h2></div><span class="tier-symbol gold-stars">★★★</span></div><p>Ouro em relevo, feixes direcionais e dois desenhos holográficos exclusivos.</p><div class="chroma-gallery">${supreme}</div></section>
     <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Comemorativa</p><h2>Estrela prismática</h2></div><span class="tier-symbol prism-star">★</span></div><p>Cristal óptico, espectro colorido e refração diferente em cada pessoa.</p><div class="chroma-gallery">${commemorative}</div></section>
-    <section class="chroma-tier approved-batch"><div class="chroma-tier-heading"><div><p class="eyebrow">Estudos de acabamento</p><h2>35 protótipos visuais</h2></div><span class="tier-symbol batch-count">35</span></div><p>Estudos de moldura, luz e textura. Não são Chromas colecionáveis: cada Chroma definitiva deverá usar uma fotografia diferente da carta básica.</p><div class="chroma-gallery approved-chroma-gallery">${approved}</div>${batchButton}<p class="batch-disclosure">Protótipos editados com inteligência artificial. Permanecem fora do inventário, do sorteio e dos duelos.</p></section>
+    <section class="chroma-tier approved-batch"><div class="chroma-tier-heading"><div><p class="eyebrow">Cartas básicas</p><h2>35 acabamentos aprovados</h2></div><span class="tier-symbol batch-count">35</span></div><p>São as cartas básicas atuais. As futuras Chromas serão colecionáveis e sempre usarão outra fotografia da pessoa.</p><div class="chroma-gallery approved-chroma-gallery">${approved}</div>${batchButton}<p class="batch-disclosure">Imagens tratadas para compor a edição básica do PoliMatch.</p></section>
     <section><p class="eyebrow">Sua coleção</p><section class="panel ranking-list">${cards || '<p class="empty">Demonstração visual: estas Chromas ainda não foram adicionadas ao seu inventário.</p>'}</section></section>
   </main>`;
 }

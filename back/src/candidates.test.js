@@ -7,13 +7,16 @@ test("the rebuild exposes one active topic and two announced expansions", () => 
   assert.deepEqual(TOPICS.filter(({ active }) => !active).map(({ id }) => id), ["influenciadores", "escandalos"]);
 });
 
-test("the curated 125-person catalog replaces the rejected 360-person catalog", () => {
+test("the 125-person catalog keeps only approved-photo profiles playable", () => {
   assert.equal(CANDIDATES.length, 125);
-  assert.equal(candidatesForTopic("eleicoes-2026").length, 100);
-  assert.equal(candidatesForTopic("influenciadores").length, 25);
+  assert.equal(candidatesForTopic("eleicoes-2026").length, 40);
+  assert.equal(candidatesForTopic("influenciadores").length, 14);
   assert.equal(candidateBelongsToTopic("lula", "eleicoes-2026"), true);
   assert.equal(candidateBelongsToTopic("lula", "influenciadores"), false);
   assert.equal(candidateBelongsToTopic("anitta", "influenciadores"), true);
+  assert.equal(candidateBelongsToTopic("acm-neto", "eleicoes-2026"), false);
+  assert.ok(candidatesForTopic("eleicoes-2026").every(({ photoApproved, photo }) => photoApproved && photo));
+  assert.ok(candidatesForTopic("influenciadores").every(({ photoApproved, photo }) => photoApproved && photo));
 });
 
 test("every candidate exposes a reviewable editorial profile", () => {

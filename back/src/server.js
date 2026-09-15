@@ -30,6 +30,9 @@ app.get("/api/health", async (_req, res) => {
       service: "polimatch-api",
       database: "postgresql",
       candidates: CANDIDATES.length,
+      playableCandidates: TOPICS
+        .filter(({ active }) => active)
+        .reduce((total, topic) => total + candidatesForTopic(topic.id).length, 0),
       activeTopics: TOPICS.filter(({ active }) => active).length,
     });
   } catch {

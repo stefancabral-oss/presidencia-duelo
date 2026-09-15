@@ -1,0 +1,18 @@
+[
+  {"personId": 78, "id": "rachel-sheherazade", "name": "Rachel Sheherazade", "source": "Rachel Sheherazade.png", "focalPoint": [0.68, 0.46]},
+  {"personId": 101, "id": "anitta", "name": "Anitta", "source": "Anitta.png", "focalPoint": [0.51, 0.47]},
+  {"personId": 102, "id": "neymar-jr", "name": "Neymar Jr.", "source": "Neymar Jr.png", "focalPoint": [0.5, 0.46]},
+  {"personId": 103, "id": "gusttavo-lima", "name": "Gusttavo Lima", "source": "Gustavo Lima.png", "focalPoint": [0.5, 0.45]},
+  {"personId": 104, "id": "ludmilla", "name": "Ludmilla", "source": "Ludimilla.png", "focalPoint": [0.5, 0.45]},
+  {"personId": 105, "id": "jose-aldo", "name": "José Aldo", "source": "José Aldo.png", "focalPoint": [0.48, 0.46]},
+  {"personId": 106, "id": "vitor-belfort", "name": "Vitor Belfort", "source": "Vitor Belfort.png", "focalPoint": [0.5, 0.43]},
+  {"personId": 107, "id": "popo", "name": "Popó", "source": "Popó.png", "focalPoint": [0.5, 0.43]},
+  {"personId": 108, "id": "luciano-huck", "name": "Luciano Huck", "source": "Luciano Huck.png", "focalPoint": [0.55, 0.48]},
+  {"personId": 109, "id": "ratinho", "name": "Ratinho", "source": "Ratinho (Apresentador).png", "focalPoint": [0.5, 0.44]},
+  {"personId": 110, "id": "casimiro", "name": "Casimiro", "source": "Casemiro Miguel (Cazé).png", "focalPoint": [0.53, 0.48]},
+  {"personId": 111, "id": "whindersson-nunes", "name": "Whindersson Nunes", "source": "Whinderson Nunes.png", "focalPoint": [0.5, 0.44]},
+  {"personId": 112, "id": "bruno-gagliasso", "name": "Bruno Gagliasso", "source": "Bruno Gagliasso.png", "focalPoint": [0.56, 0.45]},
+  {"personId": 121, "id": "antonia-fontenelle", "name": "Antonia Fontenelle", "source": "Antonia Fontenelle.png", "focalPoint": [0.5, 0.42]},
+  {"personId": 125, "id": "gracyanne-barbosa", "name": "Gracyanne Barbosa", "source": "Graziele Barbosa.png", "focalPoint": [0.54, 0.45]},
+  {"personId": null, "id": "gabriela-prioli", "name": "Gabriela Prioli", "source": "Gabriela Prioli .png", "focalPoint": [0.5, 0.45], "status": "reserve"}
+]

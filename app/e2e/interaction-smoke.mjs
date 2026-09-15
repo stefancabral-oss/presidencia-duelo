@@ -28,15 +28,37 @@ const candidates = [
     summary: "Atuação política e liderança ligada ao Movimento Brasil Livre.",
     bio: "Perfil editorial de teste do segundo candidato.",
   },
+  {
+    personId: 101,
+    id: "anitta",
+    name: "Anitta",
+    displayName: "Anitta",
+    affiliation: "Cultura",
+    role: "Cantora e empresária",
+    office: "Artista",
+    summary: "Artista brasileira com projeção internacional.",
+    bio: "Perfil editorial de teste da terceira pessoa.",
+  },
+  {
+    personId: 102,
+    id: "neymar-jr",
+    name: "Neymar Jr.",
+    displayName: "Neymar Jr.",
+    affiliation: "Esporte",
+    role: "Jogador de futebol",
+    office: "Atleta",
+    summary: "Atleta brasileiro de projeção internacional.",
+    bio: "Perfil editorial de teste da quarta pessoa.",
+  },
 ];
 
 function ranking(decisions = 0) {
   return candidates.map((candidate, index) => ({
     ...candidate,
     elo: decisions ? (index ? 1484 : 1516) : 1500,
-    wins: decisions && !index ? 1 : 0,
+    wins: decisions && !index ? 3 : 0,
     losses: decisions && index ? 1 : 0,
-    decisions,
+    decisions: decisions ? (!index ? 3 : 1) : 0,
     winRate: decisions && !index ? 100 : 0,
   }));
 }
@@ -58,12 +80,13 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
   else if (path === "/api/ranking") body = { duels: 0, ranking: ranking() };
   else if (path === "/api/player" && request.method() === "POST") body = { recoveryKey: "e2e-recovery-key" };
   else if (path === "/api/player/state") body = { version: 0, duels: 0, ranking: ranking() };
-  else if (path === "/api/vote") {
+  else if (path === "/api/round-vote") {
     body = {
       duels: 1,
       ranking: ranking(1),
       player: { version: 1, duels: 1, ranking: ranking(1) },
-      vote: { winnerDelta: 16, zebra: false },
+      round: { winnerDelta: 45, zebra: false, comparisons: 3 },
+      vote: { winnerDelta: 45, zebra: false, comparisons: 3 },
     };
   } else {
     await route.fulfill({ status: 404, json: { error: "mock não encontrado" } });
@@ -75,25 +98,35 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
 try {
   await page.goto(appUrl, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: /Começar agora|Continuar escolhendo/ }).click();
-  await page.getByRole("button", { name: "Bora duelar" }).click();
+  await page.getByRole("button", { name: "Começar rodada" }).click();
   const mobileCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
     const box = card.getBoundingClientRect();
     return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };
   }));
-  if (mobileCards.length !== 2 || Math.abs(mobileCards[0].top - mobileCards[1].top) > 2 || mobileCards[1].left <= mobileCards[0].right) {
-    throw new Error("As duas cartas não ficaram lado a lado no viewport móvel");
+  if (mobileCards.length !== 4
+    || Math.abs(mobileCards[0].top - mobileCards[1].top) > 2
+    || Math.abs(mobileCards[2].top - mobileCards[3].top) > 2
+    || mobileCards[2].top <= mobileCards[0].bottom
+    || mobileCards[1].left <= mobileCards[0].right
+    || mobileCards[3].left <= mobileCards[2].right) {
+    throw new Error("As quatro cartas não ficaram organizadas em uma grade 2 por 2 no viewport móvel");
   }
   if (mobileCards.some(({ top, right, bottom, left }) => top < 0 || left < 0 || right > 390 || bottom > 844)) {
     throw new Error("Uma das cartas ficou cortada no viewport móvel");
   }
-  if (await page.locator(".basic-card").count() !== 2) throw new Error("A carta básica não foi aplicada aos dois perfis");
-  if (await page.locator(".candidate-summary").count() !== 2) throw new Error("O resumo deixou de fazer parte da carta básica");
+  const mobileWidths = mobileCards.map(({ left, right }) => right - left);
+  const mobileHeights = mobileCards.map(({ top, bottom }) => bottom - top);
+  if (Math.max(...mobileWidths) - Math.min(...mobileWidths) > 2 || Math.max(...mobileHeights) - Math.min(...mobileHeights) > 2) {
+    throw new Error("As quatro cartas não receberam a mesma exposição no viewport móvel");
+  }
+  if (await page.locator(".basic-card").count() !== 4) throw new Error("A carta básica não foi aplicada aos quatro perfis");
+  if (await page.locator(".candidate-summary").count() !== 4) throw new Error("O resumo deixou de fazer parte da carta básica");
   if (await page.locator(".candidate-summary").first().isVisible()) throw new Error("O resumo extenso deveria ficar reservado ao perfil no celular");
-  if (await page.locator(".candidate-profile-hint").count() !== 2) throw new Error("A dica de segurar deixou de fazer parte da carta básica");
+  if (await page.locator(".candidate-profile-hint").count() !== 4) throw new Error("A dica de segurar deixou de fazer parte da carta básica");
   if (await page.locator(".profile-button").count()) throw new Error("Um botão externo voltou a ocupar espaço junto à carta");
   for (const layer of [".card-material", ".card-facets", ".card-corners"]) {
-    if (await page.locator(`.candidate-card ${layer}`).count() !== 2) {
-      throw new Error(`A camada premium ${layer} não foi renderizada nas duas cartas`);
+    if (await page.locator(`.candidate-card ${layer}`).count() !== 4) {
+      throw new Error(`A camada premium ${layer} não foi renderizada nas quatro cartas`);
     }
   }
   if (process.env.POLIMATCH_E2E_DUEL_SCREENSHOT) {
@@ -118,14 +151,14 @@ try {
   await page.locator("dialog[open]").waitFor({ state: "hidden" });
 
   await firstCard.click();
-  await page.getByText(/confirmado · \+16 Elo/).waitFor();
+  await page.getByText(/confirmado · \+45 Elo/).waitFor();
   await page.getByRole("button", { name: "Ranking" }).click();
   await page.getByRole("heading", { name: "Ranking" }).waitFor();
-  await page.getByText("1 duelo confirmado").waitFor();
+  await page.getByText("1 escolha confirmada").waitFor();
   await page.getByText("Mais recusados").waitFor();
   const rejected = await page.locator(".ranking-highlight-rejected").innerText();
-  if (!rejected.includes("Renan Santos") || !rejected.includes("−1")) {
-    throw new Error("O voto negativo não apareceu no resumo do ranking");
+  if (!["Renan Santos", "Anitta", "Neymar Jr."].every((name) => rejected.includes(name)) || !rejected.includes("−1")) {
+    throw new Error("As três comparações negativas não apareceram no resumo do ranking");
   }
 
   await page.getByRole("button", { name: "Coleção" }).click();
@@ -180,8 +213,15 @@ try {
     const box = card.getBoundingClientRect();
     return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };
   }));
-  if (desktopCards.length !== 2 || Math.abs(desktopCards[0].top - desktopCards[1].top) > 2 || desktopCards[1].left <= desktopCards[0].right) {
-    throw new Error("As cartas não ficaram lado a lado no viewport desktop");
+  if (desktopCards.length !== 4
+    || desktopCards.some((card) => Math.abs(card.top - desktopCards[0].top) > 2)
+    || desktopCards.slice(1).some((card, index) => card.left <= desktopCards[index].right)) {
+    throw new Error("As quatro cartas não ficaram lado a lado no viewport desktop");
+  }
+  const desktopWidths = desktopCards.map(({ left, right }) => right - left);
+  const desktopHeights = desktopCards.map(({ top, bottom }) => bottom - top);
+  if (Math.max(...desktopWidths) - Math.min(...desktopWidths) > 2 || Math.max(...desktopHeights) - Math.min(...desktopHeights) > 2) {
+    throw new Error("As quatro cartas não receberam a mesma exposição no desktop");
   }
 
   await page.getByRole("button", { name: "Coleção" }).click();
@@ -204,7 +244,7 @@ try {
   }
 
   if (pageErrors.length) throw new Error(`Erros na página: ${pageErrors.join(" | ")}`);
-  console.log(`${browserName}: duelo, pressão longa e ranking validados`);
+  console.log(`${browserName}: rodada de quatro, pressão longa e ranking validados`);
 } catch (error) {
   console.error(await page.locator("body").innerText());
   console.error(`Erros capturados: ${pageErrors.join(" | ") || "nenhum"}`);

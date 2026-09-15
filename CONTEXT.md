@@ -12,7 +12,8 @@ PoliMatch é um jogo casual de comparação entre personalidades públicas. Não
 - Cards têm moldura facetada, fotografia dominante, marca pequena, raridade no canto e placa inferior clara.
 - Chromas ampliam luz, cor e materialidade progressivamente; o efeito prismático máximo é reservado à Chroma comemorativa.
 - O catálogo mestre tem 125 pessoas reconhecíveis: 100 nomes políticos e 25 influenciadores. Por decisão do usuário em 15/09/2026, os influenciadores com fotografia aprovada também participam da edição principal enquanto a edição independente ainda não existe.
-- O núcleo é escolha binária rápida: duas pessoas, um toque, resultado e próximo duelo.
+- O núcleo é uma rodada rápida de quatro pessoas: todas aparecem com a mesma exposição, um toque confirma uma única preferida e a rodada seguinte traz quatro novas opções.
+- Cada escolha gera três comparações auditáveis para o ranking — a escolhida vence as outras três — mas conta como uma única rodada para o jogador e para os indicadores de uso.
 - O menu de assuntos nasce pronto para expansão, mas somente `Eleições 2026` estará ativo na primeira edição; ela reúne todos os perfis com fotografia aprovada.
 - `Influenciadores` poderá ser uma edição independente futura, sem retirar essas personalidades da edição principal atual.
 - Escândalos e acontecimentos serão curadorias independentes, começando posteriormente por casos como Banco Master, Mensalão, INSS e 8 de Janeiro.
@@ -32,7 +33,7 @@ PoliMatch é um jogo casual de comparação entre personalidades públicas. Não
 - `stages/10_rebuild_eleicoes_2026/references/approved-art-direction/02_sistema_raridades.jpeg`
 - `stages/10_rebuild_eleicoes_2026/references/approved-art-direction/03_chroma_comemorativa.jpeg`
 
-Essas peças definem direção de arte, não dimensões literais da interface. A implementação deve preservar leitura, toque e dois cards completos em telas reais.
+Essas peças definem direção de arte, não dimensões literais da interface. A implementação deve preservar leitura, toque e as quatro cartas completas na mesma tela: grade 2 × 2 no celular e uma fileira de quatro no desktop.
 
 As explorações posteriores estão documentadas em `stages/10_rebuild_eleicoes_2026/references/ART_DIRECTION.md`. Elas podem fornecer textura editorial e inspiração para a revelação, mas não substituem a fonte de verdade.
 
@@ -61,9 +62,9 @@ Construir do zero um frontend coerente e testável para `Eleições 2026`, prese
 
 O programa só é considerado concluído quando:
 
-1. O usuário escolhe `Eleições 2026` e chega ao primeiro duelo sem ambiguidade.
-2. O duelo funciona sem regressão em iPhone e desktop.
-3. A pessoa pode entender quem é cada participante sem perder o duelo atual.
+1. O usuário escolhe `Eleições 2026` e chega à primeira rodada de quatro sem ambiguidade.
+2. As quatro cartas aparecem juntas, com a mesma exposição, sem exigir rolagem para decidir em iPhone e desktop.
+3. A pessoa pode entender quem é cada participante sem perder a rodada atual.
 4. O voto só produz resultado depois de confirmado pelo servidor.
 5. Ranking da edição, ranking pessoal e coleção têm papéis claramente separados.
 6. Cards básicos e revelação de Chroma passam por gate visual humano.

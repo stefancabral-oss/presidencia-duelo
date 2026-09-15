@@ -117,6 +117,22 @@ app.post("/api/vote", async (req, res) => {
   }
 });
 
+app.post("/api/round-vote", async (req, res) => {
+  const { roundId, winnerId, candidateIds, topicId, playerVersion } = req.body || {};
+  try {
+    res.json(await store.roundVote({
+      roundId,
+      winnerId: String(winnerId || ""),
+      candidateIds,
+      topicId: String(topicId || "eleicoes-2026"),
+      recoveryKey: recoveryKeyFrom(req),
+      playerVersion,
+    }));
+  } catch (err) {
+    sendError(res, err);
+  }
+});
+
 const migration = await store.init();
 console.log("PostgreSQL Eleições 2026 inicializado", migration);
 

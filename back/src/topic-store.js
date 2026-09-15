@@ -32,6 +32,23 @@ export function validateVote(topicId, winnerId, loserId) {
   return normalizedTopic;
 }
 
+export function validateRoundVote(topicId, winnerId, candidateIds) {
+  const normalizedTopic = validateTopic(topicId);
+  const ids = Array.isArray(candidateIds) ? candidateIds.map(String) : [];
+  const unique = new Set(ids);
+  if (
+    ids.length !== 4
+    || unique.size !== 4
+    || !unique.has(winnerId)
+    || ids.some((candidateId) => !candidateBelongsToTopic(candidateId, normalizedTopic))
+  ) {
+    const error = new Error("rodada inválida para este assunto");
+    error.status = 400;
+    throw error;
+  }
+  return { topic: normalizedTopic, candidateIds: ids };
+}
+
 export function normalizeVoteId(value, createId = randomUUID) {
   const voteId = String(value || createId()).trim().toLowerCase();
   if (!UUID_PATTERN.test(voteId)) {
@@ -92,6 +109,7 @@ async function createCleanSchema(client) {
   if (!applied.rowCount) {
     await client.query(`
       DROP TABLE IF EXISTS vote_reversals CASCADE;
+      DROP TABLE IF EXISTS choice_rounds CASCADE;
       DROP TABLE IF EXISTS votes CASCADE;
       DROP TABLE IF EXISTS player_states CASCADE;
       DROP TABLE IF EXISTS anonymous_players CASCADE;
@@ -161,6 +179,18 @@ async function createCleanSchema(client) {
       CHECK (winner_id <> loser_id)
     );
 
+    CREATE TABLE IF NOT EXISTS choice_rounds (
+      round_id uuid PRIMARY KEY,
+      player_id uuid REFERENCES anonymous_players(id) ON DELETE RESTRICT,
+      topic_id text NOT NULL REFERENCES ranking_pools(topic_id),
+      winner_id text NOT NULL,
+      candidate_ids text[] NOT NULL,
+      winner_delta integer NOT NULL,
+      zebra boolean NOT NULL DEFAULT false,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      CHECK (array_length(candidate_ids, 1) = 4)
+    );
+
     CREATE TABLE IF NOT EXISTS chroma_catalog (
       id text PRIMARY KEY,
       candidate_id text NOT NULL,
@@ -198,6 +228,7 @@ async function createCleanSchema(client) {
 
     CREATE INDEX IF NOT EXISTS votes_topic_created_idx ON votes (topic_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS votes_player_created_idx ON votes (player_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS choice_rounds_topic_created_idx ON choice_rounds (topic_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS chroma_catalog_release_idx ON chroma_catalog (topic_id, status, available_from, available_until);
 
     CREATE OR REPLACE FUNCTION reject_vote_mutation()
@@ -210,6 +241,11 @@ async function createCleanSchema(client) {
     DROP TRIGGER IF EXISTS votes_are_immutable ON votes;
     CREATE TRIGGER votes_are_immutable
       BEFORE UPDATE OR DELETE ON votes
+      FOR EACH ROW EXECUTE FUNCTION reject_vote_mutation();
+
+    DROP TRIGGER IF EXISTS choice_rounds_are_immutable ON choice_rounds;
+    CREATE TRIGGER choice_rounds_are_immutable
+      BEFORE UPDATE OR DELETE ON choice_rounds
       FOR EACH ROW EXECUTE FUNCTION reject_vote_mutation();
   `);
 
@@ -419,6 +455,116 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
           },
           player: personal,
         };
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
+
+    async roundVote({ topicId, winnerId, candidateIds, roundId: requestedRoundId, recoveryKey, playerVersion }) {
+      const validated = validateRoundVote(topicId, winnerId, candidateIds);
+      const topic = validated.topic;
+      const roundCandidates = validated.candidateIds;
+      const sortedCandidates = [...roundCandidates].sort();
+      const loserIds = roundCandidates.filter((candidateId) => candidateId !== winnerId);
+      const roundId = normalizeVoteId(requestedRoundId);
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const player = recoveryKey ? await findPlayer(client, recoveryKey) : null;
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [roundId]);
+        const previous = await client.query(
+          "SELECT topic_id, winner_id, candidate_ids, player_id, winner_delta, zebra FROM choice_rounds WHERE round_id = $1",
+          [roundId],
+        );
+        if (previous.rowCount) {
+          const row = previous.rows[0];
+          const sameCandidates = JSON.stringify([...row.candidate_ids].sort()) === JSON.stringify(sortedCandidates);
+          if (row.topic_id !== topic || row.winner_id !== winnerId || !sameCandidates || (row.player_id || null) !== (player?.id || null)) {
+            const error = new Error("roundId já utilizado com outra escolha");
+            error.status = 409;
+            throw error;
+          }
+          const global = await selectRanking(client, topic);
+          const personal = player ? await selectRanking(client, topic, { playerId: player.id }) : null;
+          await client.query("COMMIT");
+          const round = {
+            id: roundId,
+            status: "alreadyProcessed",
+            winnerDelta: Number(row.winner_delta),
+            zebra: Boolean(row.zebra),
+            comparisons: 3,
+          };
+          return { ...global, round, vote: round, player: personal };
+        }
+
+        await client.query("SELECT duels FROM ranking_pools WHERE topic_id = $1 FOR UPDATE", [topic]);
+        const globalRows = await client.query(
+          "SELECT candidate_id, rating FROM ranking_stats WHERE topic_id = $1 AND candidate_id = ANY($2::text[]) FOR UPDATE",
+          [topic, roundCandidates],
+        );
+        const globalRatings = new Map(globalRows.rows.map((row) => [row.candidate_id, Number(row.rating)]));
+        if (roundCandidates.some((candidateId) => !Number.isFinite(globalRatings.get(candidateId)))) throw new Error("ranking não inicializado");
+
+        let winnerDelta = 0;
+        let zebra = false;
+        const comparisons = [];
+        for (const loserId of loserIds) {
+          const winnerRating = globalRatings.get(winnerId);
+          const loserRating = globalRatings.get(loserId);
+          const deltas = ratingDeltas(winnerRating, loserRating);
+          const pairZebra = isZebra(winnerRating, loserRating);
+          winnerDelta += deltas.winnerDelta;
+          zebra ||= pairZebra;
+          globalRatings.set(winnerId, winnerRating + deltas.winnerDelta);
+          globalRatings.set(loserId, loserRating + deltas.loserDelta);
+          comparisons.push({ loserId, winnerRating, loserRating, ...deltas, zebra: pairZebra });
+          await client.query("UPDATE ranking_stats SET rating = rating + $3, wins = wins + 1, zebras = zebras + $4 WHERE topic_id = $1 AND candidate_id = $2", [topic, winnerId, deltas.winnerDelta, pairZebra ? 1 : 0]);
+          await client.query("UPDATE ranking_stats SET rating = rating + $3, losses = losses + 1 WHERE topic_id = $1 AND candidate_id = $2", [topic, loserId, deltas.loserDelta]);
+        }
+        await client.query("UPDATE ranking_pools SET duels = duels + 1 WHERE topic_id = $1", [topic]);
+
+        if (player) {
+          const personalPool = await client.query("SELECT version FROM player_pools WHERE player_id = $1 AND topic_id = $2 FOR UPDATE", [player.id, topic]);
+          const currentVersion = Number(personalPool.rows[0]?.version) || 0;
+          assertPlayerVersion(playerVersion, currentVersion);
+          const personalRows = await client.query(
+            "SELECT candidate_id, rating FROM player_stats WHERE player_id = $1 AND topic_id = $2 AND candidate_id = ANY($3::text[]) FOR UPDATE",
+            [player.id, topic, roundCandidates],
+          );
+          const personalRatings = new Map(personalRows.rows.map((row) => [row.candidate_id, Number(row.rating)]));
+          if (roundCandidates.some((candidateId) => !Number.isFinite(personalRatings.get(candidateId)))) throw new Error("ranking pessoal não inicializado");
+          for (const loserId of loserIds) {
+            const personalWinnerRating = personalRatings.get(winnerId);
+            const personalLoserRating = personalRatings.get(loserId);
+            const personalDelta = ratingDeltas(personalWinnerRating, personalLoserRating);
+            personalRatings.set(winnerId, personalWinnerRating + personalDelta.winnerDelta);
+            personalRatings.set(loserId, personalLoserRating + personalDelta.loserDelta);
+            await client.query("UPDATE player_stats SET rating = rating + $4, wins = wins + 1 WHERE player_id = $1 AND topic_id = $2 AND candidate_id = $3", [player.id, topic, winnerId, personalDelta.winnerDelta]);
+            await client.query("UPDATE player_stats SET rating = rating + $4, losses = losses + 1 WHERE player_id = $1 AND topic_id = $2 AND candidate_id = $3", [player.id, topic, loserId, personalDelta.loserDelta]);
+          }
+          await client.query("UPDATE player_pools SET version = version + 1, duels = duels + 1 WHERE player_id = $1 AND topic_id = $2", [player.id, topic]);
+          await client.query("UPDATE anonymous_players SET last_seen_at = now() WHERE id = $1", [player.id]);
+        }
+
+        for (const comparison of comparisons) {
+          await client.query(
+            `INSERT INTO votes (vote_id, player_id, topic_id, winner_id, loser_id, winner_rating_before, loser_rating_before, winner_delta, loser_delta, zebra)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+            [randomUUID(), player?.id || null, topic, winnerId, comparison.loserId, comparison.winnerRating, comparison.loserRating, comparison.winnerDelta, comparison.loserDelta, comparison.zebra],
+          );
+        }
+        await client.query(
+          "INSERT INTO choice_rounds (round_id, player_id, topic_id, winner_id, candidate_ids, winner_delta, zebra) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+          [roundId, player?.id || null, topic, winnerId, sortedCandidates, winnerDelta, zebra],
+        );
+        const global = await selectRanking(client, topic);
+        const personal = player ? await selectRanking(client, topic, { playerId: player.id }) : null;
+        await client.query("COMMIT");
+        const round = { id: roundId, status: "created", winnerDelta, zebra, comparisons: 3 };
+        return { ...global, round, vote: round, player: personal };
       } catch (error) {
         await client.query("ROLLBACK");
         throw error;

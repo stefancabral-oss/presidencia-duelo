@@ -76,6 +76,39 @@ const influencerVote = await restartedStore.vote({
 assert.equal(influencerVote.vote.status, "created");
 assert.equal(influencerVote.player.version, 2);
 assert.equal(influencerVote.player.ranking.length, 54);
+
+const roundId = randomUUID();
+const round = await restartedStore.roundVote({
+  topicId: "eleicoes-2026",
+  winnerId: "anitta",
+  candidateIds: ["lula", "jair-bolsonaro", "anitta", "neymar-jr"],
+  roundId,
+  recoveryKey,
+  playerVersion: 2,
+});
+assert.equal(round.round.status, "created");
+assert.equal(round.round.comparisons, 3);
+assert.equal(round.duels, 3);
+assert.equal(round.player.version, 3);
+assert.equal(round.player.duels, 3);
+assert.equal(round.ranking.find(({ id }) => id === "anitta").wins, 4);
+
+const repeatedRound = await restartedStore.roundVote({
+  topicId: "eleicoes-2026",
+  winnerId: "anitta",
+  candidateIds: ["neymar-jr", "anitta", "jair-bolsonaro", "lula"],
+  roundId,
+  recoveryKey,
+  playerVersion: 2,
+});
+assert.equal(repeatedRound.round.status, "alreadyProcessed");
+assert.equal(repeatedRound.duels, 3);
+
+const auditPool = new pg.Pool({ connectionString });
+const audit = await auditPool.query("SELECT (SELECT count(*) FROM votes) AS comparisons, (SELECT count(*) FROM choice_rounds) AS rounds");
+assert.equal(Number(audit.rows[0].comparisons), 5);
+assert.equal(Number(audit.rows[0].rounds), 1);
+await auditPool.end();
 await restartedStore.close();
 
-console.log("Smoke PostgreSQL aprovado: reset único, jogador antigo, backfill, voto idempotente e rankings persistentes.");
+console.log("Smoke PostgreSQL aprovado: reset único, jogador antigo, backfill, rodada de quatro idempotente e rankings persistentes.");

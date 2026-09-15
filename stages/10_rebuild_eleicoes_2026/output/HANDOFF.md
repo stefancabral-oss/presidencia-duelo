@@ -2,11 +2,11 @@
 
 ## Status
 
-Estado: hotfix de compatibilidade em validação
+Estado: rodada principal de quatro cartas em validação
 
-- Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/141
-- Pull Request: https://github.com/stefancabral-oss/presidencia-duelo/pull/142
-- Commit da entrega: `d37f3ae5670e51eb999eec007433bc3895ccd71e`
+- Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/143
+- Pull Request: a criar após o commit validado
+- Commit da entrega: a registrar após o commit validado
 
 ## Entregue
 
@@ -86,6 +86,11 @@ Estado: hotfix de compatibilidade em validação
 - A página inicial foi reconstruída com o fluxo de design do Sites: proposta do produto, chamadas claras para rodada e ranking, edição ativa, explicação em três passos e próxima edição.
 - A vitrine principal usa quatro cartas básicas com exposição rigorosamente igual para Janja, Michelle Bolsonaro, Lula e Jair Bolsonaro; nenhuma delas é apresentada como Chroma especial.
 - O QA responsivo confirmou a página inicial em 390 × 844 e 1280 × 900, sem overflow horizontal, imagens quebradas ou erros no console; os dois acessos à rodada e o acesso ao ranking foram exercitados.
+- A rodada principal agora apresenta quatro cartas simultâneas e com a mesma exposição: grade 2 × 2 no celular e uma fileira de quatro no desktop.
+- Um único toque escolhe a preferida, compara essa pessoa com as outras três para o Elo e abre uma nova rodada com quatro opções; a ação `Nenhuma destas` troca o grupo inteiro sem votar.
+- O backend preserva uma rodada imutável e três comparações auditáveis, com idempotência por `roundId`; os indicadores de uso e a versão pessoal avançam apenas uma vez por escolha.
+- O texto essencial passou a ficar sobre a própria foto no celular. A pressão longa continua abrindo o perfil completo sem criar botões que disputem espaço com a carta.
+- Chromium e WebKit validaram as quatro cartas inteiras em 390 × 844, dimensões iguais, pressão longa, escolha, ranking e disposição em quatro colunas a 1280 × 900.
 
 ## Pendente
 
@@ -102,4 +107,4 @@ Estado: hotfix de compatibilidade em validação
 
 ## Human gate
 
-Status: usuário autorizou em 15/09/2026 a liberação dos 54 perfis; o hotfix de compatibilidade para jogadores anteriores está no PR #142.
+Status: usuário autorizou em 15/09/2026 a liberação dos 54 perfis e pediu a substituição do duelo binário por uma rodada de quatro cartas; implementação vinculada à Issue #143 aguarda PR e publicação.

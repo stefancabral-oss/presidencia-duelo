@@ -1,6 +1,6 @@
 import "./styles.css";
-import { createPlayer, loadCandidates, loadPlayerRanking, loadRanking, submitVote } from "./api.js";
-import { catalogForTopic, displayRanking, filterRanking, initials, nextBalancedPair, rankingForCatalog, rankingHighlights, shortName, voteFeedback } from "./domain.js";
+import { createPlayer, loadCandidates, loadPlayerRanking, loadRanking, submitRoundVote } from "./api.js";
+import { catalogForTopic, displayRanking, filterRanking, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, shortName, voteFeedback } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
 import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
@@ -10,9 +10,9 @@ const app = document.querySelector("#app");
 const state = {
   screen: "topics",
   candidates: [],
-  pair: [],
+  round: [],
   matchQueue: [],
-  previousPair: [],
+  previousRound: [],
   ranking: [],
   personalRanking: [],
   globalDuels: 0,
@@ -174,10 +174,11 @@ function topicsScreen() {
 
 function duelScreen() {
   return `<main class="screen duel-screen">
-    <div class="duel-head"><div><p class="eyebrow">Eleições 2026</p><h1>Quem você prefere?</h1></div><span class="progress-pill">${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}</span></div>
+    <div class="duel-head"><div><p class="eyebrow">Escolha uma entre quatro</p><h1>Quem você prefere?</h1></div><span class="progress-pill">${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}</span></div>
     ${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}
-    <div class="arena">${card(state.pair[0])}<span class="versus">OU</span>${card(state.pair[1])}</div>
-    <button class="skip-button" type="button" id="skip-pair">Não sei · mostrar outra dupla</button>
+    <p class="round-instruction">Toque na sua preferida. Segure para conhecer o perfil.</p>
+    <div class="arena arena-four">${state.round.map(card).join("")}</div>
+    <button class="skip-button" type="button" id="skip-round">Nenhuma destas · trocar as quatro</button>
   </main>`;
 }
 
@@ -192,10 +193,10 @@ function rankingScreen() {
   const rows = visible.map((person) => `<button class="ranking-row" type="button" data-profile="${escapeHtml(person.id)}"><strong class="rank-position">${person.displayRank ?? "—"}</strong><span class="rank-person">${escapeHtml(person.displayName || shortName(person.name))}<small>${escapeHtml(person.affiliation || person.party || candidateRole(person))}</small>${person.decisions ? `<span class="vote-counts"><b class="vote-positive">+ ${person.wins} escolhido${person.wins === 1 ? "" : "s"}</b><b class="vote-negative">− ${person.losses} recusado${person.losses === 1 ? "" : "s"}</b></span>` : '<span class="not-played">Ainda sem duelos</span>'}</span><strong class="rank-score">${person.decisions ? `${person.winRate}%<small>${person.elo} Elo</small>` : "—"}</strong></button>`).join("");
   const podiumCards = podium.map((person, index) => `<button class="podium-card podium-${index + 1}" type="button" data-profile="${escapeHtml(person.id)}"><span>${index + 1}º</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><small>${person.winRate}%</small></button>`).join("");
   const highlightColumn = (title, type, people) => `<section class="ranking-highlight ranking-highlight-${type}"><p>${title}</p>${people.length ? people.map((person, index) => `<button type="button" data-profile="${escapeHtml(person.id)}"><span>${index + 1}</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><b>${type === "chosen" ? `+${person.wins}` : `−${person.losses}`}</b></button>`).join("") : '<small>Aguardando duelos</small>'}</section>`;
-  const publicPulse = !personal && (highlights.chosen.length || highlights.rejected.length) ? `<section class="public-pulse" aria-label="Resumo dos votos"><div class="section-title"><span>Placar do público</span><small>cada duelo soma uma escolha e uma recusa</small></div><div class="pulse-grid">${highlightColumn("Mais escolhidos", "chosen", highlights.chosen)}${highlightColumn("Mais recusados", "rejected", highlights.rejected)}</div></section>` : "";
+  const publicPulse = !personal && (highlights.chosen.length || highlights.rejected.length) ? `<section class="public-pulse" aria-label="Resumo dos votos"><div class="section-title"><span>Placar do público</span><small>cada rodada compara a escolhida com as outras três</small></div><div class="pulse-grid">${highlightColumn("Mais escolhidos", "chosen", highlights.chosen)}${highlightColumn("Mais recusados", "rejected", highlights.rejected)}</div></section>` : "";
   const empty = state.rankingQuery ? "Nenhum nome encontrado." : personal ? "Faça uma escolha para começar seu ranking pessoal." : "Ainda não há resultados confirmados.";
   const reveal = !state.rankingQuery && !state.rankingExpanded && filtered.length > visible.length ? `<button class="secondary reveal-ranking" id="reveal-ranking" type="button">Ver ranking completo (${filtered.length})</button>` : "";
-  return `<main class="screen ranking-screen"><header class="ranking-heading"><p class="eyebrow">Eleições 2026</p><h1>Ranking</h1><p>${personal ? "O retrato das comparações que você fez." : "O placar vivo das escolhas do público."}</p><strong>${totalDuels} ${totalDuels === 1 ? "duelo confirmado" : "duelos confirmados"}</strong></header>${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}<div class="segmented" aria-label="Tipo de ranking"><button class="${personal ? "" : "active"}" data-ranking-view="general">Geral</button><button class="${personal ? "active" : ""}" data-ranking-view="personal">Seu ranking</button></div>${publicPulse}${podiumCards ? `<section class="podium" aria-label="Pódio">${podiumCards}</section>` : ""}<label class="ranking-search"><span>Todos os nomes</span><input id="ranking-search" type="search" value="${escapeHtml(state.rankingQuery)}" placeholder="Buscar nome ou partido" autocomplete="off"></label><section class="panel ranking-list">${rows || `<p class="empty">${empty}</p>`}</section>${reveal}<button class="primary continue-duels" id="continue-duels" type="button">Voltar aos duelos</button></main>`;
+  return `<main class="screen ranking-screen"><header class="ranking-heading"><p class="eyebrow">Eleições 2026</p><h1>Ranking</h1><p>${personal ? "O retrato das comparações que você fez." : "O placar vivo das escolhas do público."}</p><strong>${totalDuels} ${totalDuels === 1 ? "escolha confirmada" : "escolhas confirmadas"}</strong></header>${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}<div class="segmented" aria-label="Tipo de ranking"><button class="${personal ? "" : "active"}" data-ranking-view="general">Geral</button><button class="${personal ? "active" : ""}" data-ranking-view="personal">Seu ranking</button></div>${publicPulse}${podiumCards ? `<section class="podium" aria-label="Pódio">${podiumCards}</section>` : ""}<label class="ranking-search"><span>Todos os nomes</span><input id="ranking-search" type="search" value="${escapeHtml(state.rankingQuery)}" placeholder="Buscar nome ou partido" autocomplete="off"></label><section class="panel ranking-list">${rows || `<p class="empty">${empty}</p>`}</section>${reveal}<button class="primary continue-duels" id="continue-duels" type="button">Voltar às escolhas</button></main>`;
 }
 
 function collectionScreen() {
@@ -241,7 +242,7 @@ function connectionScreen() {
 
 function coachOverlay() {
   if (!state.showCoach) return "";
-  return `<div class="coach-overlay" role="dialog" aria-modal="true" aria-labelledby="coach-title"><section class="coach-card"><span class="coach-icon" aria-hidden="true">${brandSymbol("coach-symbol")}</span><p class="eyebrow">Primeiro duelo</p><h2 id="coach-title">É só escolher.</h2><p>Toque em quem você prefere. Segure uma carta para conhecer melhor a pessoa. Se não souber, pode trocar a dupla.</p><button class="primary" id="dismiss-coach" type="button">Bora duelar</button></section></div>`;
+  return `<div class="coach-overlay" role="dialog" aria-modal="true" aria-labelledby="coach-title"><section class="coach-card"><span class="coach-icon" aria-hidden="true">${brandSymbol("coach-symbol")}</span><p class="eyebrow">Primeira rodada</p><h2 id="coach-title">Escolha uma entre quatro.</h2><p>Toque na sua preferida. Segure qualquer carta para conhecer a pessoa. Se nenhuma fizer sentido, troque as quatro.</p><button class="primary" id="dismiss-coach" type="button">Começar rodada</button></section></div>`;
 }
 
 function render() {
@@ -265,7 +266,7 @@ function showProfile(id) {
     const label = typeof source === "string" ? "Fonte" : source.label || source.publisher || "Fonte";
     return href ? `<li><a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a></li>` : "";
   }).join("");
-  const canVote = state.screen === "duel" && state.pair.some((candidate) => candidate.id === person.id) && !state.busy;
+  const canVote = state.screen === "duel" && state.round.some((candidate) => candidate.id === person.id) && !state.busy;
   modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar resumo">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2>${escapeHtml(person.name)}</h2><p class="profile-role"><strong>${escapeHtml(candidateRole(person))}</strong></p>${metadata.length ? `<p class="profile-meta">${metadata.map(escapeHtml).join(" · ")}</p>` : ""}${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions">${canVote ? `<button class="primary" id="vote-from-profile" data-candidate="${escapeHtml(person.id)}" type="button">Escolher esta pessoa</button>` : ""}<button class="secondary" id="close-modal" type="button">Voltar ao duelo</button></div>`;
   modal.showModal();
   modal.addEventListener("close", () => document.querySelectorAll(".candidate-card.is-peeking").forEach((cardElement) => cardElement.classList.remove("is-peeking")), { once: true });
@@ -281,31 +282,30 @@ function showProfile(id) {
   });
 }
 
-function chooseNextPair() {
-  state.previousPair = state.pair.map(({ id }) => id);
-  const next = nextBalancedPair(state.candidates, state.matchQueue, state.previousPair);
-  state.pair = next.pair;
+function chooseNextRound() {
+  state.previousRound = state.round.map(({ id }) => id);
+  const next = nextBalancedGroup(state.candidates, state.matchQueue, state.previousRound);
+  state.round = next.group;
   state.matchQueue = next.queue;
 }
 
 function enterDuel() {
   state.screen = "duel";
-  state.showCoach = localStorage.getItem("polimatch:v3:duel-coach") !== "seen";
+  state.showCoach = localStorage.getItem("polimatch:v4:round-coach") !== "seen";
   render();
 }
 
 async function vote(winnerId) {
   if (state.busy) return;
-  const winner = state.pair.find(({ id }) => id === winnerId);
-  const loser = state.pair.find(({ id }) => id !== winnerId);
-  if (!winner || !loser) return;
+  const winner = state.round.find(({ id }) => id === winnerId);
+  if (!winner || state.round.length !== 4) return;
   state.busy = true;
   state.selectedId = winner.id;
   clearTimeout(resultTimer);
   state.result = "Confirmando sua escolha…";
   render();
   try {
-    const response = await submitVote(winner.id, loser.id, "eleicoes-2026", {
+    const response = await submitRoundVote(winner.id, state.round.map(({ id }) => id), "eleicoes-2026", {
       recoveryKey: state.recoveryKey,
       version: state.playerVersion,
     });
@@ -320,7 +320,7 @@ async function vote(winnerId) {
       zebra: response.vote?.zebra,
       winRate: ranked?.winRate,
     });
-    chooseNextPair();
+    chooseNextRound();
     state.busy = false;
     state.selectedId = "";
     render();
@@ -344,9 +344,9 @@ function bindEvents() {
   document.querySelector("#start-election-secondary")?.addEventListener("click", enterDuel);
   document.querySelector("#open-ranking")?.addEventListener("click", () => { state.screen = "ranking"; state.result = ""; render(); });
   document.querySelector("#continue-duels")?.addEventListener("click", () => { state.result = ""; enterDuel(); });
-  document.querySelector("#skip-pair")?.addEventListener("click", () => { state.result = ""; chooseNextPair(); render(); });
+  document.querySelector("#skip-round")?.addEventListener("click", () => { state.result = ""; chooseNextRound(); render(); });
   document.querySelector("#dismiss-coach")?.addEventListener("click", () => {
-    localStorage.setItem("polimatch:v3:duel-coach", "seen");
+    localStorage.setItem("polimatch:v4:round-coach", "seen");
     state.showCoach = false;
     render();
   });
@@ -411,15 +411,15 @@ async function initialize() {
   try {
     const [candidates, snapshot, player] = await Promise.all([loadCandidates(), loadRanking(), ensurePlayer()]);
     state.candidates = catalogForTopic(candidates);
-    if (state.candidates.length < 2) throw new Error("O elenco ainda não está disponível");
+    if (state.candidates.length < 4) throw new Error("O elenco ainda não está disponível");
     state.ranking = rankingForCatalog(snapshot, state.candidates);
     state.globalDuels = Number(snapshot.duels) || 0;
     state.recoveryKey = player.recoveryKey;
     state.playerVersion = player.personal.version;
     state.personalRanking = rankingForCatalog(player.personal, state.candidates);
     state.personalDuels = Number(player.personal.duels) || 0;
-    const firstMatch = nextBalancedPair(state.candidates);
-    state.pair = firstMatch.pair;
+    const firstMatch = nextBalancedGroup(state.candidates);
+    state.round = firstMatch.group;
     state.matchQueue = firstMatch.queue;
     state.ready = true;
   } catch (error) {

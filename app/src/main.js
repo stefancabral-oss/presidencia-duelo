@@ -234,9 +234,9 @@ function collectionScreen() {
 
 function nav() {
   return `<nav class="bottom-nav" aria-label="Navegação principal">
-    <button class="nav-button ${state.screen === "topics" || state.screen === "duel" ? "active" : ""}" data-screen="topics">Duelos</button>
+    <button class="nav-button ${state.screen === "topics" ? "active" : ""}" data-screen="topics">Início</button>
+    <button class="nav-button ${state.screen === "duel" ? "active" : ""}" data-screen="duel">Duelo</button>
     <button class="nav-button ${state.screen === "ranking" ? "active" : ""}" data-screen="ranking">Ranking</button>
-    <button class="nav-button ${state.screen === "collection" ? "active" : ""}" data-screen="collection">Coleção</button>
   </nav>`;
 }
 
@@ -398,7 +398,16 @@ function bindEvents() {
     },
   }));
   document.querySelectorAll("[data-profile]").forEach((button) => button.addEventListener("click", () => showProfile(button.dataset.profile)));
-  document.querySelectorAll("[data-screen]").forEach((button) => button.addEventListener("click", () => { sound.play("navigation"); state.screen = button.dataset.screen; state.result = ""; render(); }));
+  document.querySelectorAll("[data-screen]").forEach((button) => button.addEventListener("click", () => {
+    if (button.dataset.screen === "duel") {
+      enterDuel();
+      return;
+    }
+    sound.play("navigation");
+    state.screen = button.dataset.screen;
+    state.result = "";
+    render();
+  }));
   document.querySelectorAll("[data-ranking-view]").forEach((button) => button.addEventListener("click", () => { sound.play("navigation"); state.rankingView = button.dataset.rankingView; state.rankingQuery = ""; state.rankingExpanded = false; render(); }));
   if (state.screen === "collection") installChromaMotion(document);
   document.querySelector("#enable-chroma-motion")?.addEventListener("click", async (event) => {

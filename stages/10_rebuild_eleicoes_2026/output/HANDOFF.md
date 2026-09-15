@@ -8,6 +8,7 @@ Estado: rodada principal de quatro cartas e endurecimento técnico publicados; g
 - Pull Request principal: https://github.com/stefancabral-oss/presidencia-duelo/pull/144
 - Correções da revisão: https://github.com/stefancabral-oss/presidencia-duelo/issues/145
 - Pull Request das correções: https://github.com/stefancabral-oss/presidencia-duelo/pull/146
+- Identidade sonora: https://github.com/stefancabral-oss/presidencia-duelo/issues/151
 - Commit das correções validadas e publicado: `86e071b`
 - Commit da implementação principal publicado: `bceac93`
 - Evidência pública sanitizada: `four-card-production-verification.md`
@@ -32,6 +33,7 @@ Estado: rodada principal de quatro cartas e endurecimento técnico publicados; g
 - Novas Chromas poderão ser publicadas continuamente sem interferir no ranking.
 - Smoke real em PostgreSQL temporário comprovou reset único, persistência após reinício, voto idempotente e rankings geral/pessoal.
 - O duelo é contínuo; nenhuma quantidade de escolhas redireciona automaticamente para o ranking.
+- A interface possui sons neutros para entrada, navegação, perfil, escolha, confirmação, troca de rodada e erro; todos são sintetizados localmente, só começam após interação e podem ser desligados por um controle persistente no cabeçalho.
 - A ficha educativa aceita biografia, dados-chave e fontes revisáveis; campos ausentes aparecem como revisão pendente, sem conteúdo inventado.
 - Rankings não atribuem posição ou `0%` enganoso a pessoas que ainda não participaram de duelos.
 - Teste mobile real em 390 × 844 validou cinco escolhas contínuas sem abertura automática do ranking, feedback de `+Elo`, pressão longa abrindo a ficha sem votar e ausência de erros no navegador.

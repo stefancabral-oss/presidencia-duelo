@@ -97,6 +97,14 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
 
 try {
   await page.goto(appUrl, { waitUntil: "networkidle" });
+  const soundToggle = page.getByRole("button", { name: "Desativar efeitos sonoros" });
+  await soundToggle.waitFor();
+  if (await soundToggle.getAttribute("aria-pressed") !== "true") throw new Error("O som não iniciou disponível para a primeira interação");
+  await soundToggle.click();
+  if (await page.getByRole("button", { name: "Ativar efeitos sonoros" }).getAttribute("aria-pressed") !== "false") throw new Error("O controle não desligou os efeitos sonoros");
+  if (await page.evaluate(() => localStorage.getItem("polimatch:sound")) !== "off") throw new Error("A preferência de som desligado não foi persistida");
+  await page.getByRole("button", { name: "Ativar efeitos sonoros" }).click();
+  if (await page.evaluate(() => localStorage.getItem("polimatch:sound")) !== "on") throw new Error("A preferência de som ligado não foi persistida");
   await page.getByRole("button", { name: /Começar agora|Continuar escolhendo/ }).click();
   await page.getByRole("button", { name: "Começar rodada" }).click();
   const mobileCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {

@@ -5,8 +5,8 @@
 Estado: rodada principal de quatro cartas em validação
 
 - Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/143
-- Pull Request: a criar após o commit validado
-- Commit da entrega: a registrar após o commit validado
+- Pull Request: https://github.com/stefancabral-oss/presidencia-duelo/pull/144
+- Commit da implementação validada: `cc6fea7`
 
 ## Entregue
 

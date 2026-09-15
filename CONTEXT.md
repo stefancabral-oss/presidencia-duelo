@@ -11,10 +11,10 @@ PoliMatch é um jogo casual de comparação entre personalidades públicas. Não
 - O shell usa malaquita escura; porcelana aparece em placas de nome e superfícies editoriais; ouro indica progresso e raridade.
 - Cards têm moldura facetada, fotografia dominante, marca pequena, raridade no canto e placa inferior clara.
 - Chromas ampliam luz, cor e materialidade progressivamente; o efeito prismático máximo é reservado à Chroma comemorativa.
-- O catálogo mestre tem 125 pessoas reconhecíveis: 100 nomes políticos em `Eleições 2026` e 25 influenciadores preparados para o assunto seguinte.
+- O catálogo mestre tem 125 pessoas reconhecíveis: 100 nomes políticos e 25 influenciadores. Por decisão do usuário em 15/09/2026, os influenciadores com fotografia aprovada também participam da edição principal enquanto a edição independente ainda não existe.
 - O núcleo é escolha binária rápida: duas pessoas, um toque, resultado e próximo duelo.
-- O menu de assuntos nasce pronto para expansão, mas somente `Eleições 2026` estará ativo na primeira edição.
-- `Influenciadores` será a segunda edição.
+- O menu de assuntos nasce pronto para expansão, mas somente `Eleições 2026` estará ativo na primeira edição; ela reúne todos os perfis com fotografia aprovada.
+- `Influenciadores` poderá ser uma edição independente futura, sem retirar essas personalidades da edição principal atual.
 - Escândalos e acontecimentos serão curadorias independentes, começando posteriormente por casos como Banco Master, Mensalão, INSS e 8 de Janeiro.
 - Cada pessoa terá perfil educativo, fontes e contexto suficientes para uma escolha informada.
 - Existirão ranking da edição e ranking pessoal. Ranking geral entre assuntos só será exibido quando houver mais de um assunto ativo.
@@ -53,7 +53,7 @@ Construir do zero um frontend coerente e testável para `Eleições 2026`, prese
 
 - SSO real e escolha de provedor OIDC.
 - Migração de banco motivada apenas por autenticação.
-- Construção das edições `Influenciadores` e `Escândalos`.
+- Construção das edições independentes `Influenciadores` e `Escândalos`.
 - Manipulação de ranking para favorecer qualquer pessoa.
 - Reescrita desnecessária do backend que não seja exigida pelo frontend.
 

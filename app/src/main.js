@@ -151,7 +151,7 @@ function topicsScreen() {
         <div><p class="eyebrow">Edição disponível</p><h2 id="home-topic-title">Eleições 2026</h2></div>
         <span class="home-live"><i aria-hidden="true"></i> no ar</span>
       </div>
-      <p>Compare apenas pessoas que já passaram pelo gate de fotografia. Segure qualquer carta para conhecer o perfil completo antes de escolher.</p>
+      <p>Compare políticos e influenciadores que já passaram pelo gate de fotografia. Segure qualquer carta para conhecer o perfil completo antes de escolher.</p>
       <button class="home-topic-cta" type="button" id="start-election-secondary"><span>Entrar na rodada</span><b aria-hidden="true">→</b></button>
     </section>
 
@@ -164,9 +164,9 @@ function topicsScreen() {
       </ol>
     </section>
 
-    <section class="home-next" aria-label="Próximas edições">
-      <p class="eyebrow">A seguir</p>
-      <div><strong>Influenciadores</strong><span>14 perfis já preparados</span><small>Em breve</small></div>
+    <section class="home-next" aria-label="Perfis disponíveis nesta edição">
+      <p class="eyebrow">Todos no ar</p>
+      <div><strong>Políticos + influenciadores</strong><span>54 perfis com foto aprovada</span><small>Disponível</small></div>
     </section>
     <p class="legal-note home-legal">Experiência lúdica de opinião. Não constitui pesquisa eleitoral.</p>
   </main>`;

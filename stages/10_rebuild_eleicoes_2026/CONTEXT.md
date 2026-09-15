@@ -7,7 +7,7 @@ Substituir o frontend anterior por uma fundação limpa para a edição `Eleiç�
 ## Entradas aprovadas
 
 - Frontend anterior rejeitado.
-- Primeira edição com 125 pessoas após curadoria: 100 nomes políticos e 25 influenciadores.
+- Catálogo com 125 pessoas após curadoria: 100 nomes políticos e 25 influenciadores; a edição principal expõe somente quem já tem fotografia aprovada, independentemente do grupo.
 - Gate visual antes da publicação das fotografias tratadas.
 - Menu preparado para assuntos futuros.
 - Duelo, educação, ranking e coleção formam o núcleo.
@@ -23,14 +23,14 @@ Substituir o frontend anterior por uma fundação limpa para a edição `Eleiç�
 - Criar shell novo e independente.
 - Implementar a navegação mínima da edição.
 - Criar estados de assunto, duelo, perfil, ranking e coleção com o catálogo novo.
-- Importar 100 nomes políticos em `Eleições 2026` e preparar 25 influenciadores para o assunto seguinte.
+- Importar 100 nomes políticos e preparar 25 influenciadores; por decisão posterior do usuário, incluir na edição principal todos os perfis que já tenham fotografia aprovada.
 - Preservar as 1.500 Chromas recebidas como rascunho separado da carta padrão.
 - Manter acessibilidade e responsividade desde a fundação.
 
 ## Fora de escopo
 
 - Tratamento das 375 fotografias-fonte.
-- Edições Influenciadores e Escândalos.
+- Edições independentes Influenciadores e Escândalos.
 - Login social e publicação automática.
 - Deploy definitivo em produção antes do gate visual.
 

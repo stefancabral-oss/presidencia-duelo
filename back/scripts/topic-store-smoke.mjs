@@ -29,6 +29,7 @@ const { recoveryKey } = await firstStore.createPlayer();
 const personalBefore = await firstStore.playerRanking(recoveryKey, "eleicoes-2026");
 assert.equal(personalBefore.version, 0);
 assert.equal(personalBefore.duels, 0);
+assert.equal(personalBefore.rankingPolicy.id, "pairwise-majority-scc-v1");
 
 const voteId = randomUUID();
 const created = await firstStore.vote({
@@ -91,11 +92,15 @@ assert.equal(round.round.comparisons, 3);
 assert.equal(round.duels, 3);
 assert.equal(round.player.version, 3);
 assert.equal(round.player.duels, 3);
+assert.equal(round.player.rankingPolicy.id, "pairwise-majority-scc-v1");
 assert.equal(round.ranking.find(({ id }) => id === "anitta").wins, 4);
+assert.equal(round.round.feedbackScope, "personal");
+assert.deepEqual(round.round.personalFeedback, round.round.feedback);
 assert.equal(round.round.feedback.outcomes.length, 4);
 assert.equal(round.round.feedback.outcomes.filter(({ result }) => result === "winner").length, 1);
 assert.equal(round.round.feedback.outcomes.filter(({ result }) => result === "loser").length, 3);
 assert.ok(round.round.feedback.outcomes.every(({ delta, tier }) => Number.isInteger(delta) && tier?.id));
+assert.ok(round.round.globalEvent?.feedback?.outcomes.length === 4);
 
 const repeatedRound = await restartedStore.roundVote({
   topicId: "eleicoes-2026",
@@ -108,6 +113,8 @@ const repeatedRound = await restartedStore.roundVote({
 assert.equal(repeatedRound.round.status, "alreadyProcessed");
 assert.equal(repeatedRound.duels, 3);
 assert.deepEqual(repeatedRound.round.feedback, round.round.feedback);
+assert.deepEqual(repeatedRound.round.personalFeedback, round.round.personalFeedback);
+assert.deepEqual(repeatedRound.round.globalEvent, round.round.globalEvent);
 
 const firstGoogleSession = await restartedStore.signInWithGoogle({
   identity: { subject: "google-sub-integration", displayName: "Bia", avatarUrl: "https://example.com/bia.jpg" },
@@ -139,6 +146,8 @@ const audit = await auditPool.query(
     (SELECT count(*) FROM votes WHERE round_id = $1) AS linked_comparisons,
     (SELECT count(DISTINCT winner_rating_before) FROM votes WHERE round_id = $1) AS winner_snapshots,
     (SELECT jsonb_array_length(feedback->'outcomes') FROM choice_rounds WHERE round_id = $1) AS feedback_outcomes,
+    (SELECT feedback_scope FROM choice_rounds WHERE round_id = $1) AS feedback_scope,
+    (SELECT jsonb_array_length(global_feedback->'outcomes') FROM choice_rounds WHERE round_id = $1) AS global_feedback_outcomes,
     (SELECT count(*) FROM player_identities WHERE provider = 'google') AS google_identities,
     (SELECT count(*) FROM player_sessions) AS active_sessions`,
   [roundId],
@@ -148,6 +157,8 @@ assert.equal(Number(audit.rows[0].rounds), 1);
 assert.equal(Number(audit.rows[0].linked_comparisons), 3);
 assert.equal(Number(audit.rows[0].winner_snapshots), 1);
 assert.equal(Number(audit.rows[0].feedback_outcomes), 4);
+assert.equal(audit.rows[0].feedback_scope, "personal");
+assert.equal(Number(audit.rows[0].global_feedback_outcomes), 4);
 assert.equal(Number(audit.rows[0].google_identities), 1);
 assert.equal(Number(audit.rows[0].active_sessions), 1);
 await auditPool.end();
@@ -155,6 +166,11 @@ await restartedStore.close();
 
 const precedingRelease = new pg.Pool({ connectionString });
 await precedingRelease.query("ALTER TABLE votes DROP COLUMN round_id");
+await precedingRelease.query("DROP INDEX IF EXISTS votes_player_topic_pair_idx");
+await precedingRelease.query(`ALTER TABLE choice_rounds
+  DROP COLUMN feedback_scope,
+  DROP COLUMN global_ranking_event,
+  DROP COLUMN global_feedback`);
 await precedingRelease.query("DELETE FROM schema_migrations WHERE id = '2026-09-15-link-four-card-comparisons'");
 await precedingRelease.end();
 
@@ -163,6 +179,17 @@ await upgradedStore.init();
 const upgradedAuditPool = new pg.Pool({ connectionString });
 const upgradedAudit = await upgradedAuditPool.query("SELECT count(*) AS linked_comparisons FROM votes WHERE round_id = $1", [roundId]);
 assert.equal(Number(upgradedAudit.rows[0].linked_comparisons), 3);
+const legacyReplay = await upgradedStore.roundVote({
+  topicId: "eleicoes-2026",
+  winnerId: "anitta",
+  candidateIds: ["lula", "jair-bolsonaro", "anitta", "neymar-jr"],
+  roundId,
+  recoveryKey: returningGoogleSession.sessionToken,
+  playerVersion: 3,
+});
+assert.equal(legacyReplay.round.status, "alreadyProcessed");
+assert.deepEqual(legacyReplay.round.personalFeedback.outcomes, []);
+assert.ok(legacyReplay.round.globalEvent?.feedback?.outcomes.length === 4);
 const migrationAudit = await upgradedAuditPool.query("SELECT count(*) AS applied FROM schema_migrations WHERE id = '2026-09-15-link-four-card-comparisons'");
 assert.equal(Number(migrationAudit.rows[0].applied), 1);
 await upgradedAuditPool.end();

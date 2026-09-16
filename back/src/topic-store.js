@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import pg from "pg";
 import { eloTier, isZebra, ratingDeltas } from "../../shared/elo.js";
 import { CANDIDATES, TOPICS_BY_ID, candidateBelongsToTopic, candidatesForTopic } from "./candidates.js";
+import { personalRankingFromRows } from "./personal-ranking.js";
 
 const { Pool } = pg;
 const RESET_MIGRATION_ID = "20260913_eleicoes_2026_clean_start";
@@ -9,6 +10,13 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3
 const RECOVERY_KEY_PATTERN = /^pm2_[A-Za-z0-9_-]{43}$/;
 const SESSION_TOKEN_PATTERN = /^pms_[A-Za-z0-9_-]{43}$/;
 const SESSION_TTL_DAYS = 90;
+const FEEDBACK_SCOPE_PERSONAL = "personal";
+const FEEDBACK_SCOPE_LEGACY_GLOBAL = "legacy-global";
+const GLOBAL_RANKING_POLICY = Object.freeze({
+  id: "elo-v1",
+  label: "Elo do placar público",
+  explanation: "A ordem pública usa Elo, vitórias e nome como critérios sucessivos.",
+});
 
 export function validateTopic(topicId) {
   const topic = TOPICS_BY_ID.get(String(topicId || ""));
@@ -89,6 +97,20 @@ export function accessTokenHash(value) {
   return createHash("sha256").update(token).digest("hex");
 }
 
+function withRankingPositions(ranking) {
+  let rank = 0;
+  let previous = null;
+  return ranking.map((candidate, index) => {
+    const tied = previous
+      && previous.elo === candidate.elo
+      && previous.wins === candidate.wins
+      && previous.losses === candidate.losses;
+    if (!tied) rank = index + 1;
+    previous = candidate;
+    return { ...candidate, rank };
+  });
+}
+
 export function rankingFromRows(topicId, duels, rows) {
   const stats = new Map(rows.map((row) => [row.candidate_id, row]));
   const ranking = candidatesForTopic(topicId).map((candidate) => {
@@ -111,10 +133,17 @@ export function rankingFromRows(topicId, duels, rows) {
       winRate: decisions ? Math.round((wins * 100) / decisions) : 0,
     };
   }).sort((a, b) => b.elo - a.elo || b.wins - a.wins || a.name.localeCompare(b.name, "pt-BR"));
-  return { topicId, duels: Number(duels) || 0, ranking };
+  return {
+    topicId,
+    duels: Number(duels) || 0,
+    rankingPolicy: GLOBAL_RANKING_POLICY,
+    ranking: withRankingPositions(ranking),
+  };
 }
 
 function rankedPosition(ranking, candidateId) {
+  const explicitRank = ranking.find(({ id }) => id === candidateId)?.rank;
+  if (Number.isInteger(explicitRank) && explicitRank > 0) return explicitRank;
   const played = ranking.filter(({ decisions }) => decisions > 0);
   let previousScore = null;
   let position = 0;
@@ -157,7 +186,19 @@ export function roundFeedbackFromSnapshots(beforeRanking, afterRanking, candidat
     const previousTier = eloTier(previous.elo);
     const tier = eloTier(current.elo);
     const tierChange = tier.level > previousTier.level ? "up" : tier.level < previousTier.level ? "down" : null;
-    return { id, result: id === winnerId ? "winner" : "loser", delta: current.elo - previous.elo, elo: current.elo, previousTier, tier, tierChange };
+    return {
+      id,
+      result: id === winnerId ? "winner" : "loser",
+      delta: current.elo - previous.elo,
+      elo: current.elo,
+      previousRank: Number.isInteger(previous.rank) ? previous.rank : null,
+      rank: Number.isInteger(current.rank) ? current.rank : null,
+      preferenceScore: Number.isFinite(current.preferenceScore) ? current.preferenceScore : null,
+      rankBasis: current.rankBasis || null,
+      previousTier,
+      tier,
+      tierChange,
+    };
   });
   const winner = outcomes.find((outcome) => outcome.id === winnerId);
   const dropped = outcomes.filter((outcome) => outcome.tierChange === "down");
@@ -169,6 +210,84 @@ export function roundFeedbackFromSnapshots(beforeRanking, afterRanking, candidat
     else if (dropped.length) primaryEvent = "tierDown";
   }
   return { rankingEvent: rankingEvent || "confirm", primaryEvent, zebra: Boolean(zebra), outcomes };
+}
+
+export function globalEventFromFeedback({ rankingEvent = "confirm", winnerDelta = 0, zebra = false, feedback = null } = {}) {
+  if (!feedback) return null;
+  const primaryEvent = feedback.primaryEvent || rankingEvent || feedback.rankingEvent || "confirm";
+  if (primaryEvent === "confirm" && !zebra && !feedback.zebra) return null;
+  return {
+    scope: "global",
+    rankingEvent: rankingEvent || feedback.rankingEvent || "confirm",
+    winnerDelta: Number(winnerDelta) || 0,
+    zebra: Boolean(zebra || feedback.zebra),
+    feedback,
+  };
+}
+
+export function feedbackChannelsFromSnapshots({
+  personalBefore,
+  personalAfter,
+  globalBefore,
+  globalAfter,
+  candidateIds,
+  winnerId,
+  personalZebra = false,
+  globalZebra = false,
+}) {
+  const rankingEvent = rankingEventFromSnapshots(personalBefore, personalAfter, winnerId, { zebra: personalZebra });
+  const personalFeedback = roundFeedbackFromSnapshots(personalBefore, personalAfter, candidateIds, winnerId, rankingEvent, { zebra: personalZebra });
+  const globalRankingEvent = rankingEventFromSnapshots(globalBefore, globalAfter, winnerId, { zebra: globalZebra });
+  const globalFeedback = roundFeedbackFromSnapshots(globalBefore, globalAfter, candidateIds, winnerId, globalRankingEvent, { zebra: globalZebra });
+  const winnerDelta = Number(personalFeedback.outcomes.find(({ result }) => result === "winner")?.delta) || 0;
+  const globalWinnerDelta = Number(globalFeedback.outcomes.find(({ result }) => result === "winner")?.delta) || 0;
+  return {
+    rankingEvent,
+    personalFeedback,
+    winnerDelta,
+    globalRankingEvent,
+    globalFeedback,
+    globalEvent: globalEventFromFeedback({
+      rankingEvent: globalRankingEvent,
+      winnerDelta: globalWinnerDelta,
+      zebra: globalZebra,
+      feedback: globalFeedback,
+    }),
+  };
+}
+
+function neutralPersonalReplayFeedback() {
+  return { rankingEvent: "confirm", primaryEvent: "confirm", zebra: false, outcomes: [] };
+}
+
+export function persistedRoundChannels(row) {
+  const feedback = Array.isArray(row.feedback?.outcomes) ? row.feedback : null;
+  const globalFeedback = Array.isArray(row.global_feedback?.outcomes) ? row.global_feedback : null;
+  const feedbackScope = row.feedback_scope || (feedback ? FEEDBACK_SCOPE_LEGACY_GLOBAL : "none");
+  const personalFeedback = feedbackScope === FEEDBACK_SCOPE_PERSONAL && feedback
+    ? feedback
+    : neutralPersonalReplayFeedback();
+  // Rodadas anteriores à #169 armazenavam o feedback público no campo genérico.
+  // Ele pode ser reapresentado como público, mas nunca renomeado como pessoal.
+  const effectiveGlobalFeedback = globalFeedback
+    || (feedbackScope === FEEDBACK_SCOPE_LEGACY_GLOBAL ? feedback : null);
+  const globalWinnerDelta = effectiveGlobalFeedback?.outcomes.find(({ result }) => result === "winner")?.delta;
+  const globalEvent = globalEventFromFeedback({
+    rankingEvent: row.global_ranking_event
+      || (feedbackScope === FEEDBACK_SCOPE_LEGACY_GLOBAL ? row.ranking_event : null)
+      || effectiveGlobalFeedback?.rankingEvent
+      || "confirm",
+    winnerDelta: Number(globalWinnerDelta) || Number(row.winner_delta) || 0,
+    zebra: Boolean(effectiveGlobalFeedback?.zebra || (feedbackScope === FEEDBACK_SCOPE_LEGACY_GLOBAL && row.zebra)),
+    feedback: effectiveGlobalFeedback,
+  });
+  return {
+    rankingEvent: personalFeedback.rankingEvent,
+    feedback: personalFeedback,
+    personalFeedback,
+    feedbackScope,
+    globalEvent,
+  };
 }
 
 async function createCleanSchema(client) {
@@ -281,6 +400,9 @@ async function createCleanSchema(client) {
       zebra boolean NOT NULL DEFAULT false,
       ranking_event text NOT NULL DEFAULT 'confirm',
       feedback jsonb NOT NULL DEFAULT '{}'::jsonb,
+      feedback_scope text NOT NULL DEFAULT 'legacy-global',
+      global_ranking_event text,
+      global_feedback jsonb,
       created_at timestamptz NOT NULL DEFAULT now(),
       CHECK (array_length(candidate_ids, 1) = 4)
     );
@@ -291,8 +413,21 @@ async function createCleanSchema(client) {
     ALTER TABLE choice_rounds
       ADD COLUMN IF NOT EXISTS feedback jsonb NOT NULL DEFAULT '{}'::jsonb;
 
+    ALTER TABLE choice_rounds
+      ADD COLUMN IF NOT EXISTS feedback_scope text NOT NULL DEFAULT 'legacy-global';
+
+    ALTER TABLE choice_rounds
+      ADD COLUMN IF NOT EXISTS global_ranking_event text;
+
+    ALTER TABLE choice_rounds
+      ADD COLUMN IF NOT EXISTS global_feedback jsonb;
+
     ALTER TABLE votes
       ADD COLUMN IF NOT EXISTS round_id uuid REFERENCES choice_rounds(round_id) ON DELETE RESTRICT;
+
+    CREATE INDEX IF NOT EXISTS votes_player_topic_pair_idx
+      ON votes (player_id, topic_id, (LEAST(winner_id, loser_id)), (GREATEST(winner_id, loser_id)))
+      INCLUDE (winner_id, loser_id);
 
     CREATE TABLE IF NOT EXISTS schema_migrations (
       id text PRIMARY KEY,
@@ -404,18 +539,41 @@ async function createCleanSchema(client) {
   return { resetApplied: !applied.rowCount, migrationId: RESET_MIGRATION_ID };
 }
 
-async function selectRanking(queryable, topicId, { playerId } = {}) {
-  const poolTable = playerId ? "player_pools" : "ranking_pools";
-  const statsTable = playerId ? "player_stats" : "ranking_stats";
-  const poolWhere = playerId ? "player_id = $1 AND topic_id = $2" : "topic_id = $1";
-  const statsWhere = poolWhere;
-  const params = playerId ? [playerId, topicId] : [topicId];
-  const [pool, stats] = await Promise.all([
-    queryable.query(`SELECT duels${playerId ? ", version" : ""} FROM ${poolTable} WHERE ${poolWhere}`, params),
-    queryable.query(`SELECT candidate_id, rating, wins, losses${playerId ? ", 0 AS zebras" : ", zebras"} FROM ${statsTable} WHERE ${statsWhere}`, params),
+async function selectRanking(queryable, topicId, { playerId, pendingComparisons = [] } = {}) {
+  if (!playerId) {
+    const [pool, stats] = await Promise.all([
+      queryable.query("SELECT duels FROM ranking_pools WHERE topic_id = $1", [topicId]),
+      queryable.query("SELECT candidate_id, rating, wins, losses, zebras FROM ranking_stats WHERE topic_id = $1", [topicId]),
+    ]);
+    return rankingFromRows(topicId, pool.rows[0]?.duels, stats.rows);
+  }
+
+  const params = [playerId, topicId];
+  const [pool, stats, pairs] = await Promise.all([
+    queryable.query("SELECT duels, version FROM player_pools WHERE player_id = $1 AND topic_id = $2", params),
+    queryable.query("SELECT candidate_id, rating FROM player_stats WHERE player_id = $1 AND topic_id = $2", params),
+    queryable.query(
+      `SELECT
+         LEAST(winner_id, loser_id) AS a_id,
+         GREATEST(winner_id, loser_id) AS b_id,
+         COUNT(*) FILTER (WHERE winner_id = LEAST(winner_id, loser_id)) AS a_wins,
+         COUNT(*) FILTER (WHERE winner_id = GREATEST(winner_id, loser_id)) AS b_wins
+       FROM votes
+       WHERE player_id = $1 AND topic_id = $2
+       GROUP BY 1, 2
+       ORDER BY 1, 2`,
+      params,
+    ),
   ]);
-  const result = rankingFromRows(topicId, pool.rows[0]?.duels, stats.rows);
-  if (playerId) result.version = Number(pool.rows[0]?.version) || 0;
+  const result = personalRankingFromRows(
+    topicId,
+    pool.rows[0]?.duels,
+    candidatesForTopic(topicId),
+    stats.rows,
+    pairs.rows,
+    { pendingComparisons },
+  );
+  result.version = Number(pool.rows[0]?.version) || 0;
   return result;
 }
 
@@ -683,29 +841,36 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
       try {
         await client.query("BEGIN");
         const player = recoveryKey ? await findPlayer(client, recoveryKey) : null;
+        if (!player) {
+          const error = new Error("sessão do jogador é obrigatória para confirmar a rodada");
+          error.status = 401;
+          throw error;
+        }
         await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [roundId]);
         const previous = await client.query(
-          "SELECT topic_id, winner_id, candidate_ids, player_id, winner_delta, zebra, ranking_event, feedback FROM choice_rounds WHERE round_id = $1",
+          `SELECT topic_id, winner_id, candidate_ids, player_id, winner_delta, zebra,
+                  ranking_event, feedback, feedback_scope, global_ranking_event, global_feedback
+           FROM choice_rounds WHERE round_id = $1`,
           [roundId],
         );
         if (previous.rowCount) {
           const row = previous.rows[0];
           const sameCandidates = JSON.stringify([...row.candidate_ids].sort()) === JSON.stringify(sortedCandidates);
-          if (row.topic_id !== topic || row.winner_id !== winnerId || !sameCandidates || (row.player_id || null) !== (player?.id || null)) {
+          if (row.topic_id !== topic || row.winner_id !== winnerId || !sameCandidates || (row.player_id || null) !== player.id) {
             const error = new Error("roundId já utilizado com outra escolha");
             error.status = 409;
             throw error;
           }
           const global = await selectRanking(client, topic);
-          const personal = player ? await selectRanking(client, topic, { playerId: player.id }) : null;
+          const personal = await selectRanking(client, topic, { playerId: player.id });
           await client.query("COMMIT");
+          const channels = persistedRoundChannels(row);
           const round = {
             id: roundId,
             status: "alreadyProcessed",
             winnerDelta: Number(row.winner_delta),
             zebra: Boolean(row.zebra),
-            rankingEvent: row.ranking_event || "confirm",
-            feedback: row.feedback?.outcomes ? row.feedback : null,
+            ...channels,
             comparisons: 3,
           };
           return { ...global, round, vote: round, player: personal };
@@ -720,7 +885,6 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
         const globalRatings = new Map(globalRows.rows.map((row) => [row.candidate_id, Number(row.rating)]));
         if (roundCandidates.some((candidateId) => !Number.isFinite(globalRatings.get(candidateId)))) throw new Error("ranking não inicializado");
 
-        let winnerDelta = 0;
         let zebra = false;
         const comparisons = [];
         const winnerRatingBeforeRound = globalRatings.get(winnerId);
@@ -729,7 +893,6 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
           const loserRating = globalRatings.get(loserId);
           const deltas = ratingDeltas(winnerRating, loserRating);
           const pairZebra = isZebra(winnerRating, loserRating);
-          winnerDelta += deltas.winnerDelta;
           zebra ||= pairZebra;
           comparisons.push({ loserId, winnerRating, loserRating, ...deltas, zebra: pairZebra });
           await client.query("UPDATE ranking_stats SET rating = rating + $3, wins = wins + 1, zebras = zebras + $4 WHERE topic_id = $1 AND candidate_id = $2", [topic, winnerId, deltas.winnerDelta, pairZebra ? 1 : 0]);
@@ -737,45 +900,91 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
         }
         await client.query("UPDATE ranking_pools SET duels = duels + 1 WHERE topic_id = $1", [topic]);
 
-        if (player) {
-          const personalPool = await client.query("SELECT version FROM player_pools WHERE player_id = $1 AND topic_id = $2 FOR UPDATE", [player.id, topic]);
-          const currentVersion = Number(personalPool.rows[0]?.version) || 0;
-          assertPlayerVersion(playerVersion, currentVersion);
-          const personalRows = await client.query(
-            "SELECT candidate_id, rating FROM player_stats WHERE player_id = $1 AND topic_id = $2 AND candidate_id = ANY($3::text[]) FOR UPDATE",
-            [player.id, topic, roundCandidates],
-          );
-          const personalRatings = new Map(personalRows.rows.map((row) => [row.candidate_id, Number(row.rating)]));
-          if (roundCandidates.some((candidateId) => !Number.isFinite(personalRatings.get(candidateId)))) throw new Error("ranking pessoal não inicializado");
-          const personalWinnerRatingBeforeRound = personalRatings.get(winnerId);
-          for (const loserId of loserIds) {
-            const personalWinnerRating = personalWinnerRatingBeforeRound;
-            const personalLoserRating = personalRatings.get(loserId);
-            const personalDelta = ratingDeltas(personalWinnerRating, personalLoserRating);
-            await client.query("UPDATE player_stats SET rating = rating + $4, wins = wins + 1 WHERE player_id = $1 AND topic_id = $2 AND candidate_id = $3", [player.id, topic, winnerId, personalDelta.winnerDelta]);
-            await client.query("UPDATE player_stats SET rating = rating + $4, losses = losses + 1 WHERE player_id = $1 AND topic_id = $2 AND candidate_id = $3", [player.id, topic, loserId, personalDelta.loserDelta]);
-          }
-          await client.query("UPDATE player_pools SET version = version + 1, duels = duels + 1 WHERE player_id = $1 AND topic_id = $2", [player.id, topic]);
-          await client.query("UPDATE anonymous_players SET last_seen_at = now() WHERE id = $1", [player.id]);
+        let personalBeforeRound = null;
+        let personalZebra = false;
+        const personalPool = await client.query("SELECT version FROM player_pools WHERE player_id = $1 AND topic_id = $2 FOR UPDATE", [player.id, topic]);
+        const currentVersion = Number(personalPool.rows[0]?.version) || 0;
+        assertPlayerVersion(playerVersion, currentVersion);
+        personalBeforeRound = await selectRanking(client, topic, { playerId: player.id });
+        const personalRows = await client.query(
+          "SELECT candidate_id, rating FROM player_stats WHERE player_id = $1 AND topic_id = $2 AND candidate_id = ANY($3::text[]) FOR UPDATE",
+          [player.id, topic, roundCandidates],
+        );
+        const personalRatings = new Map(personalRows.rows.map((row) => [row.candidate_id, Number(row.rating)]));
+        if (roundCandidates.some((candidateId) => !Number.isFinite(personalRatings.get(candidateId)))) throw new Error("ranking pessoal não inicializado");
+        const personalWinnerRatingBeforeRound = personalRatings.get(winnerId);
+        for (const loserId of loserIds) {
+          const personalWinnerRating = personalWinnerRatingBeforeRound;
+          const personalLoserRating = personalRatings.get(loserId);
+          const personalDelta = ratingDeltas(personalWinnerRating, personalLoserRating);
+          personalZebra ||= isZebra(personalWinnerRating, personalLoserRating);
+          await client.query("UPDATE player_stats SET rating = rating + $4, wins = wins + 1 WHERE player_id = $1 AND topic_id = $2 AND candidate_id = $3", [player.id, topic, winnerId, personalDelta.winnerDelta]);
+          await client.query("UPDATE player_stats SET rating = rating + $4, losses = losses + 1 WHERE player_id = $1 AND topic_id = $2 AND candidate_id = $3", [player.id, topic, loserId, personalDelta.loserDelta]);
         }
+        await client.query("UPDATE player_pools SET version = version + 1, duels = duels + 1 WHERE player_id = $1 AND topic_id = $2", [player.id, topic]);
+        await client.query("UPDATE anonymous_players SET last_seen_at = now() WHERE id = $1", [player.id]);
 
         const global = await selectRanking(client, topic);
-        const rankingEvent = rankingEventFromSnapshots(globalBeforeRound.ranking, global.ranking, winnerId, { zebra });
-        const feedback = roundFeedbackFromSnapshots(globalBeforeRound.ranking, global.ranking, roundCandidates, winnerId, rankingEvent, { zebra });
+        const pendingComparisons = loserIds.map((loserId) => ({ winnerId, loserId }));
+        const personal = await selectRanking(client, topic, { playerId: player.id, pendingComparisons });
+        const channels = feedbackChannelsFromSnapshots({
+          personalBefore: personalBeforeRound.ranking,
+          personalAfter: personal.ranking,
+          globalBefore: globalBeforeRound.ranking,
+          globalAfter: global.ranking,
+          candidateIds: roundCandidates,
+          winnerId,
+          personalZebra,
+          globalZebra: zebra,
+        });
+        const {
+          rankingEvent,
+          personalFeedback: feedback,
+          winnerDelta: primaryWinnerDelta,
+          globalRankingEvent,
+          globalFeedback,
+          globalEvent,
+        } = channels;
         await client.query(
-          "INSERT INTO choice_rounds (round_id, player_id, topic_id, winner_id, candidate_ids, winner_delta, zebra, ranking_event, feedback) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)",
-          [roundId, player?.id || null, topic, winnerId, sortedCandidates, winnerDelta, zebra, rankingEvent, JSON.stringify(feedback)],
+          `INSERT INTO choice_rounds (
+             round_id, player_id, topic_id, winner_id, candidate_ids, winner_delta, zebra,
+             ranking_event, feedback, feedback_scope, global_ranking_event, global_feedback
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10, $11, $12::jsonb)`,
+          [
+            roundId,
+            player.id,
+            topic,
+            winnerId,
+            sortedCandidates,
+            primaryWinnerDelta,
+            personalZebra,
+            rankingEvent,
+            JSON.stringify(feedback),
+            FEEDBACK_SCOPE_PERSONAL,
+            globalRankingEvent,
+            JSON.stringify(globalFeedback),
+          ],
         );
         for (const comparison of comparisons) {
           await client.query(
             `INSERT INTO votes (vote_id, round_id, player_id, topic_id, winner_id, loser_id, winner_rating_before, loser_rating_before, winner_delta, loser_delta, zebra)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-            [randomUUID(), roundId, player?.id || null, topic, winnerId, comparison.loserId, comparison.winnerRating, comparison.loserRating, comparison.winnerDelta, comparison.loserDelta, comparison.zebra],
+            [randomUUID(), roundId, player.id, topic, winnerId, comparison.loserId, comparison.winnerRating, comparison.loserRating, comparison.winnerDelta, comparison.loserDelta, comparison.zebra],
           );
         }
-        const personal = player ? await selectRanking(client, topic, { playerId: player.id }) : null;
         await client.query("COMMIT");
-        const round = { id: roundId, status: "created", winnerDelta, zebra, rankingEvent, feedback, comparisons: 3 };
+        const round = {
+          id: roundId,
+          status: "created",
+          winnerDelta: primaryWinnerDelta,
+          zebra: personalZebra,
+          rankingEvent,
+          feedback,
+          personalFeedback: feedback,
+          feedbackScope: FEEDBACK_SCOPE_PERSONAL,
+          globalEvent,
+          comparisons: 3,
+        };
         return { ...global, round, vote: round, player: personal };
       } catch (error) {
         await client.query("ROLLBACK");

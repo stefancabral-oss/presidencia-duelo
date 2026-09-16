@@ -19,4 +19,6 @@ export function resetPendingVoteForIdentityChange(state, createRoundId = () => c
   state.busy = false;
   state.result = "";
   state.resultTone = "";
+  state.personalFeedbackMessage = "";
+  state.globalFeedbackMessage = "";
 }

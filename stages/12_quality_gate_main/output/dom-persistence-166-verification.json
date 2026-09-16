@@ -6,6 +6,14 @@
   "baseSha": "7af752bbf1278e28a27b57f45a6fcc76092742de",
   "implementationCommit": "6aa66d1a33981d1a43cf54d3bad79a094e912c3e",
   "reviewFixCommit": "bd276f1796eabc33f86527957096c401ca4e8a5d",
+  "focusRetryFixCommit": "56cf30342ba6b5154ea277ac17cc75e3c7e90df7",
+  "pr162Audit": {
+    "alreadyIntegrated": ["5fc4cd6", "2f3327b", "ffd1bdc"],
+    "ported": {
+      "wideShortViewport": "2e6d20f",
+      "icm03Provenance": "5421c73"
+    }
+  },
   "checks": [
     {
       "name": "root-unit",
@@ -30,12 +38,12 @@
     {
       "name": "vote-recovery-chromium",
       "command": "POLIMATCH_E2E_BROWSER=chromium node app/e2e/vote-recovery.mjs",
-      "result": "passed; timeout uncertainty, transient 503, real 401 and idempotent retry with the same roundId"
+      "result": "passed; timeout uncertainty, transient 503, real 401 and idempotent retry by real Enter; focus moved before retry was hidden and remained on the persistent candidate after the next round"
     },
     {
       "name": "vote-recovery-webkit",
       "command": "POLIMATCH_E2E_BROWSER=webkit node app/e2e/vote-recovery.mjs",
-      "result": "passed; same four recovery scenarios and persistent retry-control identity in WebKit"
+      "result": "passed; same four recovery scenarios, real Enter and activeElement contract in WebKit"
     },
     {
       "name": "optional-google-flow",
@@ -61,6 +69,11 @@
       "name": "failed-portrait-regression",
       "command": "npm test --prefix app",
       "result": "passed; a failed source remains hidden across renders and a changed source stays hidden until its load event"
+    },
+    {
+      "name": "wide-short-viewport-regression",
+      "command": "Playwright Chromium measurement at 1200x600, 1280x620, 1440x640 and 1280x900",
+      "result": "passed; the three short viewports rendered 214x260 portrait cards and the 1280x900 control remained 296x414 at 5:7"
     }
   ],
   "pending": [

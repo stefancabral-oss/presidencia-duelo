@@ -10,6 +10,8 @@
 - Base da unidade: `7af752bbf1278e28a27b57f45a6fcc76092742de`
 - Commit da implementação: `6aa66d1a33981d1a43cf54d3bad79a094e912c3e`
 - Commit da integração revisada: `bd276f1796eabc33f86527957096c401ca4e8a5d`
+- Commit da correção final de foco: `56cf30342ba6b5154ea277ac17cc75e3c7e90df7`
+- Portes independentes auditados da PR #162: `2e6d20f` (viewport largo/baixo) e `5421c73` (proveniência do ICM 03)
 
 ## Entregue
 
@@ -23,6 +25,7 @@
 - O smoke existente manteve suas verificações de layout, pressão longa, resultado Elo, navegação, ranking e Google; as novas asserções foram adicionadas sem remover as anteriores.
 - A recuperação de voto da PR #162 foi transplantada semanticamente, sem merge ou cherry-pick: o `roundId` nasce com a rodada, a repetição é idempotente e apenas um `401` descarta a chave local.
 - O controle `Tentar de novo` agora faz parte do DOM persistente, começa oculto, usa o listener delegado existente e mantém igualdade referencial durante a falha.
+- Ao repetir por teclado, o foco sai de `Tentar de novo` antes que ele seja ocultado e vai para o botão persistente da candidata pendente; a mesma referência continua ativa depois da nova rodada.
 - Timeout/rede exibem uma mensagem honesta de resultado incerto; conflito `409` ressincroniza a versão e uma resposta `503` preserva o histórico local.
 - Uma fotografia que retorna erro fica oculta nos renders seguintes; apenas uma URL nova seguida de `load` volta a revelar o elemento.
 - O workflow de UI executa `interaction-smoke.mjs` e `vote-recovery.mjs` em Chromium e WebKit e também reage a mudanças de `shared/`.
@@ -39,11 +42,19 @@
 - `npm run build --prefix app`: aprovado; 99/125 retratos disponíveis e bundle Vite produzido.
 - `POLIMATCH_E2E_BROWSER=chromium node app/e2e/interaction-smoke.mjs`: aprovado.
 - `POLIMATCH_E2E_BROWSER=webkit node app/e2e/interaction-smoke.mjs`: aprovado.
-- `POLIMATCH_E2E_BROWSER=chromium node app/e2e/vote-recovery.mjs`: aprovado nos quatro cenários.
-- `POLIMATCH_E2E_BROWSER=webkit node app/e2e/vote-recovery.mjs`: aprovado nos quatro cenários.
+- `POLIMATCH_E2E_BROWSER=chromium node app/e2e/vote-recovery.mjs`: aprovado nos quatro cenários, incluindo Enter real e `activeElement` na carta pendente antes e depois da nova rodada.
+- `POLIMATCH_E2E_BROWSER=webkit node app/e2e/vote-recovery.mjs`: aprovado no mesmo contrato de teclado e foco.
 - Variante Chromium com `VITE_GOOGLE_CLIENT_ID` e `POLIMATCH_E2E_GOOGLE=1`: aprovada.
 - No smoke, o observador registrou zero substituições; topbar, nav, instrução, repetição, região viva, slots e botões mantiveram igualdade referencial; o foco visível permaneceu no botão votado.
 - A regressão de retrato quebrado é coberta por teste unitário: o mesmo `src` não reaparece depois do erro e um novo `src` só aparece após `load`.
+- A matriz Playwright de viewport largo/baixo mediu cartas `214×260` em `1200×600`, `1280×620` e `1440×640`; o controle `1280×900` permaneceu `296×414` (5:7).
+
+## Auditoria da PR #162
+
+- `5fc4cd6` e `2f3327b` já estavam absorvidos semanticamente pela integração revisada: erro HTTP estruturado, preservação da chave fora de `401`, ressincronização de `409`, `roundId` idempotente, retry persistente e E2E nos dois navegadores.
+- `650e3da` ainda faltava. O porte preservou a condição `min-height: 641px`, mas manteve o seletor canônico da #166, `.app-shell[data-screen="duel"]`, em vez de restaurar `:has(.duel-screen)`.
+- `bb924b7` ainda faltava e foi aplicado como correção pontual de `release`; nenhum artefato corrente de U01/U02 foi substituído pelo conteúdo antigo da PR.
+- `ffd1bdc` apenas atualiza a PR com o login seguro já presente na base `fa06277`; não exige um quarto porte.
 
 ## Pendente
 

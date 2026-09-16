@@ -1,0 +1,32 @@
+{
+  "status": "human-test-required",
+  "issue": 176,
+  "checks": [
+    {
+      "name": "style-guide-before-assets",
+      "result": "passed; neutral visual grammar and prohibited bias cues are versioned"
+    },
+    {
+      "name": "eight-person-coverage",
+      "result": "passed; pilot list spans national recognition through a regional tail and balances four women/four men"
+    },
+    {
+      "name": "pilot-asset-integrity",
+      "command": "npm test --prefix app",
+      "result": "passed; 42 of 42 tests, including eight unpublished assets, 4:5 dimensions, identity references and SHA-256"
+    },
+    {
+      "name": "app-build",
+      "command": "npm run build --prefix app",
+      "result": "passed; pilot remains outside the application catalog and bundle"
+    },
+    {
+      "name": "blind-recognition-test",
+      "result": "pending external human sample"
+    },
+    {
+      "name": "neutrality-test",
+      "result": "pending external human sample"
+    }
+  ]
+}

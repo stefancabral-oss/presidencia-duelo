@@ -1,31 +1,34 @@
-# Créditos das fotos
+# Créditos e proveniência de imagens
 
-As imagens vêm de fontes públicas, principalmente do **Wikimedia Commons**, páginas institucionais, perfis públicos e veículos de imprensa.
-Nenhuma face foi gerada por IA. Os 69 arquivos locais ficam em `front/public/candidates/`; outras 291 imagens com atribuição verificada são carregadas do Commons. A fonte individual das 360 fotos aparece na aba **Créditos** do app.
+O PoliMatch mantém ativos com funções e estados diferentes. Fotografia documental, arte de carta e Chroma não são tratados como se fossem a mesma imagem.
 
-| Candidato | Arquivo | Fonte Commons | Autor / crédito | Licença |
-|---|---|---|---|---|
-| Luiz Inácio Lula da Silva | `front/public/candidates/lula.jpg` | [Foto oficial de Luiz Inácio Lula da Silva (2023–2027).jpg](https://commons.wikimedia.org/wiki/File:Foto_oficial_de_Luiz_In%C3%A1cio_Lula_da_Silva_(2023%E2%80%932027).jpg) | Palácio do Planalto (Ricardo Stuckert / Flickr) | CC BY 2.0 |
-| Flávio Bolsonaro | `front/public/candidates/flavio-bolsonaro.jpg` | [Foto oficial do senador Flávio Bolsonaro (v. AgSen) (3x4).jpg](https://commons.wikimedia.org/wiki/File:Foto_oficial_do_senador_Fl%C3%A1vio_Bolsonaro_(v._AgSen)_(3x4).jpg) | Agência Senado | Attribution (Agência Senado) |
-| Ronaldo Caiado | `front/public/candidates/caiado.jpg` | [Foto oficial do governador de Goiás, Ronaldo Caiado em 2023 (cropped).jpg](https://commons.wikimedia.org/wiki/File:Foto_oficial_do_governador_de_Goi%C3%A1s,_Ronaldo_Caiado_em_2023_(cropped).jpg) | Bianca Kida | CC BY 2.0 |
-| Romeu Zema | `front/public/candidates/zema.jpg` | [Romeu Zema, December 2024 (cropped).jpg](https://commons.wikimedia.org/wiki/File:Romeu_Zema,_December_2024_(cropped).jpg) | Andressa Anholete / Agência Senado | CC BY 2.0 |
-| Renan Santos | `front/public/candidates/renan-santos.jpg` | [Renan Santos - Congresso do Partido Missão, 2026 (cropped 2).jpg](https://commons.wikimedia.org/wiki/File:Renan_Santos_-_Congresso_do_Partido_Miss%C3%A3o,_2026_(cropped_2).jpg) | Leonardo Carraro | CC BY 4.0 |
-| Augusto Cury | `front/public/candidates/cury.jpg` | [Augusto Cury, escritor (28339139296) (cropped).jpg](https://commons.wikimedia.org/wiki/File:Augusto_Cury,_escritor_(28339139296)_(cropped).jpg) | Lima Andruška | CC BY-SA 2.0 |
-| Rui Costa Pimenta | `front/public/candidates/rui-costa-pimenta.jpg` | [Rui Costa Pimenta PCO ABr (cropped).jpg](https://commons.wikimedia.org/wiki/File:Rui_Costa_Pimenta_PCO_ABr_(cropped).jpg) | Valter Campanato / Agência Brasil | CC BY 3.0 BR |
-| Samara Martins | `front/public/candidates/samara-martins.jpg` | [Samara Martins UP.jpg](https://commons.wikimedia.org/wiki/File:Samara_Martins_UP.jpg) | Reprodução / Jornal A Verdade (via Commons) | Attribution |
-| Hertz Dias | `front/public/candidates/hertz-dias.jpg` | [Hertz Dias PSTU (cropped).jpg](https://commons.wikimedia.org/wiki/File:Hertz_Dias_PSTU_(cropped).jpg) | Romerito Pontes | CC BY 2.0 |
-| Edmilson Costa | `front/public/candidates/edmilson-costa.jpg` | [Edmilson Costa - PCB.jpg](https://commons.wikimedia.org/wiki/File:Edmilson_Costa_-_PCB.jpg) | Diário Liberdade | CC BY 3.0 |
-| Wilson Grassi | `front/public/candidates/wilson-grassi.jpg` | [Wilson Grassi Júnior 2024.jpg](https://commons.wikimedia.org/wiki/File:Wilson_Grassi_J%C3%BAnior_2024.jpg) | Portal de Dados Abertos do TSE | CC BY 4.0 |
-| Clariana Barão | `front/public/candidates/clariana-barao.jpg` | [Clariana Zacarkim Barão.jpg](https://commons.wikimedia.org/wiki/File:Clariana_Zacarkim_Bar%C3%A3o.jpg) | LFLN | CC BY-SA 4.0 |
+## Fotografias de perfil
 
-## Status das fotos
+As fotografias reais vêm de Wikimedia Commons, páginas institucionais, perfis públicos, veículos de imprensa e lotes entregues pelo curador. Fonte, crédito, licença declarada e checksum dos pacotes de referência estão documentados em:
 
-- **Fotos reais (360/360):** 69 locais e 291 carregadas diretamente do Wikimedia Commons.
-- **Placeholders por iniciais:** nenhum.
-- Nenhuma foto foi inventada ou gerada para completar o catálogo.
+- `stages/10_rebuild_eleicoes_2026/input/polimatch-fotos-catalogo-125.md`;
+- `stages/10_rebuild_eleicoes_2026/output/TREATED_PHOTO_AUDIT.md`;
+- `docs/design/USER_EDITED_PHOTOS.md`;
+- os campos `sources` de cada perfil em `shared/elections-2026.json`.
 
-## Observações
+Os slots locais atuais ficam em `app/public/portraits/001.jpg` a `125.jpg`. A existência de um arquivo no slot não equivale a aprovação editorial, de identidade ou de licença.
 
-- As imagens remotas usam thumbnails de até 900 px fornecidos pelo Wikimedia Commons.
-- Licenças CC exigem atribuição; este arquivo cumpre esse papel.
-- Este projeto **não** é afiliado a partidos, TSE, Wikimedia ou às pessoas listadas.
+## Arte de carta — piloto da Issue #176
+
+O diretório `app/public/card-art/pilot/` contém oito retratos experimentais gerados com a ferramenta integrada de geração de imagens da OpenAI. Eles usam fotografias locais somente como referência de identidade e seguem o guia `docs/design/CARD_ART_NEUTRALITY_GUIDE.md`.
+
+Esses arquivos:
+
+- têm estado `pilot-not-published`;
+- não são servidos pelo catálogo nem substituem fotografias de perfil;
+- não foram aprovados para produção;
+- dependem de teste cego externo de reconhecimento e neutralidade;
+- possuem referência, ferramenta, dimensões e SHA-256 em `app/public/card-art/pilot/manifest.json`.
+
+## Chromas e artes editadas
+
+As prévias em `app/public/chromas/` são ativos separados das fotografias documentais e da arte básica da carta. Quando uma arte tiver edição ou geração assistida por IA, essa condição deve ser informada na interface e em seu manifesto. Raridade, brilho ou acabamento não representam julgamento sobre a pessoa retratada.
+
+## Independência
+
+O projeto não é afiliado a partidos, candidaturas, TSE, Wikimedia, OpenAI ou às pessoas retratadas. A presença de uma imagem no repositório não representa apoio, oposição nem aprovação para publicação.

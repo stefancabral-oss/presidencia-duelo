@@ -1,0 +1,49 @@
+{
+  "issue": 167,
+  "date": "2026-09-16",
+  "status": "technical_pass_human_at_pending",
+  "unit": {
+    "command": "npm test",
+    "passed": 112,
+    "failed": 0,
+    "suites": {
+      "shared": 4,
+      "back": 39,
+      "app": 69
+    }
+  },
+  "build": {
+    "command": "npm run build --prefix app",
+    "status": "passed"
+  },
+  "browser_matrix": [
+    {
+      "command": "POLIMATCH_E2E_BROWSER=<chromium|webkit> node app/e2e/accessible-profile.mjs",
+      "status": "passed",
+      "coverage": "native dialogs, keyboard-only profiles, exact focus return, negative state and next round"
+    },
+    {
+      "command": "POLIMATCH_E2E_BROWSER=<chromium|webkit> node app/e2e/interaction-smoke.mjs",
+      "status": "passed"
+    },
+    {
+      "command": "POLIMATCH_E2E_BROWSER=<chromium|webkit> node app/e2e/responsive-layout.mjs",
+      "status": "passed",
+      "viewports_per_browser": 16
+    },
+    {
+      "command": "POLIMATCH_E2E_BROWSER=<chromium|webkit> node app/e2e/vote-recovery.mjs",
+      "status": "passed"
+    },
+    {
+      "command": "POLIMATCH_E2E_BROWSER=<chromium|webkit> node app/e2e/vote-trust-states.mjs",
+      "status": "passed"
+    }
+  ],
+  "human_gates": [
+    {
+      "name": "NVDA and VoiceOver reading",
+      "status": "pending"
+    }
+  ]
+}

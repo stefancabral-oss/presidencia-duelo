@@ -18,7 +18,14 @@ export function isCurrentVoteIdentity(state, attempt) {
  */
 export function resetPendingVoteForIdentityChange(state, createRoundId = () => crypto.randomUUID()) {
   state.identityEpoch = Number(state.identityEpoch || 0) + 1;
+  state.dailyLoadEpoch = Number(state.dailyLoadEpoch || 0) + 1;
   state.roundId = createRoundId();
+  state.dailySession = null;
+  state.dailyCandidates = [];
+  state.dailyLoading = false;
+  state.dailyLoadError = "";
+  state.pendingDailySession = null;
+  state.pendingDailyRefresh = false;
   state.pendingWinnerId = "";
   state.votePhase = "ready";
   state.voteAction = "";

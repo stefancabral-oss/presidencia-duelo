@@ -3,11 +3,12 @@
   "issue": 166,
   "macroIssue": 175,
   "unit": "U02",
-  "baseSha": "02f0b8a211b77e27cb9707646c983c81c08ca95d",
-  "implementationCommit": "7faa34a583c74a1d6fc368d58d8da79d01e57988",
-  "reviewFixCommit": "4c6eb249185d347aaa894fecb3116dbd42a824cc",
-  "focusRetryFixCommit": "704a66ecf2543ae40943bbce3d60db16d33394b3",
-  "finalTransitionFixCommit": "ba4ddb1f2a5a7831cc6f894eab95f59c1c2e6753",
+  "baseSha": "8f7ba527e03851370b5f5476adc68cd21d655634",
+  "implementationCommit": "cf25c6b",
+  "reviewFixCommit": "0640e6c",
+  "focusRetryFixCommit": "2b4090b",
+  "finalTransitionFixCommit": "831a990",
+  "mainIntegrationFixCommit": "b13c1a1",
   "pr162Audit": {
     "alreadyIntegrated": ["5fc4cd6", "2f3327b", "650e3da", "bb924b7", "ffd1bdc", "6eed68a"],
     "viewportHardening": ["357a3de", "8411b53"],
@@ -17,7 +18,7 @@
     {
       "name": "root-unit",
       "command": "npm test",
-      "result": "passed; 4 shared, 28 backend and 55 app tests (87 total)"
+      "result": "passed; 4 shared, 39 backend and 68 app tests (111 total)"
     },
     {
       "name": "app-build",
@@ -37,17 +38,27 @@
     {
       "name": "vote-recovery-chromium",
       "command": "POLIMATCH_E2E_BROWSER=chromium node app/e2e/vote-recovery.mjs",
-      "result": "passed; timeout uncertainty, transient 503, real 401 and idempotent retry by real Enter; focus moved before retry was hidden and remained on the persistent candidate after the next round"
+      "result": "passed; timeout, transient 503, real 401, 409 resync, idempotent retry, truncated 200 and legacy replay; blocked pending cards cannot dispatch another vote"
     },
     {
       "name": "vote-recovery-webkit",
       "command": "POLIMATCH_E2E_BROWSER=webkit node app/e2e/vote-recovery.mjs",
-      "result": "passed; same four recovery scenarios, real Enter and activeElement contract in WebKit"
+      "result": "passed; same seven recovery scenarios, real Enter and activeElement contract in WebKit"
+    },
+    {
+      "name": "vote-trust-states-chromium-webkit",
+      "command": "POLIMATCH_E2E_BROWSER=<chromium|webkit> node app/e2e/vote-trust-states.mjs",
+      "result": "passed in both engines; sending, 401, 429 and 5xx keep the round frozen and expose the correct persistent recovery action"
+    },
+    {
+      "name": "responsive-layout-chromium-webkit",
+      "command": "POLIMATCH_E2E_BROWSER=<chromium|webkit> node app/e2e/responsive-layout.mjs",
+      "result": "passed in both engines; the active persistent panel was measured across 16 viewports"
     },
     {
       "name": "optional-google-flow",
       "command": "VITE_GOOGLE_CLIENT_ID=e2e-client.apps.googleusercontent.com npm run build --prefix app; POLIMATCH_E2E_GOOGLE=1 POLIMATCH_E2E_BROWSER=chromium node app/e2e/interaction-smoke.mjs",
-      "result": "passed; persistent shell did not regress the optional sign-in flow"
+      "result": "passed in Chromium and WebKit; login/logout failures retain focus inside the dialog and remain retryable"
     },
     {
       "name": "dom-mutation-probe",
@@ -77,7 +88,7 @@
   ],
   "pending": [
     "real NVDA or VoiceOver transcript and virtual-cursor observation",
-    "automatic GitHub Actions run after PR publication",
+    "automatic GitHub Actions run after the rebased branch is pushed to draft PR #191",
     "human gate"
   ]
 }

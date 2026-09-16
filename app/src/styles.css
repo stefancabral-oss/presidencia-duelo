@@ -454,8 +454,8 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   .home-hero h1 { font-size: clamp(2.4rem, 13.4vw, 4.1rem); }
   .home-trust { display: grid; }
   .home-deck { gap: 6px; }
-  .candidate-card { height: clamp(142px, calc((100dvh - 258px) / 2), 280px); }
-  .duel-screen:has(.round-feedback) .candidate-card { height: clamp(142px, calc((100dvh - 330px) / 2), 255px); }
+  /* Em alturas curtas, manter a anatomia da carta exige rolagem vertical. */
+  .candidate-card { height: clamp(276px, 86.25vw, 280px); grid-template-rows: minmax(0, 1fr) 104px; }
   .arena { gap: 5px; }
   dialog { width: calc(100% - 18px); height: calc(100dvh - max(28px, env(safe-area-inset-top)) - max(18px, env(safe-area-inset-bottom))); max-height: none; margin-block: max(14px, env(safe-area-inset-top)) max(9px, env(safe-area-inset-bottom)); }
   .profile-preview { width: min(100%, 330px); }

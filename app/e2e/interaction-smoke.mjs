@@ -114,52 +114,8 @@ function assertOutcomeSemantics(outcomes, viewportLabel) {
   }
 }
 
-const candidates = [
-  {
-    personId: 1,
-    id: "lula",
-    name: "Luiz Inácio Lula da Silva (Lula)",
-    displayName: "Lula",
-    party: "PT",
-    role: "Presidente da República",
-    office: "Presidente da República",
-    summary: "Presidente do Brasil e possível candidato em 2026.",
-    bio: "Perfil editorial de teste do primeiro candidato.",
-  },
-  {
-    personId: 3,
-    id: "renan-santos",
-    name: "Renan Santos",
-    displayName: "Renan Santos",
-    party: "Missão",
-    role: "Ativista e candidato à Presidência",
-    office: "Fundador do MBL",
-    summary: "Atuação política e liderança ligada ao Movimento Brasil Livre.",
-    bio: "Perfil editorial de teste do segundo candidato.",
-  },
-  {
-    personId: 101,
-    id: "anitta",
-    name: "Anitta",
-    displayName: "Anitta",
-    affiliation: "Cultura",
-    role: "Cantora e empresária",
-    office: "Artista",
-    summary: "Artista brasileira com projeção internacional.",
-    bio: "Perfil editorial de teste da terceira pessoa.",
-  },
-  {
-    personId: 102,
-    id: "neymar-jr",
-    name: "Neymar Jr.",
-    displayName: "Neymar Jr.",
-    affiliation: "Esporte",
-    role: "Jogador de futebol",
-    office: "Atleta",
-    summary: "Atleta brasileiro de projeção internacional.",
-    bio: "Perfil editorial de teste da quarta pessoa.",
-  },
-];
+const shortViewportCandidateIds = new Set([46, 48, 95, 125]);
+const candidates = CATALOG.filter(({ personId }) => shortViewportCandidateIds.has(personId));
 
 function ranking(decisions = 0, winnerId = "") {
   return candidates.map((candidate) => ({
@@ -404,18 +360,107 @@ try {
   }
 
   await page.setViewportSize({ width: 320, height: 568 });
-  const shortMobileCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
-    const box = card.getBoundingClientRect();
-    return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };
-  }));
-  if (shortMobileCards.length !== 4 || shortMobileCards.some(({ top, right, bottom, left }) => top < 0 || left < 0 || right > 320 || bottom > 568)) {
-    throw new Error("As quatro cartas não cabem juntas no viewport móvel curto de 320 por 568");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const shortMobile = await page.evaluate(() => {
+    const navTop = document.querySelector(".bottom-nav").getBoundingClientRect().top;
+    const cards = [...document.querySelectorAll(".candidate-card")].map((card) => {
+      const portrait = card.querySelector(".portrait");
+      const copy = card.querySelector(".candidate-copy");
+      const name = card.querySelector(".candidate-title > strong");
+      const affiliation = card.querySelector(".candidate-affiliation");
+      const office = card.querySelector(".candidate-office");
+      const box = card.getBoundingClientRect();
+      const copyStyle = getComputedStyle(copy);
+      const portraitHeight = portrait.getBoundingClientRect().height;
+      const copyHeight = copy.getBoundingClientRect().height;
+      return {
+        top: box.top,
+        right: box.right,
+        bottom: box.bottom,
+        left: box.left,
+        width: box.width,
+        height: box.height,
+        portraitShare: portraitHeight / (portraitHeight + copyHeight),
+        copyHeight,
+        copyClientHeight: copy.clientHeight,
+        copyScrollHeight: copy.scrollHeight,
+        copyBottom: copy.getBoundingClientRect().bottom - Number.parseFloat(copyStyle.paddingBottom),
+        nameFontSize: Number.parseFloat(getComputedStyle(name).fontSize),
+        nameLineHeight: Number.parseFloat(getComputedStyle(name).lineHeight),
+        nameClientHeight: name.clientHeight,
+        nameScrollHeight: name.scrollHeight,
+        affiliationFontSize: Number.parseFloat(getComputedStyle(affiliation).fontSize),
+        officeFontSize: Number.parseFloat(getComputedStyle(office).fontSize),
+        officeLineHeight: Number.parseFloat(getComputedStyle(office).lineHeight),
+        officeClientHeight: office.clientHeight,
+        officeScrollHeight: office.scrollHeight,
+        officeBottom: office.getBoundingClientRect().bottom,
+        touchAction: getComputedStyle(card).touchAction,
+      };
+    });
+    return {
+      cards,
+      navTop,
+      documentHeight: document.documentElement.scrollHeight,
+      horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  });
+  const shortWidths = shortMobile.cards.map(({ width }) => width);
+  const shortHeights = shortMobile.cards.map(({ height }) => height);
+  const invalidShortCards = shortMobile.cards.filter((card) => (
+    card.height < 276
+      || card.portraitShare < .6
+      || card.portraitShare > .68
+      || card.copyHeight < 104
+      || card.copyScrollHeight > card.copyClientHeight
+      || card.nameFontSize < 15
+      || card.nameLineHeight < 18
+      || card.nameScrollHeight > card.nameClientHeight
+      || card.affiliationFontSize < 11
+      || card.officeFontSize < 11
+      || card.officeLineHeight < 14
+      || card.officeClientHeight + 1 < Math.min(card.officeScrollHeight, 28)
+      || card.officeBottom > card.copyBottom + 1
+      || card.touchAction !== "manipulation"
+  ));
+  if (shortMobile.cards.length !== 4
+    || Math.max(...shortWidths) - Math.min(...shortWidths) > 2
+    || Math.max(...shortHeights) - Math.min(...shortHeights) > 2
+    || Math.abs(shortMobile.cards[0].top - shortMobile.cards[1].top) > 2
+    || Math.abs(shortMobile.cards[2].top - shortMobile.cards[3].top) > 2
+    || shortMobile.cards[2].top <= shortMobile.cards[0].bottom
+    || shortMobile.cards[0].bottom >= shortMobile.navTop
+    || shortMobile.cards.some(({ left, right }) => left < 0 || right > 320)
+    || shortMobile.documentHeight <= 568
+    || shortMobile.horizontalOverflow
+    || invalidShortCards.length) {
+    throw new Error(`A anatomia das cartas não foi preservada em 320 por 568: ${JSON.stringify({ ...shortMobile, invalidShortCards })}`);
   }
-  const shortNavBox = await page.locator(".bottom-nav").boundingBox();
-  if (!shortNavBox || Math.max(...shortMobileCards.map(({ bottom }) => bottom)) >= shortNavBox.y) {
-    throw new Error("A navegação inferior cobriu as cartas no viewport móvel curto");
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const shortScroll = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll(".candidate-card")];
+    const secondRow = cards.slice(2).map((card) => card.getBoundingClientRect().toJSON());
+    const navTop = document.querySelector(".bottom-nav").getBoundingClientRect().top;
+    const skipBottom = document.querySelector("#skip-round").getBoundingClientRect().bottom;
+    return { secondRow, navTop, skipBottom, scrollY, maxScroll: document.documentElement.scrollHeight - innerHeight };
+  });
+  if (shortScroll.scrollY < shortScroll.maxScroll - 1
+    || shortScroll.secondRow.some(({ top, bottom }) => top < 0 || bottom >= shortScroll.navTop)
+    || shortScroll.skipBottom >= shortScroll.navTop) {
+    throw new Error(`A segunda linha ficou sob a navegação fixa: ${JSON.stringify(shortScroll)}`);
   }
+  const shortSecondRowCard = page.locator(".candidate-card").nth(2);
+  const shortSecondRowBox = await shortSecondRowCard.boundingBox();
+  if (!shortSecondRowBox) throw new Error("A segunda linha não ficou acessível no viewport curto");
+  await page.mouse.move(shortSecondRowBox.x + shortSecondRowBox.width / 2, shortSecondRowBox.y + shortSecondRowBox.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(520);
+  await page.mouse.up();
+  await page.locator("dialog[open]").waitFor();
+  await page.getByRole("button", { name: "Fechar resumo" }).click();
+  await page.locator("dialog[open]").waitFor({ state: "hidden" });
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => window.scrollTo(0, 0));
 
   const firstCard = page.locator(".candidate-card").first();
   const box = await firstCard.boundingBox();
@@ -472,6 +517,61 @@ try {
   if (await page.locator(".candidate-card.is-round-loser").getByText("-15 Elo").count() !== 3) throw new Error("As perdas reais de Elo não apareceram nas outras cartas");
   const outcomeEvidence = await measureRoundOutcomes(page);
   assertOutcomeSemantics(outcomeEvidence, "390 × 844");
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const shortOutcome = await page.evaluate(() => {
+    const navTop = document.querySelector(".bottom-nav").getBoundingClientRect().top;
+    const skipBottom = document.querySelector("#skip-round").getBoundingClientRect().bottom;
+    const cards = [...document.querySelectorAll(".candidate-card")].map((card) => {
+      const portrait = card.querySelector(".portrait");
+      const copy = card.querySelector(".candidate-copy");
+      const name = card.querySelector(".candidate-title");
+      const outcome = card.querySelector(".card-outcome");
+      const copyStyle = getComputedStyle(copy);
+      const cardBox = card.getBoundingClientRect();
+      const portraitHeight = portrait.getBoundingClientRect().height;
+      const copyHeight = copy.getBoundingClientRect().height;
+      return {
+        width: card.offsetWidth,
+        height: card.offsetHeight,
+        top: cardBox.top,
+        bottom: cardBox.bottom,
+        portraitShare: portraitHeight / (portraitHeight + copyHeight),
+        copyClientHeight: copy.clientHeight,
+        copyScrollHeight: copy.scrollHeight,
+        copyBottom: copy.getBoundingClientRect().bottom - Number.parseFloat(copyStyle.paddingBottom),
+        nameBottom: name.getBoundingClientRect().bottom,
+        outcomeTop: outcome.getBoundingClientRect().top,
+        outcomeBottom: outcome.getBoundingClientRect().bottom,
+        outcomeClientHeight: outcome.clientHeight,
+        outcomeScrollHeight: outcome.scrollHeight,
+        valueFontSize: Number.parseFloat(getComputedStyle(outcome.querySelector("b")).fontSize),
+        messageFontSize: Number.parseFloat(getComputedStyle(outcome.querySelector("small")).fontSize),
+      };
+    });
+    return { cards, navTop, skipBottom, scrollY, maxScroll: document.documentElement.scrollHeight - innerHeight };
+  });
+  const invalidShortOutcomes = shortOutcome.cards.filter((card) => (
+    Math.abs(card.width - shortOutcome.cards[0].width) > 2
+      || Math.abs(card.height - shortOutcome.cards[0].height) > 2
+      || card.portraitShare < .6
+      || card.portraitShare > .68
+      || card.copyScrollHeight > card.copyClientHeight
+      || card.outcomeScrollHeight > card.outcomeClientHeight
+      || card.outcomeTop < card.nameBottom - 1
+      || card.outcomeBottom > card.copyBottom + 1
+      || card.valueFontSize < 11
+      || card.messageFontSize < 11
+  ));
+  if (shortOutcome.cards.length !== 4
+    || invalidShortOutcomes.length
+    || shortOutcome.scrollY < shortOutcome.maxScroll - 1
+    || shortOutcome.cards.slice(2).some(({ top, bottom }) => top < 0 || bottom >= shortOutcome.navTop)
+    || shortOutcome.skipBottom >= shortOutcome.navTop) {
+    throw new Error(`Ganho ou perda ficou recortado em 320 por 568: ${JSON.stringify({ ...shortOutcome, invalidShortOutcomes })}`);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => window.scrollTo(0, 0));
   if (process.env.POLIMATCH_E2E_CARD_METRICS) {
     await writeFile(process.env.POLIMATCH_E2E_CARD_METRICS, `${JSON.stringify({ card: cardHierarchyEvidence, pending: pendingEvidence, outcomes: outcomeEvidence }, null, 2)}\n`);
   }

@@ -139,6 +139,7 @@ const pageErrors = [];
 const roundVoteRequests = [];
 let failNextRoundVote = false;
 let holdNextSuccessfulRoundVote = false;
+let successfulRoundVotes = 0;
 page.on("pageerror", (error) => pageErrors.push(error.message));
 
 if (googleEnabled) {
@@ -173,6 +174,7 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
       holdNextSuccessfulRoundVote = false;
       await new Promise((resolve) => setTimeout(resolve, 160));
     }
+    successfulRoundVotes += 1;
     const feedback = {
       primaryEvent: "tierUp",
       rankingEvent: "overtake",
@@ -191,11 +193,13 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
     };
     const globalFeedback = { ...feedback, primaryEvent: "top10", rankingEvent: "top10" };
     body = {
-      duels: 1,
+      duels: successfulRoundVotes,
       ranking: ranking(1, payload.winnerId),
-      player: { version: 1, duels: 1, rankingPolicy: personalRankingPolicy, ranking: ranking(1, payload.winnerId) },
-      round: { winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "overtake" },
+      player: { version: successfulRoundVotes, duels: successfulRoundVotes, rankingPolicy: personalRankingPolicy, ranking: ranking(1, payload.winnerId) },
+      round: { id: payload.roundId, status: "created", winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "overtake" },
       vote: {
+        id: payload.roundId,
+        status: "created",
         winnerDelta: 45,
         zebra: false,
         comparisons: 3,

@@ -1,6 +1,6 @@
 import "./styles.css";
 import { createPlayer, endSession, exchangeGoogleCredential, loadCandidates, loadPlayerRanking, loadRanking, submitRoundVote } from "./api.js";
-import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, rankingPodium, roundFeedbackChannels, shortName } from "./domain.js";
+import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, rankingPodium, shortName } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
 import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
@@ -8,6 +8,8 @@ import { approvedBasicCards } from "./approved-chromas.js";
 import { createSoundController } from "./sound.js";
 import { googleClientId, mountGoogleButton } from "./google-login.js";
 import { resetPendingVoteForIdentityChange, revokeSessionBeforeClearing } from "./logout.js";
+import { VOTE_ACTIONS, VOTE_PHASES, voteFailureState, voteRecoveryControl } from "./vote-flow.js";
+import { confirmedVoteData } from "./vote-response.js";
 
 const app = document.querySelector("#app");
 const sound = createSoundController();
@@ -45,6 +47,11 @@ const state = {
   roundId: "",
   // Escolha que falhou e pode ser repetida pelo botão "Tentar de novo".
   pendingWinnerId: "",
+  votePhase: VOTE_PHASES.READY,
+  voteAction: "",
+  retryAfterSeconds: null,
+  retryAt: 0,
+  sessionRecoveryMode: "",
   roundOutcome: null,
   selectedId: "",
   showCoach: false,
@@ -55,6 +62,7 @@ const state = {
 };
 let resultTimer;
 let roundAdvanceTimer;
+let retryEnableTimer;
 
 const chromaPreviews = [
   { person: "Lula", role: "Chroma Suprema", image: "/chromas/rendered/lula-supreme-3star-v1.jpg", variant: "supreme supreme-rays" },
@@ -116,8 +124,9 @@ function card(candidate) {
   const outcomeClass = outcome ? ` is-round-${outcome.winner ? "winner" : "loser"}` : "";
   const delta = Number(outcome?.delta);
   const outcomeStamp = outcome ? `<span class="card-outcome ${outcome.tone}" aria-live="polite"><b>${Number.isFinite(delta) ? `${delta > 0 ? "+" : ""}${delta} Elo` : outcome.winner ? "Escolhida" : "Não foi desta vez"}</b><small>${escapeHtml(outcome.shortMessage)}</small></span>` : "";
+  const locked = state.busy || Boolean(state.pendingWinnerId);
   return `<div class="candidate-wrap">
-    <button class="candidate-card basic-card${state.selectedId === candidate.id ? " is-selected" : ""}${outcomeClass}" type="button" data-vote="${escapeHtml(candidate.id)}" ${state.busy ? 'disabled aria-busy="true"' : ""} aria-label="${escapeHtml(candidate.name)}, carta básica. Toque para escolher; segure para saber quem é.">
+    <button class="candidate-card basic-card${state.selectedId === candidate.id ? " is-selected" : ""}${outcomeClass}" type="button" data-vote="${escapeHtml(candidate.id)}" ${locked ? `disabled${state.busy ? ' aria-busy="true"' : ""}` : ""} aria-label="${escapeHtml(candidate.name)}, carta básica. Toque para escolher; segure para saber quem é.">
       <span class="card-material" aria-hidden="true"></span>
       <span class="card-facets" aria-hidden="true"></span>
       <span class="card-brand" aria-hidden="true">${brandSymbol("card-brand-symbol")}<b>PoliMatch</b></span>
@@ -226,15 +235,16 @@ function topicsScreen() {
 }
 
 function duelScreen() {
+  const recovery = voteRecoveryControl(state);
   const feedback = state.personalFeedbackMessage
     ? `<section class="round-feedback" aria-live="polite" aria-atomic="true"><p class="feedback-channel feedback-personal"><strong>No seu ranking</strong><span>${escapeHtml(state.personalFeedbackMessage)}</span></p>${state.globalFeedbackMessage ? `<p class="feedback-channel feedback-global"><strong>No placar do público</strong><span>${escapeHtml(state.globalFeedbackMessage)}</span></p>` : ""}</section>`
     : `<p class="round-instruction${state.result ? " is-result" : ""}${state.resultTone === "erro" ? " is-error" : ""}" role="status">${escapeHtml(state.result || "Toque na sua preferida. Segure para conhecer o perfil.")}</p>`;
-  return `<main class="screen duel-screen">
+  return `<main class="screen duel-screen" data-vote-phase="${escapeHtml(state.votePhase)}" aria-busy="${state.busy ? "true" : "false"}">
     <div class="duel-head"><div><p class="eyebrow">Escolha uma entre quatro</p><h1>Quem você prefere?</h1></div><span class="progress-pill">${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}</span></div>
     ${feedback}
-    ${state.pendingWinnerId ? '<button class="retry-vote" type="button" id="retry-vote">Tentar de novo</button>' : ""}
+    ${recovery.visible ? `<button class="retry-vote" type="button" id="${recovery.id}" ${recovery.disabled ? "disabled" : ""}>${escapeHtml(recovery.label)}</button>` : ""}
     <div class="arena arena-four">${state.round.map(card).join("")}</div>
-    <button class="skip-button" type="button" id="skip-round" ${state.busy ? "disabled" : ""}>Nenhuma destas · trocar as quatro</button>
+    <button class="skip-button" type="button" id="skip-round" ${state.busy || state.pendingWinnerId ? "disabled" : ""}>Nenhuma destas · trocar as quatro</button>
   </main>`;
 }
 
@@ -255,7 +265,8 @@ function rankingScreen() {
   const policy = personal && state.personalRankingPolicy
     ? `<p class="ranking-policy"><strong>Ordenado por ${escapeHtml(state.personalRankingPolicy.label)}</strong><span>${escapeHtml(state.personalRankingPolicy.explanation)}</span></p>`
     : "";
-  return `<main class="screen ranking-screen">${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}<section class="ranking-overview"><header class="ranking-heading"><p class="eyebrow">Eleições 2026</p><h1>Ranking</h1><p>${personal ? "O retrato das comparações que você fez." : "O placar vivo das escolhas do público."}</p><strong>${totalDuels} ${totalDuels === 1 ? "escolha confirmada" : "escolhas confirmadas"}</strong></header><div class="segmented" aria-label="Tipo de ranking"><button class="${personal ? "" : "active"}" data-ranking-view="general">Geral</button><button class="${personal ? "active" : ""}" data-ranking-view="personal">Seu ranking</button></div>${policy}${publicPulse}${podiumCards ? `<section class="podium" aria-label="Pódio">${podiumCards}</section>` : ""}</section><section class="ranking-results"><label class="ranking-search"><span>Todos os nomes</span><input id="ranking-search" type="search" value="${escapeHtml(state.rankingQuery)}" placeholder="Buscar nome ou partido" autocomplete="off"></label><section class="panel ranking-list">${rows || `<p class="empty">${empty}</p>`}</section>${reveal}<button class="primary continue-duels" id="continue-duels" type="button">Voltar às escolhas</button></section></main>`;
+  const trust = personal ? "" : '<p class="ranking-trust">Escolhas confirmadas pelo servidor. <a href="/integridade.html">Como o placar é protegido</a></p>';
+  return `<main class="screen ranking-screen">${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}<section class="ranking-overview"><header class="ranking-heading"><p class="eyebrow">Eleições 2026</p><h1>Ranking</h1><p>${personal ? "O retrato das comparações que você fez." : "O placar vivo das escolhas do público."}</p><strong>${totalDuels} ${totalDuels === 1 ? "escolha confirmada" : "escolhas confirmadas"}</strong>${trust}</header><div class="segmented" aria-label="Tipo de ranking"><button class="${personal ? "" : "active"}" data-ranking-view="general">Geral</button><button class="${personal ? "active" : ""}" data-ranking-view="personal">Seu ranking</button></div>${policy}${publicPulse}${podiumCards ? `<section class="podium" aria-label="Pódio">${podiumCards}</section>` : ""}</section><section class="ranking-results"><label class="ranking-search"><span>Todos os nomes</span><input id="ranking-search" type="search" value="${escapeHtml(state.rankingQuery)}" placeholder="Buscar nome ou partido" autocomplete="off"></label><section class="panel ranking-list">${rows || `<p class="empty">${empty}</p>`}</section>${reveal}<button class="primary continue-duels" id="continue-duels" type="button">Voltar às escolhas</button></section></main>`;
 }
 
 function collectionScreen() {
@@ -326,7 +337,7 @@ function showProfile(id) {
     const label = typeof source === "string" ? "Fonte" : source.label || source.publisher || "Fonte";
     return href ? `<li><a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a></li>` : "";
   }).join("");
-  const canVote = state.screen === "duel" && state.round.some((candidate) => candidate.id === person.id) && !state.busy;
+  const canVote = state.screen === "duel" && state.round.some((candidate) => candidate.id === person.id) && !state.busy && !state.pendingWinnerId;
   modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar resumo">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2>${escapeHtml(person.name)}</h2><p class="profile-role"><strong>${escapeHtml(candidateRole(person))}</strong></p>${metadata.length ? `<p class="profile-meta">${metadata.map(escapeHtml).join(" · ")}</p>` : ""}${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions">${canVote ? `<button class="primary" id="vote-from-profile" data-candidate="${escapeHtml(person.id)}" type="button">Escolher esta pessoa</button>` : ""}<button class="secondary" id="close-modal" type="button">Voltar ao duelo</button></div>`;
   let silentClose = false;
   modal.showModal();
@@ -355,6 +366,11 @@ function chooseNextRound() {
   state.matchQueue = next.queue;
   state.roundId = crypto.randomUUID();
   state.pendingWinnerId = "";
+  state.votePhase = VOTE_PHASES.READY;
+  state.voteAction = "";
+  state.retryAfterSeconds = null;
+  state.retryAt = 0;
+  state.sessionRecoveryMode = "";
 }
 
 function enterDuel() {
@@ -364,12 +380,21 @@ function enterDuel() {
   render();
 }
 
-async function vote(winnerId) {
-  if (state.busy) return;
+async function vote(winnerId, { retry = false } = {}) {
+  if (state.busy || (state.pendingWinnerId && !retry)) return;
   const winner = state.round.find(({ id }) => id === winnerId);
   if (!winner || state.round.length !== 4) return;
+  const attempt = {
+    roundId: state.roundId,
+    winnerId: winner.id,
+    candidateIds: state.round.map(({ id }) => id),
+  };
   sound.play("choose");
   state.busy = true;
+  state.votePhase = VOTE_PHASES.SENDING;
+  state.voteAction = "";
+  state.retryAfterSeconds = null;
+  state.retryAt = 0;
   state.selectedId = winner.id;
   clearTimeout(resultTimer);
   clearTimeout(roundAdvanceTimer);
@@ -380,19 +405,21 @@ async function vote(winnerId) {
   state.resultTone = "";
   render();
   try {
-    const response = await submitRoundVote(state.roundId, winner.id, state.round.map(({ id }) => id), "eleicoes-2026", {
+    const response = await submitRoundVote(attempt.roundId, attempt.winnerId, attempt.candidateIds, "eleicoes-2026", {
       recoveryKey: state.recoveryKey,
       version: state.playerVersion,
     });
+    const confirmed = confirmedVoteData(response, state.candidates, attempt, state);
     state.pendingWinnerId = "";
+    state.votePhase = VOTE_PHASES.CONFIRMED;
     state.resultTone = "";
-    state.ranking = rankingForCatalog(response, state.candidates);
-    state.personalRanking = rankingForCatalog(response.player, state.candidates);
-    state.personalRankingPolicy = response.player?.rankingPolicy || state.personalRankingPolicy;
-    state.playerVersion = response.player?.version ?? state.playerVersion;
-    state.globalDuels = Number(response.duels) || state.globalDuels;
-    state.personalDuels = Number(response.player?.duels) || state.personalDuels + 1;
-    const channels = roundFeedbackChannels(response.vote, state.round, winner.id);
+    state.ranking = confirmed.ranking;
+    state.personalRanking = confirmed.personalRanking;
+    state.personalRankingPolicy = confirmed.personalRankingPolicy;
+    state.playerVersion = confirmed.playerVersion;
+    state.globalDuels = confirmed.globalDuels;
+    state.personalDuels = confirmed.personalDuels;
+    const { channels } = confirmed;
     state.roundOutcome = channels.personal;
     state.personalFeedbackMessage = channels.personal.outcomes.length
       ? channels.personal.message
@@ -438,15 +465,18 @@ async function recoverFromVoteFailure(error, winner) {
   state.globalFeedbackMessage = "";
   state.resultTone = "erro";
   state.pendingWinnerId = winner.id;
+  const failure = voteFailureState(error);
+  state.votePhase = failure.phase;
+  state.voteAction = failure.action;
+  state.retryAfterSeconds = failure.retryAfterSeconds;
+  state.retryAt = failure.retryAt;
 
   // A versão pessoal ficou para trás porque uma rodada anterior chegou ao
   // servidor sem que a resposta voltasse. Realinhar aqui é o que impede o app
   // de recusar todo voto seguinte até alguém recarregar a página.
   if (error?.status === 409 && error?.code === "PLAYER_VERSION_CONFLICT") {
     const resynced = await resyncPlayer();
-    state.result = resynced
-      ? "Seu ranking mudou. Toque em Tentar de novo para confirmar esta escolha."
-      : "Não conseguimos alinhar seu ranking. Toque em Tentar de novo.";
+    state.result = resynced ? failure.message : "Não conseguimos alinhar seu ranking. Tente novamente.";
     // Um 409 acontece antes da gravação desta rodada. A escolha continua
     // pendente e reutiliza o mesmo roundId depois da versão ser atualizada.
     state.pendingWinnerId = winner.id;
@@ -455,11 +485,61 @@ async function recoverFromVoteFailure(error, winner) {
     return;
   }
 
-  state.result = error?.unreachable
-    ? "Não tivemos resposta do servidor. Sua escolha pode não ter sido registrada."
-    : `Não foi possível confirmar: ${error?.message || "erro inesperado"}.`;
+  state.result = failure.message;
   render();
+  scheduleRetryUnlock();
   sound.play("error");
+}
+
+function scheduleRetryUnlock() {
+  clearTimeout(retryEnableTimer);
+  const delay = state.retryAt - Date.now();
+  if (delay <= 0) return;
+  retryEnableTimer = setTimeout(() => render(), delay + 25);
+}
+
+async function restoreVoteSession() {
+  if (state.busy || !state.pendingWinnerId || state.voteAction !== VOTE_ACTIONS.RESTORE_SESSION) return;
+  state.busy = true;
+  state.votePhase = VOTE_PHASES.RESTORING_SESSION;
+  state.voteAction = "";
+  state.result = "Restabelecendo sua sessão…";
+  state.resultTone = "";
+  render();
+  try {
+    let recoveryKey = state.recoveryKey;
+    if (state.sessionRecoveryMode !== "load") {
+      const created = await createPlayer();
+      if (!created?.recoveryKey) throw new TypeError("resposta de sessão inválida");
+      recoveryKey = created.recoveryKey;
+      state.recoveryKey = recoveryKey;
+      state.sessionRecoveryMode = "load";
+      localStorage.setItem("polimatch:v3:recovery-key", recoveryKey);
+    }
+    const personal = await loadPlayerRanking(recoveryKey);
+    state.playerVersion = personal.version ?? 0;
+    state.personalRanking = rankingForCatalog(personal, state.candidates);
+    state.personalRankingPolicy = personal.rankingPolicy || null;
+    state.personalDuels = Number(personal.duels) || 0;
+    state.busy = false;
+    state.votePhase = VOTE_PHASES.RETRY_READY;
+    state.voteAction = VOTE_ACTIONS.RETRY;
+    state.sessionRecoveryMode = "";
+    state.result = "Sessão restabelecida. Confirme novamente sua escolha.";
+    render();
+  } catch (error) {
+    state.busy = false;
+    const failure = voteFailureState(error);
+    state.votePhase = failure.phase;
+    state.voteAction = VOTE_ACTIONS.RESTORE_SESSION;
+    state.retryAfterSeconds = failure.retryAfterSeconds;
+    state.retryAt = failure.retryAt;
+    state.result = failure.message;
+    state.resultTone = "erro";
+    render();
+    scheduleRetryUnlock();
+    sound.play("error");
+  }
 }
 
 /** Relê o estado do jogador no servidor. Devolve `false` se nem isso deu. */
@@ -510,10 +590,11 @@ function bindEvents() {
     if (state.busy || !state.pendingWinnerId) return;
     // Mesmo `state.roundId` da tentativa anterior: se aquela chegou ao servidor,
     // esta é reconhecida como repetição e devolve o mesmo resultado.
-    vote(state.pendingWinnerId);
+    vote(state.pendingWinnerId, { retry: true });
   });
+  document.querySelector("#restore-session")?.addEventListener("click", restoreVoteSession);
   document.querySelector("#skip-round")?.addEventListener("click", () => {
-    if (state.busy) return;
+    if (state.busy || state.pendingWinnerId) return;
     sound.play("shuffle");
     state.result = "";
     state.resultTone = "";

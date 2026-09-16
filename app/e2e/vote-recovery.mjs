@@ -63,9 +63,9 @@ function criarServidor() {
         elo: 1000,
         wins: 0,
         losses: 0,
-        decisions: this.duels ? 1 : 0,
+        decisions: 0,
         winRate: 0,
-        rank: this.duels ? 1 : null,
+        rank: null,
       }));
     },
   };
@@ -77,9 +77,10 @@ function corpoDaRodada(servidor, roundId, winnerId, candidateIds) {
     duels: servidor.duels,
     ranking: servidor.ranking(),
     player: { version: servidor.version, duels: servidor.duels, rankingPolicy: personalRankingPolicy, ranking: servidor.ranking() },
-    round: { id: roundId, winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "overtake" },
+    round: { id: roundId, status: "created", winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "overtake" },
     vote: {
       id: roundId,
+      status: "created",
       winnerDelta: 45,
       zebra: false,
       comparisons: 3,

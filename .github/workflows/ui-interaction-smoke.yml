@@ -69,3 +69,8 @@ jobs:
         env:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
         run: node app/e2e/vote-recovery.mjs
+
+      - name: Validate vote trust states
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/vote-trust-states.mjs

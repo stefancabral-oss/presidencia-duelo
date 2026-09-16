@@ -126,7 +126,7 @@ function majorityLayers(nodeIds, edges) {
         ? "majority-cycle"
         : frontier.length > 1 ? "unresolved-frontier" : "strict-frontier";
       for (const nodeId of members) {
-        ranked.set(nodeId, { rank: competitionRank, preferenceScore: -layer, rankBasis, layer });
+        ranked.set(nodeId, { rank: competitionRank, preferenceScore: layer === 0 ? 0 : -layer, rankBasis, layer });
       }
     }
     for (const componentId of frontier) {

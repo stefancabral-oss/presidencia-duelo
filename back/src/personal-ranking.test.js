@@ -137,4 +137,6 @@ test("pending comparisons build the transactional after-snapshot before persiste
     ],
   });
   assert.deepEqual(result.ranking.map(({ id, rank }) => [id, rank]), [["a", 1], ["b", 2], ["c", 2], ["d", 2]]);
+  assert.equal(Object.is(result.ranking[0].preferenceScore, -0), false);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)).ranking, result.ranking);
 });

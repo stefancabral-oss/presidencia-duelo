@@ -1,6 +1,7 @@
 import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import { TOPICS } from "../src/candidates.js";
 import { assetApprovalFingerprint, candidateContentFingerprint, createCandidateRegistry, sha256Fingerprint } from "../src/editorial-gate.js";
+import { attachTestAttestations } from "./editorial-attestation-fixtures.js";
 
 export const TEST_CANDIDATE_IDS = Object.freeze([
   "lula",
@@ -14,7 +15,6 @@ function audit(label) {
   return {
     decidedBy: "fixture-automatizada",
     decidedAt: "2026-09-16",
-    basis: [{ label, reference: "test-support/editorial-fixtures.js" }],
   };
 }
 
@@ -68,11 +68,14 @@ export function createEditorialTestRegistry({
     };
   });
 
-  return createCandidateRegistry({
+  const inputs = attachTestAttestations({
     catalog,
     topics: TOPICS,
     ledger: { schemaVersion: 1, decisions },
     assetRegistry: { schemaVersion: 1, assets },
+  });
+  return createCandidateRegistry({
+    ...inputs,
     now: () => new Date("2026-09-16T12:00:00.000Z"),
   });
 }

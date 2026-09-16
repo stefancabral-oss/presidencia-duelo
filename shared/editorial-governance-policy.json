@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "attestationRuleset": "editorial-attestation-v1",
+  "authorizedReviewers": {
+    "content": ["stefancabral-oss"],
+    "cardArt": ["stefancabral-oss"],
+    "documentaryPhoto": ["stefancabral-oss"]
+  }
+}

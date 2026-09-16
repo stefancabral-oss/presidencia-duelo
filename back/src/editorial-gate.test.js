@@ -3,13 +3,24 @@ import test from "node:test";
 import {
   ASSET_STATUSES,
   CONTENT_STATUSES,
+  PUBLIC_CANDIDATE_SCHEMA_V1,
+  PUBLIC_CANDIDATE_SCHEMA_V2,
   assetApprovalFingerprint,
   candidateContentFingerprint,
   candidatePublicContent,
   candidatePublicPayload,
+  candidatePublicSnapshot,
+  candidateRoutingFingerprint,
   createCandidateRegistry,
   sha256Fingerprint,
 } from "./editorial-gate.js";
+import { textBlobFingerprint } from "./editorial-integrity.js";
+import { createGitReviewedStateVerifier } from "./editorial-history.js";
+import {
+  attachTestAttestations,
+  TEST_GIT_BLOB,
+  testGovernancePolicy,
+} from "../test-support/editorial-attestation-fixtures.js";
 
 const TOPICS = [{ id: "eleicoes-2026", active: true }];
 const TEST_NOW = () => new Date("2026-09-16T12:00:00.000Z");
@@ -32,17 +43,33 @@ const CANDIDATE = {
   highlight: "Destaque verificável.",
   controversy: "Ponto de atenção verificável.",
   sources: [{ label: "Fonte", url: "https://example.test/fonte" }],
+  reviewedAt: "2026-09-16",
+  reviewStatus: "pending",
+  photo: "",
 };
 
-function createTestRegistry(input) {
-  return createCandidateRegistry({ ...input, now: TEST_NOW });
+function attestedInputs(input, options) {
+  return input.loadRepositoryFile ? input : attachTestAttestations(input, options);
+}
+
+function createTestRegistry(input, options) {
+  return createCandidateRegistry({ ...attestedInputs(input, options), now: TEST_NOW });
+}
+
+function rewriteAttestation(inputs, dimension, mutate) {
+  const decision = inputs.ledger.decisions[0][dimension];
+  const path = decision.attestation.path;
+  const record = JSON.parse(inputs.repositoryFiles.get(path));
+  mutate(record);
+  const text = `${JSON.stringify(record, null, 2)}\n`;
+  inputs.repositoryFiles.set(path, text);
+  decision.attestation.blobSha256 = textBlobFingerprint(text, path);
 }
 
 function audit(dimension) {
   return {
     decidedBy: "editor-humano",
     decidedAt: "2026-09-16",
-    basis: [{ label: `Evidência ${dimension}`, reference: `https://example.test/${dimension}` }],
   };
 }
 
@@ -50,8 +77,6 @@ function approvedInputs({
   candidate = structuredClone(CANDIDATE),
   decidedBy = "editor-humano",
   decidedAt = "2026-09-16",
-  contentBasis = [{ label: "Fonte primária", reference: "https://example.test/conteudo" }],
-  cardBasis = [{ label: "Gate visual", reference: "docs/editorial/evidencia.md#arte" }],
   version = "fixture-v1",
 } = {}) {
   const cardAsset = {
@@ -74,14 +99,12 @@ function approvedInputs({
           fingerprint: candidateContentFingerprint(candidate),
           decidedBy,
           decidedAt,
-          basis: contentBasis,
         },
         cardArt: {
           status: "approved",
           fingerprint: assetApprovalFingerprint(cardAsset),
           decidedBy,
           decidedAt,
-          basis: cardBasis,
         },
       }],
     },
@@ -215,17 +238,63 @@ test("a later content edit invalidates its approval fingerprint", () => {
 
 test("the public API content projection is the single fingerprint source", () => {
   const projected = candidatePublicContent(CANDIDATE);
+  assert.equal(candidateContentFingerprint(CANDIDATE), sha256Fingerprint(JSON.stringify(projected)));
   for (const [field, value] of Object.entries(projected)) {
     const changedValue = Array.isArray(value)
       ? [...value, field === "sources" ? { label: "Outra fonte", url: "https://example.test/outra" } : "Outro fato"]
-      : typeof value === "number" ? value + 1 : `${value || ""} alterado`;
+      : typeof value === "number" ? value + 1 : field === "id" ? `${value}-alterado` : `${value || ""} alterado`;
     assert.notEqual(
       candidateContentFingerprint({ ...CANDIDATE, [field]: changedValue }),
       candidateContentFingerprint(CANDIDATE),
       `o campo público ${field} precisa invalidar a aprovação`,
     );
   }
-  assert.notEqual(candidateContentFingerprint({ ...CANDIDATE, group: "influencia" }), candidateContentFingerprint(CANDIDATE));
+  const rerouted = { ...CANDIDATE, group: "influencia" };
+  assert.equal(candidateContentFingerprint(rerouted), candidateContentFingerprint(CANDIDATE));
+  assert.notEqual(candidateRoutingFingerprint(rerouted), candidateRoutingFingerprint(CANDIDATE));
+});
+
+test("candidate-public-v1 remains byte-stable and v2 is a separate strict schema", () => {
+  const candidate = { ...CANDIDATE, cardArt: "", topicIds: ["eleicoes-2026"] };
+  const v1 = JSON.stringify(candidatePublicSnapshot(candidate, PUBLIC_CANDIDATE_SCHEMA_V1));
+  assert.equal(v1, "{\"personId\":1,\"id\":\"pessoa-teste\",\"name\":\"Pessoa de Teste\",\"displayName\":\"Pessoa\",\"affiliation\":\"Partido\",\"photo\":\"\",\"role\":\"Cargo público\",\"summary\":\"Resumo verificável.\",\"office\":\"Cargo público\",\"party\":\"Partido\",\"location\":\"Brasil\",\"bio\":\"Biografia verificável.\",\"relevance2026\":\"Relevância verificável.\",\"facts\":[\"Fato verificável.\"],\"highlight\":\"Destaque verificável.\",\"controversy\":\"Ponto de atenção verificável.\",\"sources\":[{\"label\":\"Fonte\",\"url\":\"https://example.test/fonte\"}],\"reviewedAt\":\"2026-09-16\",\"reviewStatus\":\"pending\",\"topicIds\":[\"eleicoes-2026\"]}");
+
+  const { affiliation, office, area, ...withoutLegacyTaxonomy } = CANDIDATE;
+  const provenance = Object.fromEntries(["role", "party", "primaryArea", "contextAffiliation"].map((field) => [field, {
+    status: field === "contextAffiliation" ? "ambiguous" : field === "primaryArea" ? "inferred" : "extracted",
+    source: `fonte#${field}`,
+  }]));
+  const v2Candidate = {
+    ...withoutLegacyTaxonomy,
+    party: "PARTIDO",
+    primaryArea: "Política institucional",
+    contextAffiliation: null,
+    taxonomyProvenance: provenance,
+  };
+  const v2 = candidatePublicPayload(v2Candidate, { ruleset: PUBLIC_CANDIDATE_SCHEMA_V2 });
+  assert.equal(v2.primaryArea, "Política institucional");
+  assert.deepEqual(v2.taxonomyProvenance.contextAffiliation, { status: "ambiguous", source: "fonte#contextAffiliation" });
+  assert.equal(Object.hasOwn(v2, "affiliation"), false);
+  assert.equal(Object.hasOwn(v2, "office"), false);
+  assert.deepEqual(Object.keys(candidatePublicSnapshot(v2Candidate, PUBLIC_CANDIDATE_SCHEMA_V2)), [
+    "personId", "id", "name", "displayName", "photo", "role", "party", "primaryArea",
+    "contextAffiliation", "taxonomyProvenance", "summary", "location", "bio", "relevance2026",
+    "facts", "highlight", "controversy", "sources", "reviewedAt", "reviewStatus", "topicIds",
+  ]);
+  assert.equal(JSON.stringify(candidatePublicSnapshot(candidate, PUBLIC_CANDIDATE_SCHEMA_V1)), v1);
+});
+
+test("catalog and nested public content use exact typed schemas", () => {
+  assert.throws(
+    () => candidateContentFingerprint({ ...CANDIDATE, sources: [{ ...CANDIDATE.sources[0], tracking: "vaza" }] }),
+    /campos inválidos.*tracking/,
+  );
+  assert.throws(() => candidateContentFingerprint({ ...CANDIDATE, facts: [{ text: "não é string" }] }), /facts\[0\].*texto visível/);
+  assert.throws(() => candidateContentFingerprint({ ...CANDIDATE, office: null }), /office.*texto visível/);
+  const absent = { ...CANDIDATE };
+  delete absent.office;
+  assert.throws(() => candidateContentFingerprint(absent), /campos inválidos.*office/);
+  assert.throws(() => candidateContentFingerprint({ ...CANDIDATE, office: undefined }), /valores JSON definidos|office.*texto visível/);
 });
 
 test("the reusable public payload strips audit and fingerprints", () => {
@@ -245,8 +314,8 @@ test("the reusable public payload strips audit and fingerprints", () => {
 });
 
 test("approved candidates and public payloads are independent deeply frozen snapshots", () => {
-  const inputs = approvedInputs();
-  const registry = createTestRegistry(inputs);
+  const inputs = attestedInputs(approvedInputs());
+  const registry = createCandidateRegistry({ ...inputs, now: TEST_NOW });
   const candidate = registry.candidates[0];
   const payload = candidatePublicPayload(candidate);
   const originalFingerprint = candidate.publication.content.fingerprint;
@@ -258,11 +327,11 @@ test("approved candidates and public payloads are independent deeply frozen snap
   assert.notStrictEqual(payload.sources[0], candidate.sources[0]);
   assert.throws(() => { candidate.sources[0].url = "https://attacker.invalid/candidate"; }, TypeError);
   assert.throws(() => { payload.sources[0].url = "https://attacker.invalid/payload"; }, TypeError);
-  assert.throws(() => { candidate.publication.content.audit.basis[0].reference = "https://attacker.invalid/audit"; }, TypeError);
+  assert.throws(() => { candidate.publication.content.audit.attestation.evidence[0].path = "app/public/logo.svg"; }, TypeError);
 
   inputs.catalog[0].sources[0].url = "https://attacker.invalid/input";
   inputs.ledger.decisions[0].content.status = "rejected";
-  inputs.ledger.decisions[0].content.basis[0].reference = "https://attacker.invalid/ledger";
+  rewriteAttestation(inputs, "content", (record) => { record.evidence[0].label = "Atacante"; });
   inputs.assetRegistry.assets[0].version = "attacker-v2";
   inputs.topics[0].active = false;
 
@@ -310,41 +379,145 @@ test("decision dates use an injected clock and cannot be future-dated", () => {
     /não pode estar no futuro/,
   );
   assert.throws(
-    () => createCandidateRegistry({ ...approvedInputs(), now: () => new Date("invalid") }),
+    () => createCandidateRegistry({ ...attestedInputs(approvedInputs()), now: () => new Date("invalid") }),
     /clock deve retornar uma data válida/,
   );
   assert.throws(
     () => createCandidateRegistry({
-      ...approvedInputs({ decidedAt: "2026-09-17" }),
+      ...attestedInputs(approvedInputs({ decidedAt: "2026-09-17" })),
       now: () => new Date("2026-09-17T02:30:00.000Z"),
     }),
     /não pode estar no futuro/,
   );
   assert.equal(createCandidateRegistry({
-    ...approvedInputs({ decidedAt: "2026-09-17" }),
+    ...attestedInputs(approvedInputs({ decidedAt: "2026-09-17" })),
     now: () => new Date("2026-09-17T03:30:00.000Z"),
   }).candidates[0].eligible, true);
 });
 
-test("approver identity and evidence reject invisible or unsafe metadata", () => {
+test("approver identity must be syntactically valid and authorized by versioned policy", () => {
   for (const decidedBy of ["\u200b", "nome com espaço", "-invalido", "invalido--login", "invalido-"]) {
     assert.throws(() => createTestRegistry(approvedInputs({ decidedBy })), /login GitHub válido/);
   }
-  for (const label of ["\u200b", "Evidência\nquebrada", "\u00a0"]) {
-    assert.throws(
-      () => createTestRegistry(approvedInputs({ contentBasis: [{ label, reference: "https://example.test/fonte" }] })),
-      /basis.label deve ser texto visível/,
-    );
+  assert.throws(
+    () => createTestRegistry(approvedInputs({ decidedBy: "usuario-valido-mas-nao-autorizado" })),
+    /não está autorizado pela política versionada/,
+  );
+});
+
+test("attestations require existing candidate-scoped internal evidence and matching blobs", () => {
+  const missingAttestation = attestedInputs(approvedInputs());
+  missingAttestation.repositoryFiles.delete(missingAttestation.ledger.decisions[0].content.attestation.path);
+  assert.throws(() => createTestRegistry(missingAttestation), /attestation não existe no repositório/);
+
+  const missingEvidence = attestedInputs(approvedInputs());
+  const contentAttestation = JSON.parse(missingEvidence.repositoryFiles.get(
+    missingEvidence.ledger.decisions[0].content.attestation.path,
+  ));
+  missingEvidence.repositoryFiles.delete(contentAttestation.evidence[0].path);
+  assert.throws(() => createTestRegistry(missingEvidence), /evidence\[0\] não existe no repositório/);
+
+  const tamperedEvidence = attestedInputs(approvedInputs());
+  const tamperedAttestation = JSON.parse(tamperedEvidence.repositoryFiles.get(
+    tamperedEvidence.ledger.decisions[0].content.attestation.path,
+  ));
+  tamperedEvidence.repositoryFiles.set(tamperedAttestation.evidence[0].path, "conteúdo trocado");
+  assert.throws(() => createTestRegistry(tamperedEvidence), /blobSha256 não corresponde/);
+
+  const blankEvidence = attestedInputs(approvedInputs());
+  const blankAttestation = JSON.parse(blankEvidence.repositoryFiles.get(
+    blankEvidence.ledger.decisions[0].content.attestation.path,
+  ));
+  blankEvidence.repositoryFiles.set(blankAttestation.evidence[0].path, "\n\t");
+  rewriteAttestation(blankEvidence, "content", (record) => {
+    record.evidence[0].blobSha256 = textBlobFingerprint("\n\t", record.evidence[0].path);
+  });
+  assert.throws(() => createTestRegistry(blankEvidence), /evidência textual visível e segura/);
+
+  for (const unsafePath of ["https://example.test/revisao", "app/public/brand/logo-volumetric.png", "shared/editorial-evidence/outro/content/prova.md"]) {
+    const unrelated = attestedInputs(approvedInputs());
+    rewriteAttestation(unrelated, "content", (record) => {
+      record.evidence[0].path = unsafePath;
+      record.evidence[0].blobSha256 = sha256Fingerprint("irrelevante");
+    });
+    unrelated.repositoryFiles.set(unsafePath, "irrelevante");
+    assert.throws(() => createTestRegistry(unrelated), /path deve apontar para evidência textual interna/);
   }
-  for (const reference of ["\u200b", "http://example.test/fonte", "../segredo.md", "docs/../segredo.md", "/absoluto.md"] ) {
-    assert.throws(
-      () => createTestRegistry(approvedInputs({ contentBasis: [{ label: "Fonte", reference }] })),
-      /basis.reference deve ser URL HTTPS ou caminho seguro/,
-    );
-  }
-  const executableMetadata = approvedInputs();
-  executableMetadata.ledger.decisions[0].content.basis[0].extra = () => "mutável";
-  assert.throws(() => createTestRegistry(executableMetadata), /somente valores JSON/);
+});
+
+test("attestation identity, subject and reviewed commit are bound and locally verifiable", () => {
+  const forgedIdentity = attestedInputs(approvedInputs());
+  rewriteAttestation(forgedIdentity, "content", (record) => { record.decidedBy = "outro-editor"; });
+  assert.throws(() => createTestRegistry(forgedIdentity), /não corresponde a decidedBy/);
+
+  const forgedSubject = attestedInputs(approvedInputs());
+  rewriteAttestation(forgedSubject, "content", (record) => { record.subject.fingerprint = sha256Fingerprint("outro"); });
+  assert.throws(() => createTestRegistry(forgedSubject), /subject diverge da decisão/);
+
+  const malformedCommit = attestedInputs(approvedInputs());
+  rewriteAttestation(malformedCommit, "content", (record) => { record.reviewedCommit = "main"; });
+  assert.throws(() => createTestRegistry(malformedCommit), /reviewedCommit deve ser SHA completo/);
+
+  const unprovedCommit = attestedInputs(approvedInputs());
+  assert.throws(
+    () => createCandidateRegistry({
+      ...unprovedCommit,
+      now: TEST_NOW,
+      verifyReviewedState: () => false,
+    }),
+    /não foi comprovada no commit revisado/,
+  );
+});
+
+test("the local Git verifier proves evidence blobs and reviewed content", () => {
+  const inputs = attestedInputs(approvedInputs());
+  const attestationPath = inputs.ledger.decisions[0].content.attestation.path;
+  const attestation = JSON.parse(inputs.repositoryFiles.get(attestationPath));
+  const evidencePath = attestation.evidence[0].path;
+  const cardAttestationPath = inputs.ledger.decisions[0].cardArt.attestation.path;
+  const cardAttestation = JSON.parse(inputs.repositoryFiles.get(cardAttestationPath));
+  const cardEvidencePath = cardAttestation.evidence[0].path;
+  const runGit = (args) => {
+    if (args[0] === "cat-file") return Buffer.alloc(0);
+    if (args[0] === "merge-base") return Buffer.alloc(0);
+    if (args[0] === "rev-parse") return `${TEST_GIT_BLOB}\n`;
+    if (args[0] === "show" && args[1].endsWith(`:${evidencePath}`)) return Buffer.from(inputs.repositoryFiles.get(evidencePath));
+    if (args[0] === "show" && args[1].endsWith(`:${cardEvidencePath}`)) return Buffer.from(inputs.repositoryFiles.get(cardEvidencePath));
+    if (args[0] === "show" && args[1].endsWith(":shared/elections-2026.json")) return Buffer.from(JSON.stringify(inputs.catalog));
+    if (args[0] === "show" && args[1].endsWith(":shared/editorial-asset-registry.json")) {
+      return Buffer.from(JSON.stringify(inputs.assetRegistry));
+    }
+    if (args[0] === "show" && args[1].endsWith(":app/public/fixtures/card-art.jpg")) {
+      return Buffer.from("arte-fixture-v1");
+    }
+    if (args[0] === "show" && args[1].endsWith(":shared/editorial-governance-policy.json")) {
+      return Buffer.from(JSON.stringify(inputs.governancePolicy));
+    }
+    throw new Error(`git inesperado: ${args.join(" ")}`);
+  };
+  assert.equal(createGitReviewedStateVerifier({ runGit })(attestation), true);
+  assert.equal(createGitReviewedStateVerifier({ runGit })(cardAttestation), true);
+  assert.throws(
+    () => createGitReviewedStateVerifier({ runGit: (args) => (
+      args[0] === "rev-parse" ? `${"3".repeat(40)}\n` : runGit(args)
+    ) })(attestation),
+    /gitBlob diverge/,
+  );
+  assert.throws(
+    () => createGitReviewedStateVerifier({ runGit: (args) => {
+      if (args[0] === "merge-base") throw new Error("não ancestral");
+      return runGit(args);
+    } })(attestation),
+    /não ancestral/,
+  );
+  assert.throws(
+    () => createGitReviewedStateVerifier({ runGit: (args) => (
+      args[0] === "show" && args[1].endsWith(":shared/editorial-governance-policy.json")
+        ? Buffer.from(JSON.stringify(testGovernancePolicy(["outro-editor"])))
+        : runGit(args)
+    ) })(attestation),
+    /revisor não estava autorizado no commit revisado/,
+  );
 });
 
 test("asset provenance metadata must remain visible and safe", () => {
@@ -376,7 +549,39 @@ test("unknown catalog fields fail until their editorial policy is explicit", () 
   const candidate = { ...structuredClone(CANDIDATE), primaryArea: "Política nacional" };
   assert.throws(
     () => createTestRegistry(approvedInputs({ candidate })),
-    /campo de catálogo sem política editorial: primaryArea/,
+    /campos inválidos.*primaryArea/,
+  );
+});
+
+test("candidate-public-v2 accepts only the classified taxonomy provenance shape", () => {
+  const { affiliation, office, area, ...base } = CANDIDATE;
+  const taxonomyProvenance = {
+    role: { status: "extracted", source: "perfil.json#ocupacao" },
+    party: { status: "extracted", source: "perfil.json#partido" },
+    primaryArea: { status: "inferred", source: "catalogo.json#grupo" },
+    contextAffiliation: { status: "ambiguous", source: "perfil.json#contexto" },
+  };
+  const v2 = {
+    ...base,
+    party: "PARTIDO",
+    primaryArea: "Política institucional",
+    contextAffiliation: null,
+    taxonomyProvenance,
+  };
+  assert.match(candidateContentFingerprint(v2, { ruleset: PUBLIC_CANDIDATE_SCHEMA_V2 }), /^sha256:/);
+  assert.throws(
+    () => candidateContentFingerprint({
+      ...v2,
+      taxonomyProvenance: { ...taxonomyProvenance, primaryArea: { ...taxonomyProvenance.primaryArea, confidence: 1 } },
+    }, { ruleset: PUBLIC_CANDIDATE_SCHEMA_V2 }),
+    /campos inválidos.*confidence/,
+  );
+  assert.throws(
+    () => candidateContentFingerprint({
+      ...v2,
+      contextAffiliation: "Vínculo inventado",
+    }, { ruleset: PUBLIC_CANDIDATE_SCHEMA_V2 }),
+    /deve ser null quando a proveniência é ambiguous/,
   );
 });
 
@@ -483,7 +688,7 @@ test("unknown catalog references and malformed ledgers fail closed", () => {
   const base = { catalog: [CANDIDATE], topics: TOPICS, assetRegistry: { schemaVersion: 1, assets: [] } };
   assert.throws(
     () => createTestRegistry({ ...base, ledger: { schemaVersion: 1, decisions: [{ candidateId: "desconhecido", content: {} }] } }),
-    /candidato desconhecido/,
+    /candidate deve ser um objeto|campos inválidos|candidato desconhecido/,
   );
   assert.throws(
     () => createTestRegistry({ ...base, ledger: { schemaVersion: 2, decisions: [] } }),
@@ -517,7 +722,7 @@ test("unknown catalog references and malformed ledgers fail closed", () => {
       assetRegistry: { schemaVersion: 1, assets: [{ candidateId: "desconhecido", kind: "cardArt" }] },
       ledger: { schemaVersion: 1, decisions: [] },
     }),
-    /candidato desconhecido/,
+    /campos inválidos|candidato desconhecido/,
   );
   assert.throws(
     () => createTestRegistry({

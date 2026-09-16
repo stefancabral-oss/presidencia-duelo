@@ -15,7 +15,11 @@
 - Estados independentes para conteúdo, arte da carta e foto documental.
 - Elegibilidade calculada somente por conteúdo aprovado + arte aprovada; foto ausente não bloqueia.
 - Fingerprints SHA-256 que invalidam decisões quando conteúdo, bytes, caminho, versão ou procedência de asset muda.
-- Projeção pública única compartilhada pela API e pelo fingerprint, protegendo campos editoriais adicionados no futuro.
+- Fingerprint de conteúdo sobre o JSON público exato e fingerprint separado de roteamento, sem equivalência entre ausente, `undefined` e `null`.
+- Policy local versionada por dimensão, atestação vinculada ao ledger e prova de evidência por arquivo, SHA-256, OID Git e commit revisado.
+- Verificador local/CI reproduz conteúdo, roteamento e assets a partir do commit atestado; URLs externas e arquivos fora do escopo não liberam decisão.
+- `candidate-public-v1` histórico congelado byte a byte e `candidate-public-v2` separado para a taxonomia da #173.
+- Schema recursivo estrito: `facts` somente strings, `sources` somente `{label,url}` e proveniência v2 somente `{status,source}`.
 - Snapshots profundos e imutáveis de catálogo, tópicos, ledger, assets, auditoria e payload público; mapas expostos são somente leitura.
 - Tópicos inativos/desconhecidos permanecem fechados no registry e na API.
 - Falha fechada para dados desconhecidos, duplicados, malformados, sem evidência visível ou com referência/caminho inseguro.
@@ -42,7 +46,8 @@ Esse estado é intencional. Assets existentes, nomes legados contendo `approved`
 
 ## Validação local
 
-- Suite consolidada: 155/155 testes aprovados (4 shared, 85 back, 66 app).
+- `npm run editorial:verify --prefix back`: aprovado com 0 decisões reais e 0 publicáveis.
+- Suite consolidada: 161/161 testes aprovados (4 shared, 91 back, 66 app).
 - `npm run build --prefix app`: aprovado; 0 assets no registro editorial real e bundle Vite gerado.
 - `interaction-smoke.mjs`: aprovado em Chromium e WebKit.
 - `editorial-gate.mjs`: aprovado em Chromium e WebKit.
@@ -61,8 +66,9 @@ Esse estado é intencional. Assets existentes, nomes legados contendo `approved`
 ## Pendências externas
 
 - Integração PostgreSQL 16 e prova de abuso não foram executadas localmente porque esta estação não possui Docker, `psql`, serviço PostgreSQL nem `DATABASE_URL`. O workflow `back-shared.yml` executará ambas quando houver PR.
-- Ao integrar a #173, classificar `primaryArea`, `contextAffiliation` e campos de procedência como conteúdo público, roteamento assinado ou dado não autoritativo; atualizar projeção, fingerprint, sanitização e testes no mesmo commit. O registry os recusa até essa política existir.
-- Ao integrar a #179, o snapshot diário deve chamar `candidatePublicPayload` (e sua base `candidatePublicContent`) em vez de copiar o candidato do registry. O objeto interno contém `publication.audit`, aprovador, evidências e fingerprints que nunca devem ser persistidos nem servidos pelo snapshot.
+- Na integração sobre a #173, configurar o registry corrente com `candidate-public-v2`; o schema já classifica `primaryArea`, `contextAffiliation` e as quatro entradas estritas de `taxonomyProvenance`.
+- Na integração com a #179, manter o projector `candidate-public-v1` histórico byte a byte e seu ruleset diário. Promover v2 somente por novo ruleset/edição; snapshots usam `candidatePublicSnapshot(schema)`, enquanto a API corrente usa `candidatePublicPayload`. Nenhum fluxo copia o candidato interno.
+- A allowlist e os hashes não autenticam criptograficamente o humano declarado. O review confirma identidade; o CI confirma autorização declarada, integridade e reprodução no commit.
 - Cada aprovação real requer a revisão humana individual prevista na governança. Não deve haver preenchimento em massa do ledger.
 - O gate visual da #176 é uma evidência necessária para decidir arte, mas não substitui a decisão `cardArt.approved` por pessoa.
 

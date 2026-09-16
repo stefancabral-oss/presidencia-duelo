@@ -1,10 +1,8 @@
 # Governança do portão editorial
 
-Este documento é a regra normativa para publicar uma pessoa no PoliMatch. O catálogo, a presença de um arquivo no repositório e o nome histórico de uma pasta ou constante nunca constituem aprovação.
+Este documento é a regra normativa para publicar uma pessoa no PoliMatch. Catálogo, arquivo existente, nome de pasta, fixture, script ou flag legada nunca constituem aprovação.
 
 ## Estados independentes
-
-Cada pessoa possui três decisões separadas:
 
 | Dimensão | Estados possíveis | Efeito público |
 |---|---|---|
@@ -12,101 +10,109 @@ Cada pessoa possui três decisões separadas:
 | arte da carta | `missing`, `approved`, `rejected` | precisa estar `approved` |
 | foto documental | `missing`, `approved`, `rejected` | não bloqueia a publicação |
 
-Uma pessoa só é elegível para API, duelo e ranking quando **conteúdo e arte da carta estão aprovados e ainda correspondem aos respectivos fingerprints**. A foto documental é opcional: sem uma foto aprovada, o perfil mostra o placeholder neutro `Foto documental ainda não disponível`.
+Uma pessoa só é elegível quando conteúdo e arte da carta estão aprovados e os fingerprints de conteúdo, roteamento, asset e atestação ainda correspondem aos dados verificados. Foto documental é opcional; sem aprovação, a interface usa o placeholder neutro.
 
-## Quem decide
+## Autorização e limite de identidade
 
-O responsável editorial final é Stefan Cabral (`stefancabral-oss`). Uma decisão também pode ser tomada por uma pessoa delegada, desde que ela seja identificada nominalmente na revisão da PR e seu login real do GitHub seja gravado em `decidedBy`. O gate aceita somente a sintaxe real de login do GitHub (1 a 39 caracteres alfanuméricos, com hífens apenas entre segmentos) e rejeita espaços, caracteres invisíveis e controles.
+`shared/editorial-governance-policy.json` é a allowlist versionada de revisores por dimensão. O gate aceita uma decisão somente quando `decidedBy` tem sintaxe de login GitHub e consta na dimensão correta dessa política. A política inicial autoriza `stefancabral-oss`.
 
-As responsabilidades não são intercambiáveis por inferência:
+Isso é autorização declarativa e auditável no repositório, não autenticação criptográfica da pessoa. O hash da atestação prova integridade dos bytes; não prova quem os escreveu. A revisão humana da mudança continua responsável por confirmar a identidade declarada. O código e o CI não alegam uma garantia que não possuem.
 
-- conteúdo: o responsável editorial ou revisor factual delegado confere o texto e cada afirmação relevante;
-- arte da carta: o responsável editorial ou diretor de arte delegado faz uma decisão humana depois do gate visual da #176;
-- foto documental: o responsável editorial ou produtor de direitos delegado confirma identidade, fonte e licença.
+As responsabilidades continuam separadas:
 
-Um teste, um script, o autor da implementação ou a mera existência de um asset não pode ser registrado como aprovador. A aprovação é sempre uma decisão humana individual por pessoa e por dimensão.
+- conteúdo: revisão factual de cada afirmação pública;
+- arte da carta: decisão visual humana após o gate da #176;
+- foto documental: identidade, origem e direito de uso.
 
-## Base de evidência obrigatória
+Delegar exige primeiro registrar o login em uma mudança anterior e revisável, de forma que a allowlist autorizadora já exista no `reviewedCommit`. O verificador comprova que essa policy consta daquele commit e que ele é ancestral de `HEAD`; ele não autentica a identidade humana nem prova, sozinho, que a mudança passou por uma PR separada. Automação, fixture ou mera autoria do código não autorizam aprovação real.
 
-Toda decisão em `shared/editorial-publication-ledger.json` exige uma lista `basis` com `label` e `reference` verificáveis. O `label` precisa conter texto visível; `reference` precisa ser uma URL HTTPS sem credenciais ou um caminho relativo seguro do próprio repositório. Controles, caracteres invisíveis, HTTP simples, caminhos absolutos e travessia com `..` são recusados.
+## Atestação e evidência imutável
 
-### Conteúdo
+Cada dimensão decidida aponta para exatamente um arquivo:
 
-- conferir nome, filiação, cargo, resumo, biografia, relevância, fatos, destaque e controvérsia;
-- usar fontes primárias ou oficiais para registro/cargo e fontes jornalísticas identificáveis para alegações contextuais;
-- abrir as referências no momento da revisão e registrar, em `basis`, a URL ou o documento exato usado;
-- registrar rejeição quando houver erro conhecido; deixar `pending` quando a verificação ainda não ocorreu.
+```text
+shared/editorial-attestations/<candidateId>/<content|cardArt|documentaryPhoto>.json
+```
 
-### Arte da carta
+O arquivo `editorial-attestation-v1` vincula, sem campos extras:
 
-- revisar visualmente o arquivo final e a versão candidata;
-- registrar como evidência a entrega/gate humano da #176 e o caminho/versionamento do arquivo conferido;
-- a pasta `chromas/approved`, os assets atuais, `approved-chromas.js` e nomes contendo `approved` são inventário legado e **não** aprovam a dimensão;
-- alterações de bytes exigem uma nova decisão humana, mesmo que o caminho permaneça igual.
+- candidato, dimensão, estado, `decidedBy` e `decidedAt`;
+- ruleset e fingerprint exato do sujeito revisado;
+- fingerprint de roteamento para conteúdo;
+- SHA completo do commit anterior que foi revisado;
+- uma ou mais evidências textuais internas, cada uma com `blobSha256` e OID `gitBlob` naquele commit.
 
-### Foto documental
+Cada evidência deve existir em:
 
-- conferir se a pessoa retratada corresponde ao perfil;
-- registrar a origem rastreável e a licença ou autorização de uso;
-- gravar `source` e `license` no asset registry e as respectivas referências em `basis`;
-- se fonte ou licença não estiverem demonstradas, usar `missing` ou `rejected`; isso não impede a publicação quando as outras duas dimensões estão aprovadas.
+```text
+shared/editorial-evidence/<candidateId>/<dimensão>/<arquivo.md|json|txt>
+```
 
-## Alteração exata dos dados
+O escopo impede que um logo, uma imagem qualquer ou um documento de outra pessoa seja apresentado como prova daquela decisão. URL externa, HTTP/HTTPS, caminho absoluto e travessia não satisfazem o gate. Quando uma fonte externa for necessária, a revisão deve capturar em evidência interna o material efetivamente conferido; citar uma página mutável não é prova imutável.
 
-Uma promoção editorial é feita somente em PR, por pessoa e sem aprovações em massa:
+O runtime confere arquivo existente, schema, allowlist, SHA-256 textual normalizado e correspondência integral entre ledger e atestação. `npm run editorial:verify --prefix back` acrescenta a prova histórica local pelo Git: o commit existe, é ancestral de `HEAD`, cada OID e blob correspondem, e o conteúdo/roteamento ou asset naquele commit produz exatamente o fingerprint atestado. O workflow `back-unit` executa essa prova com histórico completo (`fetch-depth: 0`), sem depender de uma configuração externa de branch protection.
 
-1. Calcular o fingerprint do conteúdo atual:
+## Fluxo exato de uma decisão
 
-   ```powershell
-   npm run editorial:fingerprint --prefix back -- content <candidate-id>
-   ```
+Uma decisão usa duas etapas para evitar circularidade de hash:
 
-2. Para arte ou foto, colocar o arquivo final sob `app/public`, calcular o fingerprint dos bytes e incluir/atualizar um item em `shared/editorial-asset-registry.json`:
+1. Em um primeiro commit, preparar o conteúdo ou asset e os arquivos em `shared/editorial-evidence/...`. Esse é o commit revisado.
+2. Calcular os fingerprints do sujeito no ruleset correto:
 
    ```powershell
-   npm run editorial:fingerprint --prefix back -- asset app/public/<caminho-do-asset>
-   ```
-
-   - arte: `candidateId`, `kind: "cardArt"`, `path`, `fingerprint` e `version`;
-   - foto: `candidateId`, `kind: "documentaryPhoto"`, `path`, `fingerprint`, `source` e `license`.
-
-3. Incluir/atualizar a decisão da dimensão em `shared/editorial-publication-ledger.json`, com:
-
-   - `status` permitido para a dimensão;
-   - `fingerprint` do conteúdo ou do registro completo do asset conferido (`missing` de asset não leva fingerprint);
-   - `decidedBy` com o login do aprovador humano;
-   - `decidedAt` em `AAAA-MM-DD`, nunca posterior à data civil corrente em `America/Sao_Paulo`;
-   - `basis` com evidência específica.
-
-   Depois de preencher o asset registry, calcular o fingerprint editorial que assina bytes, caminho e metadados:
-
-   ```powershell
+   npm run editorial:fingerprint --prefix back -- content <candidate-id> candidate-public-v1
+   npm run editorial:fingerprint --prefix back -- routing <candidate-id> candidate-public-v1
+   npm run editorial:fingerprint --prefix back -- asset app/public/<asset>
    npm run editorial:fingerprint --prefix back -- registered-asset <candidate-id> <cardArt|documentaryPhoto>
    ```
 
-4. Rodar testes e build, solicitar a revisão humana correspondente e mesclar somente depois dessa revisão.
+3. Obter o SHA completo do commit revisado, o OID Git de cada evidência nesse commit e o `blobSha256` textual:
 
-Não se altera `reviewStatus`, `reviewedAt`, `photoApproved`, `eligible`, `cardArt` ou `photo` no catálogo. Esses campos são projeções calculadas a partir do ledger e do asset registry. Flags ou exceções no código são proibidas.
+   ```powershell
+   git rev-parse <commit>:shared/editorial-evidence/<candidate>/<dimensão>/<arquivo>
+   npm run editorial:fingerprint --prefix back -- file shared/editorial-evidence/<candidate>/<dimensão>/<arquivo>
+   ```
 
-## Invalidação e falha fechada
+4. Criar a atestação JSON, calcular seu fingerprint textual e então criar/atualizar a decisão no ledger com `status`, fingerprints, `decidedBy`, `decidedAt` e `{ path, blobSha256 }` da atestação:
 
-- qualquer mudança em um campo público do perfil muda o fingerprint do conteúdo e o devolve efetivamente a `pending`;
-- qualquer mudança nos bytes, caminho, versão, fonte ou licença de uma arte/foto invalida a decisão e devolve efetivamente o asset a `missing`;
-- candidato desconhecido, ID/personId duplicado, ledger malformado, data futura, asset inseguro, evidência vazia/invisível ou fingerprint inválido impedem a inicialização/build;
-- ausência de decisão significa `pending` para conteúdo e `missing` para assets;
-- nenhuma decisão de foto torna conteúdo ou arte aprovados por consequência;
-- catálogo, tópicos, ledger e assets são copiados profundamente antes da validação; os candidatos, auditorias, fontes, payloads públicos e mapas de consulta expostos são snapshots imutáveis, sem rota pública de mutação;
-- qualquer campo novo no catálogo falha fechado até ser classificado explicitamente como público, roteamento coberto pelo fingerprint ou legado não autoritativo;
-- consumidores públicos nunca devem serializar nem copiar o candidato interno do registry; devem usar `candidatePublicPayload`, cuja base `candidatePublicContent` é também a fonte única do fingerprint de conteúdo. O payload retornado é uma cópia profunda e imutável, sem auditoria, aprovador, evidências ou fingerprints.
+   ```powershell
+   npm run editorial:fingerprint --prefix back -- file shared/editorial-attestations/<candidate>/<dimensão>.json
+   ```
 
-## Integração com as unidades seguintes
+5. Rodar obrigatoriamente:
 
-A #173 deverá classificar explicitamente `primaryArea`, `contextAffiliation` e qualquer campo de procedência que introduzir. Se o campo for exibido ao público, ele entra em `PUBLIC_CANDIDATE_CONTENT_FIELDS` e, portanto, no fingerprint; se afetar roteamento, entra na projeção de roteamento assinada. A integração deve atualizar conjuntamente projeção, fingerprint, sanitização da API e testes. O registry recusa esses campos até essa decisão ser codificada, para impedir publicação acidental durante o rebase.
+   ```powershell
+   npm run editorial:verify --prefix back
+   npm test
+   npm run build --prefix app
+   ```
 
-A #179 deverá gerar cada snapshot diário exclusivamente por `candidatePublicPayload(candidate)`. Copiar o candidato interno, mesmo com spread ou serialização intermediária, é proibido porque o objeto interno contém `publication.audit`, aprovador, evidências e fingerprints.
+`decidedAt` usa a data civil de `America/Sao_Paulo` e nunca pode estar no futuro. Não se altera `eligible`, `cardArt` ou `photo` no catálogo; são projeções calculadas.
 
-## Estado inicial desta unidade
+## Schemas públicos e fingerprints exatos
 
-O ledger e o asset registry de produção começam vazios. Portanto, os 125 perfis reais ficam em `pending`/`missing` e nenhum é exposto pela API até decisões humanas individualizadas. As fixtures aprovadas existem apenas em testes e smokes; não são importadas pelo runtime de produção.
+O catálogo usa allowlist recursiva estrita. `facts` aceita somente strings; cada item de `sources` aceita somente `{label,url}` com URL HTTPS; campos escalares têm tipo explícito; `undefined`, campos extras e objetos arbitrários falham fechados.
 
-O bloqueio humano remanescente é intencional: revisar cada conteúdo, decidir cada arte produzida no fluxo da #176 e, quando houver foto documental, verificar sua proveniência e licença.
+O fingerprint de conteúdo é SHA-256 de `JSON.stringify(candidatePublicContent(...))` exatamente como serializado, sem canonicalização que colapse ausente, `undefined` e `null`. Roteamento possui fingerprint separado e igualmente exato. Alterar qualquer um invalida a aprovação.
+
+Há dois contratos deliberadamente diferentes:
+
+- `candidate-public-v1`: projector histórico da #179, congelado inclusive na ordem dos campos e coberto por golden test byte a byte;
+- `candidate-public-v2`: contrato novo para `primaryArea`, `contextAffiliation` e `taxonomyProvenance`. A proveniência tem exatamente `role`, `party`, `primaryArea` e `contextAffiliation`; cada entrada tem somente `{status,source}`, com status `extracted`, `inferred` ou `ambiguous`.
+
+O v2 não reinterpreta nem substitui snapshots v1. Depois da integração com #173/#179, o alias corrente pode apontar para v2 e um novo ruleset diário pode usá-lo somente em uma nova edição; replay, edição e corte já persistidos continuam resolvendo explicitamente v1.
+
+## Falha fechada
+
+- mudança de conteúdo público invalida o fingerprint de conteúdo;
+- mudança de grupo/roteamento invalida o fingerprint de roteamento;
+- mudança de bytes, caminho, versão, fonte ou licença invalida o asset;
+- mudança de atestação ou evidência sem atualizar todos os hashes falha;
+- commit inexistente, blob/OID divergente, revisor não autorizado ou evidência fora do escopo falham no verificador local/CI;
+- candidato, personId, tópico, ledger, policy, asset ou campo desconhecido falham;
+- snapshots de entrada, auditoria, payload e mapas expostos são profundamente imutáveis;
+- consumidores da API usam `candidatePublicPayload`; snapshots diários usam `candidatePublicSnapshot` com o schema persistido, nunca spread/cópia do candidato interno.
+
+## Estado inicial
+
+Ledger e asset registry reais continuam vazios. Os 125 perfis ficam em `pending`/`missing`, com zero publicáveis. Atestações aprovadas existem apenas em fixtures de teste; nenhuma decisão humana real foi criada por esta unidade.

@@ -167,7 +167,9 @@ export function createHttpApp({
     const candidates = candidateRegistry.candidatesForTopic(topicId);
     res.json({
       topicId,
-      candidates: candidates.map(candidatePublicPayload),
+      candidates: candidates.map((candidate) => candidatePublicPayload(candidate, {
+        ruleset: candidateRegistry.contentRuleset,
+      })),
     });
   });
 

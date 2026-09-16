@@ -9,6 +9,7 @@ on:
       - 'stages/10_rebuild_eleicoes_2026/input/polimatch-catalogo-125.json'
       - 'stages/10_rebuild_eleicoes_2026/input/polimatch-perfis-editoriais-125.json'
       - 'stages/10_rebuild_eleicoes_2026/input/polimatch-taxonomia-125.json'
+      - 'docs/editorial/**'
       - 'package.json'
       - '.github/workflows/back-shared.yml'
   workflow_dispatch:
@@ -24,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -32,6 +35,8 @@ jobs:
           cache-dependency-path: back/package-lock.json
       - name: Install backend
         run: npm ci --prefix back
+      - name: Verify editorial attestations and reviewed commits
+        run: npm run editorial:verify --prefix back
       - name: Test backend
         run: npm test --prefix back
 

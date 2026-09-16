@@ -8,7 +8,7 @@
     "dev:app": "npm run dev --prefix app",
     "build:app": "npm run build --prefix app",
     "start:back": "npm start --prefix back",
-    "test": "npm run test:shared && npm test --prefix back && npm test --prefix app",
+    "test": "npm run editorial:verify --prefix back && npm run test:shared && npm test --prefix back && npm test --prefix app",
     "validate:taxonomy": "node shared/validate-catalog-taxonomy.mjs",
     "test:shared": "node --test shared/*.test.js && npm run validate:taxonomy",
     "build": "npm run build --prefix app"

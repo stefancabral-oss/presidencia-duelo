@@ -4,9 +4,9 @@ import { eloTier, isZebra, ratingDeltas } from "../../shared/elo.js";
 import {
   CANDIDATES,
   PRODUCTION_CANDIDATE_REGISTRY,
-  candidateProjectorBySchema,
   candidatesForTopic,
 } from "./candidates.js";
+import { candidatePublicProjectorBySchema as candidateProjectorBySchema } from "./candidate-public.js";
 import {
   DAILY_SESSION_RULESET,
   buildDailyEdition,

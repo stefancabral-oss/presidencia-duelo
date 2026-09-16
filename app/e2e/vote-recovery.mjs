@@ -15,9 +15,13 @@
  *      o cliente precisa ressincronizar e manter a mesma escolha para retry.
  *   5. Repetição do mesmo voto. O `roundId` precisa nascer com a rodada, senão
  *      a idempotência do servidor não reconhece a segunda tentativa.
+ *   6. Resposta 200 truncada. Sem o contrato completo do servidor, a interface
+ *      não pode inventar confirmação, contadores nem deltas nas cartas.
+ *   7. Replay legado. Só o evento público persistido pode reaparecer; o app
+ *      precisa dizer honestamente que o detalhe pessoal antigo não existe.
  *
  * O servidor aqui é falso, mas guarda estado: versão, contagem de rodadas e os
- * roundIds já vistos. Sem isso nenhum dos cinco cenários é observável.
+ * roundIds já vistos. Sem isso nenhum dos sete cenários é observável.
  */
 import { chromium, webkit } from "playwright";
 
@@ -55,6 +59,8 @@ function criarServidor() {
     rounds: new Map(),
     requests: [],
     chaves: new Set([RECOVERY_KEY]),
+    /** Resposta HTTP forçada para a próxima tentativa de voto. */
+    falhaNoProximoVoto: null,
     /** Falha a ser aplicada na próxima chamada de /api/player/state. */
     falhaNoEstado: null,
     ranking() {
@@ -77,10 +83,21 @@ function corpoDaRodada(servidor, roundId, winnerId, candidateIds) {
     duels: servidor.duels,
     ranking: servidor.ranking(),
     player: { version: servidor.version, duels: servidor.duels, rankingPolicy: personalRankingPolicy, ranking: servidor.ranking() },
-    round: { id: roundId, status: "created", winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "overtake" },
+    round: {
+      id: roundId,
+      status: "created",
+      winnerId,
+      candidateIds: [...candidateIds],
+      winnerDelta: 45,
+      zebra: false,
+      comparisons: 3,
+      rankingEvent: "overtake",
+    },
     vote: {
       id: roundId,
       status: "created",
+      winnerId,
+      candidateIds: [...candidateIds],
       winnerDelta: 45,
       zebra: false,
       comparisons: 3,
@@ -148,12 +165,26 @@ async function instalarServidor(page, servidor) {
 
     if (pathname === "/api/round-vote" && request.method() === "POST") {
       const { roundId, winnerId, candidateIds, playerVersion } = request.postDataJSON();
-      servidor.requests.push({ roundId, winnerId, playerVersion });
+      servidor.requests.push({ roundId, winnerId, candidateIds, playerVersion });
+
+      const falha = servidor.falhaNoProximoVoto;
+      if (falha) {
+        servidor.falhaNoProximoVoto = null;
+        const body = typeof falha.body === "function"
+          ? falha.body({ roundId, winnerId, candidateIds, playerVersion })
+          : falha.body;
+        return route.fulfill({ status: falha.status, json: body });
+      }
 
       // Repetição: devolve o resultado guardado sem contar de novo, como o
       // servidor real faz com a trava consultiva e o UNIQUE em round_id.
       const guardada = servidor.rounds.get(roundId);
-      if (guardada) return route.fulfill({ status: 200, json: guardada });
+      if (guardada) {
+        const repetida = structuredClone(guardada);
+        repetida.round.status = "alreadyProcessed";
+        repetida.vote.status = "alreadyProcessed";
+        return route.fulfill({ status: 200, json: repetida });
+      }
 
       if (Number(playerVersion) !== servidor.version) {
         return route.fulfill({
@@ -362,7 +393,111 @@ try {
     await context.close();
   }
 
-  console.log(`${browserName}: recuperação de voto validada — timeout, 503, 401, 409 e repetição idempotente`);
+  // ------------------------------------------------------------ cenário 6
+  // Um status 200 não confirma nada quando faltam os campos consumidos pela
+  // interface. A mesma escolha deve permanecer congelada e repetível.
+  {
+    const servidor = criarServidor();
+    const { context, page, pageErrors } = await novaSessao(browser, servidor, { chaveInicial: RECOVERY_KEY });
+    await abrirDuelo(page);
+    const rodadaAntes = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => card.dataset.vote));
+    const progressoAntes = (await page.locator(".progress-pill").innerText()).trim();
+    servidor.falhaNoProximoVoto = {
+      status: 200,
+      body: { duels: 1, ranking: [], player: { duels: 1, version: 1, ranking: [] } },
+    };
+
+    await votar(page);
+    await page.locator("#retry-vote").waitFor();
+    if (await instrucao(page) !== "Não foi possível confirmar agora.") {
+      throw new Error(`200 truncado recebeu mensagem inesperada: ${await instrucao(page)}`);
+    }
+    const rodadaDepois = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => card.dataset.vote));
+    const progressoDepois = (await page.locator(".progress-pill").innerText()).trim();
+    if (JSON.stringify(rodadaDepois) !== JSON.stringify(rodadaAntes) || progressoDepois !== progressoAntes) {
+      throw new Error("o 200 truncado alterou cartas ou progresso sem confirmação íntegra");
+    }
+    if (await page.locator(".card-outcome").count()) {
+      throw new Error("o 200 truncado produziu feedback visual de confirmação");
+    }
+    if (!await page.locator(".candidate-card").evaluateAll((cards) => cards.every((card) => card.disabled))) {
+      throw new Error("o 200 truncado deixou a rodada pendente editável");
+    }
+    if (servidor.duels !== 0) throw new Error("o mock truncado não deveria gravar progresso");
+
+    await page.locator("#retry-vote").click();
+    await page.waitForTimeout(2200);
+    if (servidor.duels !== 1 || servidor.requests.length !== 2) {
+      throw new Error("o retry depois do 200 truncado não confirmou uma única rodada");
+    }
+    const [truncada, confirmada] = servidor.requests;
+    if (truncada.roundId !== confirmada.roundId
+      || truncada.winnerId !== confirmada.winnerId
+      || JSON.stringify(truncada.candidateIds) !== JSON.stringify(confirmada.candidateIds)) {
+      throw new Error("o retry do 200 truncado trocou a rodada ou a escolha original");
+    }
+    if (pageErrors.length) throw new Error(`erros na página: ${pageErrors.join(" | ")}`);
+    await context.close();
+  }
+
+  // ------------------------------------------------------------ cenário 7
+  // Rodadas anteriores à separação dos canais não têm resultado pessoal para
+  // reconstruir. O evento público continua público, sem virar dado do jogador.
+  {
+    const servidor = criarServidor();
+    const { context, page, pageErrors } = await novaSessao(browser, servidor, { chaveInicial: RECOVERY_KEY });
+    await abrirDuelo(page);
+    servidor.falhaNoProximoVoto = {
+      status: 200,
+      body: ({ roundId, winnerId, candidateIds }) => {
+        servidor.version = 1;
+        servidor.duels = 1;
+        const replay = corpoDaRodada(servidor, roundId, winnerId, candidateIds);
+        const globalFeedback = {
+          ...replay.vote.personalFeedback,
+          rankingEvent: "top10",
+          primaryEvent: "top10",
+        };
+        const neutralPersonalFeedback = {
+          rankingEvent: "confirm",
+          primaryEvent: "confirm",
+          zebra: false,
+          outcomes: [],
+        };
+        replay.round.status = "alreadyProcessed";
+        Object.assign(replay.vote, {
+          status: "alreadyProcessed",
+          feedbackScope: "legacy-global",
+          feedback: neutralPersonalFeedback,
+          personalFeedback: neutralPersonalFeedback,
+          globalEvent: {
+            scope: "global",
+            rankingEvent: "top10",
+            winnerDelta: 45,
+            zebra: false,
+            feedback: globalFeedback,
+          },
+        });
+        return replay;
+      },
+    };
+
+    await votar(page);
+    await page.getByText("Escolha já confirmada. O detalhamento pessoal desta rodada anterior não está disponível.", { exact: true }).waitFor();
+    if (!await page.getByText("No seu ranking", { exact: true }).isVisible()) {
+      throw new Error("o replay legado perdeu o rótulo do canal pessoal indisponível");
+    }
+    if (!await page.getByText("No placar do público", { exact: true }).isVisible()) {
+      throw new Error("o replay legado ocultou ou relabelou o evento público persistido");
+    }
+    if ((await page.locator("body").innerText()).includes("confirmado no seu ranking")) {
+      throw new Error("o replay legado inventou detalhamento pessoal para a rodada anterior");
+    }
+    if (pageErrors.length) throw new Error(`erros na página: ${pageErrors.join(" | ")}`);
+    await context.close();
+  }
+
+  console.log(`${browserName}: recuperação validada — timeout, 503, 401, 409, idempotência, 200 truncado e replay legado`);
 } finally {
   await browser.close();
 }

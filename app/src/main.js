@@ -7,7 +7,7 @@ import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
 import { approvedBasicCards } from "./approved-chromas.js";
 import { createSoundController } from "./sound.js";
 import { googleClientId, mountGoogleButton } from "./google-login.js";
-import { resetPendingVoteForIdentityChange, revokeSessionBeforeClearing } from "./logout.js";
+import { isCurrentVoteIdentity, resetPendingVoteForIdentityChange, revokeSessionBeforeClearing } from "./logout.js";
 import { VOTE_ACTIONS, VOTE_PHASES, voteFailureState, voteRecoveryControl } from "./vote-flow.js";
 import { confirmedVoteData } from "./vote-response.js";
 
@@ -52,6 +52,7 @@ const state = {
   retryAfterSeconds: null,
   retryAt: 0,
   sessionRecoveryMode: "",
+  identityEpoch: 0,
   roundOutcome: null,
   selectedId: "",
   showCoach: false,
@@ -63,6 +64,12 @@ const state = {
 let resultTimer;
 let roundAdvanceTimer;
 let retryEnableTimer;
+
+function clearVoteTimers() {
+  clearTimeout(resultTimer);
+  clearTimeout(roundAdvanceTimer);
+  clearTimeout(retryEnableTimer);
+}
 
 const chromaPreviews = [
   { person: "Lula", role: "Chroma Suprema", image: "/chromas/rendered/lula-supreme-3star-v1.jpg", variant: "supreme supreme-rays" },
@@ -389,6 +396,11 @@ async function vote(winnerId, { retry = false } = {}) {
     winnerId: winner.id,
     candidateIds: state.round.map(({ id }) => id),
   };
+  const attemptIdentity = {
+    epoch: state.identityEpoch,
+    recoveryKey: state.recoveryKey,
+  };
+  const attemptPlayerVersion = state.playerVersion;
   sound.play("choose");
   state.busy = true;
   state.votePhase = VOTE_PHASES.SENDING;
@@ -396,8 +408,7 @@ async function vote(winnerId, { retry = false } = {}) {
   state.retryAfterSeconds = null;
   state.retryAt = 0;
   state.selectedId = winner.id;
-  clearTimeout(resultTimer);
-  clearTimeout(roundAdvanceTimer);
+  clearVoteTimers();
   state.roundOutcome = null;
   state.personalFeedbackMessage = "";
   state.globalFeedbackMessage = "";
@@ -406,9 +417,10 @@ async function vote(winnerId, { retry = false } = {}) {
   render();
   try {
     const response = await submitRoundVote(attempt.roundId, attempt.winnerId, attempt.candidateIds, "eleicoes-2026", {
-      recoveryKey: state.recoveryKey,
-      version: state.playerVersion,
+      recoveryKey: attemptIdentity.recoveryKey,
+      version: attemptPlayerVersion,
     });
+    if (!isCurrentVoteIdentity(state, attemptIdentity)) return;
     const confirmed = confirmedVoteData(response, state.candidates, attempt, state);
     state.pendingWinnerId = "";
     state.votePhase = VOTE_PHASES.CONFIRMED;
@@ -421,9 +433,7 @@ async function vote(winnerId, { retry = false } = {}) {
     state.personalDuels = confirmed.personalDuels;
     const { channels } = confirmed;
     state.roundOutcome = channels.personal;
-    state.personalFeedbackMessage = channels.personal.outcomes.length
-      ? channels.personal.message
-      : `${winner.displayName || shortName(winner.name)} confirmado no seu ranking.`;
+    state.personalFeedbackMessage = channels.personal.message;
     state.globalFeedbackMessage = channels.global?.message || "";
     state.result = "";
     render();
@@ -446,7 +456,8 @@ async function vote(winnerId, { retry = false } = {}) {
       }, 1800);
     }, 1050);
   } catch (error) {
-    await recoverFromVoteFailure(error, winner);
+    if (!isCurrentVoteIdentity(state, attemptIdentity)) return;
+    await recoverFromVoteFailure(error, winner, attemptIdentity);
   }
 }
 
@@ -457,7 +468,7 @@ async function vote(winnerId, { retry = false } = {}) {
  * contado" — e nenhum deles oferecia saída. Pior: quando o tempo se esgota, o
  * servidor pode já ter gravado a rodada, e afirmar que não contou é falso.
  */
-async function recoverFromVoteFailure(error, winner) {
+async function recoverFromVoteFailure(error, winner, attemptIdentity) {
   state.busy = false;
   state.selectedId = "";
   state.roundOutcome = null;
@@ -475,7 +486,8 @@ async function recoverFromVoteFailure(error, winner) {
   // servidor sem que a resposta voltasse. Realinhar aqui é o que impede o app
   // de recusar todo voto seguinte até alguém recarregar a página.
   if (error?.status === 409 && error?.code === "PLAYER_VERSION_CONFLICT") {
-    const resynced = await resyncPlayer();
+    const resynced = await resyncPlayer(attemptIdentity);
+    if (!isCurrentVoteIdentity(state, attemptIdentity)) return;
     state.result = resynced ? failure.message : "Não conseguimos alinhar seu ranking. Tente novamente.";
     // Um 409 acontece antes da gravação desta rodada. A escolha continua
     // pendente e reutiliza o mesmo roundId depois da versão ser atualizada.
@@ -500,6 +512,7 @@ function scheduleRetryUnlock() {
 
 async function restoreVoteSession() {
   if (state.busy || !state.pendingWinnerId || state.voteAction !== VOTE_ACTIONS.RESTORE_SESSION) return;
+  const recoveryEpoch = Number(state.identityEpoch || 0);
   state.busy = true;
   state.votePhase = VOTE_PHASES.RESTORING_SESSION;
   state.voteAction = "";
@@ -510,6 +523,7 @@ async function restoreVoteSession() {
     let recoveryKey = state.recoveryKey;
     if (state.sessionRecoveryMode !== "load") {
       const created = await createPlayer();
+      if (Number(state.identityEpoch || 0) !== recoveryEpoch) return;
       if (!created?.recoveryKey) throw new TypeError("resposta de sessão inválida");
       recoveryKey = created.recoveryKey;
       state.recoveryKey = recoveryKey;
@@ -517,6 +531,7 @@ async function restoreVoteSession() {
       localStorage.setItem("polimatch:v3:recovery-key", recoveryKey);
     }
     const personal = await loadPlayerRanking(recoveryKey);
+    if (Number(state.identityEpoch || 0) !== recoveryEpoch || state.recoveryKey !== recoveryKey) return;
     state.playerVersion = personal.version ?? 0;
     state.personalRanking = rankingForCatalog(personal, state.candidates);
     state.personalRankingPolicy = personal.rankingPolicy || null;
@@ -528,6 +543,7 @@ async function restoreVoteSession() {
     state.result = "Sessão restabelecida. Confirme novamente sua escolha.";
     render();
   } catch (error) {
+    if (Number(state.identityEpoch || 0) !== recoveryEpoch) return;
     state.busy = false;
     const failure = voteFailureState(error);
     state.votePhase = failure.phase;
@@ -543,9 +559,10 @@ async function restoreVoteSession() {
 }
 
 /** Relê o estado do jogador no servidor. Devolve `false` se nem isso deu. */
-async function resyncPlayer() {
+async function resyncPlayer(attemptIdentity) {
   try {
-    const personal = await loadPlayerRanking(state.recoveryKey);
+    const personal = await loadPlayerRanking(attemptIdentity.recoveryKey);
+    if (!isCurrentVoteIdentity(state, attemptIdentity)) return false;
     state.playerVersion = personal.version ?? state.playerVersion;
     state.personalRanking = rankingForCatalog(personal, state.candidates);
     state.personalRankingPolicy = personal.rankingPolicy || state.personalRankingPolicy;
@@ -673,6 +690,8 @@ async function handleGoogleCredential(response) {
   render();
   try {
     const result = await exchangeGoogleCredential(response.credential, state.recoveryKey);
+    clearVoteTimers();
+    resetPendingVoteForIdentityChange(state);
     localStorage.setItem("polimatch:v3:recovery-key", result.sessionToken);
     state.recoveryKey = result.sessionToken;
     state.account = result.account;
@@ -680,7 +699,6 @@ async function handleGoogleCredential(response) {
     state.personalRankingPolicy = result.player.rankingPolicy || state.personalRankingPolicy;
     state.playerVersion = result.player.version;
     state.personalDuels = Number(result.player.duels) || 0;
-    resetPendingVoteForIdentityChange(state);
     state.authBusy = false;
     sound.play("confirm");
     render();
@@ -703,13 +721,14 @@ async function signOut() {
       clearLocalSession: () => localStorage.removeItem("polimatch:v3:recovery-key"),
     });
     const player = await ensurePlayer();
+    clearVoteTimers();
+    resetPendingVoteForIdentityChange(state);
     state.recoveryKey = player.recoveryKey;
     state.account = null;
     state.personalRanking = rankingForCatalog(player.personal, state.candidates);
     state.personalRankingPolicy = player.personal.rankingPolicy || state.personalRankingPolicy;
     state.playerVersion = player.personal.version;
     state.personalDuels = Number(player.personal.duels) || 0;
-    resetPendingVoteForIdentityChange(state);
     state.authBusy = false;
     state.authOpen = false;
     state.result = "Você saiu. Um jogo novo começou neste aparelho.";

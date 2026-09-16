@@ -50,11 +50,15 @@ for (let version = 0; version < VOTE_ABUSE_LIMITS.roundsPerPlayerPerMinute; vers
   };
   const result = await store.roundVote(lastRound);
   assert.equal(result.round.status, "created");
+  assert.equal(result.round.winnerId, lastRound.winnerId);
+  assert.deepEqual(result.round.candidateIds, lastRound.candidateIds);
   assert.equal(result.player.version, version + 1);
 }
 
 const replay = await store.roundVote(lastRound);
 assert.equal(replay.round.status, "alreadyProcessed");
+assert.equal(replay.round.winnerId, lastRound.winnerId);
+assert.deepEqual(replay.round.candidateIds, lastRound.candidateIds);
 assert.equal(replay.player.version, VOTE_ABUSE_LIMITS.roundsPerPlayerPerMinute);
 
 const blockedRound = {

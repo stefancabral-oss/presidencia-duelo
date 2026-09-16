@@ -88,6 +88,8 @@ const round = await restartedStore.roundVote({
   playerVersion: 2,
 });
 assert.equal(round.round.status, "created");
+assert.equal(round.round.winnerId, "anitta");
+assert.deepEqual(round.round.candidateIds, ["lula", "jair-bolsonaro", "anitta", "neymar-jr"]);
 assert.equal(round.round.comparisons, 3);
 assert.equal(round.duels, 3);
 assert.equal(round.player.version, 3);
@@ -111,6 +113,8 @@ const repeatedRound = await restartedStore.roundVote({
   playerVersion: 2,
 });
 assert.equal(repeatedRound.round.status, "alreadyProcessed");
+assert.equal(repeatedRound.round.winnerId, "anitta");
+assert.deepEqual(repeatedRound.round.candidateIds, ["neymar-jr", "anitta", "jair-bolsonaro", "lula"]);
 assert.equal(repeatedRound.duels, 3);
 assert.deepEqual(repeatedRound.round.feedback, round.round.feedback);
 assert.deepEqual(repeatedRound.round.personalFeedback, round.round.personalFeedback);
@@ -188,6 +192,15 @@ const legacyReplay = await upgradedStore.roundVote({
   playerVersion: 3,
 });
 assert.equal(legacyReplay.round.status, "alreadyProcessed");
+assert.equal(legacyReplay.round.winnerId, "anitta");
+assert.deepEqual(legacyReplay.round.candidateIds, ["lula", "jair-bolsonaro", "anitta", "neymar-jr"]);
+assert.equal(legacyReplay.round.feedbackScope, "legacy-global");
+assert.deepEqual(legacyReplay.round.personalFeedback, {
+  rankingEvent: "confirm",
+  primaryEvent: "confirm",
+  zebra: false,
+  outcomes: [],
+});
 assert.deepEqual(legacyReplay.round.personalFeedback.outcomes, []);
 assert.ok(legacyReplay.round.globalEvent?.feedback?.outcomes.length === 4);
 const migrationAudit = await upgradedAuditPool.query("SELECT count(*) AS applied FROM schema_migrations WHERE id = '2026-09-15-link-four-card-comparisons'");

@@ -91,6 +91,6 @@ test("refuses an extracted party that is absent from the real source field", () 
   const tampered = { ...taxonomy(name), party: "PL" };
   assert.throws(
     () => buildContentCatalog([{ nome: name, grupo: "politica" }], [profile(name)], [tampered], chromas(name)),
-    /party: valor extracted não é literal na fonte/,
+    /party: valor extracted não tem relação semântica válida com a fonte/,
   );
 });

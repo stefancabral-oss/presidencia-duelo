@@ -54,6 +54,31 @@ export const TAXONOMY_NORMALIZATIONS = Object.freeze({
   }),
 });
 
+// `contextAffiliation` is intentionally free-form in the product, but an
+// `extracted` value still needs a machine-verifiable semantic contract.  This
+// versioned registry contains the institutional labels that the legacy source
+// can currently prove.  Adding another literal is an explicit editorial
+// decision; merely finding a word such as "direita" or "digital" in the old
+// overloaded column is not enough.
+export const TAXONOMY_CONTEXT_EXTRACTIONS = Object.freeze({
+  version: 1,
+  values: Object.freeze({
+    MBL: Object.freeze([
+      TAXONOMY_SOURCE_POINTERS.profileCurrentOccupation,
+      TAXONOMY_SOURCE_POINTERS.profilePartyOrArea,
+    ]),
+    Executivo: Object.freeze([TAXONOMY_SOURCE_POINTERS.profilePartyOrArea]),
+    "governo Lula": Object.freeze([TAXONOMY_SOURCE_POINTERS.profilePartyOrArea]),
+    STF: Object.freeze([TAXONOMY_SOURCE_POINTERS.profilePartyOrArea]),
+    BC: Object.freeze([TAXONOMY_SOURCE_POINTERS.profilePartyOrArea]),
+    "órbita PL": Object.freeze([TAXONOMY_SOURCE_POINTERS.profilePartyOrArea]),
+    "Assembleia de Deus Vitória em Cristo (ADVEC)": Object.freeze([
+      TAXONOMY_SOURCE_POINTERS.profileCurrentOccupation,
+    ]),
+    Universal: Object.freeze([TAXONOMY_SOURCE_POINTERS.profilePartyOrArea]),
+  }),
+});
+
 const PARTY_SET = new Set(PARTY_CODES);
 const PRIMARY_AREA_SET = new Set(PRIMARY_AREAS);
 const PROVENANCE_SET = new Set(PROVENANCE_STATUSES);
@@ -106,12 +131,49 @@ function containsLiteral(sourceValue, expectedValue) {
   return false;
 }
 
-function extractedValueMatches(field, value, sourceValue) {
-  if (field === "role") return clean(value) === clean(sourceValue);
-  if (containsLiteral(sourceValue, value)) return true;
-  if (field !== "party") return false;
-  return Object.entries(TAXONOMY_NORMALIZATIONS.party)
-    .some(([literal, normalized]) => normalized === clean(value) && containsLiteral(sourceValue, literal));
+function normalizedPartyLiterals(value) {
+  const normalizedValue = clean(value);
+  return [
+    normalizedValue,
+    ...Object.entries(TAXONOMY_NORMALIZATIONS.party)
+      .filter(([, normalized]) => normalized === normalizedValue)
+      .map(([literal]) => literal),
+  ];
+}
+
+function partyEvidenceMatches(value, evidence) {
+  if (evidence.pointer !== TAXONOMY_SOURCE_POINTERS.profilePartyOrArea) return false;
+  const source = clean(evidence.value);
+  if (!present(source)) return false;
+  const firstLegacyClause = clean(source.split("/")[0]);
+  const literals = normalizedPartyLiterals(value);
+
+  // In the legacy column, a direct party declaration always occupied the
+  // first slash-delimited clause.  A later mention (for example "órbita PL")
+  // is context, not proof of party membership.
+  if (literals.some((literal) => firstLegacyClause === literal)) return true;
+
+  // The one migrated exception is an explicit affiliation sentence, not a
+  // token discovered by cleanup: "filiada Republicanos".
+  return literals.some((literal) => {
+    const escaped = literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`\\bfiliad[oa]\\s+(?:(?:ao|a)\\s+)?${escaped}(?=$|[^\\p{L}\\p{N}])`, "iu").test(source);
+  });
+}
+
+function contextEvidenceMatches(value, source) {
+  const allowedSources = TAXONOMY_CONTEXT_EXTRACTIONS.values[clean(value)];
+  return Boolean(
+    allowedSources?.includes(source.pointer)
+    && containsLiteral(source.value, value),
+  );
+}
+
+function extractedValueMatches(field, value, source) {
+  if (field === "role") return clean(value) === clean(source.value);
+  if (field === "party") return partyEvidenceMatches(value, source);
+  if (field === "contextAffiliation") return contextEvidenceMatches(value, source);
+  return containsLiteral(source.value, value);
 }
 
 function indexEvidence(records, nameField) {
@@ -256,8 +318,8 @@ export function catalogTaxonomyEvidenceErrors(records, { profiles = [], master =
         errors.push(`${label}.${field}: extracted exige um único ponteiro de fonte`);
         continue;
       }
-      if (!extractedValueMatches(field, record[field], sources[0].value)) {
-        errors.push(`${label}.${field}: valor extracted não é literal na fonte ${sources[0].pointer}`);
+      if (!extractedValueMatches(field, record[field], sources[0])) {
+        errors.push(`${label}.${field}: valor extracted não tem relação semântica válida com a fonte ${sources[0].pointer}`);
       }
     }
   }

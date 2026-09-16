@@ -44,6 +44,10 @@ Cada item em `taxonomyProvenance` tem `status` e `source`:
 
 Para `party`, a normalização lexical canônica é explícita e versionada em `TAXONOMY_NORMALIZATIONS.version = 1`. O mapa cobre somente `Avante → AVANTE`, `Missão → MISSÃO`, `Novo → NOVO`, `Rede → REDE`, `Republicanos → REPUBLICANOS` e `União Brasil → UNIÃO`. Transformações semânticas não entram nesse mapa e devem usar `inferred`.
 
+Uma ocorrência solta de sigla não comprova filiação. Para `party`, `extracted` exige que o primeiro segmento do campo legado seja exatamente o rótulo partidário (com a normalização acima) ou que exista uma declaração explícita de filiação. Assim, `Economia / órbita PL` não prova partido, enquanto `Fitness / digital (filiada Republicanos)` prova a filiação declarada.
+
+Como `contextAffiliation` é prosa livre, seus valores extraídos usam o registro editorial fechado e versionado `TAXONOMY_CONTEXT_EXTRACTIONS.version = 1`. A inclusão de um novo contexto exige revisão explícita desse registro e da fonte permitida. A mera presença literal de `direita`, `esquerda radical`, `digital` ou outro rótulo categorial não o transforma em organização ou vínculo institucional.
+
 ## Vocabulário de partido
 
 `AVANTE`, `MDB`, `MISSÃO`, `NOVO`, `PDT`, `PL`, `PP`, `PRTB`, `PSB`, `PSD`, `PSDB`, `PSOL`, `PT`, `REDE`, `REPUBLICANOS`, `UNIÃO`.
@@ -92,6 +96,8 @@ O mesmo validador é chamado pelo gerador, pelo teste compartilhado e pelo workf
 - partido/área vazando para `role`;
 - atributo sem proveniência ou fonte;
 - ponteiro desconhecido, fonte irresolúvel ou vazia;
-- valor `extracted` que não aparece literalmente na fonte apontada (salvo o mapa lexical versionado de partido);
+- partido `extracted` sem declaração partidária direta ou filiação explícita;
+- contexto `extracted` fora do registro editorial institucional versionado;
+- qualquer outro valor `extracted` sem relação válida com a fonte apontada;
 - valor preenchido com status `ambiguous`;
 - artefato gerado divergente da fonte editorial.

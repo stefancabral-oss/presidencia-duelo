@@ -7,6 +7,7 @@ import {
   catalogTaxonomyErrors,
   catalogTaxonomyEvidenceErrors,
 } from "./catalog-taxonomy.js";
+import { readFileSync } from "node:fs";
 
 function validRecord() {
   return {
@@ -75,7 +76,7 @@ test("checks extracted values against the pointed source", () => {
   const tampered = structuredClone(record);
   tampered.party = "PL";
   const errors = catalogTaxonomyEvidenceErrors([tampered], evidence);
-  assert.equal(errors.some((error) => error.includes("party: valor extracted não é literal")), true);
+  assert.equal(errors.some((error) => error.includes("party: valor extracted não tem relação semântica")), true);
 });
 
 test("only treats semantic area mappings as inferred", () => {
@@ -89,7 +90,7 @@ test("only treats semantic area mappings as inferred", () => {
     master: [{ nome: record.name, grupo: "politica", area: "Justiça" }],
   };
   assert.equal(
-    catalogTaxonomyEvidenceErrors([record], evidence).some((error) => error.includes("primaryArea: valor extracted não é literal")),
+    catalogTaxonomyEvidenceErrors([record], evidence).some((error) => error.includes("primaryArea: valor extracted não tem relação semântica")),
     true,
   );
   record.taxonomyProvenance.primaryArea.status = "inferred";
@@ -104,4 +105,82 @@ test("uses the explicit v1 party normalization map", () => {
     master: [{ nome: record.name, grupo: "politica", area: "Política" }],
   };
   assert.deepEqual(catalogTaxonomyEvidenceErrors([record], evidence), []);
+});
+
+test("requires an explicit party relationship instead of any matching token", () => {
+  const record = validRecord();
+  record.party = "PL";
+  const evidence = {
+    profiles: [{ nome_exibicao: record.name, ocupacao_atual: record.role, partido_ou_area: "Economia / órbita PL" }],
+    master: [{ nome: record.name, grupo: "economia", area: "Economia" }],
+  };
+  const errors = catalogTaxonomyEvidenceErrors([record], evidence);
+  assert.equal(errors.some((error) => error.includes("party: valor extracted não tem relação semântica")), true);
+
+  record.party = "REPUBLICANOS";
+  evidence.profiles[0].partido_ou_area = "Fitness / digital (filiada Republicanos; sem candidatura ativa)";
+  assert.deepEqual(catalogTaxonomyEvidenceErrors([record], evidence), []);
+});
+
+test("rejects literal ideology and channel labels as extracted affiliations", () => {
+  const record = validRecord();
+  record.party = "NOVO";
+  record.contextAffiliation = "direita";
+  record.taxonomyProvenance.contextAffiliation = {
+    status: "extracted",
+    source: TAXONOMY_SOURCE_POINTERS.profilePartyOrArea,
+  };
+  const evidence = {
+    profiles: [{ nome_exibicao: record.name, ocupacao_atual: record.role, partido_ou_area: "Novo / direita" }],
+    master: [{ nome: record.name, grupo: "politica", area: "Política" }],
+  };
+  const errors = catalogTaxonomyEvidenceErrors([record], evidence);
+  assert.equal(errors.some((error) => error.includes("contextAffiliation: valor extracted não tem relação semântica")), true);
+});
+
+test("protects the real catalog regressions while preserving explicit affiliation", () => {
+  const profiles = JSON.parse(readFileSync(new URL(
+    "../stages/10_rebuild_eleicoes_2026/input/polimatch-perfis-editoriais-125.json",
+    import.meta.url,
+  ), "utf8"));
+  const master = JSON.parse(readFileSync(new URL(
+    "../stages/10_rebuild_eleicoes_2026/input/polimatch-catalogo-125.json",
+    import.meta.url,
+  ), "utf8"));
+  const generated = JSON.parse(readFileSync(new URL("./elections-2026.json", import.meta.url), "utf8"));
+
+  const paulo = structuredClone(generated.find(({ name }) => name === "Paulo Guedes"));
+  paulo.party = "PL";
+  paulo.taxonomyProvenance.party = {
+    status: "extracted",
+    source: TAXONOMY_SOURCE_POINTERS.profilePartyOrArea,
+  };
+  assert.equal(
+    catalogTaxonomyEvidenceErrors([paulo], { profiles, master })
+      .some((error) => error.includes("party: valor extracted não tem relação semântica")),
+    true,
+  );
+
+  for (const [name, contextAffiliation] of [
+    ["Guilherme Boulos", "articulação digital governista"],
+    ["Jones Manoel", "esquerda radical"],
+    ["Carla Zambelli", "digital"],
+    ["Deltan Dallagnol", "direita"],
+  ]) {
+    const candidate = structuredClone(generated.find((entry) => entry.name === name));
+    candidate.contextAffiliation = contextAffiliation;
+    candidate.taxonomyProvenance.contextAffiliation = {
+      status: "extracted",
+      source: TAXONOMY_SOURCE_POINTERS.profilePartyOrArea,
+    };
+    assert.equal(
+      catalogTaxonomyEvidenceErrors([candidate], { profiles, master })
+        .some((error) => error.includes("contextAffiliation: valor extracted não tem relação semântica")),
+      true,
+      `${name} não pode recuperar contexto categorial`,
+    );
+  }
+
+  const gracyanne = generated.find(({ name }) => name === "Gracyanne Barbosa");
+  assert.deepEqual(catalogTaxonomyEvidenceErrors([gracyanne], { profiles, master }), []);
 });

@@ -926,30 +926,35 @@ async function selectRanking(queryable, topicId, {
   catalog = candidatesForTopic(topicId),
 } = {}) {
   if (!playerId) {
-    const [pool, stats] = await Promise.all([
-      queryable.query("SELECT duels FROM ranking_pools WHERE topic_id = $1", [topicId]),
-      queryable.query("SELECT candidate_id, rating, wins, losses, zebras FROM ranking_stats WHERE topic_id = $1", [topicId]),
-    ]);
+    const pool = await queryable.query("SELECT duels FROM ranking_pools WHERE topic_id = $1", [topicId]);
+    const stats = await queryable.query(
+      "SELECT candidate_id, rating, wins, losses, zebras FROM ranking_stats WHERE topic_id = $1",
+      [topicId],
+    );
     return rankingFromRows(topicId, pool.rows[0]?.duels, stats.rows, catalog);
   }
 
   const params = [playerId, topicId];
-  const [pool, stats, pairs] = await Promise.all([
-    queryable.query("SELECT duels, version FROM player_pools WHERE player_id = $1 AND topic_id = $2", params),
-    queryable.query("SELECT candidate_id, rating FROM player_stats WHERE player_id = $1 AND topic_id = $2", params),
-    queryable.query(
-      `SELECT
-         LEAST(winner_id, loser_id) AS a_id,
-         GREATEST(winner_id, loser_id) AS b_id,
-         COUNT(*) FILTER (WHERE winner_id = LEAST(winner_id, loser_id)) AS a_wins,
-         COUNT(*) FILTER (WHERE winner_id = GREATEST(winner_id, loser_id)) AS b_wins
-       FROM votes
-       WHERE player_id = $1 AND topic_id = $2
-       GROUP BY 1, 2
-       ORDER BY 1, 2`,
-      params,
-    ),
-  ]);
+  const pool = await queryable.query(
+    "SELECT duels, version FROM player_pools WHERE player_id = $1 AND topic_id = $2",
+    params,
+  );
+  const stats = await queryable.query(
+    "SELECT candidate_id, rating FROM player_stats WHERE player_id = $1 AND topic_id = $2",
+    params,
+  );
+  const pairs = await queryable.query(
+    `SELECT
+       LEAST(winner_id, loser_id) AS a_id,
+       GREATEST(winner_id, loser_id) AS b_id,
+       COUNT(*) FILTER (WHERE winner_id = LEAST(winner_id, loser_id)) AS a_wins,
+       COUNT(*) FILTER (WHERE winner_id = GREATEST(winner_id, loser_id)) AS b_wins
+     FROM votes
+     WHERE player_id = $1 AND topic_id = $2
+     GROUP BY 1, 2
+     ORDER BY 1, 2`,
+    params,
+  );
   const result = personalRankingFromRows(
     topicId,
     pool.rows[0]?.duels,
@@ -1419,26 +1424,24 @@ async function ensureDailyPlayerSession(client, materialized, playerId) {
 
 async function selectDailyPlayerSession(client, materialized, playerId) {
   const { edition, rounds } = materialized;
-  const [answersResult, predictionsResult, completionResult] = await Promise.all([
-    client.query(
-      `SELECT slot, answer_id, winner_id, answered_at
-       FROM daily_answers
-       WHERE edition_id = $1 AND player_id = $2
-       ORDER BY slot`,
-      [edition.id, playerId],
-    ),
-    client.query(
-      `SELECT slot, prediction_id, predicted_candidate_id, skipped, responded_at
-       FROM daily_predictions
-       WHERE edition_id = $1 AND player_id = $2
-       ORDER BY slot`,
-      [edition.id, playerId],
-    ),
-    client.query(
-      "SELECT completed_at FROM daily_completions WHERE edition_id = $1 AND player_id = $2",
-      [edition.id, playerId],
-    ),
-  ]);
+  const answersResult = await client.query(
+    `SELECT slot, answer_id, winner_id, answered_at
+     FROM daily_answers
+     WHERE edition_id = $1 AND player_id = $2
+     ORDER BY slot`,
+    [edition.id, playerId],
+  );
+  const predictionsResult = await client.query(
+    `SELECT slot, prediction_id, predicted_candidate_id, skipped, responded_at
+     FROM daily_predictions
+     WHERE edition_id = $1 AND player_id = $2
+     ORDER BY slot`,
+    [edition.id, playerId],
+  );
+  const completionResult = await client.query(
+    "SELECT completed_at FROM daily_completions WHERE edition_id = $1 AND player_id = $2",
+    [edition.id, playerId],
+  );
   const answers = answersResult.rows.map((row) => ({
     slot: Number(row.slot),
     answerId: row.answer_id,
@@ -2134,18 +2137,16 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
             slot,
           );
         }
-        const [answersResult, predictionCountResult] = await Promise.all([
-          client.query(
-            `SELECT slot, answer_id FROM daily_answers
-             WHERE edition_id = $1 AND player_id = $2 ORDER BY slot`,
-            [requestedEditionId, player.id],
-          ),
-          client.query(
-            `SELECT COUNT(*)::integer AS responded FROM daily_predictions
-             WHERE edition_id = $1 AND player_id = $2`,
-            [requestedEditionId, player.id],
-          ),
-        ]);
+        const answersResult = await client.query(
+          `SELECT slot, answer_id FROM daily_answers
+           WHERE edition_id = $1 AND player_id = $2 ORDER BY slot`,
+          [requestedEditionId, player.id],
+        );
+        const predictionCountResult = await client.query(
+          `SELECT COUNT(*)::integer AS responded FROM daily_predictions
+           WHERE edition_id = $1 AND player_id = $2`,
+          [requestedEditionId, player.id],
+        );
         const responded = Number(predictionCountResult.rows[0]?.responded) || 0;
         const expectedSlot = responded + 1;
         if (slot !== expectedSlot || answersResult.rowCount !== responded + 1) {
@@ -2267,19 +2268,20 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
             publishedAt: record.publishedAt,
           };
         }
-        const [completionResult, choicesResult] = await Promise.all([
-          client.query("SELECT COUNT(*)::bigint AS total FROM daily_completions WHERE edition_id = $1", [editionRow.id]),
-          client.query(
-            `SELECT answer.slot, answer.winner_id, COUNT(*)::bigint AS choices
-             FROM daily_answers AS answer
-             INNER JOIN daily_completions AS completed
-               ON completed.edition_id = answer.edition_id AND completed.player_id = answer.player_id
-             WHERE answer.edition_id = $1
-             GROUP BY answer.slot, answer.winner_id
-             ORDER BY answer.slot, answer.winner_id`,
-            [editionRow.id],
-          ),
-        ]);
+        const completionResult = await client.query(
+          "SELECT COUNT(*)::bigint AS total FROM daily_completions WHERE edition_id = $1",
+          [editionRow.id],
+        );
+        const choicesResult = await client.query(
+          `SELECT answer.slot, answer.winner_id, COUNT(*)::bigint AS choices
+           FROM daily_answers AS answer
+           INNER JOIN daily_completions AS completed
+             ON completed.edition_id = answer.edition_id AND completed.player_id = answer.player_id
+           WHERE answer.edition_id = $1
+           GROUP BY answer.slot, answer.winner_id
+           ORDER BY answer.slot, answer.winner_id`,
+          [editionRow.id],
+        );
         const completedPlayers = Number(completionResult.rows[0]?.total) || 0;
         const counts = new Map(choicesResult.rows.map((row) => [`${Number(row.slot)}:${row.winner_id}`, Number(row.choices)]));
         const rounds = materialized.rounds.map((round) => ({

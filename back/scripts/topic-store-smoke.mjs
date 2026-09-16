@@ -231,6 +231,10 @@ assert.deepEqual(firstDailySession.edition, secondDailySession.edition);
 assert.deepEqual(firstDailySession.round, secondDailySession.round);
 assert.equal(new Set(firstDailySession.round.candidateIds).size, 4);
 assert.equal(Object.hasOwn(firstDailySession, "completedPlayers"), false);
+await assert.rejects(
+  dailyStore.dailyCut("eleicoes-2026", "2026-09-16", { now: dailyNow }),
+  (error) => error.code === "DAILY_CUT_NOT_CLOSED",
+);
 
 await assert.rejects(
   dailyStore.dailyVote({
@@ -315,6 +319,22 @@ assert.equal(identicalPredictions[0].dailySession.pendingPrediction, null);
 assert.equal(identicalPredictions[0].dailySession.predictionProgress.responded, 1);
 assert.deepEqual(await dailyStore.ranking("eleicoes-2026"), rankingBeforePrediction);
 assert.deepEqual(await dailyStore.playerRanking(firstDailyPlayer.recoveryKey, "eleicoes-2026"), personalBeforePrediction);
+const sealedPredictionResults = await dailyStore.dailyPredictionResults(
+  firstDailyPlayer.recoveryKey,
+  "eleicoes-2026",
+  { now: dailyNow },
+);
+assert.equal(sealedPredictionResults.baselinePercent, 25);
+assert.deepEqual(sealedPredictionResults.sessions, []);
+assert.deepEqual(sealedPredictionResults.score, {
+  correct: 0,
+  scored: 0,
+  attempted: 0,
+  skipped: 0,
+  ties: 0,
+  noSample: 0,
+  accuracyPercent: null,
+});
 
 await assert.rejects(
   dailyStore.dailyPrediction({
@@ -982,4 +1002,4 @@ await crossingStore.close();
 await dailyStore.close();
 await quotaMaintenance.end();
 
-console.log("Smoke PostgreSQL aprovado: reset e upgrade aditivos, identidade/sessão, Elo idempotente, edição diária comum, 10/10 atômico, reload, concorrência, virada de São Paulo, corte fechado e modo livre separado.");
+console.log("Smoke PostgreSQL aprovado: reset e upgrade aditivos, identidade/sessão, Elo idempotente, edição diária comum, apostas lacradas e idempotentes, 10/10 atômico, reload, concorrência, virada de São Paulo, corte fechado e modo livre separado.");

@@ -5,7 +5,7 @@
 O runtime calcula a elegibilidade por pessoa com a expressão:
 
 ```text
-conteúdo == approved E arte da carta == approved
+conteúdo == approved E arte da carta == approved E recibos externos válidos para ambas as decisões
 ```
 
 A foto documental é uma terceira decisão independente e nunca participa dessa expressão. Quando ela não está aprovada, o perfil continua permitido e apresenta `Foto documental ainda não disponível`.
@@ -36,22 +36,27 @@ Os casos adversariais adicionais comprovam:
 - editar uma URL aninhada antes de criar um novo registry invalida o fingerprint de conteúdo e remove a pessoa do conjunto público;
 - `topicsById` e `candidatesById` são fachadas somente leitura, sem `set`, `delete` ou `clear`, e seus valores também são imutáveis;
 - o clock é injetável e `decidedAt` futuro falha contra a data civil em `America/Sao_Paulo`, inclusive no limite em que `02:30Z` ainda pertence ao dia anterior em Brasília;
-- um login apenas plausível não basta: `decidedBy` precisa estar autorizado para a dimensão tanto na policy atual quanto na policy do `reviewedCommit`;
-- cada decisão depende de atestação existente e íntegra, evidência textual interna no escopo exato candidato/dimensão, SHA-256, OID Git e commit revisado completo;
-- atestação ausente, evidência ausente/adulterada, URL externa, logo/asset não relacionado, sujeito divergente e commit não comprovado falham fechados;
+- a policy Git apenas confere a declaração de `decidedBy`; policy, ledger, atestação, hashes e commits não autenticam a pessoa nem concedem autoridade;
+- sem verificador externo, com callback indisponível ou sem recibo correspondente, decisões versionadas voltam a `pending`/`missing` e produzem zero elegíveis;
+- somente recibos `editorial-authority-receipt-v1` Ed25519 válidos para a requisição exata autorizam; assinatura alterada, configuração parcial ou mudança da atestação falham fechados;
+- `authorizedAt` futuro ou anterior a `decidedAt` na data civil de São Paulo é recusado, e o recibo efetivamente usado permanece na auditoria interna;
+- cada decisão depende de atestação existente e íntegra, `review.json` estrito ligado a candidato/dimensão/decisão, cobertura integral dos itens revisados, capturas internas verificadas, SHA-256, OID Git e commit revisado completo;
+- texto arbitrário `x`, nota/captura trivial, campo aninhado extra, referência adulterada, URL sem captura, logo/asset não relacionado, sujeito divergente e commit não comprovado falham fechados;
 - o verificador Git exige que o commit revisado seja ancestral de `HEAD`, reproduz conteúdo e roteamento a partir do catálogo daquele commit e reproduz assets a partir do registry e dos bytes históricos;
+- todos os subprocessos Git descartam `GIT_*` herdadas e fixam `GIT_NO_REPLACE_OBJECTS=1`; um teste com repositório Git real prova que `git replace`, `GIT_DIR`, `GIT_WORK_TREE`, object dirs, alternates e configuração injetada não falsificam o commit revisado;
+- arquivos atuais precisam ser regulares, sem symlink no alvo ou em diretório ancestral; blobs históricos precisam ser `100644`/`100755`, e um blob real modo `120000` é rejeitado;
 - `sources` rejeita campos aninhados extras, `facts` rejeita não strings e os demais campos do catálogo têm tipos e allowlists exatos;
 - o fingerprint é calculado sobre os bytes exatos de `JSON.stringify` da projeção pública; roteamento é assinado separadamente, sem colapso de ausente/`undefined`/`null`;
 - `candidate-public-v1` possui golden test byte a byte; `candidate-public-v2` é separado e valida `primaryArea`, `contextAffiliation` e cada entrada `{status,source}` de `taxonomyProvenance`.
 
-Os hashes e a allowlist são garantias locais de integridade e autorização declarada. Eles não são descritos como assinatura criptográfica da identidade humana; essa confirmação continua no review.
+Hashes e policy são garantias locais de integridade e coerência declarativa. A identidade e a competência do aprovador pertencem ao emissor externo; o repositório aceita apenas o recibo criptográfico que ele emite e não afirma que Git autentica um humano.
 
 ## Estado real de produção
 
 Consulta direta ao `PRODUCTION_CANDIDATE_REGISTRY` nesta unidade:
 
 ```json
-{"catalog":125,"playable":0,"contentPending":125,"cardArtMissing":125,"documentaryPhotoMissing":125}
+{"authority":{"externalVerifierConfigured":false,"verifiedDecisions":0,"deniedDecisions":0},"catalog":125,"playable":0,"contentPending":125,"cardArtMissing":125,"documentaryPhotoMissing":125}
 ```
 
 Os arquivos `shared/editorial-publication-ledger.json` e `shared/editorial-asset-registry.json` não contêm decisões nem assets. As 99 imagens encontradas pelo inventário legado e o lote visual da #176 não foram convertidos em aprovações editoriais.
@@ -86,8 +91,8 @@ Capturas Chromium em 390 × 844:
 
 ## Validação local
 
-- `npm run editorial:verify --prefix back`: aprovado; policy e estado real foram validados com `0 decisões atestadas; 0 candidatos publicáveis`.
-- `npm test`: aprovado, 161/161 testes (4 shared, 91 back, 66 app).
+- `npm run editorial:verify --prefix back`: aprovado; policy e estado real foram validados com `0 decisões atestadas; 0 decisões autorizadas externamente; 0 candidatos publicáveis`.
+- `npm test`: aprovado, 165/165 testes (4 shared, 95 back, 66 app).
 - `npm run build --prefix app`: aprovado; verificação editorial reportou `Assets editoriais íntegros: 0` e o Vite gerou o bundle.
 - Chromium: interação, gate editorial, 3 telas × 16 viewports, recuperação de voto e estados de confiança aprovados.
 - WebKit: a mesma matriz completa aprovada.
@@ -99,4 +104,4 @@ Capturas Chromium em 390 × 844:
 
 Não há Docker, `psql`, serviço PostgreSQL nem `DATABASE_URL` disponíveis nesta estação; por isso, `topic-store-smoke.mjs` e `vote-abuse-smoke.mjs` não puderam ser executados localmente. Ambos permanecem vinculados ao job PostgreSQL 16 de `.github/workflows/back-shared.yml`, agora com registry de fixture explícito.
 
-Nenhum perfil real foi aprovado nesta implementação. A liberação de cada pessoa depende das decisões humanas individualizadas definidas em `docs/editorial/PUBLICATION_GOVERNANCE.md`.
+Nenhum perfil real foi aprovado nesta implementação. A liberação de cada pessoa depende das decisões humanas individualizadas e dos recibos emitidos pela autoridade externa definida em `docs/editorial/PUBLICATION_GOVERNANCE.md`.

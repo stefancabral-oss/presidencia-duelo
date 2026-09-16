@@ -10,6 +10,7 @@ import {
   candidateRoutingFingerprint,
   sha256Fingerprint,
 } from "../src/editorial-gate.js";
+import { approvalAuthorityRequestFingerprint } from "../src/editorial-authority.js";
 import { textBlobFingerprint } from "../src/editorial-integrity.js";
 
 const [kind, value, secondaryValue] = process.argv.slice(2);
@@ -36,6 +37,14 @@ if (kind === "content") {
   const relative = path.relative(repositoryRoot, absolutePath);
   if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) throw new Error("Caminho fora do repositório");
   console.log(textBlobFingerprint(await readFile(absolutePath), value));
+} else if (kind === "authority-request") {
+  if (!value) throw new Error("Informe o caminho da atestação relativo ao repositório");
+  const repositoryRoot = path.resolve(fileURLToPath(new URL("../../", import.meta.url)));
+  const absolutePath = path.resolve(repositoryRoot, value);
+  const relative = path.relative(repositoryRoot, absolutePath);
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) throw new Error("Caminho fora do repositório");
+  const attestation = JSON.parse(await readFile(absolutePath, "utf8"));
+  console.log(approvalAuthorityRequestFingerprint(attestation));
 } else if (kind === "registered-asset") {
   const asset = EDITORIAL_ASSETS.assets.find(({ candidateId, kind: assetKind }) => (
     candidateId === value && assetKind === secondaryValue
@@ -43,5 +52,5 @@ if (kind === "content") {
   if (!asset) throw new Error(`Asset registrado não encontrado: ${value || ""}.${secondaryValue || ""}`);
   console.log(assetApprovalFingerprint(asset));
 } else {
-  throw new Error("Uso: editorial-fingerprint.mjs content|routing <candidate-id> [candidate-public-v1|candidate-public-v2] | asset <caminho-binário> | file <caminho-textual> | registered-asset <candidate-id> <cardArt|documentaryPhoto>");
+  throw new Error("Uso: editorial-fingerprint.mjs content|routing <candidate-id> [candidate-public-v1|candidate-public-v2] | asset <caminho-binário> | file <caminho-textual> | authority-request <atestação.json> | registered-asset <candidate-id> <cardArt|documentaryPhoto>");
 }

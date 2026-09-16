@@ -16,15 +16,19 @@
 - Elegibilidade calculada somente por conteúdo aprovado + arte aprovada; foto ausente não bloqueia.
 - Fingerprints SHA-256 que invalidam decisões quando conteúdo, bytes, caminho, versão ou procedência de asset muda.
 - Fingerprint de conteúdo sobre o JSON público exato e fingerprint separado de roteamento, sem equivalência entre ausente, `undefined` e `null`.
-- Policy local versionada por dimensão, atestação vinculada ao ledger e prova de evidência por arquivo, SHA-256, OID Git e commit revisado.
-- Verificador local/CI reproduz conteúdo, roteamento e assets a partir do commit atestado; URLs externas e arquivos fora do escopo não liberam decisão.
+- Policy local versionada por dimensão apenas para coerência do revisor declarado; ela não autentica identidade nem concede autoridade.
+- Autorização de produção exclusivamente por recibo Ed25519 emitido fora do repositório e injetado no processo; ausência, erro ou assinatura divergente mantêm default-deny.
+- Atestação vinculada ao ledger e `review.json` estruturado por candidato/dimensão/decisão, com itens obrigatórios e capturas verificadas por SHA-256, OID Git e commit revisado.
+- Verificador local/CI reproduz conteúdo, roteamento, evidências e assets a partir do commit atestado; URLs sem captura e arquivos fora do escopo não liberam decisão.
+- Subprocessos Git usam ambiente saneado e `GIT_NO_REPLACE_OBJECTS=1`; teste em repositório real cobre `git replace` e injeções de diretório/configuração.
+- Arquivos atuais precisam ser regulares e blobs históricos precisam ter modo `100644`/`100755`; symlinks atuais e modo Git `120000` falham.
 - `candidate-public-v1` histórico congelado byte a byte e `candidate-public-v2` separado para a taxonomia da #173.
 - Schema recursivo estrito: `facts` somente strings, `sources` somente `{label,url}` e proveniência v2 somente `{status,source}`.
 - Snapshots profundos e imutáveis de catálogo, tópicos, ledger, assets, auditoria e payload público; mapas expostos são somente leitura.
 - Tópicos inativos/desconhecidos permanecem fechados no registry e na API.
 - Falha fechada para dados desconhecidos, duplicados, malformados, sem evidência visível ou com referência/caminho inseguro.
 - Clock injetável com limite de data civil em `America/Sao_Paulo`; decisões futuras são recusadas.
-- Login GitHub do aprovador e metadados de versão/procedência rejeitam controles e caracteres invisíveis.
+- Login declarado do revisor e metadados de versão/procedência rejeitam controles e caracteres invisíveis.
 - Campo novo no catálogo é recusado até ser classificado explicitamente na política editorial.
 - Registry injetável no domínio, API e store; produção não aceita fixture nem variável de bypass.
 - API exclui pendentes/rejeitados e não expõe fingerprints ou auditoria privada.
@@ -47,7 +51,7 @@ Esse estado é intencional. Assets existentes, nomes legados contendo `approved`
 ## Validação local
 
 - `npm run editorial:verify --prefix back`: aprovado com 0 decisões reais e 0 publicáveis.
-- Suite consolidada: 161/161 testes aprovados (4 shared, 91 back, 66 app).
+- Suite consolidada: 165/165 testes aprovados (4 shared, 95 back, 66 app).
 - `npm run build --prefix app`: aprovado; 0 assets no registro editorial real e bundle Vite gerado.
 - `interaction-smoke.mjs`: aprovado em Chromium e WebKit.
 - `editorial-gate.mjs`: aprovado em Chromium e WebKit.
@@ -68,7 +72,7 @@ Esse estado é intencional. Assets existentes, nomes legados contendo `approved`
 - Integração PostgreSQL 16 e prova de abuso não foram executadas localmente porque esta estação não possui Docker, `psql`, serviço PostgreSQL nem `DATABASE_URL`. O workflow `back-shared.yml` executará ambas quando houver PR.
 - Na integração sobre a #173, configurar o registry corrente com `candidate-public-v2`; o schema já classifica `primaryArea`, `contextAffiliation` e as quatro entradas estritas de `taxonomyProvenance`.
 - Na integração com a #179, manter o projector `candidate-public-v1` histórico byte a byte e seu ruleset diário. Promover v2 somente por novo ruleset/edição; snapshots usam `candidatePublicSnapshot(schema)`, enquanto a API corrente usa `candidatePublicPayload`. Nenhum fluxo copia o candidato interno.
-- A allowlist e os hashes não autenticam criptograficamente o humano declarado. O review confirma identidade; o CI confirma autorização declarada, integridade e reprodução no commit.
+- Policy, ledger, Git e hashes não autenticam o humano declarado. A autoridade externa é responsável por identidade/competência e emite o recibo Ed25519; o CI apenas verifica esse recibo, integridade e reprodução no commit.
 - Cada aprovação real requer a revisão humana individual prevista na governança. Não deve haver preenchimento em massa do ledger.
 - O gate visual da #176 é uma evidência necessária para decidir arte, mas não substitui a decisão `cardArt.approved` por pessoa.
 
@@ -76,11 +80,11 @@ Esse estado é intencional. Assets existentes, nomes legados contendo `approved`
 
 1. Publicar a branch e abrir uma PR isolada para a #171.
 2. Confirmar os jobs `back-unit`, `shared-data`, `back-integration-postgres` e `UI Interaction Smoke` em ambos os navegadores.
-3. Depois da aprovação técnica, iniciar PRs editoriais pequenas: uma decisão humana, uma pessoa e uma base de evidência auditável por vez.
+3. Depois da aprovação técnica, iniciar PRs editoriais pequenas: uma decisão humana, uma pessoa, uma base de evidência auditável e o recibo externo correspondente por vez.
 4. Só considerar o app com elenco público quando ao menos quatro pessoas tiverem conteúdo e arte aprovados; foto documental continua opcional.
 
 ## Human gate
 
 - Implementação do mecanismo: pronta para revisão.
 - Publicação dos 125 perfis: bloqueada por decisão humana, por desenho.
-- Responsável final: Stefan Cabral (`stefancabral-oss`) ou pessoa delegada e identificada nominalmente na PR.
+- Responsável final: a autoridade externa configurada no ambiente; `stefancabral-oss` é apenas o revisor inicialmente declarado na policy versionada.

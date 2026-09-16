@@ -1,4 +1,9 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { generateKeyPairSync, sign } from "node:crypto";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 import {
   ASSET_STATUSES,
@@ -14,8 +19,16 @@ import {
   createCandidateRegistry,
   sha256Fingerprint,
 } from "./editorial-gate.js";
+import {
+  EDITORIAL_AUTHORITY_RECEIPT_RULESET_V1,
+  approvalAuthorityFromEnvironment,
+  approvalAuthorityRequestFingerprint,
+  authorityReceiptSigningPayload,
+  createEd25519ApprovalAuthority,
+} from "./editorial-authority.js";
 import { textBlobFingerprint } from "./editorial-integrity.js";
 import { createGitReviewedStateVerifier } from "./editorial-history.js";
+import { createRepositoryFileAccess } from "./repository-files.js";
 import {
   attachTestAttestations,
   TEST_GIT_BLOB,
@@ -53,7 +66,11 @@ function attestedInputs(input, options) {
 }
 
 function createTestRegistry(input, options) {
-  return createCandidateRegistry({ ...attestedInputs(input, options), now: TEST_NOW });
+  return createCandidateRegistry({
+    ...attestedInputs(input, options),
+    now: TEST_NOW,
+    verifyApprovalAuthority: () => true,
+  });
 }
 
 function rewriteAttestation(inputs, dimension, mutate) {
@@ -64,6 +81,52 @@ function rewriteAttestation(inputs, dimension, mutate) {
   const text = `${JSON.stringify(record, null, 2)}\n`;
   inputs.repositoryFiles.set(path, text);
   decision.attestation.blobSha256 = textBlobFingerprint(text, path);
+}
+
+function rewriteStructuredEvidence(inputs, dimension, mutate) {
+  const decision = inputs.ledger.decisions[0][dimension];
+  const attestationPath = decision.attestation.path;
+  const attestation = JSON.parse(inputs.repositoryFiles.get(attestationPath));
+  const evidencePath = attestation.evidence[0].path;
+  const evidence = JSON.parse(inputs.repositoryFiles.get(evidencePath));
+  mutate(evidence);
+  const evidenceText = `${JSON.stringify(evidence, null, 2)}\n`;
+  inputs.repositoryFiles.set(evidencePath, evidenceText);
+  attestation.evidence[0].blobSha256 = textBlobFingerprint(evidenceText, evidencePath);
+  const attestationText = `${JSON.stringify(attestation, null, 2)}\n`;
+  inputs.repositoryFiles.set(attestationPath, attestationText);
+  decision.attestation.blobSha256 = textBlobFingerprint(attestationText, attestationPath);
+}
+
+function signedAuthorityFor(attestations, {
+  authorizedAt = "2026-09-16T12:00:00.000Z",
+  now = TEST_NOW,
+} = {}) {
+  const { privateKey, publicKey } = generateKeyPairSync("ed25519");
+  const issuer = "fixture-authority.example";
+  const keyId = "fixture-ed25519-1";
+  const receipts = attestations.map((attestation) => {
+    const unsigned = {
+      schemaVersion: 1,
+      ruleset: EDITORIAL_AUTHORITY_RECEIPT_RULESET_V1,
+      issuer,
+      keyId,
+      requestFingerprint: approvalAuthorityRequestFingerprint(attestation),
+      authorizedAt,
+    };
+    return {
+      ...unsigned,
+      signature: sign(null, Buffer.from(JSON.stringify(authorityReceiptSigningPayload(unsigned))), privateKey).toString("base64url"),
+    };
+  });
+  const publicKeyJwk = publicKey.export({ format: "jwk" });
+  return {
+    publicKeyJwk,
+    issuer,
+    keyId,
+    receipts,
+    verifier: createEd25519ApprovalAuthority({ publicKeyJwk, issuer, keyId, receipts, now }),
+  };
 }
 
 function audit(dimension) {
@@ -315,7 +378,7 @@ test("the reusable public payload strips audit and fingerprints", () => {
 
 test("approved candidates and public payloads are independent deeply frozen snapshots", () => {
   const inputs = attestedInputs(approvedInputs());
-  const registry = createCandidateRegistry({ ...inputs, now: TEST_NOW });
+  const registry = createCandidateRegistry({ ...inputs, now: TEST_NOW, verifyApprovalAuthority: () => true });
   const candidate = registry.candidates[0];
   const payload = candidatePublicPayload(candidate);
   const originalFingerprint = candidate.publication.content.fingerprint;
@@ -379,33 +442,125 @@ test("decision dates use an injected clock and cannot be future-dated", () => {
     /não pode estar no futuro/,
   );
   assert.throws(
-    () => createCandidateRegistry({ ...attestedInputs(approvedInputs()), now: () => new Date("invalid") }),
+    () => createCandidateRegistry({
+      ...attestedInputs(approvedInputs()),
+      now: () => new Date("invalid"),
+      verifyApprovalAuthority: () => true,
+    }),
     /clock deve retornar uma data válida/,
   );
   assert.throws(
     () => createCandidateRegistry({
       ...attestedInputs(approvedInputs({ decidedAt: "2026-09-17" })),
       now: () => new Date("2026-09-17T02:30:00.000Z"),
+      verifyApprovalAuthority: () => true,
     }),
     /não pode estar no futuro/,
   );
   assert.equal(createCandidateRegistry({
     ...attestedInputs(approvedInputs({ decidedAt: "2026-09-17" })),
     now: () => new Date("2026-09-17T03:30:00.000Z"),
+    verifyApprovalAuthority: () => true,
   }).candidates[0].eligible, true);
 });
 
-test("approver identity must be syntactically valid and authorized by versioned policy", () => {
+test("versioned policy validates only the declared reviewer claim", () => {
   for (const decidedBy of ["\u200b", "nome com espaço", "-invalido", "invalido--login", "invalido-"]) {
     assert.throws(() => createTestRegistry(approvedInputs({ decidedBy })), /login GitHub válido/);
   }
   assert.throws(
     () => createTestRegistry(approvedInputs({ decidedBy: "usuario-valido-mas-nao-autorizado" })),
-    /não está autorizado pela política versionada/,
+    /não consta como revisor declarado na política versionada/,
   );
 });
 
-test("attestations require existing candidate-scoped internal evidence and matching blobs", () => {
+test("repository declarations default-deny without externally injected authority", () => {
+  const inputs = attestedInputs(approvedInputs());
+  const denied = createCandidateRegistry({ ...inputs, now: TEST_NOW });
+  assert.equal(denied.authority.externalVerifierConfigured, false);
+  assert.equal(denied.authority.verifiedDecisions, 0);
+  assert.equal(denied.authority.deniedDecisions, 2);
+  assert.equal(denied.candidates[0].publication.content.status, "pending");
+  assert.equal(denied.candidates[0].publication.content.authorityDenied, true);
+  assert.equal(denied.candidates[0].publication.cardArt.status, "missing");
+  assert.equal(denied.candidates[0].publication.cardArt.authorityDenied, true);
+  assert.equal(denied.candidates[0].eligible, false);
+  assert.equal(denied.candidatesForTopic("eleicoes-2026").length, 0);
+
+  const callbackFailure = createCandidateRegistry({
+    ...inputs,
+    now: TEST_NOW,
+    verifyApprovalAuthority: () => { throw new Error("serviço externo indisponível"); },
+  });
+  assert.equal(callbackFailure.candidates[0].eligible, false);
+  assert.equal(callbackFailure.authority.deniedDecisions, 2);
+});
+
+test("only valid Ed25519 receipts from injected external configuration authorize decisions", () => {
+  const inputs = attestedInputs(approvedInputs());
+  const attestations = ["content", "cardArt"].map((dimension) => {
+    const decision = inputs.ledger.decisions[0][dimension];
+    return JSON.parse(inputs.repositoryFiles.get(decision.attestation.path));
+  });
+  const authority = signedAuthorityFor(attestations);
+  const registry = createCandidateRegistry({
+    ...inputs,
+    now: TEST_NOW,
+    verifyApprovalAuthority: authority.verifier,
+  });
+  assert.equal(registry.authority.externalVerifierConfigured, true);
+  assert.equal(registry.authority.verifiedDecisions, 2);
+  assert.equal(registry.authority.deniedDecisions, 0);
+  assert.equal(registry.candidates[0].eligible, true);
+  assert.equal(
+    registry.candidates[0].publication.content.audit.authorityReceipt.authorizedAt,
+    "2026-09-16T12:00:00.000Z",
+  );
+  assert.equal(
+    registry.candidates[0].publication.content.audit.authorityReceipt.requestFingerprint,
+    approvalAuthorityRequestFingerprint(attestations[0]),
+  );
+
+  const fromEnvironment = approvalAuthorityFromEnvironment({
+    EDITORIAL_AUTHORITY_PUBLIC_JWK: JSON.stringify(authority.publicKeyJwk),
+    EDITORIAL_AUTHORITY_ISSUER: authority.issuer,
+    EDITORIAL_AUTHORITY_KEY_ID: authority.keyId,
+    EDITORIAL_AUTHORITY_RECEIPTS: JSON.stringify(authority.receipts),
+  }, { now: TEST_NOW });
+  assert.equal(fromEnvironment(attestations[0]).requestFingerprint, authority.receipts[0].requestFingerprint);
+  assert.equal(fromEnvironment({ ...attestations[0], decidedAt: "2026-09-15" }), false);
+  assert.equal(approvalAuthorityFromEnvironment({}), null);
+  assert.throws(
+    () => approvalAuthorityFromEnvironment({ EDITORIAL_AUTHORITY_ISSUER: authority.issuer }),
+    /configuração externa.*incompleta/,
+  );
+  const forgedReceipts = structuredClone(authority.receipts);
+  const finalSignatureCharacter = forgedReceipts[0].signature.at(-1);
+  forgedReceipts[0].signature = `${forgedReceipts[0].signature.slice(0, -1)}${finalSignatureCharacter === "A" ? "B" : "A"}`;
+  assert.throws(
+    () => createEd25519ApprovalAuthority({ ...authority, receipts: forgedReceipts, now: TEST_NOW }),
+    /não foi assinado|assinatura Ed25519 inválida/,
+  );
+
+  const beforeDecision = signedAuthorityFor(attestations, {
+    authorizedAt: "2026-09-15T23:59:59.999Z",
+  });
+  const chronologicallyDenied = createCandidateRegistry({
+    ...inputs,
+    now: TEST_NOW,
+    verifyApprovalAuthority: beforeDecision.verifier,
+  });
+  assert.equal(chronologicallyDenied.authority.verifiedDecisions, 0);
+  assert.equal(chronologicallyDenied.authority.deniedDecisions, 2);
+  assert.equal(chronologicallyDenied.candidates[0].eligible, false);
+
+  assert.throws(
+    () => signedAuthorityFor(attestations, { authorizedAt: "2026-09-16T12:00:00.001Z" }),
+    /não pode ser autorizado no futuro/,
+  );
+});
+
+test("attestations require structured candidate-scoped evidence and verified captures", () => {
   const missingAttestation = attestedInputs(approvedInputs());
   missingAttestation.repositoryFiles.delete(missingAttestation.ledger.decisions[0].content.attestation.path);
   assert.throws(() => createTestRegistry(missingAttestation), /attestation não existe no repositório/);
@@ -424,24 +579,103 @@ test("attestations require existing candidate-scoped internal evidence and match
   tamperedEvidence.repositoryFiles.set(tamperedAttestation.evidence[0].path, "conteúdo trocado");
   assert.throws(() => createTestRegistry(tamperedEvidence), /blobSha256 não corresponde/);
 
-  const blankEvidence = attestedInputs(approvedInputs());
-  const blankAttestation = JSON.parse(blankEvidence.repositoryFiles.get(
-    blankEvidence.ledger.decisions[0].content.attestation.path,
+  const arbitraryEvidence = attestedInputs(approvedInputs());
+  const arbitraryAttestation = JSON.parse(arbitraryEvidence.repositoryFiles.get(
+    arbitraryEvidence.ledger.decisions[0].content.attestation.path,
   ));
-  blankEvidence.repositoryFiles.set(blankAttestation.evidence[0].path, "\n\t");
-  rewriteAttestation(blankEvidence, "content", (record) => {
-    record.evidence[0].blobSha256 = textBlobFingerprint("\n\t", record.evidence[0].path);
+  arbitraryEvidence.repositoryFiles.set(arbitraryAttestation.evidence[0].path, "x");
+  rewriteAttestation(arbitraryEvidence, "content", (record) => {
+    record.evidence[0].blobSha256 = textBlobFingerprint("x", record.evidence[0].path);
   });
-  assert.throws(() => createTestRegistry(blankEvidence), /evidência textual visível e segura/);
+  assert.throws(() => createTestRegistry(arbitraryEvidence), /não contém JSON válido/);
 
-  for (const unsafePath of ["https://example.test/revisao", "app/public/brand/logo-volumetric.png", "shared/editorial-evidence/outro/content/prova.md"]) {
+  const extraNestedField = attestedInputs(approvedInputs());
+  rewriteStructuredEvidence(extraNestedField, "content", (record) => { record.reviewedItems[0].x = true; });
+  assert.throws(() => createTestRegistry(extraNestedField), /campos inválidos.*x/);
+
+  const trivialReviewNote = attestedInputs(approvedInputs());
+  rewriteStructuredEvidence(trivialReviewNote, "content", (record) => { record.reviewedItems[0].note = "x"; });
+  assert.throws(() => createTestRegistry(trivialReviewNote), /note deve ser texto substantivo/);
+
+  const wrongBinding = attestedInputs(approvedInputs());
+  rewriteStructuredEvidence(wrongBinding, "content", (record) => { record.candidateId = "outro-candidato"; });
+  assert.throws(() => createTestRegistry(wrongBinding), /não está ligado ao candidato\/dimensão/);
+
+  const tamperedReference = attestedInputs(approvedInputs());
+  const referenceAttestation = JSON.parse(tamperedReference.repositoryFiles.get(
+    tamperedReference.ledger.decisions[0].content.attestation.path,
+  ));
+  const referenceEvidence = JSON.parse(tamperedReference.repositoryFiles.get(referenceAttestation.evidence[0].path));
+  tamperedReference.repositoryFiles.set(
+    referenceEvidence.references[0].path,
+    "Captura editorial adulterada com conteúdo materialmente diferente.",
+  );
+  assert.throws(() => createTestRegistry(tamperedReference), /blobSha256 não corresponde à captura/);
+
+  const trivialReference = attestedInputs(approvedInputs());
+  rewriteStructuredEvidence(trivialReference, "content", (record) => {
+    const reference = record.references[0];
+    trivialReference.repositoryFiles.set(reference.path, "x");
+    reference.blobSha256 = textBlobFingerprint("x", reference.path);
+  });
+  assert.throws(() => createTestRegistry(trivialReference), /captura textual substantiva/);
+
+  const externalUrlWithoutCapture = attestedInputs(approvedInputs());
+  rewriteStructuredEvidence(externalUrlWithoutCapture, "content", (record) => {
+    record.references[0].sourceUrl = "https://example.test/revisao";
+    record.references[0].path = "https://example.test/revisao";
+  });
+  assert.throws(() => createTestRegistry(externalUrlWithoutCapture), /captura interna no escopo exato/);
+
+  const capturedExternalUrl = attestedInputs(approvedInputs());
+  rewriteStructuredEvidence(capturedExternalUrl, "content", (record) => {
+    record.references[0].sourceUrl = "https://example.test/revisao";
+  });
+  assert.equal(createTestRegistry(capturedExternalUrl).candidates[0].eligible, true);
+
+  const currentSymlink = attestedInputs(approvedInputs());
+  const symlinkAttestation = JSON.parse(currentSymlink.repositoryFiles.get(
+    currentSymlink.ledger.decisions[0].content.attestation.path,
+  ));
+  const regularStat = currentSymlink.statRepositoryFile;
+  currentSymlink.statRepositoryFile = (repositoryPath) => (
+    repositoryPath === symlinkAttestation.evidence[0].path
+      ? { isFile: false, isSymbolicLink: true, mode: 0o777 }
+      : regularStat(repositoryPath)
+  );
+  assert.throws(() => createTestRegistry(currentSymlink), /deve ser arquivo regular, nunca symlink/);
+
+  for (const unsafePath of ["https://example.test/revisao", "app/public/brand/logo-volumetric.png", "shared/editorial-evidence/outro/content/review.json"]) {
     const unrelated = attestedInputs(approvedInputs());
     rewriteAttestation(unrelated, "content", (record) => {
       record.evidence[0].path = unsafePath;
       record.evidence[0].blobSha256 = sha256Fingerprint("irrelevante");
     });
     unrelated.repositoryFiles.set(unsafePath, "irrelevante");
-    assert.throws(() => createTestRegistry(unrelated), /path deve apontar para evidência textual interna/);
+    assert.throws(() => createTestRegistry(unrelated), /path deve apontar para o registro JSON estruturado/);
+  }
+});
+
+test("repository evidence reader rejects a symlinked ancestor escaping the repository", () => {
+  const container = mkdtempSync(path.join(tmpdir(), "polimatch-editorial-files-"));
+  const repositoryRoot = path.join(container, "repository");
+  const outsideRoot = path.join(container, "outside");
+  mkdirSync(repositoryRoot);
+  mkdirSync(outsideRoot);
+  writeFileSync(path.join(outsideRoot, "review.json"), "evidência externa que não pertence ao repositório");
+  try {
+    symlinkSync(outsideRoot, path.join(repositoryRoot, "linked-evidence"), "junction");
+    const access = createRepositoryFileAccess(repositoryRoot);
+    assert.throws(
+      () => access.statRepositoryFile("linked-evidence/review.json"),
+      /caminho usa symlink no repositório/,
+    );
+    assert.throws(
+      () => access.loadRepositoryFile("linked-evidence/review.json"),
+      /caminho usa symlink no repositório/,
+    );
+  } finally {
+    rmSync(container, { recursive: true, force: true });
   }
 });
 
@@ -476,32 +710,40 @@ test("the local Git verifier proves evidence blobs and reviewed content", () => 
   const evidencePath = attestation.evidence[0].path;
   const cardAttestationPath = inputs.ledger.decisions[0].cardArt.attestation.path;
   const cardAttestation = JSON.parse(inputs.repositoryFiles.get(cardAttestationPath));
-  const cardEvidencePath = cardAttestation.evidence[0].path;
+  const repositoryBytes = (repositoryPath) => {
+    if (inputs.repositoryFiles.has(repositoryPath)) return Buffer.from(inputs.repositoryFiles.get(repositoryPath));
+    if (repositoryPath === "shared/elections-2026.json") return Buffer.from(JSON.stringify(inputs.catalog));
+    if (repositoryPath === "shared/editorial-asset-registry.json") return Buffer.from(JSON.stringify(inputs.assetRegistry));
+    if (repositoryPath === "shared/editorial-governance-policy.json") return Buffer.from(JSON.stringify(inputs.governancePolicy));
+    if (repositoryPath === "app/public/fixtures/card-art.jpg") return Buffer.from("arte-fixture-v1");
+    throw new Error(`arquivo Git inesperado: ${repositoryPath}`);
+  };
   const runGit = (args) => {
     if (args[0] === "cat-file") return Buffer.alloc(0);
     if (args[0] === "merge-base") return Buffer.alloc(0);
-    if (args[0] === "rev-parse") return `${TEST_GIT_BLOB}\n`;
-    if (args[0] === "show" && args[1].endsWith(`:${evidencePath}`)) return Buffer.from(inputs.repositoryFiles.get(evidencePath));
-    if (args[0] === "show" && args[1].endsWith(`:${cardEvidencePath}`)) return Buffer.from(inputs.repositoryFiles.get(cardEvidencePath));
-    if (args[0] === "show" && args[1].endsWith(":shared/elections-2026.json")) return Buffer.from(JSON.stringify(inputs.catalog));
-    if (args[0] === "show" && args[1].endsWith(":shared/editorial-asset-registry.json")) {
-      return Buffer.from(JSON.stringify(inputs.assetRegistry));
-    }
-    if (args[0] === "show" && args[1].endsWith(":app/public/fixtures/card-art.jpg")) {
-      return Buffer.from("arte-fixture-v1");
-    }
-    if (args[0] === "show" && args[1].endsWith(":shared/editorial-governance-policy.json")) {
-      return Buffer.from(JSON.stringify(inputs.governancePolicy));
-    }
+    if (args[0] === "ls-tree") return `100644 blob ${TEST_GIT_BLOB}\t${args[3]}\n`;
+    if (args[0] === "show") return repositoryBytes(args[1].slice(args[1].indexOf(":") + 1));
     throw new Error(`git inesperado: ${args.join(" ")}`);
   };
   assert.equal(createGitReviewedStateVerifier({ runGit })(attestation), true);
   assert.equal(createGitReviewedStateVerifier({ runGit })(cardAttestation), true);
   assert.throws(
-    () => createGitReviewedStateVerifier({ runGit: (args) => (
-      args[0] === "rev-parse" ? `${"3".repeat(40)}\n` : runGit(args)
-    ) })(attestation),
+    () => createGitReviewedStateVerifier({ runGit: (args) => {
+      if (args[0] === "ls-tree" && args[3] === evidencePath) {
+        return `100644 blob ${"3".repeat(40)}\t${evidencePath}\n`;
+      }
+      return runGit(args);
+    } })(attestation),
     /gitBlob diverge/,
+  );
+  assert.throws(
+    () => createGitReviewedStateVerifier({ runGit: (args) => {
+      if (args[0] === "ls-tree" && args[3] === evidencePath) {
+        return `120000 blob ${TEST_GIT_BLOB}\t${evidencePath}\n`;
+      }
+      return runGit(args);
+    } })(attestation),
+    /modo Git não permitido/,
   );
   assert.throws(
     () => createGitReviewedStateVerifier({ runGit: (args) => {
@@ -516,8 +758,92 @@ test("the local Git verifier proves evidence blobs and reviewed content", () => 
         ? Buffer.from(JSON.stringify(testGovernancePolicy(["outro-editor"])))
         : runGit(args)
     ) })(attestation),
-    /revisor não estava autorizado no commit revisado/,
+    /revisor declarado não corresponde à policy do commit revisado/,
   );
+});
+
+test("the real Git verifier ignores replace refs and rejects historical symlink blobs", () => {
+  const repositoryRoot = mkdtempSync(path.join(tmpdir(), "polimatch-editorial-git-"));
+  const git = (args, { input, encoding = "utf8" } = {}) => execFileSync("git", args, {
+    cwd: repositoryRoot,
+    encoding,
+    input,
+    env: process.env,
+    stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
+  });
+  const writeRepositoryFile = (repositoryPath, contents) => {
+    const absolutePath = path.join(repositoryRoot, ...repositoryPath.split("/"));
+    mkdirSync(path.dirname(absolutePath), { recursive: true });
+    writeFileSync(absolutePath, contents);
+  };
+
+  try {
+    git(["init", "--quiet"]);
+    git(["config", "user.name", "Editorial Test"]);
+    git(["config", "user.email", "editorial-test@example.invalid"]);
+    git(["config", "commit.gpgsign", "false"]);
+
+    const inputs = attestedInputs(approvedInputs());
+    const decision = inputs.ledger.decisions[0].content;
+    const attestation = JSON.parse(inputs.repositoryFiles.get(decision.attestation.path));
+    const evidencePath = attestation.evidence[0].path;
+    const evidence = JSON.parse(inputs.repositoryFiles.get(evidencePath));
+    const reference = evidence.references[0];
+    const referenceText = inputs.repositoryFiles.get(reference.path);
+
+    writeRepositoryFile(reference.path, referenceText);
+    reference.gitBlob = git(["hash-object", reference.path]).trim();
+    const evidenceText = `${JSON.stringify(evidence, null, 2)}\n`;
+    writeRepositoryFile(evidencePath, evidenceText);
+    attestation.evidence[0].gitBlob = git(["hash-object", evidencePath]).trim();
+    attestation.evidence[0].blobSha256 = textBlobFingerprint(evidenceText, evidencePath);
+    writeRepositoryFile("shared/elections-2026.json", `${JSON.stringify(inputs.catalog, null, 2)}\n`);
+    writeRepositoryFile("shared/editorial-governance-policy.json", `${JSON.stringify(inputs.governancePolicy, null, 2)}\n`);
+    git(["add", "--", "shared"]);
+    git(["commit", "--quiet", "-m", "reviewed editorial state"]);
+    const reviewedCommit = git(["rev-parse", "HEAD"]).trim();
+    attestation.reviewedCommit = reviewedCommit;
+
+    writeRepositoryFile(
+      "shared/editorial-governance-policy.json",
+      `${JSON.stringify(testGovernancePolicy(["outro-editor"]), null, 2)}\n`,
+    );
+    git(["add", "--", "shared/editorial-governance-policy.json"]);
+    git(["commit", "--quiet", "-m", "forged replacement state"]);
+    const forgedCommit = git(["rev-parse", "HEAD"]).trim();
+    git(["replace", reviewedCommit, forgedCommit]);
+    assert.match(git(["show", `${reviewedCommit}:shared/editorial-governance-policy.json`]), /outro-editor/);
+
+    const hostileEnvironment = {
+      ...process.env,
+      GIT_NO_REPLACE_OBJECTS: "0",
+      GIT_DIR: path.join(repositoryRoot, "attacker-git-dir"),
+      GIT_WORK_TREE: path.join(repositoryRoot, "attacker-work-tree"),
+      GIT_OBJECT_DIRECTORY: path.join(repositoryRoot, "attacker-objects"),
+      GIT_ALTERNATE_OBJECT_DIRECTORIES: path.join(repositoryRoot, "attacker-alternates"),
+      GIT_CONFIG_COUNT: "1",
+      GIT_CONFIG_KEY_0: "core.repositoryformatversion",
+      GIT_CONFIG_VALUE_0: "99",
+    };
+    assert.equal(createGitReviewedStateVerifier({ repositoryRoot, environment: hostileEnvironment })(attestation), true);
+
+    git(["replace", "-d", reviewedCommit]);
+    git(["checkout", "--quiet", "--detach", reviewedCommit]);
+    const symlinkBlob = git(["hash-object", "-w", "--stdin"], { input: evidenceText }).trim();
+    git(["update-index", "--add", "--cacheinfo", `120000,${symlinkBlob},${evidencePath}`]);
+    git(["commit", "--quiet", "-m", "historical symlink evidence"]);
+    const symlinkCommit = git(["rev-parse", "HEAD"]).trim();
+    const symlinkAttestation = structuredClone(attestation);
+    symlinkAttestation.reviewedCommit = symlinkCommit;
+    symlinkAttestation.evidence[0].gitBlob = symlinkBlob;
+    assert.throws(
+      () => createGitReviewedStateVerifier({ repositoryRoot })(symlinkAttestation),
+      /modo Git não permitido.*120000 blob/,
+    );
+  } finally {
+    assert.equal(path.resolve(repositoryRoot).startsWith(path.resolve(tmpdir())), true);
+    rmSync(repositoryRoot, { recursive: true, force: true });
+  }
 });
 
 test("asset provenance metadata must remain visible and safe", () => {

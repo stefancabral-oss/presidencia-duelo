@@ -77,6 +77,7 @@ export function createEditorialTestRegistry({
   return createCandidateRegistry({
     ...inputs,
     now: () => new Date("2026-09-16T12:00:00.000Z"),
+    verifyApprovalAuthority: () => true,
   });
 }
 

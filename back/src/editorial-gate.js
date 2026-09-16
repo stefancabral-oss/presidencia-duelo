@@ -17,6 +17,10 @@ import {
   validateGovernancePolicy,
 } from "./editorial-attestation.js";
 import {
+  EDITORIAL_AUTHORITY_RECEIPT_RULESET_V1,
+  approvalAuthorityRequestFingerprint,
+} from "./editorial-authority.js";
+import {
   assertExactKeys,
   assertPlainRecord,
   editorialInvalid,
@@ -162,7 +166,9 @@ function validateLedger({
   governancePolicy,
   contentRuleset,
   loadRepositoryFile,
+  statRepositoryFile,
   verifyReviewedState,
+  verifyApprovalAuthority,
 }) {
   assertExactKeys(ledger, ["schemaVersion", "decisions"], "ledger");
   if (ledger.schemaVersion !== 1 || !Array.isArray(ledger.decisions)) {
@@ -189,9 +195,44 @@ function validateLedger({
         governancePolicy,
         contentRuleset,
         loadRepositoryFile,
+        statRepositoryFile,
         verifyReviewedState,
       });
-      validatedEntry[dimension] = Object.freeze({ ...decision, verifiedAttestation });
+      let authorityVerified = false;
+      let authorityReceipt = null;
+      if (typeof verifyApprovalAuthority === "function") {
+        try {
+          const proof = verifyApprovalAuthority(verifiedAttestation);
+          if (proof === true) {
+            authorityVerified = true;
+          } else if (proof && typeof proof === "object") {
+            assertExactKeys(proof, [
+              "schemaVersion",
+              "ruleset",
+              "issuer",
+              "keyId",
+              "requestFingerprint",
+              "authorizedAt",
+              "signature",
+            ], "recibo retornado pela autoridade editorial");
+            if (proof.schemaVersion === 1
+              && proof.ruleset === EDITORIAL_AUTHORITY_RECEIPT_RULESET_V1
+              && proof.requestFingerprint === approvalAuthorityRequestFingerprint(verifiedAttestation)) {
+              authorityReceipt = immutableJsonSnapshot(proof);
+              authorityVerified = true;
+            }
+          }
+        } catch {
+          authorityVerified = false;
+          authorityReceipt = null;
+        }
+      }
+      validatedEntry[dimension] = Object.freeze({
+        ...decision,
+        verifiedAttestation,
+        authorityVerified,
+        authorityReceipt,
+      });
     }
     decisions.set(entry.candidateId, Object.freeze(validatedEntry));
   }
@@ -211,33 +252,53 @@ function auditOf(decision) {
       reviewedCommit: attestation.reviewedCommit,
       evidence: attestation.evidence,
     },
+    authorityReceipt: decision.authorityReceipt,
   });
 }
 
 function resolveContent(candidate, decision, contentRuleset) {
   const fingerprint = candidateContentFingerprint(candidate, { ruleset: contentRuleset });
   const routingFingerprint = candidateRoutingFingerprint(candidate, { ruleset: contentRuleset });
-  const current = decision?.fingerprint === fingerprint && decision?.routingFingerprint === routingFingerprint;
+  const subjectCurrent = decision?.fingerprint === fingerprint && decision?.routingFingerprint === routingFingerprint;
+  const current = subjectCurrent && decision?.authorityVerified === true;
   return Object.freeze({
     status: current ? decision.status : "pending",
     fingerprint,
     routingFingerprint,
-    invalidated: Boolean(decision && !current),
+    invalidated: Boolean(decision && !subjectCurrent),
+    authorityDenied: Boolean(decision && subjectCurrent && !current),
     reviewedAt: current && decision.status === "approved" ? decision.decidedAt : "",
     audit: current ? auditOf(decision) : null,
   });
 }
 
 function resolveAsset(kind, decision, asset) {
-  if (!decision || decision.status === "missing") {
-    return Object.freeze({ status: "missing", invalidated: false, image: "", audit: auditOf(decision) });
+  if (!decision) {
+    return Object.freeze({ status: "missing", invalidated: false, authorityDenied: false, image: "", audit: null });
   }
-  const current = Boolean(asset && decision.fingerprint === assetApprovalFingerprint(asset));
-  if (!current) return Object.freeze({ status: "missing", invalidated: true, image: "", audit: null });
+  if (decision.status === "missing") {
+    return Object.freeze({
+      status: "missing",
+      invalidated: false,
+      authorityDenied: decision.authorityVerified !== true,
+      image: "",
+      audit: decision.authorityVerified === true ? auditOf(decision) : null,
+    });
+  }
+  const subjectCurrent = Boolean(asset && decision.fingerprint === assetApprovalFingerprint(asset));
+  const current = subjectCurrent && decision.authorityVerified === true;
+  if (!current) return Object.freeze({
+    status: "missing",
+    invalidated: !subjectCurrent,
+    authorityDenied: subjectCurrent && decision.authorityVerified !== true,
+    image: "",
+    audit: null,
+  });
   const approved = decision.status === "approved";
   return Object.freeze({
     status: decision.status,
     invalidated: false,
+    authorityDenied: false,
     image: approved ? asset.path : "",
     fingerprint: decision.fingerprint,
     assetFingerprint: asset.fingerprint,
@@ -261,7 +322,9 @@ export function createCandidateRegistry({
   assetRegistry,
   governancePolicy,
   loadRepositoryFile,
+  statRepositoryFile,
   verifyReviewedState,
+  verifyApprovalAuthority,
   contentRuleset = PUBLIC_CANDIDATE_SCHEMA_V1,
   now = () => new Date(),
 }) {
@@ -285,8 +348,20 @@ export function createCandidateRegistry({
     governancePolicy: policySnapshot,
     contentRuleset,
     loadRepositoryFile,
+    statRepositoryFile,
     verifyReviewedState,
+    verifyApprovalAuthority,
   });
+
+  let verifiedDecisions = 0;
+  let deniedDecisions = 0;
+  for (const entry of decisions.values()) {
+    for (const dimension of ["content", "cardArt", "documentaryPhoto"]) {
+      if (!entry[dimension]) continue;
+      if (entry[dimension].authorityVerified) verifiedDecisions += 1;
+      else deniedDecisions += 1;
+    }
+  }
 
   const candidates = Object.freeze(catalogSnapshot.map((person) => {
     const entry = decisions.get(person.id) || {};
@@ -312,6 +387,11 @@ export function createCandidateRegistry({
   const internalCandidatesById = new Map(candidates.map((candidate) => [candidate.id, candidate]));
   const registry = {
     contentRuleset,
+    authority: Object.freeze({
+      externalVerifierConfigured: typeof verifyApprovalAuthority === "function",
+      verifiedDecisions,
+      deniedDecisions,
+    }),
     topics: topicsSnapshot,
     topicsById: readonlyMapFacade(internalTopicsById),
     candidates,

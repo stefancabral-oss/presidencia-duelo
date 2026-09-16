@@ -11,6 +11,7 @@ import {
   candidatesForTopic,
   publicCandidate,
   serializeCandidate,
+  PRODUCTION_CANDIDATE_REGISTRY,
 } from "./candidates.js";
 import { createApprovedTestRegistry } from "../test-support/editorial-fixtures.js";
 
@@ -19,7 +20,12 @@ test("the rebuild exposes one active topic and two announced expansions", () => 
   assert.deepEqual(TOPICS.filter(({ active }) => !active).map(({ id }) => id), ["influenciadores", "escandalos"]);
 });
 
-test("the real 125-person catalog stays closed until human ledger decisions exist", () => {
+test("production stays closed without externally injected authority receipts", () => {
+  assert.deepEqual(PRODUCTION_CANDIDATE_REGISTRY.authority, {
+    externalVerifierConfigured: false,
+    verifiedDecisions: 0,
+    deniedDecisions: 0,
+  });
   assert.equal(CANDIDATES.length, 125);
   assert.equal(candidatesForTopic("eleicoes-2026").length, 0);
   assert.equal(candidatesForTopic("influenciadores").length, 0);

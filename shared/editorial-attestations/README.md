@@ -5,6 +5,8 @@ Uma decisão no ledger aponta para exatamente um arquivo
 segue `editorial-attestation-v1`; exemplos reais só entram após o conteúdo e as
 evidências existirem em um commit anterior revisável.
 
-O hash declarado é uma garantia de integridade, não uma assinatura da pessoa.
-Autorização é aplicada pela allowlist versionada e a identidade humana continua
-sendo confirmada na revisão da mudança.
+O hash declarado e o histórico Git garantem conteúdo e integridade, não
+identidade nem autoridade. A policy versionada apenas confere se `decidedBy`
+corresponde ao revisor declarado. Uma decisão só produz aprovação quando o
+runtime recebe e verifica um recibo Ed25519 da autoridade externa configurada;
+sem recibo, o estado público permanece `pending`/`missing`.

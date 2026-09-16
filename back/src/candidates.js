@@ -8,8 +8,9 @@ import {
   candidatePublicProjectorBySchema,
   candidatePublicSnapshot,
 } from "./candidate-public.js";
+import { approvalAuthorityFromEnvironment } from "./editorial-authority.js";
 import { createCandidateRegistry } from "./editorial-gate.js";
-import { loadRepositoryFile } from "./repository-files.js";
+import { loadRepositoryFile, statRepositoryFile } from "./repository-files.js";
 
 export const TOPICS = Object.freeze([
   {
@@ -43,6 +44,8 @@ export const PRODUCTION_CANDIDATE_REGISTRY = createCandidateRegistry({
   governancePolicy: EDITORIAL_GOVERNANCE,
   loadRepositoryFile,
   contentRuleset: PUBLIC_CANDIDATE_SCHEMA_V2,
+  statRepositoryFile,
+  verifyApprovalAuthority: approvalAuthorityFromEnvironment(process.env),
 });
 export const CANDIDATES = PRODUCTION_CANDIDATE_REGISTRY.candidates;
 export const CANDIDATES_BY_ID = PRODUCTION_CANDIDATE_REGISTRY.candidatesById;

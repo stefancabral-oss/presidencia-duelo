@@ -37,6 +37,11 @@ jobs:
         run: npm ci --prefix back
       - name: Verify editorial attestations and reviewed commits
         run: npm run editorial:verify --prefix back
+        env:
+          EDITORIAL_AUTHORITY_PUBLIC_JWK: ${{ secrets.EDITORIAL_AUTHORITY_PUBLIC_JWK }}
+          EDITORIAL_AUTHORITY_ISSUER: ${{ secrets.EDITORIAL_AUTHORITY_ISSUER }}
+          EDITORIAL_AUTHORITY_KEY_ID: ${{ secrets.EDITORIAL_AUTHORITY_KEY_ID }}
+          EDITORIAL_AUTHORITY_RECEIPTS: ${{ secrets.EDITORIAL_AUTHORITY_RECEIPTS }}
       - name: Test backend
         run: npm test --prefix back
 

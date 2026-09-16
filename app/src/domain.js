@@ -57,20 +57,12 @@ export function rankingForCatalog(snapshot, candidates) {
 }
 
 export function displayRanking(ranking, { personal = false } = {}) {
-  const played = ranking.filter(({ decisions = 0 }) => decisions > 0);
-  const unplayed = personal ? [] : ranking.filter(({ decisions = 0 }) => decisions === 0);
-  if (personal && played.every(({ rank }) => Number.isInteger(rank) && rank > 0)) {
-    return played.map((person) => ({ ...person, displayRank: person.rank }));
-  }
-  let previousScore = null;
-  let previousRank = 0;
-  const ranked = played.map((person, index) => {
-    const score = `${person.elo}:${person.wins}:${person.losses}`;
-    if (score !== previousScore) previousRank = index + 1;
-    previousScore = score;
-    return { ...person, displayRank: previousRank };
-  });
-  return [...ranked, ...unplayed.map((person) => ({ ...person, displayRank: null }))];
+  return ranking
+    .filter(({ decisions = 0 }) => !personal || decisions > 0)
+    .map((person) => ({
+      ...person,
+      displayRank: Number.isInteger(person.rank) && person.rank > 0 ? person.rank : null,
+    }));
 }
 
 export function rankingPodium(ranking, maximumRank = 3) {

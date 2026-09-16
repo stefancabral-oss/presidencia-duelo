@@ -100,12 +100,15 @@ export function accessTokenHash(value) {
 function withRankingPositions(ranking) {
   let rank = 0;
   let previous = null;
-  return ranking.map((candidate, index) => {
+  let played = 0;
+  return ranking.map((candidate) => {
+    if (candidate.decisions === 0) return { ...candidate, rank: null };
+    played += 1;
     const tied = previous
       && previous.elo === candidate.elo
       && previous.wins === candidate.wins
       && previous.losses === candidate.losses;
-    if (!tied) rank = index + 1;
+    if (!tied) rank = played;
     previous = candidate;
     return { ...candidate, rank };
   });
@@ -132,7 +135,12 @@ export function rankingFromRows(topicId, duels, rows) {
       zebras: Number(row.zebras) || 0,
       winRate: decisions ? Math.round((wins * 100) / decisions) : 0,
     };
-  }).sort((a, b) => b.elo - a.elo || b.wins - a.wins || a.name.localeCompare(b.name, "pt-BR"));
+  }).sort((a, b) => (
+    Number(b.decisions > 0) - Number(a.decisions > 0)
+    || b.elo - a.elo
+    || b.wins - a.wins
+    || a.name.localeCompare(b.name, "pt-BR")
+  ));
   return {
     topicId,
     duels: Number(duels) || 0,

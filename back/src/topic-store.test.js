@@ -69,6 +69,22 @@ test("topic ranking exposes only candidates from that curation", () => {
   assert.equal(result.ranking.find(({ id }) => id === "tarcisio-de-freitas").decisions, 0);
 });
 
+test("unplayed candidates have no rank and do not consume competition positions", () => {
+  const result = rankingFromRows("eleicoes-2026", 2, [
+    { candidate_id: "lula", rating: 1016, wins: 1, losses: 0, zebras: 0 },
+    { candidate_id: "jair-bolsonaro", rating: 984, wins: 0, losses: 1, zebras: 0 },
+  ]);
+  const played = result.ranking.slice(0, 2);
+  const unplayed = result.ranking.slice(2);
+
+  assert.deepEqual(played.map(({ id, rank }) => [id, rank]), [
+    ["lula", 1],
+    ["jair-bolsonaro", 2],
+  ]);
+  assert.equal(unplayed.length, 52);
+  assert.equal(unplayed.every(({ decisions, elo, rank }) => decisions === 0 && elo === 1000 && rank === null), true);
+});
+
 test("ranking sound events are derived from transactional before/after snapshots", () => {
   const candidate = (id, elo, decisions = 1, wins = 1, losses = 0) => ({ id, elo, decisions, wins, losses });
 

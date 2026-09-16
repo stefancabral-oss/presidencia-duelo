@@ -1,0 +1,149 @@
+{
+  "ready-before-401": {
+    "screenshot": "",
+    "phase": "ready",
+    "instruction": "Toque na sua preferida. Segure para conhecer o perfil.",
+    "progress": "0 escolhas",
+    "cardsDisabled": [
+      false,
+      false,
+      false,
+      false
+    ],
+    "candidateIds": [
+      "neymar-jr",
+      "lula",
+      "renan-santos",
+      "anitta"
+    ],
+    "skipDisabled": false,
+    "recovery": "",
+    "recoveryDisabled": null
+  },
+  "sending": {
+    "screenshot": "chromium-sending.png",
+    "phase": "sending",
+    "instruction": "Confirmando sua escolha…",
+    "progress": "0 escolhas",
+    "cardsDisabled": [
+      true,
+      true,
+      true,
+      true
+    ],
+    "candidateIds": [
+      "neymar-jr",
+      "lula",
+      "renan-santos",
+      "anitta"
+    ],
+    "skipDisabled": true,
+    "recovery": "",
+    "recoveryDisabled": null
+  },
+  "401-session-required": {
+    "screenshot": "chromium-401-session-required.png",
+    "phase": "session-required",
+    "instruction": "Sua sessão precisa ser restabelecida.",
+    "progress": "0 escolhas",
+    "cardsDisabled": [
+      true,
+      true,
+      true,
+      true
+    ],
+    "candidateIds": [
+      "neymar-jr",
+      "lula",
+      "renan-santos",
+      "anitta"
+    ],
+    "skipDisabled": true,
+    "recovery": "Restabelecer sessão",
+    "recoveryDisabled": false
+  },
+  "ready-before-429": {
+    "screenshot": "",
+    "phase": "ready",
+    "instruction": "Toque na sua preferida. Segure para conhecer o perfil.",
+    "progress": "0 escolhas",
+    "cardsDisabled": [
+      false,
+      false,
+      false,
+      false
+    ],
+    "candidateIds": [
+      "anitta",
+      "lula",
+      "neymar-jr",
+      "renan-santos"
+    ],
+    "skipDisabled": false,
+    "recovery": "",
+    "recoveryDisabled": null
+  },
+  "429-rate-limited": {
+    "screenshot": "chromium-429-rate-limited.png",
+    "phase": "rate-limited",
+    "instruction": "Muitas tentativas. Tente novamente em 2 segundos.",
+    "progress": "0 escolhas",
+    "cardsDisabled": [
+      true,
+      true,
+      true,
+      true
+    ],
+    "candidateIds": [
+      "anitta",
+      "lula",
+      "neymar-jr",
+      "renan-santos"
+    ],
+    "skipDisabled": true,
+    "recovery": "Tentar novamente em 2 segundos",
+    "recoveryDisabled": true
+  },
+  "ready-before-503": {
+    "screenshot": "",
+    "phase": "ready",
+    "instruction": "Toque na sua preferida. Segure para conhecer o perfil.",
+    "progress": "0 escolhas",
+    "cardsDisabled": [
+      false,
+      false,
+      false,
+      false
+    ],
+    "candidateIds": [
+      "lula",
+      "renan-santos",
+      "anitta",
+      "neymar-jr"
+    ],
+    "skipDisabled": false,
+    "recovery": "",
+    "recoveryDisabled": null
+  },
+  "503-server-error": {
+    "screenshot": "chromium-503-server-error.png",
+    "phase": "server-error",
+    "instruction": "Não foi possível confirmar agora.",
+    "progress": "0 escolhas",
+    "cardsDisabled": [
+      true,
+      true,
+      true,
+      true
+    ],
+    "candidateIds": [
+      "lula",
+      "renan-santos",
+      "anitta",
+      "neymar-jr"
+    ],
+    "skipDisabled": true,
+    "recovery": "Tentar novamente",
+    "recoveryDisabled": false
+  }
+}

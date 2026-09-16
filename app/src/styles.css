@@ -143,6 +143,7 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .feedback-global strong { color: #81d9bb; }
 .retry-vote { justify-self: center; min-height: 46px; margin-top: 2px; padding: 9px 20px; border: 1px solid #ffa196; border-radius: 999px; background: rgb(96 24 18 / 45%); color: #ffd3cd; font-size: .8rem; font-weight: 800; cursor: pointer; }
 .retry-vote:hover { background: rgb(126 32 24 / 55%); }
+.retry-vote:disabled { opacity: .62; cursor: not-allowed; }
 .arena { width: min(100%, 920px); margin: 0 auto; display: grid; align-items: stretch; gap: 12px; }
 .arena-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .versus { position: relative; z-index: 3; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid rgb(231 199 98 / 70%); border-radius: 50%; background: #082f25; color: var(--gold); box-shadow: 0 0 18px rgb(231 199 98 / 30%); font-size: .68rem; font-weight: 950; }
@@ -208,6 +209,8 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .ranking-heading h1 { margin: 4px 0 7px; font-size: 2.25rem; }
 .ranking-heading p:not(.eyebrow) { margin: 0; color: #b9c9c1; }
 .ranking-heading > strong { display: block; margin-top: 12px; color: var(--gold); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; }
+.ranking-heading .ranking-trust { margin-top: 10px; color: #9fb2aa; font-size: .7rem; }
+.ranking-trust a { color: #ead17b; font-weight: 850; }
 .segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border: 1px solid rgb(255 255 255 / 12%); border-radius: 999px; background: rgb(0 34 27 / 82%); }
 .segmented button { min-height: 42px; border: 0; border-radius: 999px; background: transparent; color: #b9c7c0; font-weight: 900; cursor: pointer; }
 .segmented button.active { background: linear-gradient(135deg, var(--gold), var(--gold-structure)); color: var(--ink); box-shadow: 0 5px 15px rgb(212 175 55 / 18%); }

@@ -107,7 +107,7 @@ Exemplo do corpo atual:
 }
 ```
 
-O PostgreSQL guarda somente hashes das chaves de recuperação e sessões. O token de identidade do Google não é persistido; a ligação usa o `sub` validado pelo servidor. A rodada é idempotente e imutável; ela avança a escolha uma vez e mantém três comparações Elo vinculadas ao mesmo `roundId`.
+O PostgreSQL guarda somente hashes das chaves de recuperação e sessões. O token de identidade do Google não é persistido; a ligação usa o `sub` validado pelo servidor. A rodada é idempotente e imutável; ela avança a escolha uma vez e mantém três comparações Elo vinculadas ao mesmo `roundId`. Escritas exigem sessão emitida pelo servidor e seguem a [política de integridade do voto](docs/security/VOTE_ABUSE_POLICY.md).
 
 ## Deploy no Dokploy
 
@@ -117,8 +117,10 @@ API:
 - Dockerfile: `back/Dockerfile`;
 - porta: `3001`;
 - variável obrigatória: `DATABASE_URL`;
+- segredo obrigatório de produção: `VOTER_NETWORK_SECRET=<valor aleatório com ao menos 32 caracteres>`;
+- topologia obrigatória de produção: `TRUST_PROXY_HOPS=<quantidade exata de proxies confiáveis até a API>`;
 - para ativar o login: `GOOGLE_CLIENT_ID=<OAuth Web Client ID>`;
-- origens permitidas, se houver ambiente adicional: `APP_ORIGINS=https://polimatch.com.br,https://staging.exemplo`;
+- origem padrão de produção: somente `https://polimatch.com.br`; ambientes adicionais exigem `APP_ORIGINS=https://polimatch.com.br,https://staging.exemplo`;
 - healthcheck: `GET /api/health`.
 
 App:

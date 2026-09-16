@@ -28,6 +28,11 @@ test("login and logout rotate the round and abandon a pending vote from the prev
     const state = {
       roundId: `${transition}-old-round`,
       pendingWinnerId: "lula",
+      votePhase: "rate-limited",
+      voteAction: "retry-vote",
+      retryAfterSeconds: 60,
+      retryAt: 60000,
+      sessionRecoveryMode: "load",
       selectedId: "lula",
       roundOutcome: { winnerId: "lula" },
       busy: true,
@@ -42,6 +47,11 @@ test("login and logout rotate the round and abandon a pending vote from the prev
     assert.deepEqual(state, {
       roundId: `${transition}-new-round`,
       pendingWinnerId: "",
+      votePhase: "ready",
+      voteAction: "",
+      retryAfterSeconds: null,
+      retryAt: 0,
+      sessionRecoveryMode: "",
       selectedId: "",
       roundOutcome: null,
       busy: false,

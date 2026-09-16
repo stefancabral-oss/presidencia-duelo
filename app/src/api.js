@@ -11,12 +11,16 @@ const TIMEOUT_MS = 8000;
  * apagar a conta do jogador por causa de um 503 passageiro.
  */
 export class ApiError extends Error {
-  constructor(message, { status = 0, code = "", body = null, cause } = {}) {
+  constructor(message, { status = 0, code = "", body = null, retryAfterSeconds = null, cause } = {}) {
     super(message, { cause });
     this.name = "ApiError";
     this.status = status;
     this.code = code;
     this.body = body;
+    const retryDelay = Number(retryAfterSeconds ?? body?.retryAfterSeconds);
+    this.retryAfterSeconds = Number.isFinite(retryDelay) && retryDelay > 0
+      ? Math.min(86400, Math.ceil(retryDelay))
+      : null;
   }
 
   /** Nenhuma resposta chegou: a tentativa pode ter sido aplicada no servidor. */
@@ -44,10 +48,12 @@ export async function requestJson(path, options = {}) {
         // não uma resposta HTTP válida nem um payload malformado.
         if (controller.signal.aborted) throw error;
       }
+      const retryAfterHeader = Number(response.headers?.get?.("retry-after"));
       throw new ApiError(body?.error || `Servidor respondeu ${response.status}`, {
         status: response.status,
         code: body?.code || "",
         body,
+        retryAfterSeconds: body?.retryAfterSeconds ?? retryAfterHeader,
       });
     }
     if (response.status === 204) return null;

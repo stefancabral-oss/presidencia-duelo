@@ -14,6 +14,11 @@ export async function revokeSessionBeforeClearing(accessToken, { endSession, cle
 export function resetPendingVoteForIdentityChange(state, createRoundId = () => crypto.randomUUID()) {
   state.roundId = createRoundId();
   state.pendingWinnerId = "";
+  state.votePhase = "ready";
+  state.voteAction = "";
+  state.retryAfterSeconds = null;
+  state.retryAt = 0;
+  state.sessionRecoveryMode = "";
   state.selectedId = "";
   state.roundOutcome = null;
   state.busy = false;

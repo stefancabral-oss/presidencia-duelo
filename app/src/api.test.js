@@ -41,6 +41,28 @@ test("requestJson preserves HTTP status, code and body", async () => {
   );
 });
 
+test("requestJson preserves the 429 retry delay from body or header", async () => {
+  await withFetch(
+    async () => ({
+      ok: false,
+      status: 429,
+      headers: { get: () => "120" },
+      json: async () => ({ error: "limite", code: "VOTE_RATE_LIMITED", retryAfterSeconds: 60 }),
+    }),
+    async () => assert.rejects(requestJson("/api/round-vote"), (error) => {
+      assert.equal(error.retryAfterSeconds, 60);
+      return true;
+    }),
+  );
+  await withFetch(
+    async () => ({ ok: false, status: 429, headers: { get: () => "120" }, json: async () => ({ error: "limite" }) }),
+    async () => assert.rejects(requestJson("/api/round-vote"), (error) => {
+      assert.equal(error.retryAfterSeconds, 120);
+      return true;
+    }),
+  );
+});
+
 test("requestJson distinguishes malformed success payloads from network failures", async () => {
   await withFetch(
     async () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError("JSON inválido"); } }),

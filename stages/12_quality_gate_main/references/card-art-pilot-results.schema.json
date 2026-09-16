@@ -8,6 +8,7 @@
   "required": [
     "protocol",
     "issue",
+    "generatedAt",
     "sample",
     "assets",
     "decision"
@@ -227,6 +228,14 @@
       "type": "integer",
       "minimum": 0
     },
+    "assetValidResponseCount": {
+      "type": "integer",
+      "minimum": 40
+    },
+    "scenarioValidResponseCount": {
+      "type": "integer",
+      "minimum": 20
+    },
     "rate": {
       "type": "number",
       "minimum": 0,
@@ -250,7 +259,7 @@
           "type": "string"
         },
         "validResponses": {
-          "$ref": "#/$defs/metricCount"
+          "$ref": "#/$defs/assetValidResponseCount"
         },
         "recognition": {
           "type": "object",
@@ -354,7 +363,7 @@
       ],
       "properties": {
         "validResponses": {
-          "$ref": "#/$defs/metricCount"
+          "$ref": "#/$defs/scenarioValidResponseCount"
         },
         "recognized": {
           "$ref": "#/$defs/metricCount"
@@ -408,7 +417,8 @@
           "format": "date-time"
         },
         "notes": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         }
       }
     },

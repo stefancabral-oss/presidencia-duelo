@@ -3,6 +3,46 @@ export const CARD_ART_PILOT_SCENARIOS = Object.freeze(["mobile-390x844", "deskto
 
 const RATE_TOLERANCE = 1e-6;
 const PERCENTAGE_POINT_TOLERANCE = 1e-4;
+const MINIMUM_VALID_RESPONSES_PER_ASSET_SCENARIO = 20;
+const FORBIDDEN_PARTICIPANT_KEYS = new Set([
+  "participant",
+  "participants",
+  "participantrecord",
+  "participantrecords",
+  "participantname",
+  "participantnames",
+  "participantemail",
+  "participantemails",
+  "rawanswer",
+  "rawanswers",
+  "rawresponse",
+  "rawresponses",
+  "respondent",
+  "respondents",
+  "email",
+  "emails",
+  "cpf",
+  "cpfs",
+  "ip",
+  "ips",
+  "city",
+  "cities",
+  "cidade",
+  "cidades",
+  "state",
+  "states",
+  "estado",
+  "estados",
+  "organization",
+  "organizations",
+  "organizacao",
+  "organizacoes"
+]);
+const FORBIDDEN_PII_PATTERNS = [
+  { label: "e-mail", pattern: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i },
+  { label: "CPF", pattern: /\b\d{3}[.\s-]?\d{3}[.\s-]?\d{3}[.\s-]?\d{2}\b/ },
+  { label: "endereço IP", pattern: /\b(?:\d{1,3}\.){3}\d{1,3}\b/ }
+];
 
 function isRecord(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -21,6 +61,77 @@ function rejectUnknownKeys(errors, path, value, allowedKeys) {
   const allowed = new Set(allowedKeys);
   for (const key of Object.keys(value)) {
     if (!allowed.has(key)) addError(errors, `${path}.${key}`, "campo não permitido no consolidado agregado");
+  }
+}
+
+function validateNoParticipantPii(errors, value, path = "result") {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => validateNoParticipantPii(errors, item, `${path}[${index}]`));
+    return;
+  }
+  if (!isRecord(value)) return;
+
+  for (const [key, child] of Object.entries(value)) {
+    const childPath = `${path}.${key}`;
+    const normalizedKey = key.normalize("NFD").replace(/[\u0300-\u036f_-]/g, "").toLocaleLowerCase("pt-BR");
+    if (FORBIDDEN_PARTICIPANT_KEYS.has(normalizedKey)) {
+      addError(errors, childPath, "campo com registro individual ou PII de participante não é permitido");
+    }
+    if (typeof child === "string") {
+      for (const { label, pattern } of FORBIDDEN_PII_PATTERNS) {
+        if (pattern.test(child)) addError(errors, childPath, `${label} não é permitido no consolidado`);
+      }
+    } else {
+      validateNoParticipantPii(errors, child, childPath);
+    }
+  }
+}
+
+function hasText(value) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isHttpsUrl(value) {
+  if (!hasText(value)) return false;
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function validateManifestForCollection(errors, manifest) {
+  if (!isRecord(manifest)) return;
+  if (manifest.collectionAllowed !== true) {
+    addError(errors, "manifest.collectionAllowed", "nenhum resultado pode ser consolidado enquanto a coleta não estiver explicitamente autorizada");
+  }
+  if (!Array.isArray(manifest.assets)) {
+    addError(errors, "manifest.assets", "lista de artes e licenças ausente");
+    return;
+  }
+
+  const observedCodes = manifest.assets.map((asset) => asset?.blindCode);
+  for (const code of CARD_ART_PILOT_CODES) {
+    const matches = manifest.assets.filter((asset) => asset?.blindCode === code);
+    if (matches.length !== 1) {
+      addError(errors, "manifest.assets", `${code} precisa aparecer exatamente uma vez; encontrado ${matches.length}`);
+      continue;
+    }
+    const reference = matches[0].identityReference;
+    const path = `manifest.assets.${code}.identityReference`;
+    if (!isRecord(reference)) {
+      addError(errors, path, "proveniência da referência ausente");
+      continue;
+    }
+    if (reference.licenseStatus !== "documented") {
+      addError(errors, `${path}.licenseStatus`, `coleta exige licença documented; recebido ${reference.licenseStatus || "missing"}`);
+    }
+    if (!isHttpsUrl(reference.photoSource)) addError(errors, `${path}.photoSource`, "coleta exige URL HTTPS da fotografia efetivamente usada");
+    if (!hasText(reference.photographer)) addError(errors, `${path}.photographer`, "coleta exige autoria documentada");
+    if (!hasText(reference.license)) addError(errors, `${path}.license`, "coleta exige licença documentada");
+  }
+  for (const code of observedCodes.filter((observed) => !CARD_ART_PILOT_CODES.includes(observed))) {
+    addError(errors, "manifest.assets", `código inesperado ${code}`);
   }
 }
 
@@ -111,6 +222,9 @@ function validateScenarioMetrics(errors, metrics, path, assignedParticipants) {
   if (isCount(metrics.validResponses) && isCount(assignedParticipants) && metrics.validResponses > assignedParticipants) {
     addError(errors, `${path}.validResponses`, `excede os ${assignedParticipants} participantes atribuídos ao cenário`);
   }
+  if (isCount(metrics.validResponses) && metrics.validResponses < MINIMUM_VALID_RESPONSES_PER_ASSET_SCENARIO) {
+    addError(errors, `${path}.validResponses`, `precisa ter ao menos ${MINIMUM_VALID_RESPONSES_PER_ASSET_SCENARIO} respostas válidas externas nesta arte e cenário`);
+  }
   checkSum(errors, `${path}.neutrality`, metrics.validResponses, [metrics.favorece, metrics.neutra, metrics.prejudica]);
   checkRate(errors, `${path}.recognitionRate`, metrics.recognized, metrics.validResponses, metrics.recognitionRate);
   checkRate(errors, `${path}.favoreceRate`, metrics.favorece, metrics.validResponses, metrics.favoreceRate);
@@ -126,6 +240,9 @@ function validateAssetMetrics(errors, asset, index, sample) {
     return;
   }
   requireCount(errors, `${path}.validResponses`, asset.validResponses);
+  if (isCount(asset.validResponses) && isCount(sample?.participantCount) && asset.validResponses > sample.participantCount) {
+    addError(errors, `${path}.validResponses`, `excede os ${sample.participantCount} participantes da amostra`);
+  }
 
   const recognition = asset.recognition;
   if (!isRecord(recognition)) {
@@ -176,7 +293,6 @@ function validateAssetMetrics(errors, asset, index, sample) {
 
 function validateFollowDecision(errors, result, manifest) {
   if (result?.decision?.value !== "seguir") return;
-  if (manifest?.collectionAllowed !== true) addError(errors, "decision.value", "seguir bloqueado porque collectionAllowed não é true no manifesto");
   if (manifest?.scaleDecisionAllowed !== true) addError(errors, "decision.value", "seguir bloqueado porque scaleDecisionAllowed não é true no manifesto");
   for (const scenario of CARD_ART_PILOT_SCENARIOS) {
     const participants = result?.sample?.displayScenarios?.[scenario];
@@ -192,7 +308,6 @@ function validateFollowDecision(errors, result, manifest) {
     addError(errors, "sample.externalRecruitment", "seguir exige atestação responsável e datada de recrutamento exclusivamente externo");
   }
 
-  const licenseByCode = new Map((manifest?.assets || []).map((asset) => [asset.blindCode, asset.identityReference?.licenseStatus]));
   const balances = [];
   for (const [index, asset] of (result.assets || []).entries()) {
     const code = asset?.blindCode || `index-${index}`;
@@ -206,8 +321,6 @@ function validateFollowDecision(errors, result, manifest) {
       const reviewStatus = asset?.[review]?.status;
       if (reviewStatus !== "approved") addError(errors, `assets[${index}](${code}).${review}.status`, `seguir exige revisão approved; recebido ${reviewStatus || "pending"}`);
     }
-    const licenseStatus = licenseByCode.get(code);
-    if (licenseStatus !== "documented") addError(errors, `manifest.assets.${code}.identityReference.licenseStatus`, `seguir exige licença documented; recebido ${licenseStatus || "missing"}`);
     if (Number.isFinite(asset?.neutrality?.balancePercentagePoints)) balances.push(asset.neutrality.balancePercentagePoints);
   }
   if (balances.length > 1 && Math.max(...balances) - Math.min(...balances) > 20 + PERCENTAGE_POINT_TOLERANCE) {
@@ -219,6 +332,8 @@ export function validateCardArtPilotResults(result, manifest) {
   const errors = [];
   if (!isRecord(result)) return ["result: deve ser um objeto"];
   if (!isRecord(manifest)) addError(errors, "manifest", "manifesto obrigatório para validar licenças e gates");
+  validateNoParticipantPii(errors, result);
+  validateManifestForCollection(errors, manifest);
 
   const sample = result.sample;
   if (!isRecord(sample)) {

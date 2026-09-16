@@ -72,10 +72,12 @@ test("the eight pilot assets stay immutable in evidence storage outside app/publ
 test("the consolidation schema requires accountable reviews and a human decision", async () => {
   const schema = JSON.parse(await readFile(resultSchemaUrl, "utf8"));
   assert.equal(schema.$schema, "https://json-schema.org/draft/2020-12/schema");
-  assert.deepEqual(schema.required, ["protocol", "issue", "sample", "assets", "decision"]);
+  assert.deepEqual(schema.required, ["protocol", "issue", "generatedAt", "sample", "assets", "decision"]);
   assert.ok(schema.$defs.sample.required.includes("externalRecruitment"));
   assert.deepEqual(schema.$defs.sample.properties.externalRecruitment.required, ["externalParticipantsOnly", "productionTeamExcluded", "attestedBy", "attestedAt"]);
   assert.ok(schema.$defs.assetResult.required.includes("byDisplayScenario"));
+  assert.equal(schema.$defs.assetValidResponseCount.minimum, 40);
+  assert.equal(schema.$defs.scenarioValidResponseCount.minimum, 20);
   assert.deepEqual(schema.$defs.assetResult.properties.byDisplayScenario.required, ["mobile-390x844", "desktop-1000x800"]);
   assert.deepEqual(schema.$defs.humanReview.required, ["status", "reviewedBy", "reviewedAt", "notes"]);
   assert.ok(schema.$defs.humanReview.properties.status.enum.includes("pending"));

@@ -108,7 +108,12 @@ export function readyManifestFixture() {
     scaleDecisionAllowed: true,
     assets: CARD_ART_PILOT_CODES.map((blindCode) => ({
       blindCode,
-      identityReference: { licenseStatus: "documented" }
+      identityReference: {
+        licenseStatus: "documented",
+        photoSource: `https://example.test/references/${blindCode}.jpg`,
+        photographer: "Fixture Photographer",
+        license: "CC BY 4.0"
+      }
     }))
   };
 }

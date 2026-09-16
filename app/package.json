@@ -8,10 +8,13 @@
     "card-art-pilot:validate-results": "node scripts/validate-card-art-pilot-results.mjs",
     "portraits:check": "node scripts/validate-portrait-slots.mjs",
     "test": "node --test src/*.test.js",
+    "test:card-art-pilot-contract": "node --test src/card-art-pilot.test.js src/card-art-pilot-validation.test.js src/card-art-pilot-docker-context.test.js",
     "test:card-art-pilot-form": "node scripts/card-art-pilot-form-smoke.mjs",
     "preview": "vite preview"
   },
   "devDependencies": {
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1",
     "playwright": "^1.55.0",
     "vite": "^6.3.5"
   }

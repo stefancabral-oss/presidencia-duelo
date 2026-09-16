@@ -6,6 +6,7 @@ import {
   DAILY_SESSION_RULESET,
   buildDailyEdition,
   dailyCutMethodology,
+  dailyRulesetByIdentity,
   editorialDateKey,
   publicDailyRuleset,
   validateEditionDate,
@@ -891,14 +892,13 @@ function serializeDailyEdition(row) {
 }
 
 export function validateMaterializedDailyEdition(row, roundRows) {
-  if (!row || row.ruleset_id !== DAILY_SESSION_RULESET.id
-    || Number(row.ruleset_version) !== DAILY_SESSION_RULESET.version) {
-    throw new Error("ruleset diário materializado diverge da versão ativa");
-  }
+  if (!row) throw new Error("edição diária materializada ausente");
+  const ruleset = dailyRulesetByIdentity(row.ruleset_id, row.ruleset_version);
   const expected = buildDailyEdition({
     topicId: row.topic_id,
     candidateIds: row.catalog_ids,
     dateKey: String(row.edition_date),
+    ruleset,
   });
   const actualRounds = [...roundRows]
     .sort((left, right) => Number(left.slot) - Number(right.slot))
@@ -921,7 +921,7 @@ export function validateMaterializedDailyEdition(row, roundRows) {
   if (!identityMatches || !roundsMatch) {
     throw new Error("edição diária materializada falhou na validação de integridade");
   }
-  return { edition: serializeDailyEdition(row), rounds: actualRounds };
+  return { edition: serializeDailyEdition(row), rounds: actualRounds, ruleset: publicDailyRuleset(ruleset) };
 }
 
 async function loadMaterializedDailyEditionById(client, editionId) {
@@ -1032,7 +1032,7 @@ async function selectDailyPlayerSession(client, materialized, playerId) {
   const nextRound = completed ? null : rounds[answers.length];
   if (!completed && !nextRound) throw new Error("slot diário autoritativo ausente");
   return {
-    ruleset: publicDailyRuleset(),
+    ruleset: materialized.ruleset,
     edition,
     status: completed ? "completed" : "active",
     progress: { answered: answers.length, total: edition.totalRounds },

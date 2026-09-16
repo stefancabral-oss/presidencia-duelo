@@ -15,6 +15,19 @@ export const DAILY_SESSION_RULESET = Object.freeze({
   }),
 });
 
+// Edições persistidas nunca são reinterpretadas pelo ruleset ativo. Uma futura
+// v2 deve ser acrescentada a este registro e só então promovida como ativa;
+// replay e corte continuam resolvendo v1 pela identidade gravada no banco.
+const DAILY_RULESET_REGISTRY = new Map([
+  [`${DAILY_SESSION_RULESET.id}@${DAILY_SESSION_RULESET.version}`, DAILY_SESSION_RULESET],
+]);
+
+export function dailyRulesetByIdentity(id, version) {
+  const ruleset = DAILY_RULESET_REGISTRY.get(`${id}@${Number(version)}`);
+  if (!ruleset) throw new Error(`ruleset diário histórico não suportado: ${id}@${version}`);
+  return ruleset;
+}
+
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 function sha256(value) {

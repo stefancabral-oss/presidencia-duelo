@@ -4,6 +4,7 @@ import {
   DAILY_SESSION_RULESET,
   buildDailyEdition,
   dailyCutMethodology,
+  dailyRulesetByIdentity,
   editionWindow,
   editorialDateKey,
   nextEditionDate,
@@ -48,6 +49,8 @@ test("ruleset fixes ten daily choices plus twenty free choices in the same edito
     freeChoices: 20,
   });
   assert.equal(dailyCutMethodology("2026-09-15"), "entre quem concluiu a rodada de 15/09");
+  assert.equal(dailyRulesetByIdentity("daily-four-card-v1", 1), DAILY_SESSION_RULESET);
+  assert.throws(() => dailyRulesetByIdentity("daily-four-card-v2", 2), /histórico não suportado/);
 });
 
 test("invalid or insufficient edition inputs fail closed", () => {

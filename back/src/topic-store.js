@@ -135,7 +135,12 @@ export function rankingFromRows(topicId, duels, rows) {
       zebras: Number(row.zebras) || 0,
       winRate: decisions ? Math.round((wins * 100) / decisions) : 0,
     };
-  }).sort((a, b) => b.elo - a.elo || b.wins - a.wins || a.name.localeCompare(b.name, "pt-BR"));
+  }).sort((a, b) => (
+    Number(b.decisions > 0) - Number(a.decisions > 0)
+    || b.elo - a.elo
+    || b.wins - a.wins
+    || a.name.localeCompare(b.name, "pt-BR")
+  ));
   return {
     topicId,
     duels: Number(duels) || 0,

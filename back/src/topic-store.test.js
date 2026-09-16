@@ -74,14 +74,15 @@ test("unplayed candidates have no rank and do not consume competition positions"
     { candidate_id: "lula", rating: 1016, wins: 1, losses: 0, zebras: 0 },
     { candidate_id: "jair-bolsonaro", rating: 984, wins: 0, losses: 1, zebras: 0 },
   ]);
-  const winner = result.ranking.find(({ id }) => id === "lula");
-  const loser = result.ranking.find(({ id }) => id === "jair-bolsonaro");
-  const unplayed = result.ranking.filter(({ decisions }) => decisions === 0);
+  const played = result.ranking.slice(0, 2);
+  const unplayed = result.ranking.slice(2);
 
-  assert.equal(winner.rank, 1);
-  assert.equal(loser.rank, 2);
-  assert.equal(unplayed.length > 1, true);
-  assert.equal(unplayed.every(({ elo, rank }) => elo === 1000 && rank === null), true);
+  assert.deepEqual(played.map(({ id, rank }) => [id, rank]), [
+    ["lula", 1],
+    ["jair-bolsonaro", 2],
+  ]);
+  assert.equal(unplayed.length, 52);
+  assert.equal(unplayed.every(({ decisions, elo, rank }) => decisions === 0 && elo === 1000 && rank === null), true);
 });
 
 test("ranking sound events are derived from transactional before/after snapshots", () => {

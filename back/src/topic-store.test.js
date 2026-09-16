@@ -7,12 +7,15 @@ import {
   createSessionToken,
   feedbackChannelsFromSnapshots,
   globalEventFromFeedback,
+  normalizeDailyPrediction,
   normalizeVoteId,
   persistedRoundCandidates,
   persistedRoundChannels,
   rankingEventFromSnapshots,
   rankingFromRows,
+  resolveDailyPredictionRound,
   roundFeedbackFromSnapshots,
+  scoreDailyPrediction,
   recoveryKeyHash,
   validateTopic,
   validateRoundVote,
@@ -48,6 +51,54 @@ function resolveTestCandidateProjector(schema) {
   }
   throw new Error(`schema público de teste desconhecido: ${schema}`);
 }
+
+test("daily prediction input distinguishes an explicit skip from a candidate", () => {
+  const id = "550e8400-e29b-41d4-a716-446655440000";
+  assert.deepEqual(normalizeDailyPrediction({ predictionId: id, decision: "skip", candidateId: null }), {
+    predictionId: id,
+    decision: "skip",
+    candidateId: null,
+    skipped: true,
+  });
+  assert.deepEqual(normalizeDailyPrediction({ predictionId: id, decision: "predict", candidateId: "lula" }), {
+    predictionId: id,
+    decision: "predict",
+    candidateId: "lula",
+    skipped: false,
+  });
+  assert.throws(
+    () => normalizeDailyPrediction({ predictionId: id, decision: "skip", candidateId: "lula" }),
+    (error) => error.code === "DAILY_PREDICTION_INVALID",
+  );
+  assert.throws(
+    () => normalizeDailyPrediction({ predictionId: "not-a-uuid", decision: "skip", candidateId: null }),
+    (error) => error.code === "DAILY_PREDICTION_ID_INVALID",
+  );
+});
+
+test("prediction scoring is neutral for skips, ties and an empty sample", () => {
+  const candidateIds = ["a", "b", "c", "d"];
+  const round = (counts) => ({
+    slot: 1,
+    candidateIds,
+    choices: candidateIds.map((candidateId, index) => ({ candidateId, count: counts[index] })),
+  });
+  const decided = resolveDailyPredictionRound(round([4, 3, 2, 1]), { completedPlayers: 10 });
+  assert.equal(decided.winnerId, "a");
+  assert.deepEqual(decided.choices.map(({ percent }) => percent), [40, 30, 20, 10]);
+  assert.equal(scoreDailyPrediction({ predictedCandidateId: "a" }, decided), "correct");
+  assert.equal(scoreDailyPrediction({ predictedCandidateId: "b" }, decided), "incorrect");
+  assert.equal(scoreDailyPrediction({ skipped: true }, decided), "skipped");
+
+  const tie = resolveDailyPredictionRound(round([4, 4, 1, 1]), { completedPlayers: 10 });
+  assert.deepEqual(tie.leaderIds, ["a", "b"]);
+  assert.equal(tie.winnerId, null);
+  assert.equal(scoreDailyPrediction({ predictedCandidateId: "a" }, tie), "tie");
+
+  const empty = resolveDailyPredictionRound(round([0, 0, 0, 0]), { completedPlayers: 0 });
+  assert.equal(empty.outcome, "no-sample");
+  assert.equal(scoreDailyPrediction({ predictedCandidateId: "a" }, empty), "no-sample");
+});
 
 test("only active curated topics accept votes", () => {
   assert.equal(validateTopic("eleicoes-2026"), "eleicoes-2026");

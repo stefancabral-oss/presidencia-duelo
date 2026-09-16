@@ -73,6 +73,16 @@ jobs:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
         run: node app/e2e/daily-session.mjs
 
+      - name: Validate optional daily prediction and closed reveal
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/daily-prediction.mjs
+
+      - name: Validate prediction scoreboard across identity switches
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/prediction-identity.mjs
+
       - name: Validate responsive layout
         env:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}

@@ -20,7 +20,7 @@ export function dailyMethodologyForDate(date) {
 
 export function validateDailySession(payload) {
   if (!payload || !payload.ruleset || !payload.edition || !payload.progress || !payload.cut
-    || !Array.isArray(payload.catalog)) fail("estrutura");
+    || !Array.isArray(payload.catalog) || !Array.isArray(payload.rounds)) fail("estrutura");
   const catalogIds = payload.catalog.map(({ id }) => String(id || ""));
   const catalog = new Set(catalogIds);
   const { ruleset, edition, progress } = payload;
@@ -42,13 +42,59 @@ export function validateDailySession(payload) {
   if (payload.catalog.length !== ruleset.rounds * ruleset.cardsPerRound
     || catalog.size !== payload.catalog.length
     || payload.catalog.some((candidate) => !String(candidate?.id || "").trim() || !String(candidate?.name || "").trim())) fail("catalog");
+  if (payload.rounds.length !== ruleset.rounds) fail("rounds");
+  const partition = [];
+  for (const [index, round] of payload.rounds.entries()) {
+    if (round?.slot !== index + 1 || !Array.isArray(round.candidateIds)
+      || round.candidateIds.length !== ruleset.cardsPerRound
+      || new Set(round.candidateIds).size !== ruleset.cardsPerRound
+      || round.candidateIds.some((id) => !catalog.has(id))) fail("rounds");
+    partition.push(...round.candidateIds);
+  }
+  if (new Set(partition).size !== catalog.size
+    || catalogIds.some((id) => !partition.includes(id))) fail("rounds.partition");
 
   const answered = integer(progress.answered, "progress.answered");
   const total = integer(progress.total, "progress.total");
   if (total !== ruleset.rounds || answered > total || !Array.isArray(payload.answers) || payload.answers.length !== answered) fail("progress");
+  const answerIds = new Set();
   for (const [index, answer] of payload.answers.entries()) {
     if (answer?.slot !== index + 1 || !UUID_PATTERN.test(String(answer.answerId || ""))
-      || !catalog.has(answer.winnerId) || !Number.isFinite(Date.parse(answer.answeredAt))) fail("answers");
+      || answerIds.has(answer.answerId)
+      || !payload.rounds[index].candidateIds.includes(answer.winnerId)
+      || !Number.isFinite(Date.parse(answer.answeredAt))) fail("answers");
+    answerIds.add(answer.answerId);
+  }
+
+  if (!Array.isArray(payload.predictions) || !payload.predictionProgress
+    || payload.predictions.length > payload.answers.length) fail("predictions");
+  const predictionIds = new Set();
+  for (const [index, prediction] of payload.predictions.entries()) {
+    const expectedSlot = index + 1;
+    if (prediction?.slot !== expectedSlot || !UUID_PATTERN.test(String(prediction.predictionId || ""))
+      || predictionIds.has(prediction.predictionId)
+      || prediction.skipped !== (prediction.candidateId === null)
+      || (!prediction.skipped && !payload.rounds[index].candidateIds.includes(prediction.candidateId))
+      || !Number.isFinite(Date.parse(prediction.respondedAt))) fail("predictions");
+    predictionIds.add(prediction.predictionId);
+  }
+  const responded = integer(payload.predictionProgress.responded, "predictionProgress.responded");
+  const predicted = integer(payload.predictionProgress.predicted, "predictionProgress.predicted");
+  const skipped = integer(payload.predictionProgress.skipped, "predictionProgress.skipped");
+  const predictionTotal = integer(payload.predictionProgress.total, "predictionProgress.total");
+  if (responded !== payload.predictions.length || predicted + skipped !== responded
+    || predictionTotal !== answered
+    || predicted !== payload.predictions.filter((prediction) => !prediction.skipped).length
+    || skipped !== payload.predictions.filter((prediction) => prediction.skipped).length) fail("predictionProgress");
+  const expectedPendingSlot = responded < answered ? responded + 1 : null;
+  if (expectedPendingSlot === null) {
+    if (payload.pendingPrediction !== null) fail("pendingPrediction");
+  } else {
+    const pending = payload.pendingPrediction;
+    if (!pending || pending.slot !== expectedPendingSlot
+      || !Array.isArray(pending.candidateIds) || pending.candidateIds.length !== ruleset.cardsPerRound
+      || new Set(pending.candidateIds).size !== ruleset.cardsPerRound
+      || pending.candidateIds.some((id, index) => id !== payload.rounds[expectedPendingSlot - 1].candidateIds[index])) fail("pendingPrediction");
   }
 
   if (payload.status === "active") {
@@ -56,7 +102,7 @@ export function validateDailySession(payload) {
     if (answered >= total || payload.completion !== null || !round || round.slot !== answered + 1
       || !Array.isArray(round.candidateIds) || round.candidateIds.length !== ruleset.cardsPerRound
       || new Set(round.candidateIds).size !== ruleset.cardsPerRound
-      || round.candidateIds.some((id) => !catalog.has(id))) fail("round");
+      || round.candidateIds.some((id, index) => id !== payload.rounds[answered].candidateIds[index])) fail("round");
   } else if (payload.status === "completed") {
     if (answered !== total || payload.round !== null || !payload.completion
       || !Number.isFinite(Date.parse(payload.completion.completedAt))) fail("completion");
@@ -77,11 +123,21 @@ export function dailyRoundCandidates(session) {
   return result;
 }
 
+export function dailyPendingPredictionCandidates(session) {
+  if (!session?.pendingPrediction) return [];
+  const byId = new Map(session.catalog.map((candidate) => [candidate.id, candidate]));
+  const result = session.pendingPrediction.candidateIds.map((id) => byId.get(id));
+  if (result.some((candidate) => !candidate)) fail("pendingPrediction.catalog");
+  return result;
+}
+
 export function dailySessionRoundChanged(current, next) {
   return current?.edition?.id !== next?.edition?.id
     || current?.edition?.snapshotHash !== next?.edition?.snapshotHash
     || current?.round?.slot !== next?.round?.slot
-    || JSON.stringify(current?.round?.candidateIds || []) !== JSON.stringify(next?.round?.candidateIds || []);
+    || JSON.stringify(current?.round?.candidateIds || []) !== JSON.stringify(next?.round?.candidateIds || [])
+    || current?.pendingPrediction?.slot !== next?.pendingPrediction?.slot
+    || JSON.stringify(current?.pendingPrediction?.candidateIds || []) !== JSON.stringify(next?.pendingPrediction?.candidateIds || []);
 }
 
 export function confirmedDailyVoteData(response, candidates, attempt, current = {}) {

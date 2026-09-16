@@ -17,9 +17,22 @@ function answerId(slot) {
   return `550e8400-e29b-41d4-a716-${String(slot).padStart(12, "0")}`;
 }
 
+function predictionId(slot) {
+  return `650e8400-e29b-41d4-a716-${String(slot).padStart(12, "0")}`;
+}
+
 export function completedDailySession(candidates) {
   const ids = candidates.map(({ id }) => id);
   if (ids.length < 4) throw new Error("o fixture diário requer ao menos quatro candidatos");
+  const dailyCatalog = Array.from({ length: 40 }, (_, index) => ({
+    ...candidates[index % candidates.length],
+    id: `daily-snapshot-${index + 1}`,
+    name: `${candidates[index % candidates.length].name} snapshot ${index + 1}`,
+  }));
+  const rounds = Array.from({ length: 10 }, (_, index) => ({
+    slot: index + 1,
+    candidateIds: dailyCatalog.slice(index * 4, index * 4 + 4).map(({ id }) => id),
+  }));
   return {
     ruleset: DAILY_RULESET,
     edition: {
@@ -39,17 +52,23 @@ export function completedDailySession(candidates) {
     },
     status: "completed",
     progress: { answered: 10, total: 10 },
-    catalog: Array.from({ length: 40 }, (_, index) => ({
-      ...candidates[index % candidates.length],
-      id: `daily-snapshot-${index + 1}`,
-      name: `${candidates[index % candidates.length].name} snapshot ${index + 1}`,
-    })),
+    catalog: dailyCatalog,
+    rounds,
     answers: Array.from({ length: 10 }, (_, index) => ({
       slot: index + 1,
       answerId: answerId(index + 1),
-      winnerId: `daily-snapshot-${index + 1}`,
+      winnerId: rounds[index].candidateIds[0],
       answeredAt: `2026-09-16T${String(index + 10).padStart(2, "0")}:00:00.000Z`,
     })),
+    predictions: Array.from({ length: 10 }, (_, index) => ({
+      slot: index + 1,
+      predictionId: predictionId(index + 1),
+      candidateId: rounds[index].candidateIds[1],
+      skipped: false,
+      respondedAt: `2026-09-16T${String(index + 10).padStart(2, "0")}:01:00.000Z`,
+    })),
+    predictionProgress: { responded: 10, predicted: 10, skipped: 0, total: 10 },
+    pendingPrediction: null,
     round: null,
     completion: { completedAt: "2026-09-16T22:00:00.000Z" },
     cut: {

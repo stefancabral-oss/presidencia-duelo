@@ -195,6 +195,22 @@ export function normalizeVoteId(value, createId = randomUUID) {
   return voteId;
 }
 
+export function normalizeDailyPrediction({ predictionId: value, decision, candidateId }, createId = randomUUID) {
+  const predictionId = String(value || createId()).trim().toLowerCase();
+  if (!UUID_PATTERN.test(predictionId)) {
+    throw contractError("predictionId inválido", 400, "DAILY_PREDICTION_ID_INVALID");
+  }
+  const normalizedDecision = String(decision || "");
+  const normalizedCandidateId = candidateId === null || candidateId === undefined ? null : String(candidateId).trim();
+  if (normalizedDecision === "skip" && normalizedCandidateId === null) {
+    return { predictionId, decision: "skip", candidateId: null, skipped: true };
+  }
+  if (normalizedDecision === "predict" && normalizedCandidateId) {
+    return { predictionId, decision: "predict", candidateId: normalizedCandidateId, skipped: false };
+  }
+  throw contractError("resposta da aposta diária inválida", 400, "DAILY_PREDICTION_INVALID");
+}
+
 export function createRecoveryKey(random = randomBytes) {
   return `pm2_${random(32).toString("base64url")}`;
 }
@@ -682,6 +698,32 @@ async function createCleanSchema(client, { candidateCatalog = candidatesForTopic
       FOREIGN KEY (edition_id, player_id) REFERENCES daily_player_sessions(edition_id, player_id) ON DELETE RESTRICT
     );
 
+    CREATE UNIQUE INDEX IF NOT EXISTS daily_answers_prediction_context_uidx
+      ON daily_answers (edition_id, player_id, slot, answer_id);
+
+    CREATE TABLE IF NOT EXISTS daily_predictions (
+      edition_id text NOT NULL,
+      player_id uuid NOT NULL,
+      slot smallint NOT NULL CHECK (slot BETWEEN 1 AND 10),
+      prediction_id uuid NOT NULL UNIQUE,
+      answer_id uuid NOT NULL,
+      candidate_ids text[] NOT NULL CHECK (array_length(candidate_ids, 1) = 4),
+      predicted_candidate_id text,
+      skipped boolean NOT NULL DEFAULT false,
+      responded_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (edition_id, player_id, slot),
+      CHECK (
+        (skipped AND predicted_candidate_id IS NULL)
+        OR (NOT skipped AND predicted_candidate_id IS NOT NULL AND predicted_candidate_id = ANY(candidate_ids))
+      ),
+      FOREIGN KEY (edition_id, player_id, slot, answer_id)
+        REFERENCES daily_answers (edition_id, player_id, slot, answer_id)
+        ON DELETE RESTRICT,
+      FOREIGN KEY (edition_id, slot, candidate_ids)
+        REFERENCES daily_edition_rounds (edition_id, slot, candidate_ids)
+        ON DELETE RESTRICT
+    );
+
     CREATE TABLE IF NOT EXISTS daily_publication_cuts (
       edition_id text PRIMARY KEY REFERENCES daily_editions(id) ON DELETE RESTRICT,
       ruleset_id text NOT NULL,
@@ -796,6 +838,7 @@ async function createCleanSchema(client, { candidateCatalog = candidatesForTopic
       ON choice_rounds (daily_edition_id, player_id, daily_slot)
       WHERE choice_mode = 'daily';
     CREATE INDEX IF NOT EXISTS daily_answers_completion_idx ON daily_answers (edition_id, player_id, slot);
+    CREATE INDEX IF NOT EXISTS daily_predictions_player_idx ON daily_predictions (player_id, edition_id, slot);
     CREATE INDEX IF NOT EXISTS daily_completions_edition_idx ON daily_completions (edition_id, completed_at);
     CREATE INDEX IF NOT EXISTS chroma_catalog_release_idx ON chroma_catalog (topic_id, status, available_from, available_until);
     CREATE INDEX IF NOT EXISTS player_sessions_player_idx ON player_sessions (player_id, expires_at DESC);
@@ -838,6 +881,11 @@ async function createCleanSchema(client, { candidateCatalog = candidatesForTopic
       BEFORE UPDATE OR DELETE ON daily_completions
       FOR EACH ROW EXECUTE FUNCTION reject_vote_mutation();
 
+    DROP TRIGGER IF EXISTS daily_predictions_are_immutable ON daily_predictions;
+    CREATE TRIGGER daily_predictions_are_immutable
+      BEFORE UPDATE OR DELETE ON daily_predictions
+      FOR EACH ROW EXECUTE FUNCTION reject_vote_mutation();
+
     DROP TRIGGER IF EXISTS daily_publication_cuts_are_immutable ON daily_publication_cuts;
     CREATE TRIGGER daily_publication_cuts_are_immutable
       BEFORE UPDATE OR DELETE ON daily_publication_cuts
@@ -878,30 +926,35 @@ async function selectRanking(queryable, topicId, {
   catalog = candidatesForTopic(topicId),
 } = {}) {
   if (!playerId) {
-    const [pool, stats] = await Promise.all([
-      queryable.query("SELECT duels FROM ranking_pools WHERE topic_id = $1", [topicId]),
-      queryable.query("SELECT candidate_id, rating, wins, losses, zebras FROM ranking_stats WHERE topic_id = $1", [topicId]),
-    ]);
+    const pool = await queryable.query("SELECT duels FROM ranking_pools WHERE topic_id = $1", [topicId]);
+    const stats = await queryable.query(
+      "SELECT candidate_id, rating, wins, losses, zebras FROM ranking_stats WHERE topic_id = $1",
+      [topicId],
+    );
     return rankingFromRows(topicId, pool.rows[0]?.duels, stats.rows, catalog);
   }
 
   const params = [playerId, topicId];
-  const [pool, stats, pairs] = await Promise.all([
-    queryable.query("SELECT duels, version FROM player_pools WHERE player_id = $1 AND topic_id = $2", params),
-    queryable.query("SELECT candidate_id, rating FROM player_stats WHERE player_id = $1 AND topic_id = $2", params),
-    queryable.query(
-      `SELECT
-         LEAST(winner_id, loser_id) AS a_id,
-         GREATEST(winner_id, loser_id) AS b_id,
-         COUNT(*) FILTER (WHERE winner_id = LEAST(winner_id, loser_id)) AS a_wins,
-         COUNT(*) FILTER (WHERE winner_id = GREATEST(winner_id, loser_id)) AS b_wins
-       FROM votes
-       WHERE player_id = $1 AND topic_id = $2
-       GROUP BY 1, 2
-       ORDER BY 1, 2`,
-      params,
-    ),
-  ]);
+  const pool = await queryable.query(
+    "SELECT duels, version FROM player_pools WHERE player_id = $1 AND topic_id = $2",
+    params,
+  );
+  const stats = await queryable.query(
+    "SELECT candidate_id, rating FROM player_stats WHERE player_id = $1 AND topic_id = $2",
+    params,
+  );
+  const pairs = await queryable.query(
+    `SELECT
+       LEAST(winner_id, loser_id) AS a_id,
+       GREATEST(winner_id, loser_id) AS b_id,
+       COUNT(*) FILTER (WHERE winner_id = LEAST(winner_id, loser_id)) AS a_wins,
+       COUNT(*) FILTER (WHERE winner_id = GREATEST(winner_id, loser_id)) AS b_wins
+     FROM votes
+     WHERE player_id = $1 AND topic_id = $2
+     GROUP BY 1, 2
+     ORDER BY 1, 2`,
+    params,
+  );
   const result = personalRankingFromRows(
     topicId,
     pool.rows[0]?.duels,
@@ -1203,6 +1256,52 @@ export function validateDailyCutRecord(materialized, row, {
   };
 }
 
+export const DAILY_PREDICTION_BASELINE_PERCENT = 25;
+
+export function resolveDailyPredictionRound(round, { completedPlayers } = {}) {
+  const denominator = Number(completedPlayers);
+  if (!Number.isSafeInteger(denominator) || denominator < 0
+    || !round || !Array.isArray(round.candidateIds) || round.candidateIds.length !== 4
+    || new Set(round.candidateIds).size !== 4 || !Array.isArray(round.choices)
+    || round.choices.length !== 4) {
+    throw new Error("slot do recorte diário inválido para apuração da aposta");
+  }
+  const choices = round.candidateIds.map((candidateId, index) => {
+    const choice = round.choices[index];
+    if (choice?.candidateId !== candidateId || !Number.isSafeInteger(choice.count) || choice.count < 0) {
+      throw new Error("distribuição diária inválida para apuração da aposta");
+    }
+    return {
+      candidateId,
+      count: choice.count,
+      percent: denominator ? Number(((choice.count / denominator) * 100).toFixed(1)) : 0,
+    };
+  });
+  if (choices.reduce((total, choice) => total + choice.count, 0) !== denominator) {
+    throw new Error("distribuição diária não fecha com a amostra publicada");
+  }
+  const highest = Math.max(...choices.map(({ count }) => count));
+  const leaderIds = denominator ? choices.filter(({ count }) => count === highest).map(({ candidateId }) => candidateId) : [];
+  const winnerId = leaderIds.length === 1 ? leaderIds[0] : null;
+  return {
+    slot: Number(round.slot),
+    candidateIds: [...round.candidateIds],
+    choices,
+    leaderIds,
+    winnerId,
+    outcome: winnerId ? "decided" : denominator ? "tie" : "no-sample",
+  };
+}
+
+export function scoreDailyPrediction({ predictedCandidateId = null, skipped = false }, resolvedRound) {
+  if (skipped) return "skipped";
+  if (!predictedCandidateId || !resolvedRound.candidateIds.includes(predictedCandidateId)) {
+    throw new Error("aposta persistida não pertence ao slot diário");
+  }
+  if (resolvedRound.outcome !== "decided") return resolvedRound.outcome;
+  return predictedCandidateId === resolvedRound.winnerId ? "correct" : "incorrect";
+}
+
 async function loadMaterializedDailyEditionById(client, editionId, validationOptions) {
   const editionResult = await client.query(
     `SELECT id, edition_date::text, topic_id, ruleset_id, ruleset_version, catalog_schema, catalog_hash, catalog_ids,
@@ -1325,19 +1424,24 @@ async function ensureDailyPlayerSession(client, materialized, playerId) {
 
 async function selectDailyPlayerSession(client, materialized, playerId) {
   const { edition, rounds } = materialized;
-  const [answersResult, completionResult] = await Promise.all([
-    client.query(
-      `SELECT slot, answer_id, winner_id, answered_at
-       FROM daily_answers
-       WHERE edition_id = $1 AND player_id = $2
-       ORDER BY slot`,
-      [edition.id, playerId],
-    ),
-    client.query(
-      "SELECT completed_at FROM daily_completions WHERE edition_id = $1 AND player_id = $2",
-      [edition.id, playerId],
-    ),
-  ]);
+  const answersResult = await client.query(
+    `SELECT slot, answer_id, winner_id, answered_at
+     FROM daily_answers
+     WHERE edition_id = $1 AND player_id = $2
+     ORDER BY slot`,
+    [edition.id, playerId],
+  );
+  const predictionsResult = await client.query(
+    `SELECT slot, prediction_id, predicted_candidate_id, skipped, responded_at
+     FROM daily_predictions
+     WHERE edition_id = $1 AND player_id = $2
+     ORDER BY slot`,
+    [edition.id, playerId],
+  );
+  const completionResult = await client.query(
+    "SELECT completed_at FROM daily_completions WHERE edition_id = $1 AND player_id = $2",
+    [edition.id, playerId],
+  );
   const answers = answersResult.rows.map((row) => ({
     slot: Number(row.slot),
     answerId: row.answer_id,
@@ -1345,11 +1449,31 @@ async function selectDailyPlayerSession(client, materialized, playerId) {
     answeredAt: new Date(row.answered_at).toISOString(),
   }));
   const completed = completionResult.rowCount === 1;
+  const predictions = predictionsResult.rows.map((row) => ({
+    slot: Number(row.slot),
+    predictionId: row.prediction_id,
+    candidateId: row.predicted_candidate_id || null,
+    skipped: Boolean(row.skipped),
+    respondedAt: new Date(row.responded_at).toISOString(),
+  }));
   if (answers.some((answer, index) => answer.slot !== index + 1)
     || answers.length > edition.totalRounds
-    || completed !== (answers.length === edition.totalRounds)) {
+    || answers.some((answer) => !rounds[answer.slot - 1]?.candidateIds.includes(answer.winnerId))
+    || completed !== (answers.length === edition.totalRounds)
+    || predictions.some((prediction, index) => prediction.slot !== index + 1)
+    || predictions.length > answers.length
+    || predictions.some((prediction) => (
+      prediction.skipped !== (prediction.candidateId === null)
+      || (!prediction.skipped && !rounds[prediction.slot - 1]?.candidateIds.includes(prediction.candidateId))
+    ))) {
     throw new Error("progresso diário persistido está inconsistente");
   }
+  const pendingPrediction = answers.length > predictions.length
+    ? {
+      slot: predictions.length + 1,
+      candidateIds: [...rounds[predictions.length].candidateIds],
+    }
+    : null;
   const nextRound = completed ? null : rounds[answers.length];
   if (!completed && !nextRound) throw new Error("slot diário autoritativo ausente");
   const catalog = selectedDailyCatalog(materialized).candidates;
@@ -1359,7 +1483,19 @@ async function selectDailyPlayerSession(client, materialized, playerId) {
     status: completed ? "completed" : "active",
     progress: { answered: answers.length, total: edition.totalRounds },
     answers,
+    predictions,
+    predictionProgress: {
+      responded: predictions.length,
+      predicted: predictions.filter(({ skipped }) => !skipped).length,
+      skipped: predictions.filter(({ skipped }) => skipped).length,
+      total: answers.length,
+    },
+    pendingPrediction,
     catalog,
+    rounds: rounds.map((round) => ({
+      slot: round.slot,
+      candidateIds: [...round.candidateIds],
+    })),
     round: nextRound ? { slot: nextRound.slot, candidateIds: [...nextRound.candidateIds] } : null,
     completion: completed ? { completedAt: new Date(completionResult.rows[0].completed_at).toISOString() } : null,
     cut: {
@@ -1557,7 +1693,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
   if (!connectionString) throw new Error("DATABASE_URL é obrigatória");
   const pool = new Pool({ connectionString, max: Number(process.env.PG_POOL_MAX) || 10 });
 
-  return {
+  const store = {
     async init() {
       const client = await pool.connect();
       try {
@@ -1695,6 +1831,13 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
         const player = await findPlayer(client, recoveryKey);
         const materialized = await materializeDailyEdition(client, topic, dateKey, { candidateCatalog });
         await ensureDailyPlayerSession(client, materialized, player.id);
+        // A sessão é montada por três SELECTs. O lock compartilhado impede que
+        // uma gravação transacional intercale resposta, aposta ou conclusão e
+        // produza um snapshot multipartes impossível.
+        await client.query(
+          "SELECT 1 FROM daily_player_sessions WHERE edition_id = $1 AND player_id = $2 FOR SHARE",
+          [materialized.edition.id, player.id],
+        );
         const session = await selectDailyPlayerSession(client, materialized, player.id);
         await client.query("COMMIT");
         return session;
@@ -1714,12 +1857,23 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
       answerId: requestedAnswerId,
       recoveryKey,
       playerVersion,
+      predictionContractVersion: requestedPredictionContractVersion,
       now,
     }) {
       const topic = validateTopic(topicId);
       const answerId = normalizeVoteId(requestedAnswerId);
       const slot = Number(requestedSlot);
       if (!Number.isInteger(slot)) throw contractError("slot diário inválido", 400, "DAILY_SLOT_INVALID");
+      const predictionContractVersion = requestedPredictionContractVersion === undefined
+        ? null
+        : requestedPredictionContractVersion;
+      if (predictionContractVersion !== null && predictionContractVersion !== 1) {
+        throw contractError(
+          "versão do contrato de aposta diária inválida",
+          400,
+          "DAILY_PREDICTION_CONTRACT_INVALID",
+        );
+      }
       const admittedAt = clockInstant(clock, now);
       const initialDate = editorialDateKey(admittedAt);
       const client = await pool.connect();
@@ -1820,9 +1974,27 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           [materialized.edition.id, player.id],
         );
         const answered = Number(progress.rows[0]?.answered) || 0;
+        const predictionProgress = await client.query(
+          "SELECT COUNT(*)::integer AS responded FROM daily_predictions WHERE edition_id = $1 AND player_id = $2",
+          [materialized.edition.id, player.id],
+        );
+        const predictionsResponded = Number(predictionProgress.rows[0]?.responded) || 0;
         const expectedSlot = answered + 1;
         if (slot !== expectedSlot) {
           throw contractError("a rodada diária precisa ser respondida na ordem", 409, "DAILY_SLOT_OUT_OF_ORDER", expectedSlot);
+        }
+        // Preserve a precedência do contrato de sequência: uma repetição ou um
+        // salto continua sendo DAILY_SLOT_OUT_OF_ORDER. A aposta só bloqueia a
+        // preferência quando o cliente pediu exatamente o próximo slot válido.
+        // Clientes antigos omitem a capacidade e podem concluir as dez
+        // preferências sem que o servidor invente apostas puladas em seu nome.
+        if (predictionContractVersion === 1 && predictionsResponded !== answered) {
+          throw contractError(
+            "responda ou pule a aposta do slot anterior antes de continuar",
+            409,
+            "DAILY_PREDICTION_REQUIRED",
+            predictionsResponded + 1,
+          );
         }
         if (!authoritativeRound.candidateIds.includes(winnerId)) {
           throw contractError("vencedor não pertence ao slot diário", 400, "DAILY_WINNER_INVALID");
@@ -1873,6 +2045,199 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
       }
     },
 
+    async dailyPrediction({
+      topicId,
+      editionId,
+      slot: requestedSlot,
+      predictionId: requestedPredictionId,
+      decision,
+      candidateId,
+      recoveryKey,
+      now,
+    }) {
+      const topic = validateTopic(topicId);
+      const slot = Number(requestedSlot);
+      if (!Number.isInteger(slot)) {
+        throw contractError("slot da aposta diária inválido", 400, "DAILY_PREDICTION_SLOT_INVALID");
+      }
+      const prediction = normalizeDailyPrediction({
+        predictionId: requestedPredictionId,
+        decision,
+        candidateId,
+      });
+      const admittedAt = clockInstant(clock, now);
+      const admittedDate = editorialDateKey(admittedAt);
+      const requestedEditionId = String(editionId || "");
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const player = await findPlayer(client, recoveryKey);
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [prediction.predictionId]);
+        const replay = await client.query(
+          `SELECT prediction.edition_id, prediction.player_id, prediction.slot, prediction.prediction_id,
+                  prediction.predicted_candidate_id, prediction.skipped, edition.topic_id
+           FROM daily_predictions AS prediction
+           INNER JOIN daily_editions AS edition ON edition.id = prediction.edition_id
+           WHERE prediction.prediction_id = $1`,
+          [prediction.predictionId],
+        );
+        if (replay.rowCount) {
+          const row = replay.rows[0];
+          if (row.edition_id !== requestedEditionId || row.topic_id !== topic
+            || row.player_id !== player.id || Number(row.slot) !== slot
+            || Boolean(row.skipped) !== prediction.skipped
+            || (row.predicted_candidate_id || null) !== prediction.candidateId) {
+            throw contractError(
+              "predictionId já utilizado com outra resposta",
+              409,
+              "DAILY_PREDICTION_REPLAY_DIVERGENT",
+            );
+          }
+          const replayEdition = await loadMaterializedDailyEditionById(client, row.edition_id);
+          await client.query(
+            "SELECT 1 FROM daily_player_sessions WHERE edition_id = $1 AND player_id = $2 FOR SHARE",
+            [row.edition_id, player.id],
+          );
+          const dailySession = await selectDailyPlayerSession(client, replayEdition, player.id);
+          await client.query("COMMIT");
+          return {
+            prediction: {
+              id: prediction.predictionId,
+              status: "alreadyProcessed",
+              slot,
+              candidateId: prediction.candidateId,
+              skipped: prediction.skipped,
+            },
+            dailySession,
+          };
+        }
+
+        // A revelação adquire a versão exclusiva desta barreira. Assim, toda
+        // aposta admitida antes do fechamento termina de gravar antes de o
+        // placar histórico ser lido; depois do fechamento nenhuma nova entra.
+        await client.query(
+          "SELECT pg_advisory_xact_lock_shared(hashtext($1))",
+          [`daily-prediction-reveal:${requestedEditionId}`],
+        );
+        const editionResult = await client.query(
+          `SELECT id, edition_date::text, topic_id, opens_at, closes_at
+           FROM daily_editions WHERE id = $1`,
+          [requestedEditionId],
+        );
+        const editionRow = editionResult.rows[0];
+        if (!editionRow || editionRow.topic_id !== topic
+          || String(editionRow.edition_date) !== admittedDate
+          || admittedAt < new Date(editionRow.opens_at) || admittedAt >= new Date(editionRow.closes_at)) {
+          throw contractError(
+            "a edição desta aposta já fechou; o resultado não pode ser previsto retroativamente",
+            409,
+            "DAILY_PREDICTION_CLOSED",
+          );
+        }
+        const publishedCut = await client.query(
+          "SELECT 1 FROM daily_publication_cuts WHERE edition_id = $1",
+          [requestedEditionId],
+        );
+        if (publishedCut.rowCount) {
+          throw contractError(
+            "o resultado desta edição já foi publicado",
+            409,
+            "DAILY_PREDICTION_CLOSED",
+          );
+        }
+        const materialized = await loadMaterializedDailyEditionById(client, requestedEditionId);
+        await client.query(
+          "SELECT 1 FROM daily_player_sessions WHERE edition_id = $1 AND player_id = $2 FOR UPDATE",
+          [requestedEditionId, player.id],
+        );
+        const existingSlot = await client.query(
+          `SELECT prediction_id, predicted_candidate_id, skipped
+           FROM daily_predictions
+           WHERE edition_id = $1 AND player_id = $2 AND slot = $3`,
+          [requestedEditionId, player.id, slot],
+        );
+        if (existingSlot.rowCount) {
+          throw contractError(
+            "a aposta deste slot já foi respondida em outro acesso",
+            409,
+            "DAILY_PREDICTION_ALREADY_RECORDED",
+            slot,
+          );
+        }
+        const answersResult = await client.query(
+          `SELECT slot, answer_id FROM daily_answers
+           WHERE edition_id = $1 AND player_id = $2 ORDER BY slot`,
+          [requestedEditionId, player.id],
+        );
+        const predictionCountResult = await client.query(
+          `SELECT COUNT(*)::integer AS responded FROM daily_predictions
+           WHERE edition_id = $1 AND player_id = $2`,
+          [requestedEditionId, player.id],
+        );
+        const responded = Number(predictionCountResult.rows[0]?.responded) || 0;
+        const expectedSlot = responded + 1;
+        if (slot !== expectedSlot || answersResult.rowCount < responded + 1) {
+          throw contractError(
+            "a aposta diária precisa acompanhar a preferência confirmada",
+            409,
+            "DAILY_PREDICTION_OUT_OF_ORDER",
+            expectedSlot,
+          );
+        }
+        const answer = answersResult.rows[responded];
+        const authoritativeRound = materialized.rounds.find((round) => round.slot === slot);
+        if (!authoritativeRound || Number(answer?.slot) !== slot) {
+          throw new Error("contexto autoritativo da aposta diária ausente");
+        }
+        if (!prediction.skipped && !authoritativeRound.candidateIds.includes(prediction.candidateId)) {
+          throw contractError(
+            "a pessoa prevista não pertence ao slot diário",
+            400,
+            "DAILY_PREDICTION_CANDIDATE_INVALID",
+          );
+        }
+        await client.query(
+          `INSERT INTO daily_predictions (
+             edition_id, player_id, slot, prediction_id, answer_id, candidate_ids,
+             predicted_candidate_id, skipped
+           ) VALUES ($1, $2, $3, $4, $5, $6::text[], $7, $8)`,
+          [
+            requestedEditionId,
+            player.id,
+            slot,
+            prediction.predictionId,
+            answer.answer_id,
+            authoritativeRound.candidateIds,
+            prediction.candidateId,
+            prediction.skipped,
+          ],
+        );
+        const dailySession = await selectDailyPlayerSession(client, materialized, player.id);
+        await hooks.beforeDailyPredictionCommit?.({
+          editionId: requestedEditionId,
+          playerId: player.id,
+          slot,
+          predictionId: prediction.predictionId,
+        });
+        await client.query("COMMIT");
+        return {
+          prediction: {
+            id: prediction.predictionId,
+            status: "created",
+            slot,
+            candidateId: prediction.candidateId,
+            skipped: prediction.skipped,
+          },
+          dailySession,
+        };
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
+
     async dailyCut(topicId, requestedDate, { now } = {}) {
       const topic = validateTopic(topicId);
       const dateKey = validateEditionDate(requestedDate);
@@ -1897,6 +2262,13 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
         if (!editionResult.rowCount) throw contractError("edição diária não encontrada", 404, "DAILY_EDITION_NOT_FOUND");
         const editionRow = editionResult.rows[0];
         await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`daily-cut:${editionRow.id}`]);
+        // Ordem global de publicação: primeiro serializa o corte e então fecha
+        // a barreira de apostas. Quem já obteve o lock compartilhado termina;
+        // quem chega depois só prossegue após encontrar o recorte publicado.
+        await client.query(
+          "SELECT pg_advisory_xact_lock(hashtext($1))",
+          [`daily-prediction-reveal:${editionRow.id}`],
+        );
         const roundsResult = await client.query(
           "SELECT slot, candidate_ids, selection_hash FROM daily_edition_rounds WHERE edition_id = $1 ORDER BY slot",
           [editionRow.id],
@@ -1930,19 +2302,20 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
             publishedAt: record.publishedAt,
           };
         }
-        const [completionResult, choicesResult] = await Promise.all([
-          client.query("SELECT COUNT(*)::bigint AS total FROM daily_completions WHERE edition_id = $1", [editionRow.id]),
-          client.query(
-            `SELECT answer.slot, answer.winner_id, COUNT(*)::bigint AS choices
-             FROM daily_answers AS answer
-             INNER JOIN daily_completions AS completed
-               ON completed.edition_id = answer.edition_id AND completed.player_id = answer.player_id
-             WHERE answer.edition_id = $1
-             GROUP BY answer.slot, answer.winner_id
-             ORDER BY answer.slot, answer.winner_id`,
-            [editionRow.id],
-          ),
-        ]);
+        const completionResult = await client.query(
+          "SELECT COUNT(*)::bigint AS total FROM daily_completions WHERE edition_id = $1",
+          [editionRow.id],
+        );
+        const choicesResult = await client.query(
+          `SELECT answer.slot, answer.winner_id, COUNT(*)::bigint AS choices
+           FROM daily_answers AS answer
+           INNER JOIN daily_completions AS completed
+             ON completed.edition_id = answer.edition_id AND completed.player_id = answer.player_id
+           WHERE answer.edition_id = $1
+           GROUP BY answer.slot, answer.winner_id
+           ORDER BY answer.slot, answer.winner_id`,
+          [editionRow.id],
+        );
         const completedPlayers = Number(completionResult.rows[0]?.total) || 0;
         const counts = new Map(choicesResult.rows.map((row) => [`${Number(row.slot)}:${row.winner_id}`, Number(row.choices)]));
         const rounds = materialized.rounds.map((round) => ({
@@ -2014,6 +2387,169 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
         throw error;
       } finally {
         client.release();
+      }
+    },
+
+    async dailyPredictionResults(recoveryKey, topicId, { now } = {}) {
+      const topic = validateTopic(topicId);
+      const requestedAt = clockInstant(clock, now);
+
+      // Primeiro descobre apenas as edições fechadas em que esta identidade
+      // respondeu preferências. Nenhuma distribuição é lida nesta etapa.
+      const discovery = await pool.connect();
+      let playerId;
+      let closedDates;
+      try {
+        await discovery.query("BEGIN");
+        const player = await findPlayer(discovery, recoveryKey);
+        playerId = player.id;
+        const result = await discovery.query(
+          `SELECT DISTINCT edition.edition_date::text AS edition_date
+           FROM daily_editions AS edition
+           INNER JOIN daily_answers AS answer ON answer.edition_id = edition.id
+           WHERE answer.player_id = $1
+             AND edition.topic_id = $2
+             AND edition.closes_at <= $3::timestamptz
+           ORDER BY edition_date`,
+          [playerId, topic, requestedAt.toISOString()],
+        );
+        closedDates = result.rows.map(({ edition_date: date }) => String(date));
+        await discovery.query("COMMIT");
+      } catch (error) {
+        await discovery.query("ROLLBACK");
+        throw error;
+      } finally {
+        discovery.release();
+      }
+
+      // O resultado individual só pode apontar para recortes públicos já
+      // materializados e validados. Publicar aqui todos os dias fechados do
+      // jogador torna o placar realmente cumulativo, mesmo sem cron externo.
+      const cuts = [];
+      for (const date of closedDates) {
+        cuts.push(await store.dailyCut(topic, date, { now: requestedAt }));
+      }
+      if (!cuts.length) {
+        return {
+          baselinePercent: DAILY_PREDICTION_BASELINE_PERCENT,
+          score: {
+            correct: 0,
+            scored: 0,
+            attempted: 0,
+            skipped: 0,
+            ties: 0,
+            noSample: 0,
+            accuracyPercent: null,
+          },
+          sessions: [],
+        };
+      }
+
+      const editionIds = cuts.map(({ edition }) => edition.id).sort();
+      const reader = await pool.connect();
+      try {
+        await reader.query("BEGIN");
+        const player = await findPlayer(reader, recoveryKey);
+        if (player.id !== playerId) throw new Error("identidade mudou durante a leitura das apostas");
+        // Exclusivo: espera apostas admitidas antes do fechamento concluírem e
+        // impede uma leitura cumulativa parcial em corrida com a última escrita.
+        for (const editionId of editionIds) {
+          await reader.query(
+            "SELECT pg_advisory_xact_lock(hashtext($1))",
+            [`daily-prediction-reveal:${editionId}`],
+          );
+        }
+        const answersResult = await reader.query(
+          `SELECT answer.edition_id, answer.slot, answer.answer_id, answer.winner_id, answer.answered_at,
+                  prediction.prediction_id, prediction.predicted_candidate_id,
+                  prediction.skipped, prediction.responded_at
+           FROM daily_answers AS answer
+           LEFT JOIN daily_predictions AS prediction
+             ON prediction.edition_id = answer.edition_id
+            AND prediction.player_id = answer.player_id
+            AND prediction.slot = answer.slot
+           WHERE answer.player_id = $1
+             AND answer.edition_id = ANY($2::text[])
+           ORDER BY answer.edition_id, answer.slot`,
+          [playerId, editionIds],
+        );
+        const rowsByEdition = new Map();
+        for (const row of answersResult.rows) {
+          const rows = rowsByEdition.get(row.edition_id) || [];
+          rows.push(row);
+          rowsByEdition.set(row.edition_id, rows);
+        }
+
+        const totals = {
+          correct: 0,
+          scored: 0,
+          attempted: 0,
+          skipped: 0,
+          ties: 0,
+          noSample: 0,
+        };
+        const sessions = cuts.map((cut) => {
+          const rows = rowsByEdition.get(cut.edition.id) || [];
+          const bySlot = new Map(rows.map((row) => [Number(row.slot), row]));
+          const rounds = cut.rounds.map((round) => {
+            const resolved = resolveDailyPredictionRound(round, { completedPlayers: cut.completedPlayers });
+            const row = bySlot.get(resolved.slot);
+            if (!row) return { ...resolved, preference: null, prediction: null, result: "not-answered" };
+            const preference = {
+              answerId: row.answer_id,
+              candidateId: row.winner_id,
+              answeredAt: new Date(row.answered_at).toISOString(),
+            };
+            if (!row.prediction_id) {
+              return { ...resolved, preference, prediction: null, result: "not-answered" };
+            }
+            const prediction = {
+              predictionId: row.prediction_id,
+              candidateId: row.predicted_candidate_id || null,
+              skipped: Boolean(row.skipped),
+              respondedAt: new Date(row.responded_at).toISOString(),
+            };
+            const result = scoreDailyPrediction({
+              predictedCandidateId: prediction.candidateId,
+              skipped: prediction.skipped,
+            }, resolved);
+            if (result === "skipped") totals.skipped += 1;
+            else {
+              totals.attempted += 1;
+              if (result === "correct" || result === "incorrect") totals.scored += 1;
+              if (result === "correct") totals.correct += 1;
+              if (result === "tie") totals.ties += 1;
+              if (result === "no-sample") totals.noSample += 1;
+            }
+            return { ...resolved, preference, prediction, result };
+          });
+          return {
+            edition: cut.edition,
+            methodology: cut.methodology,
+            completedPlayers: cut.completedPlayers,
+            sampleNotice: cut.sampleNotice,
+            publishedAt: cut.publishedAt,
+            catalog: cut.catalog,
+            completed: rows.length === cut.edition.totalRounds,
+            rounds,
+          };
+        }).sort((left, right) => right.edition.date.localeCompare(left.edition.date));
+        await reader.query("COMMIT");
+        return {
+          baselinePercent: DAILY_PREDICTION_BASELINE_PERCENT,
+          score: {
+            ...totals,
+            accuracyPercent: totals.scored
+              ? Number(((totals.correct / totals.scored) * 100).toFixed(1))
+              : null,
+          },
+          sessions,
+        };
+      } catch (error) {
+        await reader.query("ROLLBACK");
+        throw error;
+      } finally {
+        reader.release();
       }
     },
 
@@ -2147,6 +2683,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
       await pool.end();
     },
   };
+  return store;
 }
 
 export const CLEAN_START_MIGRATION = RESET_MIGRATION_ID;

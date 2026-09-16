@@ -213,6 +213,18 @@ export function createHttpApp({
     }
   });
 
+  app.get("/api/daily-prediction-results", async (req, res) => {
+    try {
+      res.json(await store.dailyPredictionResults(
+        requiredRecoveryKey(req),
+        String(req.query.topic || "eleicoes-2026"),
+        { now: clock() },
+      ));
+    } catch (error) {
+      sendError(req, res, error);
+    }
+  });
+
   app.post("/api/auth/google", async (req, res) => {
     try {
       const identity = await googleIdentity.verify(req.body?.credential);
@@ -262,7 +274,15 @@ export function createHttpApp({
     // A ordem e as quatro cartas nunca vêm do cliente. `editionId + slot`
     // apontam para o baralho materializado; o store relê esse registro sob
     // trava antes de aplicar Elo e progresso na mesma transação.
-    const { answerId, editionId, slot, winnerId, topicId, playerVersion } = req.body || {};
+    const {
+      answerId,
+      editionId,
+      slot,
+      winnerId,
+      topicId,
+      playerVersion,
+      predictionContractVersion,
+    } = req.body || {};
     try {
       res.json(await store.dailyVote({
         answerId,
@@ -272,6 +292,28 @@ export function createHttpApp({
         topicId: String(topicId || "eleicoes-2026"),
         recoveryKey: requiredRecoveryKey(req),
         playerVersion,
+        predictionContractVersion,
+        now: clock(),
+      }));
+    } catch (error) {
+      sendError(req, res, error);
+    }
+  });
+
+  app.post("/api/daily-prediction", async (req, res) => {
+    // A lista de cartas e o answerId são resolvidos no banco. O cliente envia
+    // só a identidade idempotente, o slot e a decisão explícita de prever ou
+    // pular; isso mantém a aposta separada da preferência e do Elo.
+    const { predictionId, editionId, slot, decision, candidateId, topicId } = req.body || {};
+    try {
+      res.json(await store.dailyPrediction({
+        predictionId,
+        editionId: String(editionId || ""),
+        slot,
+        decision: String(decision || ""),
+        candidateId: candidateId === null || candidateId === undefined ? null : String(candidateId),
+        topicId: String(topicId || "eleicoes-2026"),
+        recoveryKey: requiredRecoveryKey(req),
         now: clock(),
       }));
     } catch (error) {

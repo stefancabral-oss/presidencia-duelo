@@ -8,46 +8,53 @@
 - Branch: `icm/12-u04-taxonomy-173`
 - PR: `não aberta por instrução`
 - Commit de implementação: `3cc16091720b523ba9d38b86ae95614e2ef656fd`
+- Commit de correção adversarial: `896085aaddfc93d348154cbfb252303f03e00c52`
 
 ## Causa corrigida
 
-O gerador copiava `partido_ou_area` simultaneamente para cargo, afiliação e partido e criava uma área genérica. A mesma prosa passava pela API e era indexada pela busca. A correção cria uma fonte editorial estruturada, materializa os campos uma única vez e bloqueia qualquer valor que viole o contrato.
+O gerador copiava `partido_ou_area` simultaneamente para cargo, afiliação e partido e criava uma área genérica. A mesma prosa passava pela API e era indexada pela busca. A primeira correção estruturou os campos, mas a revisão adversarial mostrou que o validador ainda aceitava nomes de fonte sem resolvê-los e não confrontava um valor `extracted` com a evidência. O contrato v2 agora resolve cada ponteiro no catálogo real, compara o valor e bloqueia a geração quando a evidência diverge.
 
 ## Entregue
 
-- Contrato versionado de `role`, `party`, `primaryArea`, `contextAffiliation` e proveniência por atributo.
+- Contrato v2 de `role`, `party`, `primaryArea`, `contextAffiliation` e proveniência por atributo.
 - Fonte editorial com 125 registros, ligada por nome aos 125 perfis.
 - Vocabulário fechado de 16 siglas partidárias e 11 áreas.
+- Quatro ponteiros permitidos, resolvidos contra os arquivos editoriais reais; fonte desconhecida, ausente ou vazia falha.
+- `extracted` precisa ser literal na fonte; as únicas normalizações lexicais de partido ficam no mapa explícito `TAXONOMY_NORMALIZATIONS.version = 1`.
+- Reclassificação dos 33 mapeamentos semânticos de área de `extracted` para `inferred`.
+- Remoção de contextos que eram ideologia/canal de atuação, sem inventar vínculo: André Janones, Jones Manoel, Carla Zambelli e Deltan Dallagnol ficaram `null`/`ambiguous`.
 - Proveniência preservada no JSON gerado e na allowlist da API.
 - Remoção dos campos sobrepostos `affiliation`, `area` e `office` do artefato novo.
 - Correção de Antonia Fontenelle: cargo descritivo, `PSDB` e `Comunicação digital`.
 - Carta e ranking com um único chip estruturado; perfil com seções separadas.
-- Busca restrita a nome, partido e área, com filtros combináveis por partido/área.
+- Busca restrita a nome, partido e área, com filtros combináveis por partido/área e limpeza dos três filtros na troca entre ranking geral e pessoal.
 - Um único validador compartilhado pelo gerador, teste e CI.
-- Screenshot comparativo em `references/taxonomy-comparison.png`.
+- Contrato de serialização exercitado sobre os 125 registros reais, incluindo Lula e Antonia Fontenelle.
+- Screenshot comparativo em `references/taxonomy-comparison.png`, produzido pela fixture visual E2E de quatro pessoas; ele não é apresentado como captura do catálogo real.
 
 ## Estado editorial explícito
 
 - `role`: 125 `extracted`.
 - `party`: 85 `extracted`; 40 `ambiguous` e `null`.
-- `primaryArea`: 47 `extracted`; 78 `inferred`.
-- `contextAffiliation`: 23 `extracted`; 102 `ambiguous` e `null`.
+- `primaryArea`: 14 `extracted`; 111 `inferred`.
+- `contextAffiliation`: 18 `extracted`; 1 `inferred`; 106 `ambiguous` e `null`.
 
 Nenhum valor foi criado para um atributo ambíguo. `ambiguous` significa falta de suporte suficiente no material disponível, não afirmação de que a pessoa não tem partido ou vínculo.
 
 ## Testes e evidências
 
-- `npm run test:shared`: 7/7 testes e validação dos 125 registros.
-- `npm test`: 67/67 testes (7 shared, 18 back, 42 app).
+- `npm run test:shared`: 11/11 testes e validação estrutural/evidencial dos 125 registros.
+- `npm test`: 73/73 testes (11 shared, 20 back, 42 app).
 - `npm run build`: aprovado; 99/125 retratos presentes e bundle Vite produzido.
-- E2E Chromium e WebKit: navegação, rodada, perfil estruturado, busca, filtros e ranking aprovados.
+- E2E Chromium e WebKit: navegação, rodada, perfil estruturado, busca, filtros, ranking e limpeza de filtros na troca de visão aprovados.
 - Regeneração consecutiva: hashes SHA-256 idênticos para candidatos e Chromas.
 - Workflow: YAML válido; `test:shared` é chamado uma vez pelo job `shared-data` e os caminhos das três fontes editoriais acionam o workflow.
 
 ## Lacunas e riscos preservados
 
-- As 78 áreas `inferred` precisam de gate editorial humano; o código valida o conjunto e a proveniência, não substitui a decisão editorial.
-- Quarenta partidos e 102 contextos continuam ambíguos por falta de evidência explícita suficiente.
+- As 111 áreas `inferred` precisam de gate editorial humano; o código valida o conjunto e a proveniência, não substitui a decisão editorial.
+- Quarenta partidos e 106 contextos continuam ambíguos por falta de evidência explícita suficiente.
+- O único contexto `inferred` preserva a redação editorial sobre a filiação de Gracyanne Barbosa e deve ser confirmado no gate humano.
 - Os 125 perfis permanecem com `reviewStatus=pending`; a revisão fonte a fonte descrita no gate editorial anterior não foi simulada nesta unidade.
 - O disparo remoto em `pull_request` permanece pendente porque não houve push nem PR.
 - `actionlint` não estava disponível neste host; a sintaxe YAML foi validada com `yaml.safe_load` e o workflow deve passar pelo check remoto.

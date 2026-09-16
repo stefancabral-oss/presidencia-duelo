@@ -4,28 +4,31 @@
   "macroIssue": 175,
   "branch": "icm/12-u04-taxonomy-173",
   "implementationCommit": "3cc16091720b523ba9d38b86ae95614e2ef656fd",
-  "generatedAt": "2026-09-16T00:05:41-03:00",
+  "adversarialReviewCommit": "896085aaddfc93d348154cbfb252303f03e00c52",
+  "generatedAt": "2026-09-16T00:28:05-03:00",
   "catalog": {
     "records": 125,
+    "schemaVersion": 2,
+    "normalizationVersion": 1,
     "partyVocabularySize": 16,
     "primaryAreaVocabularySize": 11,
     "provenance": {
       "role": { "extracted": 125, "inferred": 0, "ambiguous": 0 },
       "party": { "extracted": 85, "inferred": 0, "ambiguous": 40 },
-      "primaryArea": { "extracted": 47, "inferred": 78, "ambiguous": 0 },
-      "contextAffiliation": { "extracted": 23, "inferred": 0, "ambiguous": 102 }
+      "primaryArea": { "extracted": 14, "inferred": 111, "ambiguous": 0 },
+      "contextAffiliation": { "extracted": 18, "inferred": 1, "ambiguous": 106 }
     }
   },
   "checks": [
     {
       "name": "shared-taxonomy",
       "command": "npm run test:shared",
-      "result": "passed; 7 of 7 tests and 125 generated records synchronized with the editorial source"
+      "result": "passed; 11 of 11 tests, 125 generated records synchronized, source pointers resolved, and extracted values compared with real evidence"
     },
     {
       "name": "root-unit",
       "command": "npm test",
-      "result": "passed; 67 of 67 tests (7 shared, 18 back, 42 app)"
+      "result": "passed; 73 of 73 tests (11 shared, 20 back, 42 app), including real 125-record API serialization"
     },
     {
       "name": "app-build",
@@ -35,17 +38,17 @@
     {
       "name": "catalog-determinism",
       "command": "npm run build:catalog --prefix back; compare SHA-256 before and after",
-      "result": "passed; elections-2026.json E47B05D065F7A7B3086C3FF67167CCF347DC836A66B794F7B3696E83D4B2A7C9 and chromas-catalog-draft.json 0DAAE462C7E010FCCB5375855FE0A867E7F8F92CABBDF1CE9808B36D6DF707E0 remained identical"
+      "result": "passed; elections-2026.json F9A666ABAE8F62FE675734EAF08B8B8B551839560DEBA005FD9BB0432879B897 and chromas-catalog-draft.json 0DAAE462C7E010FCCB5375855FE0A867E7F8F92CABBDF1CE9808B36D6DF707E0 remained identical across consecutive rebuilds"
     },
     {
       "name": "taxonomy-ui-smoke",
       "command": "POLIMATCH_E2E_BROWSER=chromium|webkit node app/e2e/interaction-smoke.mjs",
-      "result": "passed in Chromium and WebKit; structured profile sections, search, filters and compact ranking labels verified"
+      "result": "passed in Chromium and WebKit; structured profile sections, search, filters, compact labels and filter reset when switching ranking views verified"
     },
     {
       "name": "taxonomy-screenshot",
       "command": "POLIMATCH_E2E_TAXONOMY_SCREENSHOT=stages/12_quality_gate_main/references/taxonomy-comparison.png",
-      "result": "passed; real ranking compares PT, Justice without asserted party, Music without asserted party, and Antonia Fontenelle as PSDB"
+      "result": "passed; E2E fixture of four people displays PT, Justice without asserted party, Music without asserted party, and Antonia Fontenelle as PSDB; this is visual fixture evidence, not a claim about the real catalog"
     },
     {
       "name": "workflow-yaml",
@@ -54,8 +57,8 @@
     }
   ],
   "pending": [
-    "human review of 78 inferred primary areas",
-    "attribute-level editorial research for 40 ambiguous parties and 102 ambiguous context affiliations",
+    "human review of 111 inferred primary areas and the one inferred context affiliation",
+    "attribute-level editorial research for 40 ambiguous parties and 106 ambiguous context affiliations",
     "automatic GitHub Actions run on pull_request",
     "human gate"
   ]

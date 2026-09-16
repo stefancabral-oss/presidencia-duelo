@@ -1,6 +1,12 @@
 import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import { TOPICS } from "../src/candidates.js";
-import { assetApprovalFingerprint, candidateContentFingerprint, createCandidateRegistry, sha256Fingerprint } from "../src/editorial-gate.js";
+import {
+  PUBLIC_CANDIDATE_SCHEMA_V2,
+  assetApprovalFingerprint,
+  candidateContentFingerprint,
+  createCandidateRegistry,
+  sha256Fingerprint,
+} from "../src/editorial-gate.js";
 import {
   attachTestAttestations,
   createTestApprovalAuthority,
@@ -64,7 +70,7 @@ export function createEditorialTestRegistry({
       candidateId: candidate.id,
       content: {
         status: "approved",
-        fingerprint: candidateContentFingerprint(candidate),
+        fingerprint: candidateContentFingerprint(candidate, { ruleset: PUBLIC_CANDIDATE_SCHEMA_V2 }),
         ...audit("Conteúdo editorial de fixture"),
       },
       cardArt: { status: "approved", fingerprint: assetApprovalFingerprint(cardAsset), ...audit("Arte de carta de fixture") },
@@ -77,7 +83,7 @@ export function createEditorialTestRegistry({
     topics: TOPICS,
     ledger: { schemaVersion: 1, decisions },
     assetRegistry: { schemaVersion: 1, assets },
-  });
+  }, { contentRuleset: PUBLIC_CANDIDATE_SCHEMA_V2 });
   const authority = createTestApprovalAuthority(inputs);
   return createCandidateRegistry({
     ...inputs,

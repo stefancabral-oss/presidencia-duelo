@@ -66,10 +66,12 @@ Os arquivos `shared/editorial-publication-ledger.json` e `shared/editorial-asset
 ## API e persistência
 
 - `/api/candidates` devolve apenas pessoas elegíveis.
+- A API corrente projeta o catálogo pela taxonomia `candidate-public-v2`; o projector `candidate-public-v1` permanece congelado para snapshots históricos.
 - Tópicos ausentes ou inativos devolvem lista vazia mesmo que uma pessoa aprovada possua aquele `topicId` derivado.
 - O teste HTTP injeta duas pessoas, aprova apenas uma e comprova que a pendente não aparece em nenhum trecho do JSON.
 - Fingerprints, `decidedBy`, atestação e evidência permanecem internos; a API pública recebe somente estados e procedência pública por `candidatePublicPayload`.
-- Snapshots diários devem resolver `candidatePublicSnapshot` pelo schema persistido. O v1 histórico não é substituído pelo v2 e nenhum deles copia o candidato interno.
+- Snapshots diários resolvem `candidatePublicSnapshot` pelo schema persistido. O v1 histórico não é substituído pelo v2 e nenhum deles copia metadados internos do registry.
+- A integração mantém os locks da rodada diária e da aposta, inclusive replay histórico com o catálogo e o ruleset registrados no snapshot.
 - O store PostgreSQL aceita um registry injetado. Smokes usam fixtures explicitamente aprovadas; produção usa somente o ledger real, sem bypass por ambiente.
 - Reinicializações continuam preenchendo `ranking_stats` e `player_stats` apenas para o conjunto atualmente elegível.
 
@@ -94,10 +96,12 @@ Capturas Chromium em 390 × 844:
 ## Validação local
 
 - `npm run editorial:verify --prefix back`: aprovado; policy e estado real foram validados com `0 decisões atestadas; 0 decisões autorizadas externamente; 0 candidatos publicáveis`.
-- `npm test`: aprovado, 166/166 testes (4 shared, 96 back, 66 app).
-- `npm run build --prefix app`: aprovado; verificação editorial reportou `Assets editoriais íntegros: 0` e o Vite gerou o bundle.
-- Chromium: interação, gate editorial, 3 telas × 16 viewports, recuperação de voto e estados de confiança aprovados.
-- WebKit: a mesma matriz completa aprovada.
+- `npm test`: aprovado, 223/223 testes (16 shared, 119 back, 88 app).
+- `npm run build --prefix app`: aprovado com `VITE_GOOGLE_CLIENT_ID` de E2E; verificação editorial reportou `Assets editoriais íntegros: 0`, o inventário de retratos reportou `99/125` e o Vite gerou o bundle.
+- `npm audit --omit=dev --prefix app`: aprovado, 0 vulnerabilidades.
+- `npm audit --omit=dev --prefix back`: aprovado, 0 vulnerabilidades.
+- Chromium: os nove cenários foram aprovados — interação, sessão diária, aposta diária, troca de identidade durante a aposta, gate editorial, 3 telas × 16 viewports, recuperação de voto, estados de confiança e fluxo com Google simulado.
+- WebKit: os mesmos nove cenários foram aprovados.
 - `npm run editorial:fingerprint --prefix back -- content lula`: comando aprovado.
 - `npm run editorial:fingerprint --prefix back -- asset app/public/brand/logo-volumetric.png`: comando aprovado.
 - Compatibilidade cruzada: os 125 snapshots `candidate-public-v1` ficaram byte a byte iguais ao projector da #179 e os 125 snapshots v2, iguais ao projector corrente da #173.
@@ -105,5 +109,7 @@ Capturas Chromium em 390 × 844:
 ## Limite local e human gate
 
 Não há Docker, `psql`, serviço PostgreSQL nem `DATABASE_URL` disponíveis nesta estação; por isso, `topic-store-smoke.mjs` e `vote-abuse-smoke.mjs` não puderam ser executados localmente. Ambos permanecem vinculados ao job PostgreSQL 16 de `.github/workflows/back-shared.yml`, agora com registry de fixture explícito.
+
+O job remoto `back-integration-postgres` permanece como prova obrigatória antes de qualquer conclusão sobre integração PostgreSQL; a ausência local foi registrada como limite, não convertida em sucesso.
 
 Nenhum perfil real foi aprovado nesta implementação. A liberação de cada pessoa depende das decisões humanas individualizadas e dos recibos emitidos pela autoridade externa definida em `docs/editorial/PUBLICATION_GOVERNANCE.md`.

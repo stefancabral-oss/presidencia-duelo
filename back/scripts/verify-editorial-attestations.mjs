@@ -5,6 +5,7 @@ import EDITORIAL_LEDGER from "../../shared/editorial-publication-ledger.json" wi
 import { TOPICS } from "../src/candidates.js";
 import { approvalAuthorityFromEnvironment } from "../src/editorial-authority.js";
 import { createCandidateRegistry } from "../src/editorial-gate.js";
+import { PUBLIC_CANDIDATE_SCHEMA_V2 } from "../src/candidate-public.js";
 import { createGitReviewedStateVerifier } from "../src/editorial-history.js";
 import { loadRepositoryFile, REPOSITORY_ROOT, statRepositoryFile } from "../src/repository-files.js";
 
@@ -23,6 +24,7 @@ const registry = createCandidateRegistry({
   statRepositoryFile,
   verifyReviewedState: createGitReviewedStateVerifier({ repositoryRoot: REPOSITORY_ROOT }),
   verifyApprovalAuthority,
+  contentRuleset: PUBLIC_CANDIDATE_SCHEMA_V2,
 });
 
 if (registry.authority.deniedDecisions > 0) {

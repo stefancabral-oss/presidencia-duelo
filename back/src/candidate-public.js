@@ -309,7 +309,11 @@ function requireSnapshotFields(candidate, fields, schema) {
 
 function candidatePublicSnapshotV1(candidate) {
   requireSnapshotFields(candidate, CANDIDATE_PUBLIC_V1_SNAPSHOT_FIELDS, PUBLIC_CANDIDATE_SCHEMA_V1);
-  const payload = candidatePublicPayload(candidate, { ruleset: PUBLIC_CANDIDATE_SCHEMA_V1 });
+  // O snapshot é uma allowlist histórica; metadados internos presentes no
+  // objeto do registry não participam nem da validação nem da serialização.
+  const payload = candidatePublicPayload({ ...candidate, publication: undefined }, {
+    ruleset: PUBLIC_CANDIDATE_SCHEMA_V1,
+  });
   return immutableJsonSnapshot(Object.fromEntries(
     CANDIDATE_PUBLIC_V1_SNAPSHOT_FIELDS.map((field) => [field, payload[field]]),
   ));
@@ -317,7 +321,9 @@ function candidatePublicSnapshotV1(candidate) {
 
 function candidatePublicSnapshotV2(candidate) {
   requireSnapshotFields(candidate, CANDIDATE_PUBLIC_V2_SNAPSHOT_FIELDS, PUBLIC_CANDIDATE_SCHEMA_V2);
-  const payload = candidatePublicPayload(candidate, { ruleset: PUBLIC_CANDIDATE_SCHEMA_V2 });
+  const payload = candidatePublicPayload({ ...candidate, publication: undefined }, {
+    ruleset: PUBLIC_CANDIDATE_SCHEMA_V2,
+  });
   return immutableJsonSnapshot(Object.fromEntries(
     CANDIDATE_PUBLIC_V2_SNAPSHOT_FIELDS.map((field) => [field, payload[field]]),
   ));

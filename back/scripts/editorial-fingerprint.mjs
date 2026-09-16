@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import EDITORIAL_ASSETS from "../../shared/editorial-asset-registry.json" with { type: "json" };
 import {
-  PUBLIC_CANDIDATE_SCHEMA_V1,
+  PUBLIC_CANDIDATE_SCHEMA_V2,
   assetApprovalFingerprint,
   candidateContentFingerprint,
   candidateRoutingFingerprint,
@@ -18,11 +18,11 @@ const [kind, value, secondaryValue] = process.argv.slice(2);
 if (kind === "content") {
   const candidate = CATALOG.find(({ id }) => id === value);
   if (!candidate) throw new Error(`Candidato desconhecido: ${value || ""}`);
-  console.log(candidateContentFingerprint(candidate, { ruleset: secondaryValue || PUBLIC_CANDIDATE_SCHEMA_V1 }));
+  console.log(candidateContentFingerprint(candidate, { ruleset: secondaryValue || PUBLIC_CANDIDATE_SCHEMA_V2 }));
 } else if (kind === "routing") {
   const candidate = CATALOG.find(({ id }) => id === value);
   if (!candidate) throw new Error(`Candidato desconhecido: ${value || ""}`);
-  console.log(candidateRoutingFingerprint(candidate, { ruleset: secondaryValue || PUBLIC_CANDIDATE_SCHEMA_V1 }));
+  console.log(candidateRoutingFingerprint(candidate, { ruleset: secondaryValue || PUBLIC_CANDIDATE_SCHEMA_V2 }));
 } else if (kind === "asset") {
   if (!value) throw new Error("Informe o caminho do asset relativo ao repositório");
   const repositoryRoot = path.resolve(fileURLToPath(new URL("../../", import.meta.url)));

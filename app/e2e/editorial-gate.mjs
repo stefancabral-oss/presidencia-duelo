@@ -2,6 +2,7 @@ import { chromium, webkit } from "playwright";
 import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import { hasCuratedPortrait } from "../../shared/curated-portraits.js";
 import { approvedEditorialCandidates } from "./editorial-fixtures.mjs";
+import { completedDailySession } from "./daily-fixture.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -50,6 +51,9 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
   if (pathname === "/api/player/state") {
     return route.fulfill({ status: 200, json: { topicId: "eleicoes-2026", version: 0, duels: 0, ranking } });
   }
+  if (pathname === "/api/daily-session") {
+    return route.fulfill({ status: 200, json: completedDailySession(candidates) });
+  }
   return route.fulfill({ status: 404, json: { error: "mock não encontrado" } });
 });
 
@@ -64,7 +68,8 @@ try {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_EDITORIAL_HOME_SCREENSHOT, fullPage: true });
   }
 
-  await page.getByRole("button", { name: /Começar agora/ }).click();
+  await page.locator("#start-election").click();
+  await page.getByRole("button", { name: "Continuar no modo livre" }).click();
   await page.getByRole("heading", { name: "Quem você prefere?" }).waitFor();
   await page.getByRole("button", { name: "Começar rodada" }).click();
   await page.locator(".candidate-card").first().waitFor();

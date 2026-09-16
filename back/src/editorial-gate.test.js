@@ -338,6 +338,7 @@ test("candidate-public-v1 remains byte-stable and v2 is a separate strict schema
     primaryArea: "Política institucional",
     contextAffiliation: null,
     taxonomyProvenance: provenance,
+    topicIds: ["eleicoes-2026"],
   };
   const v2 = candidatePublicPayload(v2Candidate, { ruleset: PUBLIC_CANDIDATE_SCHEMA_V2 });
   assert.equal(v2.primaryArea, "Política institucional");

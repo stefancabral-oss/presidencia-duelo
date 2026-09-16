@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { confirmedVoteData } from "./vote-response.js";
+import { confirmedVoteData, LEGACY_REPLAY_MESSAGE } from "./vote-response.js";
 
 const candidates = ["a", "b", "c", "d"].map((id) => ({ id, name: id.toUpperCase() }));
 const ranking = candidates.map((candidate, index) => ({
@@ -19,11 +19,19 @@ function response(overrides = {}) {
     duels: 12,
     ranking,
     player: { duels: 4, version: 4, ranking, rankingPolicy: { id: "majority" } },
-    round: { id: "round-1" },
+    round: {
+      id: "round-1",
+      status: "created",
+      winnerId: "a",
+      candidateIds: ["a", "b", "c", "d"],
+    },
     vote: {
       id: "round-1",
       status: "created",
+      winnerId: "a",
+      candidateIds: ["a", "b", "c", "d"],
       comparisons: 3,
+      feedbackScope: "personal",
       personalFeedback: {
         primaryEvent: "confirm",
         zebra: false,
@@ -61,8 +69,107 @@ test("truncated, stale or divergent 200 responses are rejected", () => {
     () => confirmedVoteData(response(), candidates, { ...attempt, winnerId: "b" }),
     /rodada divergente/,
   );
+  const reordered = response();
+  reordered.round.candidateIds = ["b", "a", "c", "d"];
+  reordered.vote.candidateIds = ["b", "a", "c", "d"];
+  assert.throws(() => confirmedVoteData(reordered, candidates, attempt), /rodada divergente/);
   assert.throws(
     () => confirmedVoteData(response(), candidates, attempt, { globalDuels: 12, personalDuels: 4, playerVersion: 4 }),
     /progresso sem avanço/,
   );
+});
+
+test("numeric response fields never coerce null and ranks match played state", () => {
+  for (const field of ["elo", "wins", "losses", "decisions", "winRate"]) {
+    const invalid = response();
+    invalid.ranking = invalid.ranking.map((row, index) => (index ? { ...row } : { ...row, [field]: null }));
+    assert.throws(() => confirmedVoteData(invalid, candidates, attempt), /métricas de ranking/);
+  }
+
+  const nullOutcome = response();
+  nullOutcome.vote.personalFeedback.outcomes = nullOutcome.vote.personalFeedback.outcomes
+    .map((outcome, index) => (index ? { ...outcome } : { ...outcome, delta: null }));
+  assert.throws(() => confirmedVoteData(nullOutcome, candidates, attempt), /rodada divergente/);
+
+  const unplayedCandidate = { id: "e", name: "E" };
+  const unplayedRanking = {
+    ...unplayedCandidate,
+    elo: 1000,
+    wins: 0,
+    losses: 0,
+    decisions: 0,
+    zebras: 0,
+    winRate: 0,
+    rank: null,
+  };
+  const withUnplayed = response();
+  withUnplayed.ranking = [...withUnplayed.ranking.map((row) => ({ ...row })), { ...unplayedRanking }];
+  withUnplayed.player = {
+    ...withUnplayed.player,
+    ranking: [...withUnplayed.player.ranking.map((row) => ({ ...row })), { ...unplayedRanking }],
+  };
+  const extendedCandidates = [...candidates, unplayedCandidate];
+  assert.doesNotThrow(() => confirmedVoteData(withUnplayed, extendedCandidates, attempt));
+
+  withUnplayed.player.ranking.at(-1).rank = 1;
+  assert.throws(() => confirmedVoteData(withUnplayed, extendedCandidates, attempt), /métricas de player\.ranking/);
+
+  const playedWithoutRank = response();
+  playedWithoutRank.ranking = playedWithoutRank.ranking.map((row, index) => (index ? { ...row } : { ...row, rank: null }));
+  assert.throws(() => confirmedVoteData(playedWithoutRank, candidates, attempt), /métricas de ranking/);
+});
+
+test("only an exact legacy replay may omit personal outcomes", () => {
+  const legacy = response();
+  const globalFeedback = {
+    ...legacy.vote.personalFeedback,
+    rankingEvent: "top10",
+    primaryEvent: "top10",
+  };
+  const neutralPersonalFeedback = {
+    rankingEvent: "confirm",
+    primaryEvent: "confirm",
+    zebra: false,
+    outcomes: [],
+  };
+  legacy.round.status = "alreadyProcessed";
+  Object.assign(legacy.vote, {
+    status: "alreadyProcessed",
+    feedbackScope: "legacy-global",
+    feedback: neutralPersonalFeedback,
+    personalFeedback: neutralPersonalFeedback,
+    globalEvent: {
+      scope: "global",
+      rankingEvent: "top10",
+      winnerDelta: 3,
+      zebra: false,
+      feedback: globalFeedback,
+    },
+  });
+
+  const data = confirmedVoteData(legacy, candidates, attempt);
+  assert.equal(data.channels.personal.message, LEGACY_REPLAY_MESSAGE);
+  assert.deepEqual(data.channels.personal.outcomes, []);
+  assert.match(data.channels.global.message, /Top 10/);
+
+  for (const mutate of [
+    (payload) => { payload.round.status = "created"; payload.vote.status = "created"; },
+    (payload) => { payload.vote.feedbackScope = "personal"; },
+    (payload) => { payload.vote.personalFeedback = { ...neutralPersonalFeedback, source: "legacy" }; },
+  ]) {
+    const invalid = structuredClone(legacy);
+    mutate(invalid);
+    assert.throws(() => confirmedVoteData(invalid, candidates, attempt), /rodada divergente/);
+  }
+});
+
+test("a newly created response can never omit personal outcomes", () => {
+  const created = response();
+  created.vote.personalFeedback = {
+    rankingEvent: "confirm",
+    primaryEvent: "confirm",
+    zebra: false,
+    outcomes: [],
+  };
+  assert.throws(() => confirmedVoteData(created, candidates, attempt), /rodada divergente/);
 });

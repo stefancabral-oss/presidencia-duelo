@@ -3,6 +3,11 @@ export async function revokeSessionBeforeClearing(accessToken, { endSession, cle
   clearLocalSession();
 }
 
+export function isCurrentVoteIdentity(state, attempt) {
+  return Number(state.identityEpoch || 0) === attempt.epoch
+    && state.recoveryKey === attempt.recoveryKey;
+}
+
 /**
  * Abandona qualquer tentativa ligada ao jogador anterior.
  *
@@ -12,6 +17,7 @@ export async function revokeSessionBeforeClearing(accessToken, { endSession, cle
  * mas começa uma confirmação nova e sem ambiguidade.
  */
 export function resetPendingVoteForIdentityChange(state, createRoundId = () => crypto.randomUUID()) {
+  state.identityEpoch = Number(state.identityEpoch || 0) + 1;
   state.roundId = createRoundId();
   state.pendingWinnerId = "";
   state.votePhase = "ready";

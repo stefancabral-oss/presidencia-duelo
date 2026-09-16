@@ -953,6 +953,8 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
           const round = {
             id: roundId,
             status: "alreadyProcessed",
+            winnerId,
+            candidateIds: [...roundCandidates],
             winnerDelta: Number(row.winner_delta),
             zebra: Boolean(row.zebra),
             ...channels,
@@ -1062,6 +1064,8 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
         const round = {
           id: roundId,
           status: "created",
+          winnerId,
+          candidateIds: [...roundCandidates],
           winnerDelta: primaryWinnerDelta,
           zebra: personalZebra,
           rankingEvent,

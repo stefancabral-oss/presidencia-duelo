@@ -70,6 +70,8 @@ function roundResponse(server, payload) {
   const round = {
     id: payload.roundId,
     status: "created",
+    winnerId: payload.winnerId,
+    candidateIds: [...payload.candidateIds],
     winnerDelta: 46,
     zebra: false,
     comparisons: 3,

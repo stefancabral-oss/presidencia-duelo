@@ -49,3 +49,50 @@ U05 nasceu de `main@dbf55ca`, depois da integração de U04 e dos hotfixes isola
 ## Human gate
 
 Stefan autorizou a integração automática das unidades que estiverem isoladas, revisadas, testadas e com CI verde. Essa autorização não substitui os gates técnicos nem permite empilhar #171 nesta PR.
+
+---
+
+## Unidade U04 — taxonomia editorial do catálogo (#173)
+
+### Objetivo
+
+Substituir a sobrecarga de `partido_ou_area` por um contrato editorial validável para as 125 pessoas, sem inferir fatos ausentes e sem corrigir somente o JSON derivado.
+
+### Escopo
+
+- fonte editorial própria para `party`, `primaryArea`, `contextAffiliation` e proveniência por atributo;
+- `role` extraído de `ocupacao_atual`, sem reutilizar partido ou área como cargo;
+- vocabulários fechados de partido e área, úteis à busca, filtros e ao futuro Espelho;
+- materialização determinística em `shared/elections-2026.json`;
+- validação única usada pelo gerador, por `test:shared` e pelo workflow de `back/shared`;
+- passagem dos campos pela allowlist da API, pelo ranking e pela interface;
+- correção de Antonia Fontenelle e teste de regressão.
+
+### Fora de escopo
+
+- inferir ideologia, situação/oposição, idade, gênero ou região;
+- preencher partido ou contexto quando a evidência atual é insuficiente;
+- promover perfis de `pending` para `published` sem revisão humana fonte a fonte;
+- abrir PR, publicar ou alterar banco de dados.
+
+### Critérios de aceite
+
+- 125 registros materializados com proveniência em `role`, `party`, `primaryArea` e `contextAffiliation`;
+- `party` contém somente sigla canônica ou `null`;
+- `primaryArea` usa exclusivamente o vocabulário versionado;
+- todo atributo `ambiguous` permanece sem valor;
+- busca indexa apenas nome, partido e área; filtros usam os campos estruturados;
+- carta e ranking exibem partido ou área, enquanto o perfil separa cargo, partido, área e contexto;
+- CI falha para prosa em partido, área aberta, vazamento em cargo ou proveniência inválida;
+- regeneração consecutiva produz hashes idênticos.
+
+### Evidências e handoff
+
+- `docs/data/CATALOG_TAXONOMY.md`
+- `stages/12_quality_gate_main/references/taxonomy-comparison.png`
+- `stages/12_quality_gate_main/output/taxonomy-173-HANDOFF.md`
+- `stages/12_quality_gate_main/output/taxonomy-173-verification.json`
+
+### Human gate
+
+Pendente: revisar as 78 classificações de área marcadas como `inferred`, as ausências ambíguas preservadas e o comportamento visual antes da integração em `main`.

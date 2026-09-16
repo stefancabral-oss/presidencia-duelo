@@ -49,3 +49,35 @@ U05 nasceu de `main@dbf55ca`, depois da integração de U04 e dos hotfixes isola
 ## Human gate
 
 Stefan autorizou a integração automática das unidades que estiverem isoladas, revisadas, testadas e com CI verde. Essa autorização não substitui os gates técnicos nem permite empilhar #171 nesta PR.
+
+## Unidade isolada U02 — persistência do DOM (#166)
+
+U02 é desenvolvida na branch `icm/12-u02-dom-persistence-166` sem alterar o estado nem os artefatos de U01. Seu objetivo é remover a reconstrução integral do frontend durante um voto e tornar observáveis os estados da rodada sem depender de refoco corretivo.
+
+### Escopo de U02
+
+- montar uma única vez shell, topbar, navegação, painéis, instrução, região viva e quatro slots de carta;
+- atualizar texto, atributos, classes, fotografias e resultados nos mesmos quatro controles;
+- registrar os eventos da aplicação uma vez, usando delegação para conteúdo dinâmico;
+- manter o botão votado focado e com foco visível durante confirmação, resultado e nova rodada;
+- anunciar `Confirmando`, o resultado confirmado e `Nova rodada disponível` pela mesma região `role="status"`;
+- provar identidade e foco com teste unitário e smoke real em Chromium e WebKit.
+
+### Exclusões de U02
+
+- caminho de teclado para abrir perfil, dica móvel e correção modal, que pertencem à #167;
+- mudanças de backend, contrato de voto, autenticação ou ranking;
+- validação assistiva simulada como substituta de NVDA ou VoiceOver humano;
+- alteração dos artefatos `HANDOFF.md` e `verification.json` de U01/#174.
+
+### Critérios de aceite de U02
+
+- topbar, navegação, `.round-instruction`, a região viva e os quatro slots preservam identidade durante um voto;
+- `document.activeElement` continua sendo o controle votado e o anel de foco segue visível após a nova rodada;
+- um `MutationObserver` registra zero substituições dos nós persistentes;
+- existe uma única região `role="status"`, montada vazia, que recebe os três anúncios em ordem;
+- testes do repositório, build e `interaction-smoke.mjs` permanecem verdes.
+
+### Human gate de U02
+
+Stefan Cabral precisa confirmar em leitor de tela real o que foi ouvido nos três estados e se o cursor virtual permanece no contexto da rodada. A evidência automática não fecha esse gate.

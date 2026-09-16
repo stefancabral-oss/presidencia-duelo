@@ -71,6 +71,8 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 const pageErrors = [];
+const roundVoteRequests = [];
+let failNextRoundVote = false;
 page.on("pageerror", (error) => pageErrors.push(error.message));
 
 if (googleEnabled) {
@@ -89,8 +91,18 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
   else if (path === "/api/player" && request.method() === "POST") body = { recoveryKey: "e2e-recovery-key" };
   else if (path === "/api/player/state") body = { version: 0, duels: 0, ranking: ranking() };
   else if (path === "/api/auth/google" && request.method() === "POST") body = { sessionToken: `pms_${"s".repeat(43)}`, account: { displayName: "Bia", avatarUrl: "" }, player: { version: 0, duels: 0, ranking: ranking(), account: { displayName: "Bia", avatarUrl: "" } } };
+  else if (path === "/api/auth/logout" && request.method() === "POST") {
+    await route.fulfill({ status: 204 });
+    return;
+  }
   else if (path === "/api/round-vote") {
     const payload = request.postDataJSON();
+    roundVoteRequests.push({ roundId: payload.roundId, authorization: request.headers().authorization || "" });
+    if (failNextRoundVote) {
+      failNextRoundVote = false;
+      await route.fulfill({ status: 503, json: { error: "falha passageira de teste" } });
+      return;
+    }
     const feedback = {
       primaryEvent: "tierUp",
       rankingEvent: "overtake",
@@ -158,6 +170,44 @@ try {
   await page.getByRole("button", { name: "Duelo" }).click();
   await page.getByRole("heading", { name: "Quem você prefere?" }).waitFor();
   await page.getByRole("button", { name: "Começar rodada" }).click();
+  if (googleEnabled) {
+    // Uma tentativa pertence à identidade que a iniciou. Login e logout devem
+    // abandonar o retry pendente e gerar outro roundId antes do próximo voto.
+    failNextRoundVote = true;
+    await page.locator(".candidate-card").first().click();
+    await page.locator("#retry-vote").waitFor();
+    const roundBeforeLogout = roundVoteRequests.at(-1)?.roundId;
+
+    await page.getByRole("button", { name: "Abrir sua conta" }).click();
+    await page.getByRole("button", { name: "Sair desta conta" }).click();
+    await page.getByText("Você saiu. Um jogo novo começou neste aparelho.").waitFor();
+    if (await page.locator("#retry-vote").count()) throw new Error("O logout preservou um voto pendente da conta anterior");
+
+    failNextRoundVote = true;
+    await page.locator(".candidate-card").first().click();
+    await page.locator("#retry-vote").waitFor();
+    const roundBeforeLogin = roundVoteRequests.at(-1)?.roundId;
+    if (!roundBeforeLogout || !roundBeforeLogin || roundBeforeLogout === roundBeforeLogin) {
+      throw new Error("O logout não rotacionou o roundId ligado à identidade anterior");
+    }
+
+    await page.getByRole("button", { name: "Salvar seu jogo com Google" }).click();
+    await page.getByRole("button", { name: "Continuar com Google" }).click();
+    await page.getByRole("heading", { name: "Tudo certo, Bia!" }).waitFor();
+    await page.getByRole("button", { name: "Voltar ao jogo" }).click();
+    if (await page.locator("#retry-vote").count()) throw new Error("O login preservou um voto pendente do jogador anônimo");
+
+    await page.locator(".candidate-card").first().click();
+    await page.getByText(/subiu de patente/i).waitFor();
+    const roundAfterLogin = roundVoteRequests.at(-1)?.roundId;
+    if (!roundAfterLogin || roundAfterLogin === roundBeforeLogin) {
+      throw new Error("O login não rotacionou o roundId ligado ao jogador anônimo");
+    }
+    await page.locator(".card-outcome").first().waitFor({ state: "hidden", timeout: 2500 });
+    // A confirmação ainda agenda uma última renderização para limpar a mensagem.
+    // Esperar por ela evita que o DOM seja trocado no meio dos gestos seguintes.
+    await page.getByText("Toque na sua preferida. Segure para conhecer o perfil.", { exact: true }).waitFor();
+  }
   const mobileCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
     const box = card.getBoundingClientRect();
     return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };

@@ -4,8 +4,12 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'front/**'
       - 'app/**'
+      # `shared/` entra no bundle do app (domain.js importa elo.js), então
+      # mudanças ali mudam o que este smoke exercita. `back/` fica de fora de
+      # propósito: o servidor aqui é simulado, e incluí-lo daria a impressão de
+      # uma cobertura de back que estes testes não têm.
+      - 'shared/**'
       - '.github/workflows/ui-interaction-smoke.yml'
   workflow_dispatch:
 
@@ -55,3 +59,8 @@ jobs:
         env:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
         run: node app/e2e/interaction-smoke.mjs
+
+      - name: Run vote recovery e2e
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/vote-recovery.mjs

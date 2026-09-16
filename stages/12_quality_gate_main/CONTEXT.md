@@ -25,9 +25,9 @@ Fazer cada mudança chegar à `main` com evidência automática da camada que el
 - nenhuma alteração, rebase ou resolução de conflito na PR #162;
 - nenhuma mudança nas issues #165–#173 ou #176.
 
-## Dependência de não conflito
+## Dependência resolvida sem sobreposição
 
-A PR #162 está aberta e altera `.github/workflows/ui-interaction-smoke.yml`. U01 não tocará esse arquivo enquanto a PR estiver ativa. Depois que #162 for resolvida e integrada, U01 deverá atualizar sua base e remover `front/**` desse workflow preservando o smoke de recuperação de voto.
+A PR #162 foi integrada em `main` pelo commit `6eed68a`. U01 atualizou sua base somente depois desse gate e removeu `front/**` de `.github/workflows/ui-interaction-smoke.yml`, preservando `app/**`, `shared/**` e o smoke de recuperação de voto trazido pela #162.
 
 ## Critérios de aceite
 

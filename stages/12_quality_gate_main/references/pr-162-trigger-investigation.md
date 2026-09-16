@@ -27,3 +27,12 @@ Os três runs associados à branch foram acionados manualmente (`event=workflow_
 ## Consequência para U01
 
 O diagnóstico satisfaz a alternativa de causa da issue #174, mas não autoriza misturar a recuperação de #162 nesta branch. A remoção de `front/**` em `.github/workflows/ui-interaction-smoke.yml` fica bloqueada até #162 ser resolvida; todos os demais arquivos de U01 permanecem independentes.
+
+## Confirmação após a resolução
+
+A PR #162 foi atualizada sem conflito, recebeu checks automáticos no evento `pull_request` e foi integrada em `main` pelo commit `6eed68a101c79276c3ce0d2f81b65d0433583e3a`:
+
+- Design Validator: https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35051211773
+- UI Interaction Smoke: https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35051211779
+
+Os dois runs passaram. O contraste entre o estado conflitante sem checks e o estado limpo com disparo automático confirma a causa documentada, sem necessidade de adotar `pull_request_target`.

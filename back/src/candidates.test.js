@@ -1,6 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { CANDIDATES, TOPICS, candidateBelongsToTopic, candidatesForTopic, serializeCandidate } from "./candidates.js";
+import {
+  CANDIDATES,
+  CURRENT_PUBLIC_CANDIDATE_SCHEMA,
+  PUBLIC_CANDIDATE_SCHEMA_V1,
+  PUBLIC_CANDIDATE_SCHEMA_V2,
+  TOPICS,
+  candidateBelongsToTopic,
+  candidateProjectorBySchema,
+  candidatesForTopic,
+  publicCandidate,
+  serializeCandidate,
+} from "./candidates.js";
 
 test("the rebuild exposes one active topic and two announced expansions", () => {
   assert.deepEqual(TOPICS.filter(({ active }) => active).map(({ id }) => id), ["eleicoes-2026"]);
@@ -49,4 +60,30 @@ test("serializes the real catalog through the public API allowlist", () => {
   assert.equal(antonia.party, "PSDB");
   assert.equal(antonia.primaryArea, "Comunicação digital");
   assert.equal(antonia.taxonomyProvenance.primaryArea.status, "inferred");
+});
+
+test("the public candidate projection excludes eligibility and editorial audit metadata", () => {
+  const projected = publicCandidate({
+    ...CANDIDATES[0],
+    secret: "never-public",
+    fingerprint: "internal-fingerprint",
+    eligible: true,
+    publication: { audit: { decidedBy: "reviewer@example.com", basis: "internal" } },
+  });
+  assert.equal(projected.id, CANDIDATES[0].id);
+  assert.equal(projected.bio, CANDIDATES[0].bio);
+  assert.equal(projected.reviewStatus, CANDIDATES[0].reviewStatus);
+  assert.deepEqual(projected.topicIds, CANDIDATES[0].topicIds);
+  for (const field of ["secret", "fingerprint", "eligible", "publication", "photoApproved", "group", "area", "affiliation", "office"]) {
+    assert.equal(Object.hasOwn(projected, field), false, `${field} vazou na projeção pública`);
+  }
+  assert.equal(CURRENT_PUBLIC_CANDIDATE_SCHEMA, PUBLIC_CANDIDATE_SCHEMA_V2);
+  assert.deepEqual(candidateProjectorBySchema(PUBLIC_CANDIDATE_SCHEMA_V2)(CANDIDATES[0]), projected);
+  assert.deepEqual(serializeCandidate(CANDIDATES[0]), projected);
+
+  const historicalV1 = candidateProjectorBySchema(PUBLIC_CANDIDATE_SCHEMA_V1)(CANDIDATES[0]);
+  assert.equal(Object.hasOwn(historicalV1, "affiliation"), true);
+  assert.equal(Object.hasOwn(historicalV1, "primaryArea"), false);
+  assert.equal(Object.hasOwn(historicalV1, "taxonomyProvenance"), false);
+  assert.throws(() => candidateProjectorBySchema("candidate-public-v999"), /não suportado/);
 });

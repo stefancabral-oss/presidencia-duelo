@@ -6,6 +6,7 @@ PoliMatch é um jogo web casual de comparação entre personalidades públicas. 
 
 - Interface reconstruída na direção `Malaquita 2026 / Digital First`.
 - Aplicação online-only: um voto só altera a tela depois da confirmação do servidor.
+- Rodada do dia com dez escolhas fixas de quatro cartas, iguais para todos na mesma data editorial de São Paulo; o progresso retoma no slot autoritativo.
 - Duelo contínuo; o ranking abre apenas quando a pessoa pedir.
 - Toque na carta escolhe; pressão longa abre a ficha educativa sem votar.
 - Carta padrão neutra para todos.
@@ -92,8 +93,11 @@ O contrato de `role`, `party`, `primaryArea`, `contextAffiliation` e da proveni�
 | `GET` | `/api/ranking?topic=eleicoes-2026` | ranking agregado |
 | `POST` | `/api/player` | cria identidade anônima e chave de recuperação |
 | `GET` | `/api/player/state?topic=eleicoes-2026` | ranking pessoal; exige chave Bearer |
+| `GET` | `/api/daily-session?topic=eleicoes-2026` | edição diária e progresso autoritativo do jogador; exige chave Bearer |
+| `GET` | `/api/daily-cut?topic=eleicoes-2026&date=AAAA-MM-DD` | recorte público imutável de uma edição já fechada, com as 40 fichas históricas |
 | `POST` | `/api/auth/google` | valida a credencial Google no servidor, liga a conta ao jogador atual e emite uma sessão própria |
 | `POST` | `/api/auth/logout` | revoga a sessão própria atual |
+| `POST` | `/api/daily-vote` | confirma o próximo slot diário por `editionId`, `slot`, `winnerId` e `answerId`; a ordem das cartas nunca vem do cliente |
 | `POST` | `/api/round-vote` | confirma uma escolha entre quatro pessoas numa transação; exige `roundId`, `winnerId`, quatro `candidateIds` únicos e `playerVersion` |
 | `POST` | `/api/vote` | endpoint binário aposentado; responde `410 ROUND_V4_REQUIRED` para impedir contagem incompatível por clientes antigos |
 
@@ -110,6 +114,8 @@ Exemplo do corpo atual:
 ```
 
 O PostgreSQL guarda somente hashes das chaves de recuperação e sessões. O token de identidade do Google não é persistido; a ligação usa o `sub` validado pelo servidor. A rodada é idempotente e imutável; ela avança a escolha uma vez e mantém três comparações Elo vinculadas ao mesmo `roundId`. Escritas exigem sessão emitida pelo servidor e seguem a [política de integridade do voto](docs/security/VOTE_ABUSE_POLICY.md).
+
+A edição diária persiste ruleset, versão da ficha pública (`catalogSchema`), janela, dez slots e o snapshot editorial completo antes do primeiro jogador. Retirar uma pessoa ou ampliar a projeção da API corrente não reescreve a edição aberta nem seu recorte: sessões históricas e cortes publicados continuam autoexplicativos pelo snapshot e seus hashes. Um schema novo só estreia junto de um ruleset novo, numa data ainda não materializada. Somente sessões concluídas em `10/10` entram no recorte público.
 
 ## Deploy no Dokploy
 

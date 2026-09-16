@@ -52,55 +52,88 @@ export function candidatesForTopic(topicId) {
   return CANDIDATES.filter((candidate) => candidate.photoApproved && candidate.topicIds.includes(topicId));
 }
 
+export const PUBLIC_CANDIDATE_SCHEMA_V1 = "candidate-public-v1";
+export const PUBLIC_CANDIDATE_SCHEMA_V2 = "candidate-public-v2";
+export const CURRENT_PUBLIC_CANDIDATE_SCHEMA = PUBLIC_CANDIDATE_SCHEMA_V2;
+
+// O schema v1 é imutável: novas fichas públicas ganham outro projector e outro
+// identificador. Assim uma edição diária já materializada nunca é reescrita
+// quando a API corrente acrescenta, remove ou normaliza campos.
+const PUBLIC_CANDIDATE_FIELDS_V1 = Object.freeze([
+  "personId",
+  "id",
+  "name",
+  "displayName",
+  "affiliation",
+  "photo",
+  "role",
+  "summary",
+  "office",
+  "party",
+  "location",
+  "bio",
+  "relevance2026",
+  "facts",
+  "highlight",
+  "controversy",
+  "sources",
+  "reviewedAt",
+  "reviewStatus",
+  "topicIds",
+]);
+
+// O schema v2 é a projeção pública da taxonomia estruturada. Ele não altera o
+// v1 usado pelas edições diárias já materializadas.
+const PUBLIC_CANDIDATE_FIELDS_V2 = Object.freeze([
+  "personId",
+  "id",
+  "name",
+  "displayName",
+  "photo",
+  "role",
+  "party",
+  "primaryArea",
+  "contextAffiliation",
+  "taxonomyProvenance",
+  "summary",
+  "location",
+  "bio",
+  "relevance2026",
+  "facts",
+  "highlight",
+  "controversy",
+  "sources",
+  "reviewedAt",
+  "reviewStatus",
+  "topicIds",
+]);
+
+function projectCandidateFields(candidate, fields) {
+  return Object.fromEntries(fields.map((field) => [field, candidate?.[field]]));
+}
+
+const PUBLIC_CANDIDATE_PROJECTORS = new Map([
+  [PUBLIC_CANDIDATE_SCHEMA_V1, (candidate) => projectCandidateFields(candidate, PUBLIC_CANDIDATE_FIELDS_V1)],
+  [PUBLIC_CANDIDATE_SCHEMA_V2, (candidate) => projectCandidateFields(candidate, PUBLIC_CANDIDATE_FIELDS_V2)],
+]);
+
+export function candidateProjectorBySchema(schema) {
+  const projector = PUBLIC_CANDIDATE_PROJECTORS.get(String(schema || ""));
+  if (!projector) throw new Error(`schema público histórico não suportado: ${schema}`);
+  return projector;
+}
+
+// Projeção corrente da API. Snapshots históricos não chamam este alias: eles
+// resolvem explicitamente o schema gravado na edição.
+export function publicCandidate(candidate = {}) {
+  return candidateProjectorBySchema(CURRENT_PUBLIC_CANDIDATE_SCHEMA)(candidate);
+}
+
 export function candidateBelongsToTopic(candidateId, topicId) {
   const candidate = CANDIDATES_BY_ID.get(candidateId);
   return candidate?.photoApproved === true && candidate.topicIds.includes(topicId);
 }
 
-export function serializeCandidate({
-  personId,
-  id,
-  name,
-  displayName,
-  photo,
-  role,
-  party,
-  primaryArea,
-  contextAffiliation,
-  taxonomyProvenance,
-  summary,
-  location,
-  bio,
-  relevance2026,
-  facts,
-  highlight,
-  controversy,
-  sources,
-  reviewedAt,
-  reviewStatus,
-  topicIds,
-}) {
-  return {
-    personId,
-    id,
-    name,
-    displayName,
-    photo,
-    role,
-    party,
-    primaryArea,
-    contextAffiliation,
-    taxonomyProvenance,
-    summary,
-    location,
-    bio,
-    relevance2026,
-    facts,
-    highlight,
-    controversy,
-    sources,
-    reviewedAt,
-    reviewStatus,
-    topicIds,
-  };
+export function serializeCandidate(candidate = {}) {
+  return candidateProjectorBySchema(PUBLIC_CANDIDATE_SCHEMA_V2)(candidate);
 }

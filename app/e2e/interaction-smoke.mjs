@@ -3,6 +3,7 @@ import { writeFile } from "node:fs/promises";
 import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import { hasCuratedPortrait } from "../../shared/curated-portraits.js";
 import { compactTaxonomyLabel } from "../../shared/catalog-taxonomy.js";
+import { completedDailySession } from "./daily-fixture.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -146,16 +147,15 @@ const page = await context.newPage();
 const pageErrors = [];
 const roundVoteRequests = [];
 let failNextRoundVote = false;
+let failNextDailySession = false;
 let holdNextSuccessfulRoundVote = false;
 let successfulRoundVotes = 0;
 page.on("pageerror", (error) => pageErrors.push(error.message));
 
-if (googleEnabled) {
-  await page.route("https://accounts.google.com/gsi/client", (route) => route.fulfill({
-    contentType: "application/javascript",
-    body: `window.google={accounts:{id:{initialize(options){window.__polimatchGoogleCallback=options.callback},renderButton(element){const button=document.createElement('button');button.type='button';button.textContent='Continuar com Google';button.addEventListener('click',()=>window.__polimatchGoogleCallback({credential:'mock-google-id-token'}));element.replaceChildren(button)}}}};`,
-  }));
-}
+await page.route("https://accounts.google.com/gsi/client", (route) => route.fulfill({
+  contentType: "application/javascript",
+  body: `window.google={accounts:{id:{initialize(options){window.__polimatchGoogleCallback=options.callback},renderButton(element){const button=document.createElement('button');button.type='button';button.textContent='Continuar com Google';button.addEventListener('click',()=>window.__polimatchGoogleCallback({credential:'mock-google-id-token'}));element.replaceChildren(button)}}}};`,
+}));
 
 await page.route(/\/api(?:\/|$)/, async (route) => {
   const request = route.request();
@@ -165,6 +165,14 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
   else if (path === "/api/ranking") body = { duels: 0, ranking: ranking() };
   else if (path === "/api/player" && request.method() === "POST") body = { recoveryKey: "e2e-recovery-key" };
   else if (path === "/api/player/state") body = { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking() };
+  else if (path === "/api/daily-session") {
+    if (failNextDailySession) {
+      failNextDailySession = false;
+      await route.fulfill({ status: 503, json: { error: "serviço diário indisponível" } });
+      return;
+    }
+    body = completedDailySession(candidates);
+  }
   else if (path === "/api/auth/google" && request.method() === "POST") body = { sessionToken: `pms_${"s".repeat(43)}`, account: { displayName: "Bia", avatarUrl: "" }, player: { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking(), account: { displayName: "Bia", avatarUrl: "" } } };
   else if (path === "/api/auth/logout" && request.method() === "POST") {
     await route.fulfill({ status: 204 });
@@ -262,6 +270,7 @@ try {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_AUTH_SCREENSHOT });
   }
   if (googleEnabled) {
+    failNextDailySession = true;
     await page.getByRole("button", { name: "Continuar com Google" }).click();
     await page.getByRole("heading", { name: "Tudo certo, Bia!" }).waitFor();
     const storedToken = await page.evaluate(() => localStorage.getItem("polimatch:v3:recovery-key"));
@@ -273,6 +282,7 @@ try {
   }
   if (await page.locator(".auth-overlay").count()) throw new Error("A entrada com Google bloqueou quem prefere continuar anonimamente");
   await page.getByRole("button", { name: "Duelo" }).click();
+  await page.getByRole("button", { name: "Continuar no modo livre" }).click();
   await page.getByRole("heading", { name: "Quem você prefere?" }).waitFor();
   await page.getByRole("button", { name: "Começar rodada" }).click();
   if (googleEnabled) {
@@ -284,9 +294,17 @@ try {
     const roundBeforeLogout = roundVoteRequests.at(-1)?.roundId;
 
     await page.getByRole("button", { name: "Abrir sua conta" }).click();
+    failNextDailySession = true;
     await page.getByRole("button", { name: "Sair desta conta" }).click();
-    await page.getByText("Você saiu. Um jogo novo começou neste aparelho.").waitFor();
+    await page.getByRole("heading", { name: "Não conseguimos atualizar a rodada." }).waitFor();
+    if (!await page.getByRole("button", { name: "Salvar seu jogo com Google" }).isVisible()) {
+      throw new Error("A falha diária pós-logout deixou a conta revogada aparecendo como conectada");
+    }
+    if (await page.evaluate(() => localStorage.getItem("polimatch:v3:recovery-key")) !== "e2e-recovery-key") {
+      throw new Error("A falha diária pós-logout restaurou o token revogado");
+    }
     if (await page.locator("#retry-vote").count()) throw new Error("O logout preservou um voto pendente da conta anterior");
+    await page.getByRole("button", { name: "Ir para o modo livre" }).click();
 
     failNextRoundVote = true;
     await page.locator(".candidate-card").first().click();
@@ -297,10 +315,16 @@ try {
     }
 
     await page.getByRole("button", { name: "Salvar seu jogo com Google" }).click();
+    failNextDailySession = true;
     await page.getByRole("button", { name: "Continuar com Google" }).click();
     await page.getByRole("heading", { name: "Tudo certo, Bia!" }).waitFor();
     await page.getByRole("button", { name: "Voltar ao jogo" }).click();
+    await page.getByRole("heading", { name: "Não conseguimos atualizar a rodada." }).waitFor();
+    if (!await page.getByRole("button", { name: "Abrir sua conta" }).isVisible()) {
+      throw new Error("A falha diária pós-login desfez a identidade já confirmada");
+    }
     if (await page.locator("#retry-vote").count()) throw new Error("O login preservou um voto pendente do jogador anônimo");
+    await page.getByRole("button", { name: "Ir para o modo livre" }).click();
 
     await page.locator(".candidate-card").first().click();
     await page.getByText(/subiu de patente/i).waitFor();
@@ -372,7 +396,7 @@ try {
     throw new Error("A anatomia móvel perdeu a carta de cerca de 280px com retrato dominante");
   }
   if (cardHierarchyEvidence.geometry.skipToNavGap < 12 || cardHierarchyEvidence.geometry.skipToNavGap > 40) {
-    throw new Error("O espaço entre a rodada e a navegação não foi redistribuído pela nova carta");
+    throw new Error(`O espaço entre a rodada e a navegação não foi redistribuído pela nova carta: ${cardHierarchyEvidence.geometry.skipToNavGap}px`);
   }
   if (cardHierarchyEvidence.typography.brand.display !== "none") {
     throw new Error("A assinatura textual microscópica reapareceu no card móvel");
@@ -620,7 +644,7 @@ try {
   await page.locator(".card-outcome").first().waitFor({ state: "hidden", timeout: 2500 });
   await page.getByRole("button", { name: "Ranking" }).click();
   await page.getByRole("heading", { name: "Ranking" }).waitFor();
-  await page.getByText("1 escolha confirmada").waitFor();
+  await page.getByText(`${successfulRoundVotes} ${successfulRoundVotes === 1 ? "escolha confirmada" : "escolhas confirmadas"}`).waitFor();
   await page.getByText("Mais derrotas").waitFor();
   if (!await page.getByPlaceholder("Buscar por nome, partido ou área").isVisible()) throw new Error("A busca não descreve os campos estruturados");
   if (!await page.getByLabel("Partido").isVisible() || !await page.getByLabel("Área").isVisible()) throw new Error("Filtros estruturados ausentes");

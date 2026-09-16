@@ -103,6 +103,16 @@ export function loadPlayerRanking(recoveryKey, topicId = "eleicoes-2026") {
   });
 }
 
+export function loadDailySession(recoveryKey, topicId = "eleicoes-2026") {
+  return requestJson(`/api/daily-session?topic=${encodeURIComponent(topicId)}`, {
+    headers: { Authorization: `Bearer ${recoveryKey}` },
+  });
+}
+
+export function loadDailyCut(date, topicId = "eleicoes-2026") {
+  return requestJson(`/api/daily-cut?topic=${encodeURIComponent(topicId)}&date=${encodeURIComponent(date)}`);
+}
+
 export function exchangeGoogleCredential(credential, currentToken, topicId = "eleicoes-2026") {
   return requestJson("/api/auth/google", {
     method: "POST",
@@ -157,6 +167,24 @@ export function submitRoundVote(roundId, winnerId, candidateIds, topicId = "elei
       roundId,
       winnerId,
       candidateIds,
+      topicId,
+      playerVersion: player.version,
+    }),
+  });
+}
+
+export function submitDailyVote(answerId, editionId, slot, winnerId, topicId = "eleicoes-2026", player = {}) {
+  return requestJson("/api/daily-vote", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(player.recoveryKey ? { Authorization: `Bearer ${player.recoveryKey}` } : {}),
+    },
+    body: JSON.stringify({
+      answerId,
+      editionId,
+      slot,
+      winnerId,
       topicId,
       playerVersion: player.version,
     }),

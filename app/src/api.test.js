@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ApiError, requestJson } from "./api.js";
+import { ApiError, requestJson, submitDailyVote } from "./api.js";
 
 async function withFetch(fakeFetch, callback) {
   const originalFetch = globalThis.fetch;
@@ -121,4 +121,30 @@ test("an aborted response body remains a timeout, not BAD_PAYLOAD", async () => 
     globalThis.setTimeout = originalSetTimeout;
     globalThis.clearTimeout = originalClearTimeout;
   }
+});
+
+test("daily vote requests never send a client candidate list", async () => {
+  let request;
+  await withFetch(
+    async (_url, options) => {
+      request = options;
+      return { ok: true, status: 200, json: async () => ({ ok: true }) };
+    },
+    async () => submitDailyVote(
+      "550e8400-e29b-41d4-a716-446655440000",
+      "edition-1",
+      4,
+      "lula",
+      "eleicoes-2026",
+      { recoveryKey: "pm2_player", version: 3 },
+    ),
+  );
+  assert.deepEqual(JSON.parse(request.body), {
+    answerId: "550e8400-e29b-41d4-a716-446655440000",
+    editionId: "edition-1",
+    slot: 4,
+    winnerId: "lula",
+    topicId: "eleicoes-2026",
+    playerVersion: 3,
+  });
 });

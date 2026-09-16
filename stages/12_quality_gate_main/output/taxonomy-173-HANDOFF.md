@@ -9,10 +9,11 @@
 - PR: `não aberta por instrução`
 - Commit de implementação: `3cc16091720b523ba9d38b86ae95614e2ef656fd`
 - Commit de correção adversarial: `896085aaddfc93d348154cbfb252303f03e00c52`
+- Commit de validação semântica: `acc9b34107fce3d002f38d62b33fcdb480833082`
 
 ## Causa corrigida
 
-O gerador copiava `partido_ou_area` simultaneamente para cargo, afiliação e partido e criava uma área genérica. A mesma prosa passava pela API e era indexada pela busca. A primeira correção estruturou os campos, mas a revisão adversarial mostrou que o validador ainda aceitava nomes de fonte sem resolvê-los e não confrontava um valor `extracted` com a evidência. O contrato v2 agora resolve cada ponteiro no catálogo real, compara o valor e bloqueia a geração quando a evidência diverge.
+O gerador copiava `partido_ou_area` simultaneamente para cargo, afiliação e partido e criava uma área genérica. A mesma prosa passava pela API e era indexada pela busca. A primeira correção estruturou os campos, mas duas revisões adversariais mostraram que não bastava resolver a fonte nem procurar o token literalmente: `PL` em `órbita PL` e `direita` em `Novo / direita` ainda podiam voltar ao campo errado. O contrato v2 agora resolve cada ponteiro no catálogo real e exige uma relação semântica específica por campo.
 
 ## Entregue
 
@@ -20,7 +21,9 @@ O gerador copiava `partido_ou_area` simultaneamente para cargo, afiliação e pa
 - Fonte editorial com 125 registros, ligada por nome aos 125 perfis.
 - Vocabulário fechado de 16 siglas partidárias e 11 áreas.
 - Quatro ponteiros permitidos, resolvidos contra os arquivos editoriais reais; fonte desconhecida, ausente ou vazia falha.
-- `extracted` precisa ser literal na fonte; as únicas normalizações lexicais de partido ficam no mapa explícito `TAXONOMY_NORMALIZATIONS.version = 1`.
+- Partido `extracted` exige declaração no primeiro segmento legado ou frase explícita de filiação; uma sigla citada apenas como contexto é rejeitada.
+- Contexto `extracted` precisa constar no registro institucional fechado `TAXONOMY_CONTEXT_EXTRACTIONS.version = 1`, com ponteiro permitido e literal comprovável.
+- As únicas normalizações lexicais de partido ficam no mapa explícito `TAXONOMY_NORMALIZATIONS.version = 1`.
 - Reclassificação dos 33 mapeamentos semânticos de área de `extracted` para `inferred`.
 - Remoção de contextos que eram ideologia/canal de atuação, sem inventar vínculo: André Janones, Jones Manoel, Carla Zambelli e Deltan Dallagnol ficaram `null`/`ambiguous`.
 - Proveniência preservada no JSON gerado e na allowlist da API.
@@ -43,8 +46,9 @@ Nenhum valor foi criado para um atributo ambíguo. `ambiguous` significa falta d
 
 ## Testes e evidências
 
-- `npm run test:shared`: 11/11 testes e validação estrutural/evidencial dos 125 registros.
-- `npm test`: 73/73 testes (11 shared, 20 back, 42 app).
+- `npm run test:shared`: 14/14 testes e validação estrutural/evidencial/semântica dos 125 registros.
+- `npm test`: 76/76 testes (14 shared, 20 back, 42 app).
+- Regressões negativas reais: Paulo Guedes não pode receber `PL` a partir de `órbita PL`; Guilherme Boulos, Jones Manoel, Carla Zambelli e Deltan Dallagnol não podem recuperar rótulos categoriais como contexto; a filiação explícita de Gracyanne continua válida.
 - `npm run build`: aprovado; 99/125 retratos presentes e bundle Vite produzido.
 - E2E Chromium e WebKit: navegação, rodada, perfil estruturado, busca, filtros, ranking e limpeza de filtros na troca de visão aprovados.
 - Regeneração consecutiva: hashes SHA-256 idênticos para candidatos e Chromas.

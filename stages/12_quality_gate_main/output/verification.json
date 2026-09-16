@@ -1,0 +1,58 @@
+{
+  "status": "local-checks-passed-ci-pending",
+  "issue": 174,
+  "macroIssue": 175,
+  "baseSha": "fa06277722761c6a183492c2a401c27464f28225",
+  "checks": [
+    {
+      "name": "conflict-scan",
+      "command": "gh pr list --state open --json number,headRefName,headRefOid,mergeable,mergeStateStatus,files; gh pr view 162 --json mergeable,mergeStateStatus,statusCheckRollup",
+      "result": "passed; PR #162 is the only open PR and overlaps only .github/workflows/ui-interaction-smoke.yml in this unit"
+    },
+    {
+      "name": "pr-162-trigger-cause",
+      "command": "gh pr view 162 --json baseRefOid,headRefOid,mergeable,mergeStateStatus,statusCheckRollup; gh run view 35040127075 --json event,headSha,url; gh run view 35040124969 --json event,headSha,url; gh run view 35040808480 --json event,headSha,url",
+      "result": "explained; PR #162 is conflicting and all three observed workflow runs used workflow_dispatch"
+    },
+    {
+      "name": "back-unit",
+      "command": "npm test --prefix back",
+      "result": "passed; 17 of 17 behavior tests"
+    },
+    {
+      "name": "shared-data",
+      "command": "npm run test:shared",
+      "result": "passed; 4 of 4 Elo domain behavior tests"
+    },
+    {
+      "name": "back-integration-postgres",
+      "command": "DATABASE_URL=<isolated-postgres> npm run test:integration --prefix back",
+      "result": "pending GitHub Actions; local host has neither PostgreSQL nor Docker"
+    },
+    {
+      "name": "root-unit",
+      "command": "npm test",
+      "result": "passed; 4 shared plus 17 backend plus 41 app tests"
+    },
+    {
+      "name": "app-build",
+      "command": "npm run build --prefix app",
+      "result": "passed; portrait validator reported 99 of 125 ready and Vite produced the production bundle"
+    },
+    {
+      "name": "workflow-lint",
+      "command": "actionlint .github/workflows/back-shared.yml .github/workflows/design-validator.yml",
+      "result": "passed with actionlint 1.7.12 and no findings"
+    },
+    {
+      "name": "automatic-pull-request-trigger",
+      "command": "GitHub Actions event=pull_request",
+      "result": "pending PR publication"
+    }
+  ],
+  "pending": [
+    "resolve PR #162 before editing .github/workflows/ui-interaction-smoke.yml",
+    "capture automatic GitHub Actions run IDs and URLs",
+    "human gate"
+  ]
+}

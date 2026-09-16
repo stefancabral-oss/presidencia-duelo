@@ -63,6 +63,7 @@ Portanto, **0 publicáveis é o resultado correto do default-deny sem decisões,
 - `npm audit --omit=dev --prefix back`: 0 vulnerabilidades.
 - CLI de fingerprint de conteúdo e asset: aprovada.
 - `git diff --check`: aprovado.
+- CI remoto no commit `551db3f20a88bee8420080e1405f893d68450384`: `back-unit`, `shared-data`, PostgreSQL 16 + prova de abuso, `validate`, Chromium e WebKit aprovados.
 
 ## Evidência
 
@@ -72,7 +73,7 @@ Portanto, **0 publicáveis é o resultado correto do default-deny sem decisões,
 
 ## Pendências externas
 
-- Integração PostgreSQL 16 e prova de abuso não foram executadas localmente porque esta estação não possui Docker, `psql`, serviço PostgreSQL nem `DATABASE_URL`. O workflow `back-shared.yml` executará ambas quando houver PR.
+- Esta estação continua sem Docker, `psql`, serviço PostgreSQL ou `DATABASE_URL`; a lacuna local foi coberta pelo [workflow remoto PostgreSQL 16](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35098290836), inclusive a prova de abuso.
 - A integração sobre a #173 está concluída: o registry corrente usa `candidate-public-v2`, com `primaryArea`, `contextAffiliation` e as quatro entradas estritas de `taxonomyProvenance`.
 - A integração com a #179 está concluída: o projector `candidate-public-v1` histórico permanece byte a byte e snapshots usam `candidatePublicSnapshot(schema)`, enquanto a API corrente usa `candidatePublicPayload` v2. Nenhum fluxo copia metadados internos do registry.
 - Policy, ledger, Git e hashes não autenticam o humano declarado. A autoridade externa é responsável por identidade/competência e emite o recibo Ed25519; o CI apenas verifica esse recibo, integridade e reprodução no commit.
@@ -81,10 +82,9 @@ Portanto, **0 publicáveis é o resultado correto do default-deny sem decisões,
 
 ## Próximo passo exato
 
-1. Publicar a branch e abrir uma PR draft isolada para a #171, com base em `icm/12-u04-taxonomy-173`.
-2. Confirmar os jobs `back-unit`, `shared-data`, `back-integration-postgres`, `validate` e os smokes Chromium/WebKit.
-3. Depois da aprovação técnica, iniciar PRs editoriais pequenas: uma decisão humana, uma pessoa, uma base de evidência auditável e o recibo externo correspondente por vez.
-4. Só considerar o app com elenco público quando ao menos quatro pessoas tiverem conteúdo e arte aprovados; foto documental continua opcional.
+1. Revisar a PR draft #200 sem alterar a base encadeada nem fazer merge antes da #173.
+2. Depois da aprovação técnica, iniciar PRs editoriais pequenas: uma decisão humana, uma pessoa, uma base de evidência auditável e o recibo externo correspondente por vez.
+3. Só considerar o app com elenco público quando ao menos quatro pessoas tiverem conteúdo e arte aprovados; foto documental continua opcional.
 
 ## Human gate
 

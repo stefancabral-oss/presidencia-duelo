@@ -106,10 +106,12 @@ Capturas Chromium em 390 × 844:
 - `npm run editorial:fingerprint --prefix back -- asset app/public/brand/logo-volumetric.png`: comando aprovado.
 - Compatibilidade cruzada: os 125 snapshots `candidate-public-v1` ficaram byte a byte iguais ao projector da #179 e os 125 snapshots v2, iguais ao projector corrente da #173.
 
-## Limite local e human gate
+## PostgreSQL remoto, limite local e human gate
 
-Não há Docker, `psql`, serviço PostgreSQL nem `DATABASE_URL` disponíveis nesta estação; por isso, `topic-store-smoke.mjs` e `vote-abuse-smoke.mjs` não puderam ser executados localmente. Ambos permanecem vinculados ao job PostgreSQL 16 de `.github/workflows/back-shared.yml`, agora com registry de fixture explícito.
+Não há Docker, `psql`, serviço PostgreSQL nem `DATABASE_URL` disponíveis nesta estação; por isso, `topic-store-smoke.mjs` e `vote-abuse-smoke.mjs` não puderam ser executados localmente.
 
-O job remoto `back-integration-postgres` permanece como prova obrigatória antes de qualquer conclusão sobre integração PostgreSQL; a ausência local foi registrada como limite, não convertida em sucesso.
+O primeiro disparo remoto encontrou corretamente uma fixture diária ainda ligada à opção antiga `candidateCatalog`. A correção substituiu esse bypass por um registry V2 de teste explicitamente aprovado. No commit `551db3f20a88bee8420080e1405f893d68450384`, o workflow [Backend and Shared](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35098290836) aprovou `back-unit`, `shared-data`, `topic-store-smoke.mjs` e `vote-abuse-smoke.mjs` contra PostgreSQL 16.
+
+No mesmo commit, [Design Validator](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35098293638) e [UI Interaction Smoke](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35098296607) também foram aprovados; o último concluiu a matriz completa em Chromium e WebKit. Esses workflows foram disparados manualmente porque PRs encadeadas sobre a branch da #173 não satisfazem o filtro `pull_request.branches: [main]`.
 
 Nenhum perfil real foi aprovado nesta implementação. A liberação de cada pessoa depende das decisões humanas individualizadas e dos recibos emitidos pela autoridade externa definida em `docs/editorial/PUBLICATION_GOVERNANCE.md`.

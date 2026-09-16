@@ -74,6 +74,26 @@ test("personal ranking preserves server order and shared ranks despite Elo or ra
   );
 });
 
+test("personal ranking never repairs invalid or missing server ranks locally", () => {
+  const ranking = [
+    { id: "elo-leader", elo: 1800, wins: 20, losses: 0, decisions: 20 },
+    { id: "zero-rank", rank: 0, elo: 1700, wins: 10, losses: 1, decisions: 11 },
+    { id: "string-rank", rank: "2", elo: 1600, wins: 8, losses: 2, decisions: 10 },
+    { id: "server-ranked", rank: 7, elo: 900, wins: 1, losses: 9, decisions: 10 },
+    { id: "unplayed", rank: 1, elo: 2000, wins: 0, losses: 0, decisions: 0 },
+  ];
+
+  assert.deepEqual(
+    displayRanking(ranking, { personal: true }).map(({ id, displayRank }) => [id, displayRank]),
+    [
+      ["elo-leader", null],
+      ["zero-rank", null],
+      ["string-rank", null],
+      ["server-ranked", 7],
+    ],
+  );
+});
+
 test("podium includes every shared top-three rank", () => {
   const ranking = [
     ...["a", "b", "c", "d", "e"].map((id) => ({ id, decisions: 1, displayRank: 1 })),

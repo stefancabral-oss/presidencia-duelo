@@ -100,12 +100,15 @@ export function accessTokenHash(value) {
 function withRankingPositions(ranking) {
   let rank = 0;
   let previous = null;
-  return ranking.map((candidate, index) => {
+  let played = 0;
+  return ranking.map((candidate) => {
+    if (candidate.decisions === 0) return { ...candidate, rank: null };
+    played += 1;
     const tied = previous
       && previous.elo === candidate.elo
       && previous.wins === candidate.wins
       && previous.losses === candidate.losses;
-    if (!tied) rank = index + 1;
+    if (!tied) rank = played;
     previous = candidate;
     return { ...candidate, rank };
   });

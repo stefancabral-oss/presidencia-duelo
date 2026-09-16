@@ -1458,6 +1458,7 @@ async function selectDailyPlayerSession(client, materialized, playerId) {
   }));
   if (answers.some((answer, index) => answer.slot !== index + 1)
     || answers.length > edition.totalRounds
+    || answers.some((answer) => !rounds[answer.slot - 1]?.candidateIds.includes(answer.winnerId))
     || completed !== (answers.length === edition.totalRounds)
     || predictions.some((prediction, index) => prediction.slot !== index + 1)
     || predictions.length > answers.length
@@ -1466,11 +1467,6 @@ async function selectDailyPlayerSession(client, materialized, playerId) {
       || (!prediction.skipped && !rounds[prediction.slot - 1]?.candidateIds.includes(prediction.candidateId))
     ))) {
     throw new Error("progresso diário persistido está inconsistente");
-  }
-  // Um slot respondido sem aposta é o estado intermediário explícito entre as
-  // duas perguntas. A escrita do próximo voto recusa qualquer lacuna maior.
-  if (answers.length - predictions.length > 1) {
-    throw new Error("progresso diário contém mais de uma aposta pendente");
   }
   const pendingPrediction = answers.length > predictions.length
     ? {
@@ -1496,6 +1492,10 @@ async function selectDailyPlayerSession(client, materialized, playerId) {
     },
     pendingPrediction,
     catalog,
+    rounds: rounds.map((round) => ({
+      slot: round.slot,
+      candidateIds: [...round.candidateIds],
+    })),
     round: nextRound ? { slot: nextRound.slot, candidateIds: [...nextRound.candidateIds] } : null,
     completion: completed ? { completedAt: new Date(completionResult.rows[0].completed_at).toISOString() } : null,
     cut: {
@@ -1831,6 +1831,13 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
         const player = await findPlayer(client, recoveryKey);
         const materialized = await materializeDailyEdition(client, topic, dateKey, { candidateCatalog });
         await ensureDailyPlayerSession(client, materialized, player.id);
+        // A sessão é montada por três SELECTs. O lock compartilhado impede que
+        // uma gravação transacional intercale resposta, aposta ou conclusão e
+        // produza um snapshot multipartes impossível.
+        await client.query(
+          "SELECT 1 FROM daily_player_sessions WHERE edition_id = $1 AND player_id = $2 FOR SHARE",
+          [materialized.edition.id, player.id],
+        );
         const session = await selectDailyPlayerSession(client, materialized, player.id);
         await client.query("COMMIT");
         return session;
@@ -1850,12 +1857,23 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
       answerId: requestedAnswerId,
       recoveryKey,
       playerVersion,
+      predictionContractVersion: requestedPredictionContractVersion,
       now,
     }) {
       const topic = validateTopic(topicId);
       const answerId = normalizeVoteId(requestedAnswerId);
       const slot = Number(requestedSlot);
       if (!Number.isInteger(slot)) throw contractError("slot diário inválido", 400, "DAILY_SLOT_INVALID");
+      const predictionContractVersion = requestedPredictionContractVersion === undefined
+        ? null
+        : requestedPredictionContractVersion;
+      if (predictionContractVersion !== null && predictionContractVersion !== 1) {
+        throw contractError(
+          "versão do contrato de aposta diária inválida",
+          400,
+          "DAILY_PREDICTION_CONTRACT_INVALID",
+        );
+      }
       const admittedAt = clockInstant(clock, now);
       const initialDate = editorialDateKey(admittedAt);
       const client = await pool.connect();
@@ -1961,7 +1979,10 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           [materialized.edition.id, player.id],
         );
         const predictionsResponded = Number(predictionProgress.rows[0]?.responded) || 0;
-        if (predictionsResponded !== answered) {
+        // Clientes que declaram o contrato v1 precisam alternar preferência e
+        // aposta. Clientes antigos omitem a capacidade e podem concluir as dez
+        // preferências sem que o servidor invente apostas puladas em seu nome.
+        if (predictionContractVersion === 1 && predictionsResponded !== answered) {
           throw contractError(
             "responda ou pule a aposta do slot anterior antes de continuar",
             409,
@@ -2071,6 +2092,10 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
             );
           }
           const replayEdition = await loadMaterializedDailyEditionById(client, row.edition_id);
+          await client.query(
+            "SELECT 1 FROM daily_player_sessions WHERE edition_id = $1 AND player_id = $2 FOR SHARE",
+            [row.edition_id, player.id],
+          );
           const dailySession = await selectDailyPlayerSession(client, replayEdition, player.id);
           await client.query("COMMIT");
           return {
@@ -2149,7 +2174,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
         );
         const responded = Number(predictionCountResult.rows[0]?.responded) || 0;
         const expectedSlot = responded + 1;
-        if (slot !== expectedSlot || answersResult.rowCount !== responded + 1) {
+        if (slot !== expectedSlot || answersResult.rowCount < responded + 1) {
           throw contractError(
             "a aposta diária precisa acompanhar a preferência confirmada",
             409,
@@ -2235,6 +2260,13 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
         if (!editionResult.rowCount) throw contractError("edição diária não encontrada", 404, "DAILY_EDITION_NOT_FOUND");
         const editionRow = editionResult.rows[0];
         await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`daily-cut:${editionRow.id}`]);
+        // Ordem global de publicação: primeiro serializa o corte e então fecha
+        // a barreira de apostas. Quem já obteve o lock compartilhado termina;
+        // quem chega depois só prossegue após encontrar o recorte publicado.
+        await client.query(
+          "SELECT pg_advisory_xact_lock(hashtext($1))",
+          [`daily-prediction-reveal:${editionRow.id}`],
+        );
         const roundsResult = await client.query(
           "SELECT slot, candidate_ids, selection_hash FROM daily_edition_rounds WHERE edition_id = $1 ORDER BY slot",
           [editionRow.id],

@@ -60,6 +60,10 @@ function publicSession(server) {
     status: answered === 10 ? "completed" : "active",
     progress: { answered, total: 10 },
     catalog,
+    rounds: Array.from({ length: 10 }, (_, index) => ({
+      slot: index + 1,
+      candidateIds: catalog.slice(index * 4, index * 4 + 4).map(({ id }) => id),
+    })),
     answers: structuredClone(server.answers),
     predictions: structuredClone(server.predictions),
     predictionProgress: {
@@ -191,6 +195,9 @@ function createServer() {
     loseNextPredictionResponse: true,
     divergeNextPredictionResponse: false,
     failResults: true,
+    predictionRequestCount: 0,
+    dailySessionOverride: null,
+    dailySessionGate: null,
   };
 }
 
@@ -202,9 +209,17 @@ async function installApi(page, server) {
     if (pathname === "/api/ranking") return route.fulfill({ status: 200, json: { duels: server.version, ranking: ranking() } });
     if (pathname === "/api/player" && request.method() === "POST") return route.fulfill({ status: 201, json: { recoveryKey: `pm2_${"p".repeat(43)}` } });
     if (pathname === "/api/player/state") return route.fulfill({ status: 200, json: { version: server.version, duels: server.version, ranking: ranking() } });
-    if (pathname === "/api/daily-session") return route.fulfill({ status: 200, json: publicSession(server) });
+    if (pathname === "/api/daily-session") {
+      if (server.dailySessionGate) {
+        const gate = server.dailySessionGate;
+        server.dailySessionGate = null;
+        await gate;
+      }
+      return route.fulfill({ status: 200, json: server.dailySessionOverride || publicSession(server) });
+    }
     if (pathname === "/api/daily-vote" && request.method() === "POST") {
       const payload = request.postDataJSON();
+      assert.equal(payload.predictionContractVersion, 1);
       assert.equal(server.answers.length, server.predictions.length, "preferência avançou com aposta pendente");
       const candidateIds = catalog.slice((payload.slot - 1) * 4, payload.slot * 4).map(({ id }) => id);
       assert.ok(candidateIds.includes(payload.winnerId));
@@ -218,6 +233,7 @@ async function installApi(page, server) {
       return route.fulfill({ status: 200, json: voteResponse(server, payload) });
     }
     if (pathname === "/api/daily-prediction" && request.method() === "POST") {
+      server.predictionRequestCount += 1;
       const payload = request.postDataJSON();
       assert.equal(Object.hasOwn(payload, "answerId"), false);
       assert.equal(Object.hasOwn(payload, "candidateIds"), false);
@@ -338,8 +354,51 @@ try {
   await page.getByText("1 de 1", { exact: false }).waitFor();
   await page.getByText("Empate — não pontua", { exact: true }).waitFor();
   await page.getByText("Acima de", { exact: false }).waitFor();
+
+  const midnightPage = await context.newPage();
+  const midnightErrors = [];
+  midnightPage.on("pageerror", (error) => midnightErrors.push(error.message));
+  const midnightServer = createServer();
+  await installApi(midnightPage, midnightServer);
+  await midnightPage.addInitScript(() => localStorage.setItem("polimatch:v4:round-coach", "seen"));
+  await midnightPage.goto(appUrl, { waitUntil: "networkidle" });
+  await midnightPage.locator("#start-election").click();
+  await midnightPage.getByRole("heading", { name: "Quem você prefere?" }).waitFor();
+  await midnightPage.locator("[data-vote]").first().click();
+  await midnightPage.getByRole("heading", { name: "E o Brasil, escolhe quem?" }).waitFor();
+  await midnightPage.locator("[data-predict]").first().click();
+  await midnightPage.getByRole("button", { name: "Tentar a mesma aposta novamente" }).waitFor();
+  const nextEditionSession = publicSession({ answers: [], predictions: [] });
+  nextEditionSession.edition = {
+    ...nextEditionSession.edition,
+    id: "daily-four-card-v1:v1:eleicoes-2026:2026-09-17:e2e-prediction-next",
+    date: "2026-09-17",
+    catalogHash: "c".repeat(64),
+    snapshotHash: "d".repeat(64),
+    opensAt: "2026-09-17T03:00:00.000Z",
+    closesAt: "2026-09-18T03:00:00.000Z",
+  };
+  nextEditionSession.cut = {
+    status: "pending",
+    availableAt: nextEditionSession.edition.closesAt,
+    methodology: "entre quem concluiu a rodada de 17/09",
+  };
+  midnightServer.dailySessionOverride = nextEditionSession;
+  let releaseDailySession;
+  midnightServer.dailySessionGate = new Promise((resolve) => { releaseDailySession = resolve; });
+  await midnightPage.getByRole("button", { name: "Tentar a mesma aposta novamente" }).click();
+  await midnightPage.getByRole("heading", { name: "Buscando a edição vigente…" }).waitFor();
+  assert.equal(await midnightPage.locator("[data-vote], [data-predict]").count(), 0, "a edição antiga voltou a ficar interativa durante o resync");
+  releaseDailySession();
+  await midnightPage.getByRole("heading", { name: "Quem você prefere?" }).waitFor({ timeout: 5000 });
+  await midnightPage.getByText("1/10", { exact: true }).waitFor();
+  await midnightPage.getByText(/Aposta guardada.*edição vigente já foi aberta/).waitFor();
+  assert.equal(midnightServer.predictions.length, 1, "replay após a meia-noite duplicou a aposta antiga");
+  assert.equal(midnightServer.predictionRequestCount, 2, "replay confirmado entrou em loop de retry");
+  assert.deepEqual(midnightErrors, []);
+  await midnightPage.close();
   assert.deepEqual(errors, []);
-  console.log(`${browserName}: aposta separada, correlação 200, pressão longa, retry, teclado, 320x568 e revelação fechada validados`);
+  console.log(`${browserName}: aposta separada, correlação 200, retry na meia-noite, pressão longa, teclado, 320x568 e revelação fechada validados`);
 } finally {
   await context.close();
   await browser.close();

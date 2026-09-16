@@ -20,7 +20,7 @@ export function dailyMethodologyForDate(date) {
 
 export function validateDailySession(payload) {
   if (!payload || !payload.ruleset || !payload.edition || !payload.progress || !payload.cut
-    || !Array.isArray(payload.catalog)) fail("estrutura");
+    || !Array.isArray(payload.catalog) || !Array.isArray(payload.rounds)) fail("estrutura");
   const catalogIds = payload.catalog.map(({ id }) => String(id || ""));
   const catalog = new Set(catalogIds);
   const { ruleset, edition, progress } = payload;
@@ -42,24 +42,41 @@ export function validateDailySession(payload) {
   if (payload.catalog.length !== ruleset.rounds * ruleset.cardsPerRound
     || catalog.size !== payload.catalog.length
     || payload.catalog.some((candidate) => !String(candidate?.id || "").trim() || !String(candidate?.name || "").trim())) fail("catalog");
+  if (payload.rounds.length !== ruleset.rounds) fail("rounds");
+  const partition = [];
+  for (const [index, round] of payload.rounds.entries()) {
+    if (round?.slot !== index + 1 || !Array.isArray(round.candidateIds)
+      || round.candidateIds.length !== ruleset.cardsPerRound
+      || new Set(round.candidateIds).size !== ruleset.cardsPerRound
+      || round.candidateIds.some((id) => !catalog.has(id))) fail("rounds");
+    partition.push(...round.candidateIds);
+  }
+  if (new Set(partition).size !== catalog.size
+    || catalogIds.some((id) => !partition.includes(id))) fail("rounds.partition");
 
   const answered = integer(progress.answered, "progress.answered");
   const total = integer(progress.total, "progress.total");
   if (total !== ruleset.rounds || answered > total || !Array.isArray(payload.answers) || payload.answers.length !== answered) fail("progress");
+  const answerIds = new Set();
   for (const [index, answer] of payload.answers.entries()) {
     if (answer?.slot !== index + 1 || !UUID_PATTERN.test(String(answer.answerId || ""))
-      || !catalog.has(answer.winnerId) || !Number.isFinite(Date.parse(answer.answeredAt))) fail("answers");
+      || answerIds.has(answer.answerId)
+      || !payload.rounds[index].candidateIds.includes(answer.winnerId)
+      || !Number.isFinite(Date.parse(answer.answeredAt))) fail("answers");
+    answerIds.add(answer.answerId);
   }
 
   if (!Array.isArray(payload.predictions) || !payload.predictionProgress
-    || payload.predictions.length > payload.answers.length
-    || payload.answers.length - payload.predictions.length > 1) fail("predictions");
+    || payload.predictions.length > payload.answers.length) fail("predictions");
+  const predictionIds = new Set();
   for (const [index, prediction] of payload.predictions.entries()) {
     const expectedSlot = index + 1;
     if (prediction?.slot !== expectedSlot || !UUID_PATTERN.test(String(prediction.predictionId || ""))
+      || predictionIds.has(prediction.predictionId)
       || prediction.skipped !== (prediction.candidateId === null)
-      || (!prediction.skipped && !catalog.has(prediction.candidateId))
+      || (!prediction.skipped && !payload.rounds[index].candidateIds.includes(prediction.candidateId))
       || !Number.isFinite(Date.parse(prediction.respondedAt))) fail("predictions");
+    predictionIds.add(prediction.predictionId);
   }
   const responded = integer(payload.predictionProgress.responded, "predictionProgress.responded");
   const predicted = integer(payload.predictionProgress.predicted, "predictionProgress.predicted");
@@ -77,7 +94,7 @@ export function validateDailySession(payload) {
     if (!pending || pending.slot !== expectedPendingSlot
       || !Array.isArray(pending.candidateIds) || pending.candidateIds.length !== ruleset.cardsPerRound
       || new Set(pending.candidateIds).size !== ruleset.cardsPerRound
-      || pending.candidateIds.some((id) => !catalog.has(id))) fail("pendingPrediction");
+      || pending.candidateIds.some((id, index) => id !== payload.rounds[expectedPendingSlot - 1].candidateIds[index])) fail("pendingPrediction");
   }
 
   if (payload.status === "active") {
@@ -85,7 +102,7 @@ export function validateDailySession(payload) {
     if (answered >= total || payload.completion !== null || !round || round.slot !== answered + 1
       || !Array.isArray(round.candidateIds) || round.candidateIds.length !== ruleset.cardsPerRound
       || new Set(round.candidateIds).size !== ruleset.cardsPerRound
-      || round.candidateIds.some((id) => !catalog.has(id))) fail("round");
+      || round.candidateIds.some((id, index) => id !== payload.rounds[answered].candidateIds[index])) fail("round");
   } else if (payload.status === "completed") {
     if (answered !== total || payload.round !== null || !payload.completion
       || !Number.isFinite(Date.parse(payload.completion.completedAt))) fail("completion");

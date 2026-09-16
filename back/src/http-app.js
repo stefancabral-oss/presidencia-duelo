@@ -274,7 +274,15 @@ export function createHttpApp({
     // A ordem e as quatro cartas nunca vêm do cliente. `editionId + slot`
     // apontam para o baralho materializado; o store relê esse registro sob
     // trava antes de aplicar Elo e progresso na mesma transação.
-    const { answerId, editionId, slot, winnerId, topicId, playerVersion } = req.body || {};
+    const {
+      answerId,
+      editionId,
+      slot,
+      winnerId,
+      topicId,
+      playerVersion,
+      predictionContractVersion,
+    } = req.body || {};
     try {
       res.json(await store.dailyVote({
         answerId,
@@ -284,6 +292,7 @@ export function createHttpApp({
         topicId: String(topicId || "eleicoes-2026"),
         recoveryKey: requiredRecoveryKey(req),
         playerVersion,
+        predictionContractVersion,
         now: clock(),
       }));
     } catch (error) {

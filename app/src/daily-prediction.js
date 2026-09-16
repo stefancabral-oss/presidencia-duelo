@@ -73,6 +73,10 @@ function sameRecord(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
+function samePrefix(current, next) {
+  return current.every((record, index) => sameRecord(record, next[index]));
+}
+
 /**
  * Confirma que um 200 de aposta pertence exatamente à tentativa que o gerou.
  * A sessão só pode ser instalada depois desta correlação; um corpo truncado ou
@@ -99,16 +103,38 @@ export function confirmedDailyPredictionData(response, attempt, currentSession) 
     || confirmation.skipped !== skipped
     || !PREDICTION_STATUSES.has(confirmation.status)) fail("confirmation.prediction");
   if (!sameRecord(next.edition, current.edition) || !sameRecord(next.catalog, current.catalog)
-    || !current.answers.every((answer, index) => sameRecord(answer, next.answers[index]))
-    || !current.predictions.every((prediction, index) => sameRecord(prediction, next.predictions[index]))) {
+    || !sameRecord(next.rounds, current.rounds)
+    || !samePrefix(current.answers, next.answers)
+    || !samePrefix(current.predictions, next.predictions)) {
     fail("confirmation.session");
   }
   const acceptedRows = next.predictions.filter(({ predictionId }) => predictionId === attempt.predictionId);
   const accepted = next.predictions.find(({ slot }) => slot === attempt.slot);
   if (acceptedRows.length !== 1 || acceptedRows[0] !== accepted
-    || accepted.candidateId !== candidateId
-    || accepted.skipped !== skipped || next.predictionProgress.responded < current.predictionProgress.responded + 1) {
+    || accepted.candidateId !== candidateId || accepted.skipped !== skipped) {
     fail("confirmation.progress");
+  }
+  if (confirmation.status === "created") {
+    const expectedPredictionProgress = {
+      responded: current.predictionProgress.responded + 1,
+      predicted: current.predictionProgress.predicted + (skipped ? 0 : 1),
+      skipped: current.predictionProgress.skipped + (skipped ? 1 : 0),
+      total: current.predictionProgress.total,
+    };
+    if (!sameRecord(next.answers, current.answers)
+      || !sameRecord(next.progress, current.progress)
+      || next.predictions.length !== current.predictions.length + 1
+      || accepted !== next.predictions[current.predictions.length]
+      || !sameRecord(next.predictionProgress, expectedPredictionProgress)
+      || next.status !== current.status
+      || !sameRecord(next.round, current.round)
+      || !sameRecord(next.completion, current.completion)) {
+      fail("confirmation.created");
+    }
+  } else if (next.predictionProgress.responded < current.predictionProgress.responded + 1) {
+    // Um replay pode observar avanços reais de outra aba, mas nunca regressão,
+    // troca de prefixo ou ausência da aposta idempotente correlacionada.
+    fail("confirmation.alreadyProcessed");
   }
   return { prediction: confirmation, dailySession: next };
 }
@@ -231,7 +257,7 @@ export function validateDailyPredictionResults(payload) {
       || partition.some((id) => !catalog.has(id)) || catalogIds.some((id) => !partition.includes(id))) fail("rounds.partition");
     if (session.completed !== (preferenceCount === DAILY_ROUNDS)
       || (session.completed && session.completedPlayers === 0)
-      || predictionCount > preferenceCount || preferenceCount - predictionCount > 1) fail("completed");
+      || predictionCount > preferenceCount) fail("completed");
   }
 
   for (const [field, value] of Object.entries(totals)) {

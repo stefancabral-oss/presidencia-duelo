@@ -146,6 +146,7 @@ test("daily vote requests never send a client candidate list", async () => {
     winnerId: "lula",
     topicId: "eleicoes-2026",
     playerVersion: 3,
+    predictionContractVersion: 1,
   });
 });
 

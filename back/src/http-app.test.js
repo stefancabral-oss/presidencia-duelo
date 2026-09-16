@@ -212,6 +212,7 @@ test("daily votes forward only edition, slot and winner, never a client card ord
         winnerId: "lula",
         candidateIds: ["ordem", "forjada", "pelo", "cliente"],
         playerVersion: 2,
+        predictionContractVersion: 1,
       }),
     });
     assert.equal(response.status, 200);
@@ -224,6 +225,7 @@ test("daily votes forward only edition, slot and winner, never a client card ord
     topicId: "eleicoes-2026",
     recoveryKey: "pm2_player",
     playerVersion: 2,
+    predictionContractVersion: 1,
     now,
   });
   assert.equal(Object.hasOwn(received, "candidateIds"), false);

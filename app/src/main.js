@@ -769,20 +769,51 @@ async function answerDailyPrediction(candidateId, { retry = false } = {}) {
       { recoveryKey: identity.recoveryKey },
     );
     if (!isCurrentVoteIdentity(state, identity)) return;
-    let confirmed = confirmedDailyPredictionData(response, attempt, state.dailySession);
-    if (confirmed.prediction.status === "alreadyProcessed") {
-      const reloaded = await loadDailySession(identity.recoveryKey);
-      if (!isCurrentVoteIdentity(state, identity)) return;
-      confirmed = confirmedDailyPredictionData({ prediction: confirmed.prediction, dailySession: reloaded }, attempt, state.dailySession);
-    }
+    const confirmed = confirmedDailyPredictionData(response, attempt, state.dailySession);
+    const replayed = confirmed.prediction.status === "alreadyProcessed";
     installDailySession(confirmed.dailySession);
-    state.result = attempt.candidateId === null
+    if (replayed) {
+      // A sessão antiga está confirmada, mas não pode voltar a ficar interativa
+      // enquanto a edição vigente é consultada.
+      state.busy = true;
+      state.predictionBusy = true;
+      state.dailyLoading = true;
+    }
+    const confirmationMessage = attempt.candidateId === null
       ? "Aposta pulada. Sua preferência continua registrada."
       : "Aposta guardada. O resultado só aparece depois do fechamento.";
+    state.result = confirmationMessage;
     state.resultTone = "";
     state.selectedId = "";
     sound.play("confirm");
     render();
+    if (replayed) {
+      // Primeiro instala a resposta antiga que acabou de ser correlacionada.
+      // Só então consulta a edição vigente: atravessar a meia-noite não pode
+      // transformar uma confirmação idempotente em falha nem reabrir o retry.
+      const confirmedEditionId = confirmed.dailySession.edition.id;
+      const resynced = await resyncDailyState(identity);
+      if (!isCurrentVoteIdentity(state, identity)) return;
+      state.busy = false;
+      state.predictionBusy = false;
+      state.dailyLoading = !resynced;
+      state.dailyLoadError = resynced
+        ? ""
+        : "A aposta foi confirmada, mas não conseguimos abrir a edição vigente.";
+      const editionChanged = resynced && state.dailySession.edition.id !== confirmedEditionId;
+      if (editionChanged) {
+        state.personalFeedbackMessage = "";
+        state.globalFeedbackMessage = "";
+        state.roundOutcome = null;
+      }
+      state.result = editionChanged
+        ? `${confirmationMessage} A edição vigente já foi aberta.`
+        : resynced
+          ? confirmationMessage
+          : `${confirmationMessage} Atualize para abrir a edição vigente.`;
+      state.resultTone = "";
+      render();
+    }
   } catch (error) {
     if (!isCurrentVoteIdentity(state, identity)) return;
     if (error?.status === 409 && [

@@ -35,6 +35,10 @@ function activeSession(answered = 0, predictionResponded = answered) {
     status: "active",
     progress: { answered, total: 10 },
     catalog: candidates.map((candidate) => ({ ...candidate })),
+    rounds: Array.from({ length: 10 }, (_, index) => ({
+      slot: index + 1,
+      candidateIds: candidates.slice(index * 4, index * 4 + 4).map(({ id }) => id),
+    })),
     answers: Array.from({ length: answered }, (_, index) => ({
       slot: index + 1,
       answerId: `550e8400-e29b-41d4-a716-${String(index + 1).padStart(12, "0")}`,
@@ -83,7 +87,7 @@ test("ten answers close the daily session and preserve the declared cut", () => 
   assert.equal(dailyMethodologyForDate(session.edition.date), "entre quem concluiu a rodada de 16/09");
 });
 
-test("the pending prediction reuses the exact four cards after preference confirmation", () => {
+test("the pending prediction reuses the exact four cards and supports a legacy backlog", () => {
   const session = activeSession(4, 3);
   assert.equal(validateDailySession(session), session);
   assert.equal(session.pendingPrediction.slot, 4);
@@ -96,7 +100,9 @@ test("the pending prediction reuses the exact four cards after preference confir
   forgedGap.predictionProgress.responded -= 1;
   forgedGap.predictionProgress.predicted -= 1;
   forgedGap.pendingPrediction.slot -= 1;
-  assert.throws(() => validateDailySession(forgedGap), /predictions/);
+  forgedGap.pendingPrediction.candidateIds = [...forgedGap.rounds[2].candidateIds];
+  assert.equal(validateDailySession(forgedGap), forgedGap);
+  assert.equal(forgedGap.pendingPrediction.slot, 3);
 });
 
 test("client-side session validation rejects skips, reshuffles and forged catalogs", () => {
@@ -109,6 +115,22 @@ test("client-side session validation rejects skips, reshuffles and forged catalo
   const foreign = activeSession(0);
   foreign.round.candidateIds[3] = "not-in-catalog";
   assert.throws(() => validateDailySession(foreign, candidates), /round/);
+  const brokenPartition = activeSession(0);
+  brokenPartition.rounds[1].candidateIds[0] = brokenPartition.rounds[0].candidateIds[0];
+  assert.throws(() => validateDailySession(brokenPartition), /rounds\.partition/);
+  const wrongAnswerContext = activeSession(1, 0);
+  wrongAnswerContext.answers[0].winnerId = wrongAnswerContext.rounds[1].candidateIds[0];
+  assert.throws(() => validateDailySession(wrongAnswerContext), /answers/);
+  const duplicateAnswerId = activeSession(2, 0);
+  duplicateAnswerId.answers[1].answerId = duplicateAnswerId.answers[0].answerId;
+  assert.throws(() => validateDailySession(duplicateAnswerId), /answers/);
+  const duplicatePredictionId = activeSession(2, 2);
+  duplicatePredictionId.predictions[1].predictionId = duplicatePredictionId.predictions[0].predictionId;
+  assert.throws(() => validateDailySession(duplicatePredictionId), /predictions/);
+  const wrongPredictionContext = activeSession(2, 2);
+  wrongPredictionContext.predictions[1].candidateId = wrongPredictionContext.rounds[0].candidateIds[0];
+  wrongPredictionContext.predictions[1].skipped = false;
+  assert.throws(() => validateDailySession(wrongPredictionContext), /predictions/);
   const reinterpreted = activeSession(0);
   reinterpreted.ruleset.catalogSchema = "candidate-public-v2";
   assert.throws(() => validateDailySession(reinterpreted, candidates), /ruleset/);

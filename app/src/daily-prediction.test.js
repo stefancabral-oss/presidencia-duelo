@@ -92,6 +92,10 @@ function pendingSession() {
     status: "active",
     progress: { answered: 1, total: 10 },
     catalog: catalog.map((candidate) => ({ ...candidate })),
+    rounds: Array.from({ length: 10 }, (_, index) => ({
+      slot: index + 1,
+      candidateIds: catalog.slice(index * 4, index * 4 + 4).map(({ id }) => id),
+    })),
     answers: [{
       slot: 1,
       answerId: uuid("5", 1),
@@ -121,7 +125,11 @@ function predictionConfirmation(current = pendingSession()) {
     respondedAt: "2026-09-16T12:01:00.000Z",
   });
   next.predictionProgress = { responded: 1, predicted: 1, skipped: 0, total: 1 };
-  next.pendingPrediction = null;
+  next.predictionProgress.total = next.answers.length;
+  next.pendingPrediction = next.predictions.length < next.answers.length ? {
+    slot: next.predictions.length + 1,
+    candidateIds: [...next.rounds[next.predictions.length].candidateIds],
+  } : null;
   return {
     prediction: {
       id: uuid("6", 1),
@@ -220,4 +228,95 @@ test("truncated or divergent prediction 200 responses fail without advancing the
     () => confirmedDailyPredictionData(predictionConfirmation(current), { ...attempt, candidateId: "candidate-9" }, current),
     /confirmation\.attempt/,
   );
+});
+
+test("a created confirmation changes exactly one prediction and no preference", () => {
+  const changedPreference = predictionConfirmation();
+  changedPreference.dailySession.answers[0].winnerId = "candidate-2";
+  assert.throws(
+    () => confirmedDailyPredictionData(changedPreference, attempt, pendingSession()),
+    /confirmation\.(session|created)/,
+  );
+
+  const addedPreference = predictionConfirmation();
+  addedPreference.dailySession.answers.push({
+    slot: 2,
+    answerId: uuid("5", 2),
+    winnerId: "candidate-5",
+    answeredAt: "2026-09-16T13:00:00.000Z",
+  });
+  addedPreference.dailySession.progress.answered = 2;
+  addedPreference.dailySession.predictionProgress.total = 2;
+  addedPreference.dailySession.pendingPrediction = { slot: 2, candidateIds: [...addedPreference.dailySession.rounds[1].candidateIds] };
+  addedPreference.dailySession.round = { slot: 3, candidateIds: [...addedPreference.dailySession.rounds[2].candidateIds] };
+  assert.throws(
+    () => confirmedDailyPredictionData(addedPreference, attempt, pendingSession()),
+    /confirmation\.created/,
+  );
+
+  const backlog = pendingSession();
+  backlog.answers.push({
+    slot: 2,
+    answerId: uuid("5", 2),
+    winnerId: "candidate-5",
+    answeredAt: "2026-09-16T13:00:00.000Z",
+  });
+  backlog.progress.answered = 2;
+  backlog.predictionProgress.total = 2;
+  backlog.round = { slot: 3, candidateIds: [...backlog.rounds[2].candidateIds] };
+  const twoPredictions = predictionConfirmation(backlog);
+  twoPredictions.dailySession.predictions.push({
+    slot: 2,
+    predictionId: uuid("6", 2),
+    candidateId: "candidate-6",
+    skipped: false,
+    respondedAt: "2026-09-16T13:01:00.000Z",
+  });
+  twoPredictions.dailySession.predictionProgress = { responded: 2, predicted: 2, skipped: 0, total: 2 };
+  twoPredictions.dailySession.pendingPrediction = null;
+  assert.throws(
+    () => confirmedDailyPredictionData(twoPredictions, attempt, backlog),
+    /confirmation\.created/,
+  );
+});
+
+test("an alreadyProcessed confirmation accepts a monotonic multi-tab tail", () => {
+  const current = pendingSession();
+  const replay = predictionConfirmation(current);
+  replay.prediction.status = "alreadyProcessed";
+  replay.dailySession.answers.push({
+    slot: 2,
+    answerId: uuid("5", 2),
+    winnerId: "candidate-5",
+    answeredAt: "2026-09-16T13:00:00.000Z",
+  });
+  replay.dailySession.predictions.push({
+    slot: 2,
+    predictionId: uuid("6", 2),
+    candidateId: "candidate-6",
+    skipped: false,
+    respondedAt: "2026-09-16T13:01:00.000Z",
+  });
+  replay.dailySession.progress.answered = 2;
+  replay.dailySession.predictionProgress = { responded: 2, predicted: 2, skipped: 0, total: 2 };
+  replay.dailySession.pendingPrediction = null;
+  replay.dailySession.round = { slot: 3, candidateIds: [...replay.dailySession.rounds[2].candidateIds] };
+  assert.deepEqual(confirmedDailyPredictionData(replay, attempt, current), replay);
+});
+
+test("a completed legacy preference-only history remains a valid result", () => {
+  const legacy = closedPayload();
+  const session = legacy.sessions[0];
+  session.completed = true;
+  for (const [index, round] of session.rounds.entries()) {
+    round.preference = {
+      answerId: uuid("5", index + 1),
+      candidateId: round.candidateIds[1],
+      answeredAt: `2026-09-16T${String(index + 12).padStart(2, "0")}:00:00.000Z`,
+    };
+    round.prediction = null;
+    round.result = "not-answered";
+  }
+  legacy.score = { correct: 0, scored: 0, attempted: 0, skipped: 0, ties: 0, noSample: 0, accuracyPercent: null };
+  assert.equal(validateDailyPredictionResults(legacy), legacy);
 });

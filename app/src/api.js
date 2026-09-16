@@ -193,6 +193,7 @@ export function submitDailyVote(answerId, editionId, slot, winnerId, topicId = "
       winnerId,
       topicId,
       playerVersion: player.version,
+      predictionContractVersion: 1,
     }),
   });
 }

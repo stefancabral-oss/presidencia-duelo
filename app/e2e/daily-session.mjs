@@ -76,6 +76,10 @@ function publicSession(state) {
     status: completed ? "completed" : "active",
     progress: { answered, total: 10 },
     catalog: state.catalog,
+    rounds: Array.from({ length: 10 }, (_, index) => ({
+      slot: index + 1,
+      candidateIds: state.catalog.slice(index * 4, index * 4 + 4).map(({ id }) => id),
+    })),
     answers: structuredClone(state.answers),
     predictions: structuredClone(state.predictions),
     predictionProgress: {
@@ -198,6 +202,7 @@ async function installApi(page, server) {
     if (pathname === "/api/daily-vote" && request.method() === "POST") {
       const payload = request.postDataJSON();
       assert.equal(Object.hasOwn(payload, "candidateIds"), false, "o cliente enviou a ordem do baralho diário");
+      assert.equal(payload.predictionContractVersion, 1, "o cliente moderno não declarou o contrato de aposta");
       server.requests.push(payload);
       const replay = server.responses.get(payload.answerId);
       if (replay) {

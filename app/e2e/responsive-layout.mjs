@@ -113,6 +113,28 @@ async function screenMetrics(page, screen) {
   }, { currentScreen: screen, names: playableNames });
 }
 
+async function compactDuelScrollMetrics(page) {
+  const maxScroll = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+  if (maxScroll <= 0) return null;
+
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForFunction(() => Math.abs(
+    scrollY - (document.documentElement.scrollHeight - innerHeight),
+  ) <= 1);
+  const metrics = await page.evaluate(() => {
+    const readBox = (element) => element?.getBoundingClientRect().toJSON() || null;
+    return {
+      scrollY,
+      maxScroll: document.documentElement.scrollHeight - innerHeight,
+      secondRow: [...document.querySelectorAll(".candidate-card")].slice(2).map(readBox),
+      skip: readBox(document.querySelector("#skip-round")),
+      navigation: readBox(document.querySelector(".bottom-nav")),
+    };
+  });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  return metrics;
+}
+
 const browser = await browserType.launch();
 const context = await browser.newContext({ viewport: viewports[0], serviceWorkers: "block" });
 const page = await context.newPage();
@@ -166,7 +188,29 @@ function assertResponsiveLayout(evidence) {
     if (duel.gridColumns !== expectedColumns) problems.push(`${viewportKey}/duel: ${duel.gridColumns} colunas; esperado ${expectedColumns}`);
     for (const card of duel.cards) {
       if (card.left < -1 || card.right > duel.viewport.width + 1) problems.push(`${viewportKey}/duel: carta fora da largura visível`);
-      if (card.bottom > duel.navigation.top + 1) problems.push(`${viewportKey}/duel: carta coberta pela navegação`);
+    }
+    if (duel.compactScroll) {
+      for (const card of duel.cards.slice(0, 2)) {
+        if (card.top < -1 || card.bottom > duel.navigation.top + 1) {
+          problems.push(`${viewportKey}/duel: primeira linha coberta pela navegação`);
+        }
+      }
+      const { compactScroll } = duel;
+      if (compactScroll.scrollY < compactScroll.maxScroll - 1) {
+        problems.push(`${viewportKey}/duel: fim da rodada não foi alcançado pela rolagem`);
+      }
+      if (compactScroll.secondRow.length !== 2 || compactScroll.secondRow.some((card) => (
+        card.top < -1 || card.bottom > compactScroll.navigation.top + 1
+      ))) {
+        problems.push(`${viewportKey}/duel: segunda linha coberta após a rolagem`);
+      }
+      if (!compactScroll.skip || compactScroll.skip.bottom > compactScroll.navigation.top + 1) {
+        problems.push(`${viewportKey}/duel: ação de pular coberta após a rolagem`);
+      }
+    } else {
+      for (const card of duel.cards) {
+        if (card.bottom > duel.navigation.top + 1) problems.push(`${viewportKey}/duel: carta coberta pela navegação`);
+      }
     }
     const clippedNames = duel.names.filter(({ overflow, clientHeight, scrollHeight }) => overflow !== "visible" || scrollHeight > clientHeight + 1);
     if (clippedNames.length) problems.push(`${viewportKey}/duel: ${clippedNames.length} nomes truncados`);
@@ -197,7 +241,11 @@ try {
     const viewportKey = `${viewport.width}x${viewport.height}`;
     for (const screen of ["home", "duel", "ranking"]) {
       await goTo(screen);
-      evidence.push(await screenMetrics(page, screen));
+      const measurement = await screenMetrics(page, screen);
+      if (screen === "duel" && viewport.width < 480) {
+        measurement.compactScroll = await compactDuelScrollMetrics(page);
+      }
+      evidence.push(measurement);
       if (screenshotsDir && screenshotViewports.has(viewportKey)) {
         await page.screenshot({ path: `${screenshotsDir}/${viewportKey}-${screen}.png` });
       }

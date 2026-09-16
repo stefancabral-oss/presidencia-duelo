@@ -100,4 +100,3 @@ export function validateDailyPredictionResults(payload) {
   if (payload.score.accuracyPercent !== accuracyPercent) fail("score.accuracyPercent");
   return payload;
 }
-

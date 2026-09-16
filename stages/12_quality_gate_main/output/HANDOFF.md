@@ -16,8 +16,12 @@
 - Elegibilidade calculada somente por conteúdo aprovado + arte aprovada; foto ausente não bloqueia.
 - Fingerprints SHA-256 que invalidam decisões quando conteúdo, bytes, caminho, versão ou procedência de asset muda.
 - Projeção pública única compartilhada pela API e pelo fingerprint, protegendo campos editoriais adicionados no futuro.
+- Snapshots profundos e imutáveis de catálogo, tópicos, ledger, assets, auditoria e payload público; mapas expostos são somente leitura.
 - Tópicos inativos/desconhecidos permanecem fechados no registry e na API.
-- Falha fechada para dados desconhecidos, duplicados, malformados, sem evidência ou com caminho inseguro.
+- Falha fechada para dados desconhecidos, duplicados, malformados, sem evidência visível ou com referência/caminho inseguro.
+- Clock injetável com limite de data civil em `America/Sao_Paulo`; decisões futuras são recusadas.
+- Login GitHub do aprovador e metadados de versão/procedência rejeitam controles e caracteres invisíveis.
+- Campo novo no catálogo é recusado até ser classificado explicitamente na política editorial.
 - Registry injetável no domínio, API e store; produção não aceita fixture nem variável de bypass.
 - API exclui pendentes/rejeitados e não expõe fingerprints ou auditoria privada.
 - UI usa arte aprovada na carta, foto documental aprovada no perfil e placeholder neutro quando ela falta.
@@ -38,7 +42,7 @@ Esse estado é intencional. Assets existentes, nomes legados contendo `approved`
 
 ## Validação local
 
-- Suite consolidada: 148/148 testes aprovados (4 shared, 78 back, 66 app).
+- Suite consolidada: 155/155 testes aprovados (4 shared, 85 back, 66 app).
 - `npm run build --prefix app`: aprovado; 0 assets no registro editorial real e bundle Vite gerado.
 - `interaction-smoke.mjs`: aprovado em Chromium e WebKit.
 - `editorial-gate.mjs`: aprovado em Chromium e WebKit.
@@ -57,6 +61,7 @@ Esse estado é intencional. Assets existentes, nomes legados contendo `approved`
 ## Pendências externas
 
 - Integração PostgreSQL 16 e prova de abuso não foram executadas localmente porque esta estação não possui Docker, `psql`, serviço PostgreSQL nem `DATABASE_URL`. O workflow `back-shared.yml` executará ambas quando houver PR.
+- Ao integrar a #173, classificar `primaryArea`, `contextAffiliation` e campos de procedência como conteúdo público, roteamento assinado ou dado não autoritativo; atualizar projeção, fingerprint, sanitização e testes no mesmo commit. O registry os recusa até essa política existir.
 - Ao integrar a #179, o snapshot diário deve chamar `candidatePublicPayload` (e sua base `candidatePublicContent`) em vez de copiar o candidato do registry. O objeto interno contém `publication.audit`, aprovador, evidências e fingerprints que nunca devem ser persistidos nem servidos pelo snapshot.
 - Cada aprovação real requer a revisão humana individual prevista na governança. Não deve haver preenchimento em massa do ledger.
 - O gate visual da #176 é uma evidência necessária para decidir arte, mas não substitui a decisão `cardArt.approved` por pessoa.

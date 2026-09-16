@@ -16,7 +16,7 @@ Uma pessoa só é elegível para API, duelo e ranking quando **conteúdo e arte 
 
 ## Quem decide
 
-O responsável editorial final é Stefan Cabral (`stefancabral-oss`). Uma decisão também pode ser tomada por uma pessoa delegada, desde que ela seja identificada nominalmente na revisão da PR e seu login real seja gravado em `decidedBy`.
+O responsável editorial final é Stefan Cabral (`stefancabral-oss`). Uma decisão também pode ser tomada por uma pessoa delegada, desde que ela seja identificada nominalmente na revisão da PR e seu login real do GitHub seja gravado em `decidedBy`. O gate aceita somente a sintaxe real de login do GitHub (1 a 39 caracteres alfanuméricos, com hífens apenas entre segmentos) e rejeita espaços, caracteres invisíveis e controles.
 
 As responsabilidades não são intercambiáveis por inferência:
 
@@ -28,7 +28,7 @@ Um teste, um script, o autor da implementação ou a mera existência de um asse
 
 ## Base de evidência obrigatória
 
-Toda decisão em `shared/editorial-publication-ledger.json` exige uma lista `basis` com `label` e `reference` verificáveis.
+Toda decisão em `shared/editorial-publication-ledger.json` exige uma lista `basis` com `label` e `reference` verificáveis. O `label` precisa conter texto visível; `reference` precisa ser uma URL HTTPS sem credenciais ou um caminho relativo seguro do próprio repositório. Controles, caracteres invisíveis, HTTP simples, caminhos absolutos e travessia com `..` são recusados.
 
 ### Conteúdo
 
@@ -75,7 +75,7 @@ Uma promoção editorial é feita somente em PR, por pessoa e sem aprovações e
    - `status` permitido para a dimensão;
    - `fingerprint` do conteúdo ou do registro completo do asset conferido (`missing` de asset não leva fingerprint);
    - `decidedBy` com o login do aprovador humano;
-   - `decidedAt` em `AAAA-MM-DD`;
+   - `decidedAt` em `AAAA-MM-DD`, nunca posterior à data civil corrente em `America/Sao_Paulo`;
    - `basis` com evidência específica.
 
    Depois de preencher o asset registry, calcular o fingerprint editorial que assina bytes, caminho e metadados:
@@ -92,10 +92,18 @@ Não se altera `reviewStatus`, `reviewedAt`, `photoApproved`, `eligible`, `cardA
 
 - qualquer mudança em um campo público do perfil muda o fingerprint do conteúdo e o devolve efetivamente a `pending`;
 - qualquer mudança nos bytes, caminho, versão, fonte ou licença de uma arte/foto invalida a decisão e devolve efetivamente o asset a `missing`;
-- candidato desconhecido, ID duplicado, ledger malformado, asset inseguro, evidência vazia ou fingerprint inválido impedem a inicialização/build;
+- candidato desconhecido, ID/personId duplicado, ledger malformado, data futura, asset inseguro, evidência vazia/invisível ou fingerprint inválido impedem a inicialização/build;
 - ausência de decisão significa `pending` para conteúdo e `missing` para assets;
-- nenhuma decisão de foto torna conteúdo ou arte aprovados por consequência.
-- consumidores públicos nunca devem serializar o candidato interno do registry; devem usar `candidatePublicPayload`, cuja base `candidatePublicContent` é também a fonte única do fingerprint de conteúdo.
+- nenhuma decisão de foto torna conteúdo ou arte aprovados por consequência;
+- catálogo, tópicos, ledger e assets são copiados profundamente antes da validação; os candidatos, auditorias, fontes, payloads públicos e mapas de consulta expostos são snapshots imutáveis, sem rota pública de mutação;
+- qualquer campo novo no catálogo falha fechado até ser classificado explicitamente como público, roteamento coberto pelo fingerprint ou legado não autoritativo;
+- consumidores públicos nunca devem serializar nem copiar o candidato interno do registry; devem usar `candidatePublicPayload`, cuja base `candidatePublicContent` é também a fonte única do fingerprint de conteúdo. O payload retornado é uma cópia profunda e imutável, sem auditoria, aprovador, evidências ou fingerprints.
+
+## Integração com as unidades seguintes
+
+A #173 deverá classificar explicitamente `primaryArea`, `contextAffiliation` e qualquer campo de procedência que introduzir. Se o campo for exibido ao público, ele entra em `PUBLIC_CANDIDATE_CONTENT_FIELDS` e, portanto, no fingerprint; se afetar roteamento, entra na projeção de roteamento assinada. A integração deve atualizar conjuntamente projeção, fingerprint, sanitização da API e testes. O registry recusa esses campos até essa decisão ser codificada, para impedir publicação acidental durante o rebase.
+
+A #179 deverá gerar cada snapshot diário exclusivamente por `candidatePublicPayload(candidate)`. Copiar o candidato interno, mesmo com spread ou serialização intermediária, é proibido porque o objeto interno contém `publication.audit`, aprovador, evidências e fingerprints.
 
 ## Estado inicial desta unidade
 

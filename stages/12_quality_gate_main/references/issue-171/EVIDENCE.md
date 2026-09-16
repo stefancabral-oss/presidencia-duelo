@@ -28,6 +28,17 @@ Para cada combinação, o teste confere os três estados projetados, `eligible`,
 - catálogo desconhecido, tópico inativo/desconhecido, ledger malformado, data impossível e caminho inseguro falham fechados;
 - cada campo da projeção pública única participa do fingerprint, evitando que um campo novo da API escape da revisão.
 
+## Remediação da auditoria independente
+
+Os casos adversariais adicionais comprovam:
+
+- fontes aninhadas, auditorias e payloads públicos são cópias profundas imutáveis; mutar os objetos originais de catálogo, ledger, assets ou tópicos após a construção não altera o registry;
+- editar uma URL aninhada antes de criar um novo registry invalida o fingerprint de conteúdo e remove a pessoa do conjunto público;
+- `topicsById` e `candidatesById` são fachadas somente leitura, sem `set`, `delete` ou `clear`, e seus valores também são imutáveis;
+- o clock é injetável e `decidedAt` futuro falha contra a data civil em `America/Sao_Paulo`, inclusive no limite em que `02:30Z` ainda pertence ao dia anterior em Brasília;
+- login do aprovador, evidências, versão, fonte, licença e caminho de assets recusam controles, caracteres invisíveis e referências inseguras;
+- um campo novo, como `primaryArea` da #173, falha fechado até receber política explícita de projeção, fingerprint e sanitização.
+
 ## Estado real de produção
 
 Consulta direta ao `PRODUCTION_CANDIDATE_REGISTRY` nesta unidade:
@@ -43,7 +54,7 @@ Os arquivos `shared/editorial-publication-ledger.json` e `shared/editorial-asset
 - `/api/candidates` devolve apenas pessoas elegíveis.
 - Tópicos ausentes ou inativos devolvem lista vazia mesmo que uma pessoa aprovada possua aquele `topicId` derivado.
 - O teste HTTP injeta duas pessoas, aprova apenas uma e comprova que a pendente não aparece em nenhum trecho do JSON.
-- Fingerprints, `decidedBy` e base de evidência permanecem internos; a API pública recebe somente os estados e a procedência necessária por meio de `candidatePublicPayload`. O mesmo contrato fica reutilizável por snapshots sem carregar auditoria privada.
+- Fingerprints, `decidedBy` e base de evidência permanecem internos; a API pública recebe somente os estados e a procedência necessária por meio de `candidatePublicPayload`. O payload é uma cópia profunda imutável e o mesmo contrato fica reutilizável por snapshots sem carregar auditoria privada.
 - O store PostgreSQL aceita um registry injetado. Smokes usam fixtures explicitamente aprovadas; produção usa somente o ledger real, sem bypass por ambiente.
 - Reinicializações continuam preenchendo `ranking_stats` e `player_stats` apenas para o conjunto atualmente elegível.
 
@@ -67,7 +78,7 @@ Capturas Chromium em 390 × 844:
 
 ## Validação local
 
-- `npm test`: aprovado, 148/148 testes (4 shared, 78 back, 66 app).
+- `npm test`: aprovado, 155/155 testes (4 shared, 85 back, 66 app).
 - `npm run build --prefix app`: aprovado; verificação editorial reportou `Assets editoriais íntegros: 0` e o Vite gerou o bundle.
 - Chromium: interação, gate editorial, 3 telas × 16 viewports, recuperação de voto e estados de confiança aprovados.
 - WebKit: a mesma matriz completa aprovada.

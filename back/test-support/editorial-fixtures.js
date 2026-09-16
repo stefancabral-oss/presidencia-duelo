@@ -73,6 +73,7 @@ export function createEditorialTestRegistry({
     topics: TOPICS,
     ledger: { schemaVersion: 1, decisions },
     assetRegistry: { schemaVersion: 1, assets },
+    now: () => new Date("2026-09-16T12:00:00.000Z"),
   });
 }
 

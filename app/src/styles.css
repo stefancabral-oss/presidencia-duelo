@@ -465,6 +465,11 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   .chroma-card { width: min(100%, 338px); justify-self: center; }
 }
 
+@media (min-width: 320px) and (max-width: 340px) {
+  .candidate-card { height: 286px; grid-template-rows: minmax(0, 1fr) 108px; }
+  .duel-screen:has(.round-feedback) .candidate-card { height: 302px; grid-template-rows: minmax(0, 1fr) 114px; }
+}
+
 /* 480–699: celular confortável. */
 @media (min-width: 480px) and (max-width: 699px) {
   :root { --shell-gutter: 16px; }

@@ -9,7 +9,7 @@
     {
       "name": "frontend-unit",
       "command": "npm test --prefix app",
-      "result": "39 passed; includes optional configuration and official GIS button rendering contract"
+      "result": "41 passed; includes optional configuration, official GIS button rendering contract and logout failure preserving the local session"
     },
     {
       "name": "production-build",
@@ -19,7 +19,7 @@
     {
       "name": "postgres-integration",
       "command": "DATABASE_URL=<isolated-postgres> npm run test:integration --prefix back",
-      "result": "passed; first Google sign-in preserved 3 anonymous rounds, returning sign-in recovered the same player, logout revoked the prior session and only hashes remained active"
+      "result": "passed; first Google sign-in preserved 3 anonymous rounds, invalidated the previous anonymous credential, returning sign-in recovered the same player, logout revoked the prior session and only hashes remained active"
     },
     {
       "name": "browser-fallback",

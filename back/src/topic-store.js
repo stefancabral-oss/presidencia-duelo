@@ -534,6 +534,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
         await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`google:${subject}`]);
         const linked = await client.query("SELECT player_id FROM player_identities WHERE provider = 'google' AND subject = $1", [subject]);
         let playerId = linked.rows[0]?.player_id;
+        const firstLink = !playerId;
         if (!playerId && currentToken) playerId = (await findPlayer(client, currentToken)).id;
         if (!playerId) {
           playerId = randomUUID();
@@ -546,6 +547,12 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
            SET display_name = EXCLUDED.display_name, avatar_url = EXCLUDED.avatar_url, updated_at = now()`,
           [subject, playerId, String(identity.displayName || ""), String(identity.avatarUrl || "")],
         );
+        if (firstLink) {
+          await client.query(
+            "UPDATE anonymous_players SET recovery_hash = $1 WHERE id = $2",
+            [recoveryKeyHash(createRecoveryKey()), playerId],
+          );
+        }
         const sessionToken = createSessionToken();
         await client.query(
           `INSERT INTO player_sessions (session_hash, player_id, expires_at)

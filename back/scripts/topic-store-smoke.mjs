@@ -118,6 +118,7 @@ assert.match(firstGoogleSession.sessionToken, /^pms_/);
 assert.equal(firstGoogleSession.player.duels, 3);
 assert.deepEqual(firstGoogleSession.account, { displayName: "Bia", avatarUrl: "https://example.com/bia.jpg" });
 assert.equal(Object.hasOwn(firstGoogleSession.account, "email"), false);
+await assert.rejects(restartedStore.playerRanking(recoveryKey, "eleicoes-2026"), /expirada/);
 const recoveredWithSession = await restartedStore.playerRanking(firstGoogleSession.sessionToken, "eleicoes-2026");
 assert.equal(recoveredWithSession.duels, 3);
 assert.equal(recoveredWithSession.account.displayName, "Bia");
@@ -167,4 +168,4 @@ assert.equal(Number(migrationAudit.rows[0].applied), 1);
 await upgradedAuditPool.end();
 await upgradedStore.close();
 
-console.log("Smoke PostgreSQL aprovado: reset único, jogador antigo, login Google preservando progresso, sessão revogável, rodada idempotente e rankings persistentes.");
+console.log("Smoke PostgreSQL aprovado: reset único, jogador antigo, login Google preservando progresso, credencial anônima invalidada, sessão revogável, rodada idempotente e rankings persistentes.");

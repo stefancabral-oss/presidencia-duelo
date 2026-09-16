@@ -142,6 +142,8 @@ const page = await context.newPage();
 const pageErrors = [];
 const roundVoteRequests = [];
 let failNextRoundVote = false;
+let failNextGoogleLogin = false;
+let failNextLogout = false;
 let holdNextSuccessfulRoundVote = false;
 let successfulRoundVotes = 0;
 page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -161,8 +163,20 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
   else if (path === "/api/ranking") body = { duels: 0, ranking: ranking() };
   else if (path === "/api/player" && request.method() === "POST") body = { recoveryKey: "e2e-recovery-key" };
   else if (path === "/api/player/state") body = { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking() };
-  else if (path === "/api/auth/google" && request.method() === "POST") body = { sessionToken: `pms_${"s".repeat(43)}`, account: { displayName: "Bia", avatarUrl: "" }, player: { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking(), account: { displayName: "Bia", avatarUrl: "" } } };
+  else if (path === "/api/auth/google" && request.method() === "POST") {
+    if (failNextGoogleLogin) {
+      failNextGoogleLogin = false;
+      await route.fulfill({ status: 503, json: { error: "falha passageira de login" } });
+      return;
+    }
+    body = { sessionToken: `pms_${"s".repeat(43)}`, account: { displayName: "Bia", avatarUrl: "" }, player: { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking(), account: { displayName: "Bia", avatarUrl: "" } } };
+  }
   else if (path === "/api/auth/logout" && request.method() === "POST") {
+    if (failNextLogout) {
+      failNextLogout = false;
+      await route.fulfill({ status: 503, json: { error: "falha passageira de logout" } });
+      return;
+    }
     await route.fulfill({ status: 204 });
     return;
   }
@@ -258,6 +272,13 @@ try {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_AUTH_SCREENSHOT });
   }
   if (googleEnabled) {
+    failNextGoogleLogin = true;
+    await page.getByRole("button", { name: "Continuar com Google" }).click();
+    await page.getByRole("alert").waitFor();
+    if (!await page.locator(".auth-overlay").evaluate((dialog) => dialog.contains(document.activeElement))) {
+      throw new Error("A falha de login deixou o foco fora do diálogo de autenticação");
+    }
+    await page.getByRole("button", { name: "Continuar com Google" }).waitFor();
     await page.getByRole("button", { name: "Continuar com Google" }).click();
     await page.getByRole("heading", { name: "Tudo certo, Bia!" }).waitFor();
     const storedToken = await page.evaluate(() => localStorage.getItem("polimatch:v3:recovery-key"));
@@ -280,6 +301,12 @@ try {
     const roundBeforeLogout = roundVoteRequests.at(-1)?.roundId;
 
     await page.getByRole("button", { name: "Abrir sua conta" }).click();
+    failNextLogout = true;
+    await page.getByRole("button", { name: "Sair desta conta" }).click();
+    await page.getByRole("alert").waitFor();
+    if (!await page.locator(".auth-overlay").evaluate((dialog) => dialog.contains(document.activeElement))) {
+      throw new Error("A falha de logout deixou o foco fora do diálogo de autenticação");
+    }
     await page.getByRole("button", { name: "Sair desta conta" }).click();
     await page.locator(".round-instruction", { hasText: "Você saiu. Um jogo novo começou neste aparelho." }).waitFor();
     if (await page.locator("#retry-vote").isVisible()) throw new Error("O logout preservou um voto pendente da conta anterior");
@@ -693,7 +720,7 @@ try {
   }
   await page.getByRole("button", { name: "Ranking" }).click();
   await page.getByRole("heading", { name: "Ranking" }).waitFor();
-  await page.getByText("1 escolha confirmada").waitFor();
+  await page.getByText(`${successfulRoundVotes} ${successfulRoundVotes === 1 ? "escolha confirmada" : "escolhas confirmadas"}`, { exact: true }).waitFor();
   await page.getByText("Mais derrotas").waitFor();
   const rejected = await page.locator(".ranking-highlight-rejected").innerText();
   const expectedRejected = candidates.filter(({ id }) => selectedRoundIds.includes(id) && id !== selectedWinnerId).map(({ displayName }) => displayName);

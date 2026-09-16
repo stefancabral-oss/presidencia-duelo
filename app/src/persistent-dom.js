@@ -37,7 +37,7 @@ export function patchCandidateSlot(slot, model) {
 
   button.dataset.vote = model.id;
   button.setAttribute("aria-label", model.accessibleName);
-  button.setAttribute("aria-disabled", String(Boolean(model.busy)));
+  button.setAttribute("aria-disabled", String(Boolean(model.locked ?? model.busy)));
   setBooleanAttribute(button, "aria-busy", model.busy);
 
   CARD_STATE_CLASSES.forEach((className) => button.classList.toggle(className, Boolean(model.classes?.includes(className))));

@@ -69,7 +69,7 @@ async function screenMetrics(page, screen) {
       shell: readBox(".app-shell"),
       topbar: readBox(".topbar"),
       brand: readBox(".brand"),
-      main: readBox("main.screen"),
+      main: readBox("main.screen:not([hidden])"),
     };
 
     if (currentScreen === "home") {
@@ -175,6 +175,9 @@ function assertResponsiveLayout(evidence) {
     screens.push(measurement);
     byViewport.set(viewportKey, screens);
     if (measurement.document.horizontalOverflow) problems.push(`${viewportKey}/${measurement.screen}: overflow horizontal`);
+    if (!measurement.main || measurement.main.width <= 0 || measurement.main.height <= 0) {
+      problems.push(`${viewportKey}/${measurement.screen}: painel ativo sem geometria mensurável`);
+    }
   }
 
   for (const [viewportKey, screens] of byViewport) {

@@ -35,6 +35,7 @@ const state = {
   authOpen: false,
   authBusy: false,
   authError: "",
+  authErrorKind: "",
   collection: [],
   result: "",
   // "erro" faz a mensagem ser grafada como falha. Sem isso, "seu voto não foi
@@ -166,6 +167,7 @@ function candidateSlotModel(candidate) {
     affiliation: candidateAffiliation(candidate),
     office: candidate.office || candidateRole(candidate),
     summary: candidateCardSummary(candidate),
+    locked: state.busy || Boolean(state.pendingWinnerId),
     busy: state.busy,
     classes: [
       state.selectedId === candidate.id ? "is-selected" : "",
@@ -194,7 +196,9 @@ function authOverlay() {
       ${signedIn
         ? `<button class="auth-secondary" id="logout" type="button" ${state.authBusy ? "disabled" : ""}>Sair desta conta</button>`
         : configured
-          ? `<div class="google-button-wrap${state.authBusy ? " is-busy" : ""}" id="google-button"><span>${state.authBusy ? "Confirmando…" : "Carregando Google…"}</span></div>`
+          ? state.authErrorKind === "provider"
+            ? '<button class="auth-secondary" id="retry-google-provider" type="button">Tentar carregar o Google novamente</button>'
+            : `<div class="google-button-wrap${state.authBusy ? " is-busy" : ""}" id="google-button"><span>${state.authBusy ? "Confirmando…" : "Carregando Google…"}</span></div>`
           : `<p class="auth-config-note">O acesso com Google está sendo preparado. Você pode continuar jogando normalmente.</p>`}
       <button class="auth-continue" id="continue-anonymous" type="button">${signedIn ? "Voltar ao jogo" : "Continuar jogando"}</button>
       <small>O Google confirma sua identidade; sua senha nunca passa pelo PoliMatch.</small>
@@ -454,6 +458,9 @@ function renderTopics() {
 }
 
 function renderDuel() {
+  const recovery = voteRecoveryControl(state);
+  refs.panels.duel.dataset.votePhase = state.votePhase;
+  refs.panels.duel.setAttribute("aria-busy", String(state.busy));
   refs.progress.textContent = `${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}`;
   refs.instruction.textContent = state.result || "Toque na sua preferida. Segure para conhecer o perfil.";
   refs.instruction.classList.toggle("is-result", Boolean(state.result));
@@ -463,10 +470,12 @@ function renderDuel() {
   refs.personalFeedback.textContent = state.personalFeedbackMessage;
   refs.globalFeedbackBand.hidden = !state.globalFeedbackMessage;
   refs.globalFeedback.textContent = state.globalFeedbackMessage;
-  refs.retryVote.hidden = !state.pendingWinnerId || state.busy;
-  refs.retryVote.disabled = state.busy;
+  refs.retryVote.hidden = !recovery.visible;
+  refs.retryVote.disabled = recovery.disabled;
+  refs.retryVote.id = recovery.visible ? recovery.id : "retry-vote";
+  refs.retryVote.textContent = recovery.label || "Tentar novamente";
   refs.slots.forEach((slot, index) => patchCandidateSlot(slot, state.round[index] ? candidateSlotModel(state.round[index]) : null));
-  refs.skip.disabled = state.busy;
+  refs.skip.disabled = state.busy || Boolean(state.pendingWinnerId);
 }
 
 function renderRanking() {
@@ -512,12 +521,11 @@ function renderOverlays() {
   const markup = `${coachOverlay()}${authOverlay()}`;
   if (markup === refs.overlayMarkup) return;
   const coachOpening = state.showCoach && !refs.overlays.querySelector(".coach-overlay");
-  const authOpening = state.authOpen && !refs.overlays.querySelector(".auth-overlay");
   refs.overlays.innerHTML = markup;
   refs.overlayMarkup = markup;
   if (coachOpening) queueMicrotask(() => refs.overlays.querySelector("#dismiss-coach")?.focus());
-  if (authOpening) queueMicrotask(() => refs.overlays.querySelector("#close-auth")?.focus());
-  if (state.authOpen && !state.account && !state.authBusy && !state.authError) queueMicrotask(mountAuthButton);
+  if (state.authOpen) queueMicrotask(() => refs.overlays.querySelector("#close-auth")?.focus());
+  if (state.authOpen && !state.account && !state.authBusy && state.authErrorKind !== "provider") queueMicrotask(mountAuthButton);
 }
 
 function render() {
@@ -779,6 +787,7 @@ async function resyncPlayer(attemptIdentity) {
 function closeAuth() {
   state.authOpen = false;
   state.authError = "";
+  state.authErrorKind = "";
   render();
 }
 
@@ -822,6 +831,7 @@ function handleAppClick(event) {
     sound.play("navigation");
     state.authOpen = true;
     state.authError = "";
+    state.authErrorKind = "";
     render();
     return;
   }
@@ -831,6 +841,12 @@ function handleAppClick(event) {
   }
   if (button.id === "logout") {
     signOut();
+    return;
+  }
+  if (button.id === "retry-google-provider") {
+    state.authError = "";
+    state.authErrorKind = "";
+    render();
     return;
   }
   if (button.id === "sound-toggle") {
@@ -965,8 +981,12 @@ function installEvents() {
     refs.slots.forEach(({ button }) => button.classList.remove("is-peeking"));
   });
   refs.slots.forEach(({ button }) => installPressGesture(button, {
-    onTap: () => vote(button.dataset.vote),
+    onTap: () => {
+      if (button.getAttribute("aria-disabled") === "true") return;
+      vote(button.dataset.vote);
+    },
     onHold: () => {
+      if (button.getAttribute("aria-disabled") === "true") return;
       button.classList.add("is-peeking");
       try { navigator.vibrate?.(18); } catch {}
       showProfile(button.dataset.vote);
@@ -992,6 +1012,7 @@ async function mountAuthButton() {
   } catch (error) {
     if (!state.authOpen) return;
     state.authError = error.message || "Não foi possível abrir o Google agora.";
+    state.authErrorKind = "provider";
     render();
   }
 }
@@ -1000,6 +1021,7 @@ async function handleGoogleCredential(response) {
   if (!response?.credential || state.authBusy) return;
   state.authBusy = true;
   state.authError = "";
+  state.authErrorKind = "";
   render();
   try {
     const result = await exchangeGoogleCredential(response.credential, state.recoveryKey);
@@ -1018,6 +1040,7 @@ async function handleGoogleCredential(response) {
   } catch (error) {
     state.authBusy = false;
     state.authError = error.message || "Não foi possível salvar seu jogo agora.";
+    state.authErrorKind = "credential";
     sound.play("error");
     render();
   }
@@ -1027,6 +1050,7 @@ async function signOut() {
   if (state.authBusy) return;
   state.authBusy = true;
   state.authError = "";
+  state.authErrorKind = "";
   render();
   try {
     await revokeSessionBeforeClearing(state.recoveryKey, {
@@ -1053,6 +1077,7 @@ async function signOut() {
   } catch (error) {
     state.authBusy = false;
     state.authError = error.message || "Não foi possível sair agora.";
+    state.authErrorKind = "session";
     render();
   }
 }

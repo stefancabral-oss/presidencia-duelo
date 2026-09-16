@@ -449,11 +449,17 @@ try {
     if (JSON.stringify(rodadaDepois) !== JSON.stringify(rodadaAntes) || progressoDepois !== progressoAntes) {
       throw new Error("o 200 truncado alterou cartas ou progresso sem confirmação íntegra");
     }
-    if (await page.locator(".card-outcome").count()) {
+    if (await page.locator(".card-outcome:visible").count()) {
       throw new Error("o 200 truncado produziu feedback visual de confirmação");
     }
-    if (!await page.locator(".candidate-card").evaluateAll((cards) => cards.every((card) => card.disabled))) {
+    if (!await page.locator(".candidate-card").evaluateAll((cards) => cards.every((card) => card.getAttribute("aria-disabled") === "true" && !card.disabled))) {
       throw new Error("o 200 truncado deixou a rodada pendente editável");
+    }
+    const pedidosAntesDoCliqueBloqueado = servidor.requests.length;
+    await page.locator(".candidate-card").nth(1).evaluate((card) => card.click());
+    await page.waitForTimeout(100);
+    if (servidor.requests.length !== pedidosAntesDoCliqueBloqueado) {
+      throw new Error("uma carta aria-disabled enviou outro voto enquanto a rodada estava pendente");
     }
     if (servidor.duels !== 0) throw new Error("o mock truncado não deveria gravar progresso");
 

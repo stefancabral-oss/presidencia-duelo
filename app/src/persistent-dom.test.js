@@ -51,6 +51,7 @@ const firstCandidate = {
   affiliation: "Partido A",
   office: "Cargo A",
   summary: "Resumo A",
+  locked: true,
   busy: true,
   classes: ["is-selected"],
   outcome: null,
@@ -67,6 +68,7 @@ test("candidate patches keep the four slot nodes and controls alive", () => {
     id: `nova-${index}`,
     accessibleName: `Nova Pessoa ${index + 1}`,
     name: `Nova Pessoa ${index + 1}`,
+    locked: false,
     busy: false,
     classes: [],
     outcome: { tone: "gain", value: "+45 Elo", message: "Subiu de patente" },
@@ -89,6 +91,15 @@ test("busy cards remain focusable DOM controls while their vote is unavailable",
   assert.equal(slot.button.getAttribute("aria-busy"), "true");
   assert.equal(slot.button.getAttribute("disabled"), null);
   assert.equal(slot.button.classList.contains("is-selected"), true);
+});
+
+test("pending cards stay unavailable without being announced as busy", () => {
+  const slot = fakeSlot();
+  patchCandidateSlot(slot, { ...firstCandidate, locked: true, busy: false });
+
+  assert.equal(slot.button.getAttribute("aria-disabled"), "true");
+  assert.equal(slot.button.getAttribute("aria-busy"), null);
+  assert.equal(slot.button.getAttribute("disabled"), null);
 });
 
 test("a failed portrait stays hidden until a different source loads", () => {

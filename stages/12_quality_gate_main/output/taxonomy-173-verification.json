@@ -3,10 +3,11 @@
   "issue": 173,
   "macroIssue": 175,
   "branch": "icm/12-u04-taxonomy-173",
-  "implementationCommit": "3cc16091720b523ba9d38b86ae95614e2ef656fd",
-  "adversarialReviewCommit": "896085aaddfc93d348154cbfb252303f03e00c52",
-  "semanticReviewCommit": "acc9b34107fce3d002f38d62b33fcdb480833082",
-  "generatedAt": "2026-09-16T00:39:10-03:00",
+  "baseCommit": "dbf55ca304989a455e792f82b0d73e1070dcd857",
+  "implementationCommit": "c3e05215b1ea98468e23cab315008374c4ad6d89",
+  "adversarialReviewCommit": "49e709004421da7abdca64cd6c8d8951fd107d0d",
+  "semanticReviewCommit": "178e46331be91924124ddaa73dc55a95ed7eb169",
+  "generatedAt": "2026-09-16T03:01:17-03:00",
   "catalog": {
     "records": 125,
     "schemaVersion": 2,
@@ -29,7 +30,7 @@
     {
       "name": "root-unit",
       "command": "npm test",
-      "result": "passed; 76 of 76 tests (14 shared, 20 back, 42 app), including real 125-record API serialization and negative regressions for Paulo Guedes, Guilherme Boulos, Jones Manoel, Carla Zambelli and Deltan Dallagnol"
+      "result": "passed; 96 of 96 tests (14 shared, 31 back, 51 app), including real 125-record API serialization and negative regressions for Paulo Guedes, Guilherme Boulos, Jones Manoel, Carla Zambelli and Deltan Dallagnol"
     },
     {
       "name": "app-build",
@@ -44,12 +45,12 @@
     {
       "name": "taxonomy-ui-smoke",
       "command": "POLIMATCH_E2E_BROWSER=chromium|webkit node app/e2e/interaction-smoke.mjs",
-      "result": "passed in Chromium and WebKit; structured profile sections, search, filters, compact labels and filter reset when switching ranking views verified"
+      "result": "passed in Chromium and WebKit; current mobile card hierarchy, structured profile sections, search, filters, compact labels and filter reset when switching ranking views verified"
     },
     {
       "name": "taxonomy-screenshot",
       "command": "POLIMATCH_E2E_TAXONOMY_SCREENSHOT=stages/12_quality_gate_main/references/taxonomy-comparison.png",
-      "result": "passed; E2E fixture of four people displays PT, Justice without asserted party, Music without asserted party, and Antonia Fontenelle as PSDB; this is visual fixture evidence, not a claim about the real catalog"
+      "result": "passed; regenerated from the current real-catalog smoke records and displays PT, PSOL, NOVO and REPUBLICANOS compact labels without replacing their distinct roles or areas"
     },
     {
       "name": "workflow-yaml",

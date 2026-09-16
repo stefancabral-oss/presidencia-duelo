@@ -7,9 +7,10 @@
 - Macro: https://github.com/stefancabral-oss/presidencia-duelo/issues/175
 - Branch: `icm/12-u04-taxonomy-173`
 - PR: `não aberta por instrução`
-- Commit de implementação: `3cc16091720b523ba9d38b86ae95614e2ef656fd`
-- Commit de correção adversarial: `896085aaddfc93d348154cbfb252303f03e00c52`
-- Commit de validação semântica: `acc9b34107fce3d002f38d62b33fcdb480833082`
+- Base do restack: `dbf55ca304989a455e792f82b0d73e1070dcd857`
+- Commit de implementação: `c3e05215b1ea98468e23cab315008374c4ad6d89`
+- Commit de correção adversarial: `49e709004421da7abdca64cd6c8d8951fd107d0d`
+- Commit de validação semântica: `178e46331be91924124ddaa73dc55a95ed7eb169`
 
 ## Causa corrigida
 
@@ -33,7 +34,7 @@ O gerador copiava `partido_ou_area` simultaneamente para cargo, afiliação e pa
 - Busca restrita a nome, partido e área, com filtros combináveis por partido/área e limpeza dos três filtros na troca entre ranking geral e pessoal.
 - Um único validador compartilhado pelo gerador, teste e CI.
 - Contrato de serialização exercitado sobre os 125 registros reais, incluindo Lula e Antonia Fontenelle.
-- Screenshot comparativo em `references/taxonomy-comparison.png`, produzido pela fixture visual E2E de quatro pessoas; ele não é apresentado como captura do catálogo real.
+- Screenshot comparativo em `references/taxonomy-comparison.png`, regenerado com quatro registros reais do catálogo usados pelo smoke de hierarquia móvel.
 
 ## Estado editorial explícito
 
@@ -47,10 +48,10 @@ Nenhum valor foi criado para um atributo ambíguo. `ambiguous` significa falta d
 ## Testes e evidências
 
 - `npm run test:shared`: 14/14 testes e validação estrutural/evidencial/semântica dos 125 registros.
-- `npm test`: 76/76 testes (14 shared, 20 back, 42 app).
+- `npm test`: 96/96 testes (14 shared, 31 back, 51 app).
 - Regressões negativas reais: Paulo Guedes não pode receber `PL` a partir de `órbita PL`; Guilherme Boulos, Jones Manoel, Carla Zambelli e Deltan Dallagnol não podem recuperar rótulos categoriais como contexto; a filiação explícita de Gracyanne continua válida.
 - `npm run build`: aprovado; 99/125 retratos presentes e bundle Vite produzido.
-- E2E Chromium e WebKit: navegação, rodada, perfil estruturado, busca, filtros, ranking e limpeza de filtros na troca de visão aprovados.
+- E2E Chromium e WebKit: navegação, rodada, perfil estruturado, busca, filtros, ranking, anatomia móvel atual e limpeza de filtros na troca de visão aprovados.
 - Regeneração consecutiva: hashes SHA-256 idênticos para candidatos e Chromas.
 - Workflow: YAML válido; `test:shared` é chamado uma vez pelo job `shared-data` e os caminhos das três fontes editoriais acionam o workflow.
 

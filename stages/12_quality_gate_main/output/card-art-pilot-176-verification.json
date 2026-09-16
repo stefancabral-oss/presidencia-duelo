@@ -14,8 +14,8 @@
     },
     {
       "name": "docker-build-context",
-      "command": "npm run test:card-art-pilot-contract --prefix app",
-      "result": "passed static contract; app/Dockerfile copies the manifest from the documented repository-root context before npm run build and only app/dist reaches nginx; Docker CLI was unavailable locally, so an actual image build remains a remote CI/deploy check"
+      "command": "npm run test:card-art-pilot-contract --prefix app; docker build --file app/Dockerfile --tag polimatch-app:pilot-176 .",
+      "result": "static contract passed locally; app/Dockerfile copies the manifest from the documented repository-root context before npm run build and only app/dist reaches nginx; Docker CLI was unavailable locally, but the actual root-context image build is now mandatory in design-validator.yml and remains unobserved until remote CI runs"
     },
     {
       "name": "pilot-asset-and-reference-integrity",
@@ -34,7 +34,7 @@
     {
       "name": "result-governance-schema",
       "command": "npm run test:card-art-pilot-contract --prefix app",
-      "result": "passed 18 of 18; locked Ajv 8.17.1 plus ajv-formats 3.0.1 validates every result instance against Draft 2020-12 before semantics, including additionalProperties, required authors, dates, reviews and decision"
+      "result": "passed 18 of 18; locked Ajv 8.20.0 plus ajv-formats 3.0.1 validates every result instance against Draft 2020-12 before semantics, including additionalProperties, required authors, dates, reviews and decision; npm audit reports zero vulnerabilities"
     },
     {
       "name": "result-semantic-validator",
@@ -44,7 +44,7 @@
     {
       "name": "continuous-integration-enforcement",
       "command": "design-validator.yml and ui-interaction-smoke.yml",
-      "result": "configured; path triggers cover app, the style guide, protocol, form, schema, manifest and evidence; CI runs the result contract, dist isolation and the canonical-geometry form smoke in Chromium and WebKit"
+      "result": "configured; path triggers cover app, the style guide, protocol, form, schema, manifest and evidence; CI runs the result contract, dist isolation, a real repository-root Docker image build and the canonical-geometry form smoke in Chromium and WebKit"
     },
     {
       "name": "blind-recognition-test",

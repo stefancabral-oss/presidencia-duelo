@@ -32,3 +32,5 @@ jobs:
         run: npm run test:card-art-pilot-contract --prefix app
       - name: Build app and verify pilot evidence isolation
         run: npm run build --prefix app
+      - name: Build production PWA image from repository-root context
+        run: docker build --file app/Dockerfile --tag polimatch-app:pilot-176 .

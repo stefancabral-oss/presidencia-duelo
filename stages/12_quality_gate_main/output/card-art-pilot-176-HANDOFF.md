@@ -27,8 +27,9 @@
 - `npm test`: 123/123 aprovados (4 compartilhados, 39 backend, 80 app), incluindo os payloads negativos que antes burlavam schema, PII, autoria, invalidação e denominadores.
 - `npm run build --prefix app`: aprovado; 157 arquivos do `dist` inspecionados e nenhum hash do piloto empacotado.
 - `npm run test:card-art-pilot-form --prefix app`: aprovado em Chromium e WebKit nos dois cenários; geometria canônica igual ao CSS do app e coleta/exportação bloqueadas.
-- `npm run test:card-art-pilot-contract --prefix app`: 18/18 aprovados; Ajv 8.17.1 e ajv-formats 3.0.1 lockados validam a instância Draft 2020-12 antes da semântica, além do contrato do contexto Docker.
-- `docker build -f app/Dockerfile .`: não executado porque o binário Docker não está instalado neste ambiente; o teste automatizado confirma estaticamente o `COPY` a partir do contexto-raiz, sua ordem antes do build, o `.dockerignore` e que o manifesto não entra no estágio final nginx.
+- `npm run test:card-art-pilot-contract --prefix app`: 18/18 aprovados; Ajv 8.20.0 e ajv-formats 3.0.1 lockados validam a instância Draft 2020-12 antes da semântica, além do contrato do contexto Docker.
+- `npm audit --prefix app`: zero vulnerabilidades após travar Ajv 8.20.0 e Playwright 1.55.1.
+- `docker build -f app/Dockerfile .`: não executado localmente porque o binário Docker não está instalado neste ambiente; o teste automatizado confirma estaticamente o `COPY` a partir do contexto-raiz, sua ordem antes do build, o `.dockerignore` e que o manifesto não entra no estágio final nginx. O mesmo build real é obrigatório no runner Ubuntu de `design-validator.yml`; seu resultado remoto ainda não foi observado nesta branch sem push/PR.
 - `git diff --check`: aprovado.
 
 ## Proveniência que ainda bloqueia produção

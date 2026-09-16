@@ -79,10 +79,11 @@ async function screenMetrics(page, screen) {
 
     if (currentScreen === "duel") {
       const arena = document.querySelector(".arena-four");
-      const cards = [...document.querySelectorAll(".candidate-card")];
+      const cards = [...document.querySelectorAll(".candidate-wrap")];
       result.arena = readBox(".arena-four");
       result.gridColumns = arena ? getComputedStyle(arena).gridTemplateColumns.split(" ").filter(Boolean).length : 0;
-      result.cards = cards.map((card) => readBox(`[data-vote="${CSS.escape(card.dataset.vote)}"]`));
+      result.cards = cards.map((card) => card.getBoundingClientRect().toJSON());
+      result.profileTriggers = [...document.querySelectorAll(".profile-trigger")].map((button) => button.getBoundingClientRect().toJSON());
       result.skip = readBox("#skip-round");
       result.navigation = readBox(".bottom-nav");
       const nameElement = document.querySelector(".candidate-name, .candidate-copy > strong");
@@ -127,7 +128,7 @@ async function compactDuelScrollMetrics(page) {
     return {
       scrollY,
       maxScroll: document.documentElement.scrollHeight - innerHeight,
-      secondRow: [...document.querySelectorAll(".candidate-card")].slice(2).map(readBox),
+      secondRow: [...document.querySelectorAll(".candidate-wrap")].slice(2).map(readBox),
       skip: readBox(document.querySelector("#skip-round")),
       navigation: readBox(document.querySelector(".bottom-nav")),
     };
@@ -200,6 +201,9 @@ function assertResponsiveLayout(evidence) {
     if (duel.gridColumns !== expectedColumns) problems.push(`${viewportKey}/duel: ${duel.gridColumns} colunas; esperado ${expectedColumns}`);
     for (const card of duel.cards) {
       if (card.left < -1 || card.right > duel.viewport.width + 1) problems.push(`${viewportKey}/duel: carta fora da largura visível`);
+    }
+    if (duel.profileTriggers.length !== 4 || duel.profileTriggers.some(({ width, height }) => width <= 0 || height < 44)) {
+      problems.push(`${viewportKey}/duel: rodapé Conhecer perfil ausente ou abaixo de 44px`);
     }
     if (duel.compactScroll) {
       for (const card of duel.cards.slice(0, 2)) {

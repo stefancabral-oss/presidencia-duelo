@@ -27,16 +27,35 @@ export function markPortraitLoaded(image) {
 }
 
 export function patchCandidateSlot(slot, model) {
-  const { root, button, fallback, image, name, affiliation, office, summary, interactionHint, outcome, outcomeValue, outcomeMessage } = slot;
+  const {
+    root,
+    button,
+    profileButton,
+    fallback,
+    image,
+    name,
+    affiliation,
+    office,
+    summary,
+    interactionHint,
+    outcome,
+    outcomeValue,
+    outcomeMessage,
+  } = slot;
   root.hidden = !model;
   delete button.dataset.vote;
   delete button.dataset.predict;
+  delete profileButton.dataset.profile;
   if (!model) {
     button.setAttribute("aria-disabled", "true");
     button.removeAttribute("aria-busy");
     button.removeAttribute("aria-label");
+    profileButton.setAttribute("aria-disabled", "true");
+    profileButton.removeAttribute("aria-label");
+    profileButton.hidden = true;
     CARD_STATE_CLASSES.forEach((className) => button.classList.toggle(className, false));
     interactionHint.textContent = "";
+    interactionHint.hidden = true;
     outcome.hidden = true;
     return slot;
   }
@@ -46,6 +65,15 @@ export function patchCandidateSlot(slot, model) {
   button.setAttribute("aria-label", model.accessibleName);
   button.setAttribute("aria-disabled", String(Boolean(model.locked ?? model.busy)));
   setBooleanAttribute(button, "aria-busy", model.busy);
+  profileButton.hidden = !model.profileEnabled;
+  if (model.profileEnabled) {
+    profileButton.dataset.profile = model.id;
+    profileButton.setAttribute("aria-label", model.profileAccessibleName);
+    profileButton.setAttribute("aria-disabled", String(Boolean(model.locked ?? model.busy)));
+  } else {
+    profileButton.removeAttribute("aria-label");
+    profileButton.setAttribute("aria-disabled", "true");
+  }
 
   CARD_STATE_CLASSES.forEach((className) => button.classList.toggle(className, Boolean(model.classes?.includes(className))));
 
@@ -70,6 +98,7 @@ export function patchCandidateSlot(slot, model) {
   office.textContent = model.office;
   summary.textContent = model.summary;
   interactionHint.textContent = model.interactionHint || "";
+  interactionHint.hidden = !model.interactionHint;
 
   const hasOutcome = Boolean(model.outcome);
   outcome.hidden = !hasOutcome;

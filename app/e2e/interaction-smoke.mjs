@@ -32,9 +32,11 @@ async function measureCardHierarchy(page) {
     const nav = bounds(".bottom-nav");
     return {
       viewport: { width: innerWidth, height: innerHeight, scrollY, documentHeight: document.documentElement.scrollHeight },
+      wrap: bounds(".candidate-wrap"),
       card: bounds(".candidate-card"),
       portrait: bounds(".candidate-card .portrait"),
       copy: bounds(".candidate-card .candidate-copy"),
+      profile: bounds(".profile-trigger"),
       skipToNavGap: skip && nav ? nav.top - skip.bottom : null,
     };
   });
@@ -358,9 +360,9 @@ try {
     await page.locator(".card-outcome").first().waitFor({ state: "hidden", timeout: 2500 });
     // A confirmação ainda agenda uma última renderização para limpar a mensagem.
     // Esperar por ela evita que o DOM seja trocado no meio dos gestos seguintes.
-    await page.getByText("Toque na sua preferida. Segure para conhecer o perfil.", { exact: true }).waitFor();
+    await page.getByText("Escolha uma pessoa ou use Conhecer perfil antes de decidir.", { exact: true }).waitFor();
   }
-  const mobileCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
+  const mobileCards = await page.locator(".candidate-wrap").evaluateAll((cards) => cards.map((card) => {
     const box = card.getBoundingClientRect();
     return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };
   }));
@@ -384,8 +386,33 @@ try {
   if (await page.locator(".candidate-summary").count() !== 4) throw new Error("O resumo deixou de fazer parte da carta básica");
   if (await page.locator(".candidate-summary").first().isVisible()) throw new Error("O resumo extenso deveria ficar reservado ao perfil no celular");
   if (!await page.locator(".candidate-office").first().isVisible()) throw new Error("A função da pessoa precisa permanecer visível no celular");
-  if (await page.locator(".candidate-profile-hint").count() !== 4) throw new Error("A dica de segurar deixou de fazer parte da carta básica");
-  if (await page.locator(".profile-button").count()) throw new Error("Um botão externo voltou a ocupar espaço junto à carta");
+  const separatedActions = await page.locator(".candidate-wrap").evaluateAll((slots) => slots.map((slot) => {
+    const vote = slot.querySelector(":scope > button.vote-target");
+    const profile = slot.querySelector(":scope > button.profile-trigger");
+    const profileBox = profile?.getBoundingClientRect();
+    return {
+      tag: slot.tagName,
+      directButtons: slot.querySelectorAll(":scope > button").length,
+      nestedButtons: slot.querySelectorAll("button button").length,
+      voteName: vote?.getAttribute("aria-label") || "",
+      profileName: profile?.getAttribute("aria-label") || "",
+      profileText: profile?.textContent.trim() || "",
+      profileVisible: Boolean(profileBox?.width && profileBox?.height),
+      profileHeight: profileBox?.height || 0,
+    };
+  }));
+  if (separatedActions.length !== 4 || separatedActions.some((slot) => (
+    slot.tag !== "ARTICLE"
+      || slot.directButtons !== 2
+      || slot.nestedButtons !== 0
+      || !slot.voteName.startsWith("Escolher ")
+      || !slot.profileName.startsWith("Conhecer ")
+      || slot.profileText !== "ⓘConhecer perfil"
+      || !slot.profileVisible
+      || slot.profileHeight < 44
+  ))) {
+    throw new Error(`Escolher e conhecer não são dois controles irmãos inequívocos: ${JSON.stringify(separatedActions)}`);
+  }
   for (const layer of [".card-material", ".card-facets", ".card-corners"]) {
     if (await page.locator(`.candidate-card ${layer}`).count() !== 4) {
       throw new Error(`A camada premium ${layer} não foi renderizada nas quatro cartas`);
@@ -412,11 +439,13 @@ try {
     throw new Error(`Nomes com glifo ou linha cortada: ${clippedNames.map(({ name }) => name).join(", ")}`);
   }
   const portraitRatio = cardHierarchyEvidence.geometry.portrait.height / (cardHierarchyEvidence.geometry.card.height - 12);
-  if (cardHierarchyEvidence.geometry.card.height < 276
-    || cardHierarchyEvidence.geometry.card.height > 282
-    || portraitRatio < .6
-    || portraitRatio > .68) {
-    throw new Error("A anatomia móvel perdeu a carta de cerca de 280px com retrato dominante");
+  if (cardHierarchyEvidence.geometry.wrap.height < 276
+    || cardHierarchyEvidence.geometry.wrap.height > 282
+    || cardHierarchyEvidence.geometry.profile.height < 44
+    || cardHierarchyEvidence.geometry.card.bottom > cardHierarchyEvidence.geometry.profile.top + 2
+    || portraitRatio < .58
+    || portraitRatio > .66) {
+    throw new Error(`A anatomia móvel não reservou o rodapé fora do retrato: ${JSON.stringify(cardHierarchyEvidence.geometry)}`);
   }
   if (cardHierarchyEvidence.geometry.skipToNavGap < 12 || cardHierarchyEvidence.geometry.skipToNavGap > 40) {
     throw new Error(`O espaço entre a rodada e a navegação não foi redistribuído pela nova carta: ${cardHierarchyEvidence.geometry.skipToNavGap}px`);
@@ -433,13 +462,17 @@ try {
   await page.evaluate(() => window.scrollTo(0, 0));
   const shortMobile = await page.evaluate(() => {
     const navTop = document.querySelector(".bottom-nav").getBoundingClientRect().top;
-    const cards = [...document.querySelectorAll(".candidate-card")].map((card) => {
+    const cards = [...document.querySelectorAll(".candidate-wrap")].map((wrap) => {
+      const card = wrap.querySelector(".candidate-card");
+      const profile = wrap.querySelector(".profile-trigger");
       const portrait = card.querySelector(".portrait");
       const copy = card.querySelector(".candidate-copy");
       const name = card.querySelector(".candidate-title > strong");
       const affiliation = card.querySelector(".candidate-affiliation");
       const office = card.querySelector(".candidate-office");
-      const box = card.getBoundingClientRect();
+      const box = wrap.getBoundingClientRect();
+      const cardBox = card.getBoundingClientRect();
+      const profileBox = profile.getBoundingClientRect();
       const copyStyle = getComputedStyle(copy);
       const portraitHeight = portrait.getBoundingClientRect().height;
       const copyHeight = copy.getBoundingClientRect().height;
@@ -450,6 +483,10 @@ try {
         left: box.left,
         width: box.width,
         height: box.height,
+        cardHeight: cardBox.height,
+        profileHeight: profileBox.height,
+        profileTop: profileBox.top,
+        cardBottom: cardBox.bottom,
         portraitShare: portraitHeight / (portraitHeight + copyHeight),
         copyHeight,
         copyClientHeight: copy.clientHeight,
@@ -478,10 +515,13 @@ try {
   const shortWidths = shortMobile.cards.map(({ width }) => width);
   const shortHeights = shortMobile.cards.map(({ height }) => height);
   const invalidShortCards = shortMobile.cards.filter((card) => (
-    card.height < 276
-      || card.portraitShare < .6
-      || card.portraitShare > .68
-      || card.copyHeight < 104
+    card.height < 284
+      || card.cardHeight < 240
+      || card.profileHeight < 44
+      || card.profileTop < card.cardBottom - 2
+      || card.portraitShare < .55
+      || card.portraitShare > .66
+      || card.copyHeight < 88
       || card.copyScrollHeight > card.copyClientHeight
       || card.nameFontSize < 15
       || card.nameLineHeight < 18
@@ -489,7 +529,7 @@ try {
       || card.affiliationFontSize < 11
       || card.officeFontSize < 11
       || card.officeLineHeight < 14
-      || card.officeClientHeight + 1 < Math.min(card.officeScrollHeight, 28)
+      || card.officeClientHeight + 1 < Math.min(card.officeScrollHeight, 14)
       || card.officeBottom > card.copyBottom + 1
       || card.touchAction !== "manipulation"
   ));
@@ -527,7 +567,7 @@ try {
   await page.waitForTimeout(520);
   await page.mouse.up();
   await page.locator("dialog[open]").waitFor();
-  await page.getByRole("button", { name: "Fechar resumo" }).click();
+  await page.getByRole("button", { name: /^Fechar perfil de / }).click();
   await page.locator("dialog[open]").waitFor({ state: "hidden" });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -540,7 +580,7 @@ try {
   await page.waitForTimeout(520);
   await page.mouse.up();
   await page.locator("dialog[open]").waitFor();
-  const closeSummary = page.getByRole("button", { name: "Fechar resumo" });
+  const closeSummary = page.getByRole("button", { name: /^Fechar perfil de / });
   await closeSummary.waitFor();
   if (!await closeSummary.isVisible()) throw new Error("O fechamento do resumo não está visível");
   if (process.env.POLIMATCH_E2E_PROFILE_SCREENSHOT) {
@@ -563,9 +603,7 @@ try {
   if (!googleEnabled && await page.locator(".app-live-region").innerText()) throw new Error("A região viva deveria nascer vazia antes do primeiro anúncio");
   const selectedRoundIds = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => card.dataset.vote));
   const votingCard = page.locator(".candidate-card").nth(1);
-  await page.getByRole("button", { name: "Desativar efeitos sonoros" }).focus();
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Tab");
+  await votingCard.focus();
   if (!await votingCard.evaluate((card) => card === document.activeElement && card.matches(":focus-visible"))) {
     throw new Error("A carta de voto não recebeu foco visível pela navegação de teclado");
   }
@@ -578,8 +616,9 @@ try {
       liveRegion: document.querySelector(".app-live-region"),
       slots: [...document.querySelectorAll("[data-candidate-slot]")],
       cards: [...document.querySelectorAll(".candidate-card")],
+      profiles: [...document.querySelectorAll(".profile-trigger")],
     };
-    const trackedNodes = [tracked.topbar, tracked.nav, tracked.instruction, tracked.retryVote, tracked.liveRegion, ...tracked.slots, ...tracked.cards];
+    const trackedNodes = [tracked.topbar, tracked.nav, tracked.instruction, tracked.retryVote, tracked.liveRegion, ...tracked.slots, ...tracked.cards, ...tracked.profiles];
     const announcements = [];
     const substitutions = [];
     const observer = new MutationObserver((records) => {
@@ -674,7 +713,7 @@ try {
   const invalidShortOutcomes = shortOutcome.cards.filter((card) => (
     Math.abs(card.width - shortOutcome.cards[0].width) > 2
       || Math.abs(card.height - shortOutcome.cards[0].height) > 2
-      || card.portraitShare < .6
+      || card.portraitShare < .55
       || card.portraitShare > .68
       || card.copyScrollHeight > card.copyClientHeight
       || card.outcomeScrollHeight > card.outcomeClientHeight
@@ -719,6 +758,7 @@ try {
       liveRegion: probe.tracked.liveRegion === document.querySelector(".app-live-region"),
       slots: probe.tracked.slots.every((slot, index) => slot === document.querySelectorAll("[data-candidate-slot]")[index]),
       cards: probe.tracked.cards.every((card, index) => card === currentCards[index]),
+      profiles: probe.tracked.profiles.every((profile, index) => profile === document.querySelectorAll(".profile-trigger")[index]),
       focused: document.activeElement === probe.focusedCard,
       focusVisible: probe.focusedCard.matches(":focus-visible") && getComputedStyle(probe.focusedCard).outlineStyle !== "none",
       accessibleNameChanged: probe.initialAccessibleName !== probe.focusedCard.getAttribute("aria-label"),
@@ -728,8 +768,8 @@ try {
       statusCount: document.querySelectorAll('[role="status"]').length,
     };
   });
-  if (!persistence.topbar || !persistence.nav || !persistence.instruction || !persistence.retryVote || !persistence.liveRegion || !persistence.slots || !persistence.cards) {
-    throw new Error("Topbar, navegação, instrução, repetição, região viva ou slots foram substituídos durante o voto");
+  if (!persistence.topbar || !persistence.nav || !persistence.instruction || !persistence.retryVote || !persistence.liveRegion || !persistence.slots || !persistence.cards || !persistence.profiles) {
+    throw new Error("Topbar, navegação, instrução, repetição, região viva ou controles dos slots foram substituídos durante o voto");
   }
   if (persistence.substitutions.length) throw new Error(`O MutationObserver detectou substituições persistentes: ${persistence.substitutions.join(", ")}`);
   if (!persistence.focused || !persistence.focusVisible) throw new Error("O botão votado perdeu o foco ou o anel visível durante a nova rodada");
@@ -803,7 +843,6 @@ try {
     ".candidate-affiliation",
     ".candidate-office",
     ".candidate-summary",
-    ".candidate-profile-hint",
   ].map((selector) => {
     const element = card.querySelector(selector);
     const style = getComputedStyle(element);

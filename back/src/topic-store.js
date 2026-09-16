@@ -10,6 +10,7 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3
 const RECOVERY_KEY_PATTERN = /^pm2_[A-Za-z0-9_-]{43}$/;
 const SESSION_TOKEN_PATTERN = /^pms_[A-Za-z0-9_-]{43}$/;
 const SESSION_TTL_DAYS = 90;
+const NETWORK_HASH_PATTERN = /^[a-f0-9]{64}$/;
 const FEEDBACK_SCOPE_PERSONAL = "personal";
 const FEEDBACK_SCOPE_LEGACY_GLOBAL = "legacy-global";
 const GLOBAL_RANKING_POLICY = Object.freeze({
@@ -17,6 +18,56 @@ const GLOBAL_RANKING_POLICY = Object.freeze({
   label: "Elo do placar público",
   explanation: "A ordem pública usa Elo, vitórias e nome como critérios sucessivos.",
 });
+
+export const VOTE_ABUSE_LIMITS = Object.freeze({
+  anonymousPlayersPerNetworkPerDay: 3,
+  roundsPerPlayerPerMinute: 8,
+  roundsPerPlayerPerDay: 30,
+});
+
+function quotaError(message, code, retryAfterSeconds) {
+  const error = new Error(message);
+  error.status = 429;
+  error.code = code;
+  error.retryAfterSeconds = retryAfterSeconds;
+  return error;
+}
+
+async function consumeQuota(client, { scope, subjectHash, window, limit, code, message, retryAfterSeconds }) {
+  const bucket = window === "minute" ? "date_trunc('minute', now())" : "date_trunc('day', now())";
+  const result = await client.query(
+    `INSERT INTO abuse_quota_counters (scope, subject_hash, window_start, used)
+     VALUES ($1, $2, ${bucket}, 1)
+     ON CONFLICT (scope, subject_hash, window_start) DO UPDATE
+     SET used = abuse_quota_counters.used + 1,
+         updated_at = now()
+     WHERE abuse_quota_counters.used < $3
+     RETURNING used`,
+    [scope, subjectHash, limit],
+  );
+  if (!result.rowCount) throw quotaError(message, code, retryAfterSeconds);
+}
+
+async function consumePlayerRoundQuota(client, playerId) {
+  await consumeQuota(client, {
+    scope: "player-round-minute",
+    subjectHash: playerId,
+    window: "minute",
+    limit: VOTE_ABUSE_LIMITS.roundsPerPlayerPerMinute,
+    code: "VOTE_RATE_LIMITED",
+    message: "muitas rodadas em pouco tempo; aguarde antes de continuar",
+    retryAfterSeconds: 60,
+  });
+  await consumeQuota(client, {
+    scope: "player-round-day",
+    subjectHash: playerId,
+    window: "day",
+    limit: VOTE_ABUSE_LIMITS.roundsPerPlayerPerDay,
+    code: "VOTE_DAILY_LIMIT",
+    message: "limite diário de rodadas atingido",
+    retryAfterSeconds: 86400,
+  });
+}
 
 export function validateTopic(topicId) {
   const topic = TOPICS_BY_ID.get(String(topicId || ""));
@@ -345,6 +396,15 @@ async function createCleanSchema(client) {
       last_seen_at timestamptz NOT NULL DEFAULT now()
     );
 
+    CREATE TABLE IF NOT EXISTS abuse_quota_counters (
+      scope text NOT NULL CHECK (scope IN ('network-player-day', 'player-round-minute', 'player-round-day')),
+      subject_hash text NOT NULL,
+      window_start timestamptz NOT NULL,
+      used integer NOT NULL DEFAULT 0 CHECK (used >= 0),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (scope, subject_hash, window_start)
+    );
+
     CREATE TABLE IF NOT EXISTS player_identities (
       provider text NOT NULL,
       subject text NOT NULL,
@@ -501,6 +561,7 @@ async function createCleanSchema(client) {
     CREATE INDEX IF NOT EXISTS choice_rounds_topic_created_idx ON choice_rounds (topic_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS chroma_catalog_release_idx ON chroma_catalog (topic_id, status, available_from, available_until);
     CREATE INDEX IF NOT EXISTS player_sessions_player_idx ON player_sessions (player_id, expires_at DESC);
+    CREATE INDEX IF NOT EXISTS abuse_quota_window_idx ON abuse_quota_counters (window_start);
 
     CREATE OR REPLACE FUNCTION reject_vote_mutation()
     RETURNS trigger AS $$
@@ -544,6 +605,7 @@ async function createCleanSchema(client) {
   if (!applied.rowCount) {
     await client.query("INSERT INTO schema_migrations (id) VALUES ($1)", [RESET_MIGRATION_ID]);
   }
+  await client.query("DELETE FROM abuse_quota_counters WHERE window_start < now() - interval '8 days'");
   return { resetApplied: !applied.rowCount, migrationId: RESET_MIGRATION_ID };
 }
 
@@ -660,12 +722,27 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
       await pool.query("SELECT 1");
     },
 
-    async createPlayer() {
+    async createPlayer({ networkHash } = {}) {
+      const normalizedNetworkHash = String(networkHash || "").trim().toLowerCase();
+      if (!NETWORK_HASH_PATTERN.test(normalizedNetworkHash)) {
+        const error = new Error("identificador de rede inválido");
+        error.status = 400;
+        throw error;
+      }
       const recoveryKey = createRecoveryKey();
       const playerId = randomUUID();
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
+        await consumeQuota(client, {
+          scope: "network-player-day",
+          subjectHash: normalizedNetworkHash,
+          window: "day",
+          limit: VOTE_ABUSE_LIMITS.anonymousPlayersPerNetworkPerDay,
+          code: "PLAYER_ISSUANCE_LIMIT",
+          message: "limite diário de novos jogadores nesta rede atingido",
+          retryAfterSeconds: 86400,
+        });
         await createPlayerRecords(client, playerId, recoveryKeyHash(recoveryKey));
         await client.query("COMMIT");
         return { recoveryKey };
@@ -884,6 +961,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
           return { ...global, round, vote: round, player: personal };
         }
 
+        await consumePlayerRoundQuota(client, player.id);
         await client.query("SELECT duels FROM ranking_pools WHERE topic_id = $1 FOR UPDATE", [topic]);
         const globalBeforeRound = await selectRanking(client, topic);
         const globalRows = await client.query(

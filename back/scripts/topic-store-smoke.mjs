@@ -25,7 +25,7 @@ const initial = await firstStore.ranking("eleicoes-2026");
 assert.equal(initial.duels, 0);
 assert.equal(initial.ranking.length, 54);
 
-const { recoveryKey } = await firstStore.createPlayer();
+const { recoveryKey } = await firstStore.createPlayer({ networkHash: "a".repeat(64) });
 const personalBefore = await firstStore.playerRanking(recoveryKey, "eleicoes-2026");
 assert.equal(personalBefore.version, 0);
 assert.equal(personalBefore.duels, 0);

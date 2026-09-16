@@ -79,3 +79,5 @@ jobs:
         run: npm ci --prefix back
       - name: Test PostgreSQL integration
         run: npm run test:integration --prefix back
+      - name: Prove vote abuse is blocked
+        run: npm run test:abuse --prefix back

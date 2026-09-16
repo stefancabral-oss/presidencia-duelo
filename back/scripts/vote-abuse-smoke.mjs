@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import pg from "pg";
 import { createTopicStore, recoveryKeyHash, VOTE_ABUSE_LIMITS } from "../src/topic-store.js";
 
@@ -17,14 +17,21 @@ async function expectCode(operation, code) {
   });
 }
 
-const issuanceNetwork = "b".repeat(64);
+// The integration workflow intentionally runs the broader store smoke first in
+// the same database. Use per-run network subjects so this abuse proof measures
+// its own quota window instead of inheriting counters from another smoke.
+const networkSubject = (label) => createHash("sha256")
+  .update(`${label}:${randomUUID()}`)
+  .digest("hex");
+
+const issuanceNetwork = networkSubject("issuance-limit");
 for (let index = 0; index < VOTE_ABUSE_LIMITS.anonymousPlayersPerNetworkPerDay; index += 1) {
   const issued = await store.createPlayer({ networkHash: issuanceNetwork });
   assert.match(issued.recoveryKey, /^pm2_/);
 }
 await expectCode(() => store.createPlayer({ networkHash: issuanceNetwork }), "PLAYER_ISSUANCE_LIMIT");
 
-const { recoveryKey } = await store.createPlayer({ networkHash: "c".repeat(64) });
+const { recoveryKey } = await store.createPlayer({ networkHash: networkSubject("round-limits") });
 const candidateIds = ["lula", "jair-bolsonaro", "anitta", "neymar-jr"];
 await assert.rejects(
   () => store.roundVote({
@@ -81,8 +88,8 @@ await audit.query(
 await audit.query(
   `UPDATE abuse_quota_counters
    SET used = $2
-   WHERE scope = 'player-round-day' AND subject_hash = $1`,
-  [playerId, VOTE_ABUSE_LIMITS.roundsPerPlayerPerDay],
+   WHERE scope = 'player-choice-editorial-day-v2' AND subject_hash = $1`,
+  [playerId, VOTE_ABUSE_LIMITS.editorialChoicesPerPlayerPerDay],
 );
 await expectCode(() => store.roundVote(blockedRound), "VOTE_DAILY_LIMIT");
 
@@ -93,7 +100,8 @@ const persisted = await audit.query(
 assert.deepEqual(
   persisted.rows.map(({ scope, used }) => [scope, Number(used)]),
   [
-    ["player-round-day", VOTE_ABUSE_LIMITS.roundsPerPlayerPerDay],
+    ["player-choice-editorial-day-v2", VOTE_ABUSE_LIMITS.editorialChoicesPerPlayerPerDay],
+    ["player-free-editorial-day-v2", VOTE_ABUSE_LIMITS.roundsPerPlayerPerMinute],
     ["player-round-minute", VOTE_ABUSE_LIMITS.roundsPerPlayerPerMinute],
   ],
 );

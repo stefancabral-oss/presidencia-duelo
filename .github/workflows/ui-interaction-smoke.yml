@@ -33,12 +33,14 @@ jobs:
         run: npm ci --prefix app
 
       - name: Install Playwright
-        run: npm install --no-save playwright@1.55.0 --prefix app
+        run: npm install --no-save playwright@1.55.1 --prefix app
 
       - name: Install browser
         run: npx --prefix app playwright install --with-deps ${{ matrix.browser }}
 
       - name: Build app
+        env:
+          VITE_GOOGLE_CLIENT_ID: e2e-client.apps.googleusercontent.com
         run: npm run build --prefix app
 
       - name: Start preview
@@ -59,6 +61,27 @@ jobs:
         env:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
         run: node app/e2e/interaction-smoke.mjs
+
+      - name: Validate login and logout when daily service fails
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+          POLIMATCH_E2E_GOOGLE: '1'
+        run: node app/e2e/interaction-smoke.mjs
+
+      - name: Validate deterministic daily session
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/daily-session.mjs
+
+      - name: Validate optional daily prediction and closed reveal
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/daily-prediction.mjs
+
+      - name: Validate prediction scoreboard across identity switches
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/prediction-identity.mjs
 
       - name: Validate responsive layout
         env:

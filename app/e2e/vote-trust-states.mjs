@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
+import { completedDailySession } from "./daily-fixture.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -35,6 +36,8 @@ function createServer() {
     keys: new Set([ORIGINAL_KEY]),
     requests: [],
     nextFailure: null,
+    dailyRequests: 0,
+    failDailySession: false,
     ranking() {
       return candidates.map((candidate) => ({
         ...candidate,
@@ -111,6 +114,13 @@ async function installApi(page, server) {
         json: { topicId: "eleicoes-2026", duels: server.duels, version: server.version, rankingPolicy: POLICY, ranking: server.ranking() },
       });
     }
+    if (pathname === "/api/daily-session") {
+      server.dailyRequests += 1;
+      if (server.failDailySession) {
+        return route.fulfill({ status: 503, json: { error: "serviço diário indisponível" } });
+      }
+      return route.fulfill({ status: 200, json: completedDailySession(candidates) });
+    }
     if (pathname === "/api/round-vote" && request.method() === "POST") {
       const payload = request.postDataJSON();
       server.requests.push({ payload, authorization: request.headers().authorization || "" });
@@ -139,6 +149,7 @@ async function openDuel(browser, server) {
   await page.addInitScript((key) => localStorage.setItem("polimatch:v3:recovery-key", key), ORIGINAL_KEY);
   await page.goto(appUrl, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Duelo" }).click();
+  await page.getByRole("button", { name: "Continuar no modo livre" }).click();
   const coach = page.getByRole("button", { name: "Começar rodada" });
   if (await coach.count()) await coach.click();
   await page.getByRole("heading", { name: "Quem você prefere?" }).waitFor();
@@ -194,9 +205,12 @@ try {
     const failed = await snapshot(page, "401-session-required", evidence);
     assertFrozen(before, failed, "401");
     assert.equal(server.issuances, 0, "401 emitiu sessão sem ação explícita");
+    const dailyRequestsBeforeRestore = server.dailyRequests;
+    server.failDailySession = true;
     await page.getByRole("button", { name: "Restabelecer sessão" }).click();
     await page.getByRole("button", { name: "Tentar novamente" }).waitFor();
     assert.equal(server.issuances, 1, "restauração deveria emitir exatamente uma sessão");
+    assert.equal(server.dailyRequests, dailyRequestsBeforeRestore, "restauração livre consultou o serviço diário indisponível");
     await page.getByRole("button", { name: "Tentar novamente" }).click();
     await page.locator(".feedback-channel:visible").first().waitFor();
     assert.equal(server.duels, 1);

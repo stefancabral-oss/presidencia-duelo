@@ -27,15 +27,22 @@ export function markPortraitLoaded(image) {
 }
 
 export function patchCandidateSlot(slot, model) {
-  const { root, button, fallback, image, name, affiliation, office, summary, outcome, outcomeValue, outcomeMessage } = slot;
+  const { root, button, fallback, image, name, affiliation, office, summary, interactionHint, outcome, outcomeValue, outcomeMessage } = slot;
   root.hidden = !model;
+  delete button.dataset.vote;
+  delete button.dataset.predict;
   if (!model) {
-    button.dataset.vote = "";
     button.setAttribute("aria-disabled", "true");
+    button.removeAttribute("aria-busy");
+    button.removeAttribute("aria-label");
+    CARD_STATE_CLASSES.forEach((className) => button.classList.toggle(className, false));
+    interactionHint.textContent = "";
+    outcome.hidden = true;
     return slot;
   }
 
-  button.dataset.vote = model.id;
+  if (model.actionMode === "prediction") button.dataset.predict = model.id;
+  else if (model.actionMode === "vote") button.dataset.vote = model.id;
   button.setAttribute("aria-label", model.accessibleName);
   button.setAttribute("aria-disabled", String(Boolean(model.locked ?? model.busy)));
   setBooleanAttribute(button, "aria-busy", model.busy);
@@ -62,6 +69,7 @@ export function patchCandidateSlot(slot, model) {
   affiliation.textContent = model.affiliation;
   office.textContent = model.office;
   summary.textContent = model.summary;
+  interactionHint.textContent = model.interactionHint || "";
 
   const hasOutcome = Boolean(model.outcome);
   outcome.hidden = !hasOutcome;

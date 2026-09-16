@@ -8,6 +8,7 @@
 - Branch: `icm/12-u02-dom-persistence-166`
 - PR: draft #191 — https://github.com/stefancabral-oss/presidencia-duelo/pull/191
 - Base da unidade: `8f7ba527e03851370b5f5476adc68cd21d655634`
+- Base diária integrada semanticamente: `f86aec40ba4770fc71de6deca55175e356ac942d` (#178 e follow-up #179)
 - Commit da implementação rebaseada: `cf25c6b`
 - Commit da integração revisada: `0640e6c`
 - Commit da correção final de foco: `2b4090b`
@@ -33,6 +34,8 @@
 - O controle persistente alterna honestamente entre `Restabelecer sessão` e `Tentar novamente`; cartas pendentes usam `aria-disabled` sem perder foco e ignoram toque, teclado e pressão longa até a recuperação explícita.
 - Falhas assíncronas de login ou logout mantêm foco dentro do diálogo de autenticação; o botão Google é remontado para nova tentativa sem loop quando o provedor está indisponível.
 - O workflow de UI executa `interaction-smoke.mjs` e `vote-recovery.mjs` em Chromium e WebKit e também reage a mudanças de `shared/`.
+- Os mesmos quatro slots persistentes agora alternam entre preferência (`data-vote`) e aposta (`data-predict`) sem trocar os nós; durante carregamento, ressincronização e fechamento, ambos os atributos de ação são removidos.
+- A aposta pendente do décimo slot tem precedência sobre o fechamento: a tela final só abre depois da preferência e da aposta opcional serem resolvidas.
 
 ## Fora de escopo preservado
 
@@ -42,15 +45,20 @@
 
 ## Evidência local
 
-- `npm test`: 111/111 testes aprovados (4 shared, 39 backend e 68 app).
-- `npm run build --prefix app`: aprovado; 99/125 retratos disponíveis e bundle Vite produzido.
+- `npm test`: 150/150 testes aprovados (4 shared, 58 backend e 88 app).
+- `VITE_GOOGLE_CLIENT_ID=e2e-client.apps.googleusercontent.com npm run build`: aprovado; 99/125 retratos disponíveis e bundle Vite produzido.
+- Preview de evidência iniciado no próprio worktree em `127.0.0.1:4281` com `--strictPort`; listener, command line e resposta HTTP 200 foram conferidos antes da matriz.
 - `POLIMATCH_E2E_BROWSER=chromium node app/e2e/interaction-smoke.mjs`: aprovado.
 - `POLIMATCH_E2E_BROWSER=webkit node app/e2e/interaction-smoke.mjs`: aprovado.
 - `POLIMATCH_E2E_BROWSER=chromium node app/e2e/vote-recovery.mjs`: aprovado em timeout, 503, 401, 409, idempotência, resposta 200 truncada e replay legado.
 - `POLIMATCH_E2E_BROWSER=webkit node app/e2e/vote-recovery.mjs`: aprovado nos mesmos sete cenários e no mesmo contrato de teclado e foco.
 - `vote-trust-states.mjs`: aprovado em Chromium e WebKit para `sending`, 401, 429 e 5xx.
 - `responsive-layout.mjs`: aprovado em Chromium e WebKit, medindo o painel persistente ativo em 16 viewports.
+- `daily-session.mjs`: aprovado em Chromium e WebKit para snapshot fixo, reload, dez slots, fallback livre e virada editorial.
+- `daily-prediction.mjs`: aprovado em Chromium e WebKit para preferência/aposta separadas, correlação 200, retry na virada, pressão longa, teclado, 320×568 e revelação fechada.
+- `prediction-identity.mjs`: aprovado em Chromium e WebKit; login/logout durante carregamento não deixam o placar preso à identidade anterior.
 - Variante com `VITE_GOOGLE_CLIENT_ID` e `POLIMATCH_E2E_GOOGLE=1`: aprovada em Chromium e WebKit, incluindo falha e retry de login/logout com foco dentro do diálogo.
+- `npm audit --prefix app --omit=dev` e `npm audit --prefix back --omit=dev`: zero vulnerabilidades.
 - No smoke, o observador registrou zero substituições; topbar, nav, instrução, repetição, região viva, slots e botões mantiveram igualdade referencial; o foco visível permaneceu no botão votado.
 - A regressão de retrato quebrado é coberta por teste unitário: o mesmo `src` não reaparece depois do erro e um novo `src` só aparece após `load`.
 - O smoke Playwright revalidou `320×568` com rolagem vertical e sem recorte da segunda linha/resultado, `390×844` com quatro cartas completas, `1280×900` com proporção 5:7 e `1440×900` sem overflow horizontal.
@@ -61,6 +69,7 @@
 - A base corrente também contém os hotfixes `357a3de` e `8411b53`, que preservam a anatomia da carta e a placa completa de resultado em celulares estreitos.
 - `36e00f6` e `02f0b8a` mantêm ranks pessoais server-authoritative e listam perfis já comparados antes dos ainda não jogados; a #166 apenas atualiza esses dados nos mesmos nós persistentes.
 - A base `8f7ba52` incorpora #170 e o follow-up #193: resposta exata, limites, idempotência, recuperação de sessão e descarte de respostas de identidade antiga foram preservados no DOM persistente.
+- A base diária `f86aec4` incorpora #178/#179; preferência, aposta, fechamento e placar selado foram portados para a arquitetura persistente sem reintroduzir remount da rodada.
 
 ## Pendente
 

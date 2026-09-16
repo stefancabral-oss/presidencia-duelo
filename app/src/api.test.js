@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ApiError, requestJson, submitRoundVote } from "./api.js";
+import { ApiError, loadDailyPredictionResults, requestJson, submitDailyPrediction, submitDailyVote, submitRoundVote } from "./api.js";
 
 async function withFetch(fakeFetch, callback) {
   const originalFetch = globalThis.fetch;
@@ -137,4 +137,79 @@ test("a supplied round id survives every retry request", async () => {
   assert.equal(payloads.length, 2);
   assert.deepEqual(payloads.map(({ roundId }) => roundId), ["stable-round-id", "stable-round-id"]);
   assert.deepEqual(payloads.map(({ playerVersion }) => playerVersion), [4, 4]);
+});
+
+test("daily vote requests never send a client candidate list", async () => {
+  let request;
+  await withFetch(
+    async (_url, options) => {
+      request = options;
+      return { ok: true, status: 200, json: async () => ({ ok: true }) };
+    },
+    async () => submitDailyVote(
+      "550e8400-e29b-41d4-a716-446655440000",
+      "edition-1",
+      4,
+      "lula",
+      "eleicoes-2026",
+      { recoveryKey: "pm2_player", version: 3 },
+    ),
+  );
+  assert.deepEqual(JSON.parse(request.body), {
+    answerId: "550e8400-e29b-41d4-a716-446655440000",
+    editionId: "edition-1",
+    slot: 4,
+    winnerId: "lula",
+    topicId: "eleicoes-2026",
+    playerVersion: 3,
+    predictionContractVersion: 1,
+  });
+});
+
+test("daily predictions have a separate idempotent contract and explicit skip", async () => {
+  const requests = [];
+  const predictionId = "650e8400-e29b-41d4-a716-446655440000";
+  await withFetch(
+    async (_url, options) => {
+      requests.push({ url: _url, options, body: JSON.parse(options.body) });
+      return { ok: true, status: 200, json: async () => ({ ok: true }) };
+    },
+    async () => {
+      await submitDailyPrediction(predictionId, "edition-1", 2, "candidate-8", "eleicoes-2026", {
+        recoveryKey: "pm2_private",
+      });
+      await submitDailyPrediction(predictionId, "edition-1", 2, null, "eleicoes-2026", {
+        recoveryKey: "pm2_private",
+      });
+    },
+  );
+  assert.deepEqual(requests.map(({ body }) => body), [{
+    predictionId,
+    editionId: "edition-1",
+    slot: 2,
+    decision: "predict",
+    candidateId: "candidate-8",
+    topicId: "eleicoes-2026",
+  }, {
+    predictionId,
+    editionId: "edition-1",
+    slot: 2,
+    decision: "skip",
+    candidateId: null,
+    topicId: "eleicoes-2026",
+  }]);
+  assert.ok(requests.every(({ options }) => options.headers.Authorization === "Bearer pm2_private"));
+});
+
+test("prediction results are loaded only in the player's bearer scope", async () => {
+  let request;
+  await withFetch(
+    async (url, options) => {
+      request = { url, options };
+      return { ok: true, status: 200, json: async () => ({ baselinePercent: 25, score: {}, sessions: [] }) };
+    },
+    async () => loadDailyPredictionResults("pm2_private", "eleicoes-2026"),
+  );
+  assert.match(request.url, /daily-prediction-results/);
+  assert.equal(request.options.headers.Authorization, "Bearer pm2_private");
 });

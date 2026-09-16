@@ -2,6 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
 import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import { curatedPortraitPath, hasCuratedPortrait } from "../../shared/curated-portraits.js";
+import { completedDailySession } from "./daily-fixture.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -84,9 +85,9 @@ async function screenMetrics(page, screen) {
       result.cards = cards.map((card) => readBox(`[data-vote="${CSS.escape(card.dataset.vote)}"]`));
       result.skip = readBox("#skip-round");
       result.navigation = readBox(".bottom-nav");
-      const nameElement = document.querySelector(".candidate-name");
+      const nameElement = document.querySelector(".candidate-name, .candidate-copy > strong");
       const originalName = nameElement?.textContent || "";
-      result.names = names.map((name) => {
+      result.names = nameElement ? names.map((name) => {
         nameElement.textContent = name;
         const style = getComputedStyle(nameElement);
         return {
@@ -97,8 +98,8 @@ async function screenMetrics(page, screen) {
           clientHeight: nameElement.clientHeight,
           scrollHeight: nameElement.scrollHeight,
         };
-      });
-      nameElement.textContent = originalName;
+      }) : [];
+      if (nameElement) nameElement.textContent = originalName;
     }
 
     if (currentScreen === "ranking") {
@@ -148,6 +149,7 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
   if (path === "/api/ranking") return route.fulfill({ status: 200, json: { duels: 240, ranking: candidates } });
   if (path === "/api/player" && request.method() === "POST") return route.fulfill({ status: 200, json: { recoveryKey: "responsive-layout-key" } });
   if (path === "/api/player/state") return route.fulfill({ status: 200, json: { version: 0, duels: 0, ranking: candidates } });
+  if (path === "/api/daily-session") return route.fulfill({ status: 200, json: completedDailySession(candidates) });
   return route.fulfill({ status: 404, json: { error: "mock não encontrado" } });
 });
 
@@ -159,10 +161,17 @@ async function goTo(screen) {
     ranking: "Ranking",
   };
   await page.getByRole("button", { name: labels[screen] }).click();
+  if (screen === "duel") {
+    await page.locator("#start-free-mode:visible, .candidate-card:visible").first().waitFor();
+    if (await page.getByRole("button", { name: "Continuar no modo livre" }).count()) {
+      await page.getByRole("button", { name: "Continuar no modo livre" }).click();
+    }
+  }
   await page.getByRole("heading", { name: headings[screen], exact: true }).waitFor();
   if (screen === "duel" && await page.getByRole("button", { name: "Começar rodada", exact: true }).count()) {
     await page.getByRole("button", { name: "Começar rodada", exact: true }).click();
   }
+  if (screen === "duel") await page.locator(".candidate-card").first().waitFor();
   await page.evaluate(() => window.scrollTo(0, 0));
 }
 
@@ -216,6 +225,7 @@ function assertResponsiveLayout(evidence) {
       }
     }
     const clippedNames = duel.names.filter(({ overflow, clientHeight, scrollHeight }) => overflow !== "visible" || scrollHeight > clientHeight + 1);
+    if (duel.names.length !== playableNames.length) problems.push(`${viewportKey}/duel: nomes não puderam ser medidos`);
     if (clippedNames.length) problems.push(`${viewportKey}/duel: ${clippedNames.length} nomes truncados`);
     const undersizedNames = duel.names.filter(({ fontSize }) => Number.parseFloat(fontSize) < 11);
     if (undersizedNames.length) problems.push(`${viewportKey}/duel: nomes abaixo de 11px`);

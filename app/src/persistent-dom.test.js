@@ -35,6 +35,7 @@ function fakeSlot() {
     affiliation: fakeElement(),
     office: fakeElement(),
     summary: fakeElement(),
+    interactionHint: fakeElement(),
     outcome: fakeElement(),
     outcomeValue: fakeElement(),
     outcomeMessage: fakeElement(),
@@ -43,6 +44,7 @@ function fakeSlot() {
 
 const firstCandidate = {
   id: "primeira",
+  actionMode: "vote",
   accessibleName: "Primeira Pessoa, carta básica. Toque para escolher; segure para saber quem é.",
   initials: "PP",
   photo: "/portraits/001.jpg",
@@ -51,6 +53,7 @@ const firstCandidate = {
   affiliation: "Partido A",
   office: "Cargo A",
   summary: "Resumo A",
+  interactionHint: "ⓘ Segure para conhecer",
   locked: true,
   busy: true,
   classes: ["is-selected"],
@@ -77,6 +80,7 @@ test("candidate patches keep the four slot nodes and controls alive", () => {
   assert.deepEqual(slots.map(({ root }) => root), originalRoots);
   assert.deepEqual(slots.map(({ button }) => button), originalButtons);
   assert.deepEqual(slots.map(({ button }) => button.dataset.vote), ["nova-0", "nova-1", "nova-2", "nova-3"]);
+  assert.deepEqual(slots.map(({ button }) => button.dataset.predict), [undefined, undefined, undefined, undefined]);
   assert.equal(slots[0].button.getAttribute("aria-disabled"), "false");
   assert.equal(slots[0].name.textContent, "Nova Pessoa 1");
   assert.equal(slots[0].outcome.hidden, false);
@@ -91,6 +95,33 @@ test("busy cards remain focusable DOM controls while their vote is unavailable",
   assert.equal(slot.button.getAttribute("aria-busy"), "true");
   assert.equal(slot.button.getAttribute("disabled"), null);
   assert.equal(slot.button.classList.contains("is-selected"), true);
+});
+
+test("persistent cards switch between preference, prediction, and sealed states", () => {
+  const slot = fakeSlot();
+  const originalButton = slot.button;
+
+  patchCandidateSlot(slot, firstCandidate);
+  assert.equal(slot.button.dataset.vote, "primeira");
+  assert.equal(slot.button.dataset.predict, undefined);
+
+  patchCandidateSlot(slot, {
+    ...firstCandidate,
+    actionMode: "prediction",
+    accessibleName: "Primeira Pessoa, carta básica. Toque para apostar.",
+    interactionHint: "Toque para apostar",
+  });
+  assert.equal(slot.button, originalButton);
+  assert.equal(slot.button.dataset.vote, undefined);
+  assert.equal(slot.button.dataset.predict, "primeira");
+  assert.equal(slot.interactionHint.textContent, "Toque para apostar");
+
+  patchCandidateSlot(slot, null);
+  assert.equal(slot.button, originalButton);
+  assert.equal(slot.button.dataset.vote, undefined);
+  assert.equal(slot.button.dataset.predict, undefined);
+  assert.equal(slot.button.getAttribute("aria-label"), null);
+  assert.equal(slot.root.hidden, true);
 });
 
 test("pending cards stay unavailable without being announced as busy", () => {

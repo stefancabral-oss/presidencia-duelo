@@ -4,6 +4,7 @@
   "macroIssue": 175,
   "unit": "U02",
   "baseSha": "8f7ba527e03851370b5f5476adc68cd21d655634",
+  "dailyIntegrationBaseSha": "f86aec40ba4770fc71de6deca55175e356ac942d",
   "implementationCommit": "cf25c6b",
   "reviewFixCommit": "0640e6c",
   "focusRetryFixCommit": "2b4090b",
@@ -18,12 +19,17 @@
     {
       "name": "root-unit",
       "command": "npm test",
-      "result": "passed; 4 shared, 39 backend and 68 app tests (111 total)"
+      "result": "passed; 4 shared, 58 backend and 88 app tests (150 total)"
     },
     {
       "name": "app-build",
-      "command": "npm run build --prefix app",
+      "command": "VITE_GOOGLE_CLIENT_ID=e2e-client.apps.googleusercontent.com npm run build",
       "result": "passed; portrait validator reported 99 of 125 ready and Vite produced the production bundle"
+    },
+    {
+      "name": "strict-preview-provenance",
+      "command": "vite preview --host 127.0.0.1 --port 4281 --strictPort",
+      "result": "passed; listener command line pointed to this worktree and returned HTTP 200 before the browser matrix"
     },
     {
       "name": "interaction-smoke-chromium",
@@ -56,6 +62,21 @@
       "result": "passed in both engines; the active persistent panel was measured across 16 viewports"
     },
     {
+      "name": "daily-session-chromium-webkit",
+      "command": "POLIMATCH_E2E_BROWSER=<chromium|webkit> node app/e2e/daily-session.mjs",
+      "result": "passed in both engines; fixed snapshot, reload, ten slots, free fallback and editorial-day rollover"
+    },
+    {
+      "name": "daily-prediction-chromium-webkit",
+      "command": "POLIMATCH_E2E_BROWSER=<chromium|webkit> node app/e2e/daily-prediction.mjs",
+      "result": "passed in both engines; separate preference and prediction, exact four-card reuse, midnight retry, hold, keyboard, compact viewport and sealed reveal"
+    },
+    {
+      "name": "prediction-identity-chromium-webkit",
+      "command": "POLIMATCH_E2E_BROWSER=<chromium|webkit> node app/e2e/prediction-identity.mjs",
+      "result": "passed in both engines; login and logout during a pending results request release the next identity"
+    },
+    {
       "name": "optional-google-flow",
       "command": "VITE_GOOGLE_CLIENT_ID=e2e-client.apps.googleusercontent.com npm run build --prefix app; POLIMATCH_E2E_GOOGLE=1 POLIMATCH_E2E_BROWSER=chromium node app/e2e/interaction-smoke.mjs",
       "result": "passed in Chromium and WebKit; login/logout failures retain focus inside the dialog and remain retryable"
@@ -84,6 +105,11 @@
       "name": "wide-short-viewport-regression",
       "command": "Playwright interaction smoke at 320x568, 390x844, 1280x900 and 1440x900",
       "result": "passed; short mobile scroll exposes the second row and complete outcomes above fixed navigation, regular mobile keeps all four cards visible, desktop keeps 5:7 cards and no horizontal overflow"
+    },
+    {
+      "name": "production-dependency-audits",
+      "command": "npm audit --prefix app --omit=dev; npm audit --prefix back --omit=dev",
+      "result": "passed; zero vulnerabilities in both production dependency trees"
     }
   ],
   "pending": [

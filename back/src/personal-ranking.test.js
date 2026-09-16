@@ -35,6 +35,21 @@ test("declares pairwise majority as the personal ranking contract", () => {
   assert.match(PERSONAL_RANKING_POLICY.explanation, /Elo/);
 });
 
+test("serializes structured taxonomy without the retired affiliation field", () => {
+  const candidate = {
+    id: "candidate-a",
+    name: "Candidate A",
+    party: "PT",
+    primaryArea: "politica",
+  };
+  const result = personalRankingFromRows("topic", 0, [candidate], stats([candidate.id]), []);
+  const [entry] = result.ranking;
+
+  assert.equal(Object.hasOwn(entry, "affiliation"), false);
+  assert.equal(entry.party, candidate.party);
+  assert.equal(entry.primaryArea, candidate.primaryArea);
+});
+
 test("the measured 35-round regression no longer uses exposure or Elo as a tiebreak", () => {
   const featured = ["janja", "gleisi", "vitor", "haddad", "ratinho", "lula"];
   const rounds = [

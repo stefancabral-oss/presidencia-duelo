@@ -7,7 +7,8 @@
   "implementationCommit": "e8a8534f4f3b065401f6f33752d0c61de8b5774f",
   "adversarialReviewCommit": "60357ff39a5bff20087de62e6fa407f6ba19a426",
   "semanticReviewCommit": "8116ebf255b0939058616d8567246f5e884e3ca5",
-  "generatedAt": "2026-09-16T03:49:45-03:00",
+  "parityValidationCommit": "88d9ea957c7e221a63d004631055def5778331bd",
+  "generatedAt": "2026-09-16T04:05:13-03:00",
   "catalog": {
     "records": 125,
     "schemaVersion": 2,
@@ -30,7 +31,7 @@
     {
       "name": "root-unit",
       "command": "npm test",
-      "result": "passed; 121 of 121 tests (16 shared, 42 back, 63 app), including source-parity negatives, protected vote-boundary regressions, real 125-record API serialization and regressions for Paulo Guedes, Guilherme Boulos, Jones Manoel, Carla Zambelli and Deltan Dallagnol"
+      "result": "passed; 122 of 122 tests (16 shared, 43 back, 63 app), including source-parity negatives, protected vote-boundary regressions, real 125-record API serialization, rejection of the retired affiliation field and regressions for Paulo Guedes, Guilherme Boulos, Jones Manoel, Carla Zambelli and Deltan Dallagnol"
     },
     {
       "name": "app-build",

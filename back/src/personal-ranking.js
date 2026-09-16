@@ -172,7 +172,6 @@ export function personalRankingFromRows(topicId, duels, candidates, statRows = [
       id: candidate.id,
       name: candidate.name,
       displayName: candidate.displayName,
-      affiliation: candidate.affiliation,
       party: candidate.party,
       primaryArea: candidate.primaryArea,
       photo: candidate.photo,

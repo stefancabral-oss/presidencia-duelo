@@ -33,7 +33,7 @@ jobs:
         run: npm ci --prefix app
 
       - name: Install Playwright
-        run: npm install --no-save playwright@1.55.0 --prefix app
+        run: npm install --no-save playwright@1.55.1 --prefix app
 
       - name: Install browser
         run: npx --prefix app playwright install --with-deps ${{ matrix.browser }}

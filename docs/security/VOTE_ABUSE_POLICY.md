@@ -1,6 +1,6 @@
 # Política de integridade do voto público
 
-Status: política normativa da API do PoliMatch, versão 1, vinculada à issue #170.
+Status: política normativa da API do PoliMatch, versão 2, vinculada às issues #170 e #179.
 
 Esta política existe para que o placar público seja um painel de preferências declaradas com limites conhecidos. Ela não transforma o resultado em pesquisa eleitoral nem prova que cada jogador corresponde a uma pessoa única.
 
@@ -14,15 +14,21 @@ Esta política existe para que o placar público seja um painel de preferências
 
 ## Quanto cada jogador pode votar
 
-Somente rodadas novas consomem cota. Repetir o mesmo `roundId` com a mesma escolha é uma recuperação idempotente e não consome outra unidade.
+Somente escolhas novas consomem cota. Repetir o mesmo `roundId` livre ou `answerId` diário com a mesma escolha é uma recuperação idempotente e não consome outra unidade.
 
 | Escopo | Limite | Janela | Resultado ao exceder |
 |---|---:|---|---|
-| jogador | 8 rodadas | minuto UTC | HTTP 429, `VOTE_RATE_LIMITED` |
-| jogador | 30 rodadas | dia UTC | HTTP 429, `VOTE_DAILY_LIMIT` |
+| jogador | 8 escolhas | minuto do PostgreSQL | HTTP 429, `VOTE_RATE_LIMITED` |
+| jogador, total | 30 escolhas | dia editorial de São Paulo | HTTP 429, `VOTE_DAILY_LIMIT` |
+| jogador, rodada do dia | 10 escolhas | janela persistida da edição diária | HTTP 429, `DAILY_CHOICE_LIMIT` |
+| jogador, modo livre | 20 escolhas | dia editorial de São Paulo | HTTP 429, `FREE_CHOICE_LIMIT` |
 | pseudônimo de rede | 3 novos jogadores anônimos | dia UTC | HTTP 429, `PLAYER_ISSUANCE_LIMIT` |
 
-O pseudônimo de rede é `HMAC-SHA-256(identidade de rede normalizada, VOTER_NETWORK_SECRET)`. IPv4 usa o endereço canônico; IPv6 usa o prefixo `/64`, para que endereços temporários da mesma rede não multipliquem cotas. Entradas de proxy que não sejam IP válidos caem numa identidade comum e não podem fabricar pseudônimos arbitrários. A cota de emissão por rede não é usada sozinha: ela limita a multiplicação de tokens, enquanto as duas cotas persistentes por jogador limitam a escrita. O segredo deve ser próprio do ambiente de produção e não pode ser versionado.
+Uma escolha entre quatro gera três comparações Elo, mas consome uma unidade. A cota total de 30 é compartilhada: concluir os dez slots diários deixa até vinte escolhas livres naquela mesma data editorial. A edição diária usa exatamente seus `opensAt` e `closesAt` persistidos; o modo livre calcula a mesma janela no relógio injetado pela aplicação. Apenas o bucket de minuto usa `now()` do PostgreSQL.
+
+Na migração da cota antiga por dia UTC, os buckets legados que se sobrepõem ao dia editorial são somados conservadoramente ao contador total v2, limitado a 30. A aproximação pode bloquear cedo, mas nunca concede uma segunda franquia de 30 escolhas durante o deploy.
+
+O pseudônimo de rede é `HMAC-SHA-256(identidade de rede normalizada, VOTER_NETWORK_SECRET)`. IPv4 usa o endereço canônico; IPv6 usa o prefixo `/64`, para que endereços temporários da mesma rede não multipliquem cotas. Entradas de proxy que não sejam IP válidos caem numa identidade comum e não podem fabricar pseudônimos arbitrários. A cota de emissão por rede não é usada sozinha: ela limita a multiplicação de tokens, enquanto as cotas persistentes por jogador limitam a escrita. O segredo deve ser próprio do ambiente de produção e não pode ser versionado.
 
 Alterar qualquer número exige nova decisão versionada, teste e registro no handoff; não é ajuste operacional silencioso.
 

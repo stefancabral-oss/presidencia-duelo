@@ -30,6 +30,7 @@ test("the daily edition is identical for every player and reproducible from date
   assert.deepEqual(secondPlayer, firstPlayer);
   assert.equal(firstPlayer.rounds.length, 10);
   assert.equal(firstPlayer.rounds.every(({ candidateIds }) => candidateIds.length === 4), true);
+  assert.equal(firstPlayer.catalogSchema, "candidate-public-v1");
   assert.equal(new Set(firstPlayer.rounds.flatMap(({ candidateIds }) => candidateIds)).size, 40);
   assert.match(firstPlayer.catalogHash, /^[a-f0-9]{64}$/);
   assert.equal(firstPlayer.rounds.every(({ selectionHash }) => /^[a-f0-9]{64}$/.test(selectionHash)), true);
@@ -48,6 +49,7 @@ test("ruleset fixes ten daily choices plus twenty free choices in the same edito
     dailyChoices: 10,
     freeChoices: 20,
   });
+  assert.equal(DAILY_SESSION_RULESET.catalogSchema, "candidate-public-v1");
   assert.equal(dailyCutMethodology("2026-09-15"), "entre quem concluiu a rodada de 15/09");
   assert.equal(dailyRulesetByIdentity("daily-four-card-v1", 1), DAILY_SESSION_RULESET);
   assert.throws(() => dailyRulesetByIdentity("daily-four-card-v2", 2), /histórico não suportado/);

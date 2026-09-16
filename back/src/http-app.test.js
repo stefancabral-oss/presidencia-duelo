@@ -121,6 +121,39 @@ test("allowed player issuance receives only a network pseudonym", async () => {
   });
 });
 
+test("candidate responses use the same public projection as historical daily snapshots", async () => {
+  const app = createHttpApp({
+    store: fakeStore(),
+    googleIdentity,
+    env: {},
+    candidateCatalog: () => [{
+      personId: 1,
+      id: "public-person",
+      name: "Pessoa Pública",
+      bio: "Ficha pública",
+      photoApproved: true,
+      secret: "internal",
+      fingerprint: "internal-hash",
+      publication: { audit: { reviewer: "internal-reviewer" } },
+      reviewStatus: "published",
+      topicIds: ["eleicoes-2026"],
+    }],
+  });
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/candidates`);
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.deepEqual(body.candidates, [{
+      personId: 1,
+      id: "public-person",
+      name: "Pessoa Pública",
+      bio: "Ficha pública",
+      reviewStatus: "published",
+      topicIds: ["eleicoes-2026"],
+    }]);
+  });
+});
+
 test("round writes require a player bearer token before reaching the store", async () => {
   let writes = 0;
   const app = createHttpApp({ store: fakeStore({ roundVote: async () => { writes += 1; return {}; } }), googleIdentity, env: {} });

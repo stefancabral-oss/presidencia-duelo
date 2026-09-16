@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { PUBLIC_CANDIDATE_SCHEMA_V1 } from "./candidates.js";
 
 export const DAILY_SESSION_RULESET = Object.freeze({
   id: "daily-four-card-v1",
@@ -7,6 +8,7 @@ export const DAILY_SESSION_RULESET = Object.freeze({
   rounds: 10,
   cardsPerRound: 4,
   selection: "sha256-ranked-catalog-v1",
+  catalogSchema: PUBLIC_CANDIDATE_SCHEMA_V1,
   quota: Object.freeze({
     id: "editorial-day-v2",
     totalChoices: 30,
@@ -32,6 +34,10 @@ const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+function compareCodePoints(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
 }
 
 function dateParts(date, timeZone = DAILY_SESSION_RULESET.timeZone) {
@@ -117,6 +123,7 @@ export function buildDailyEdition({ topicId, candidateIds, dateKey, ruleset = DA
   const normalizedDate = validateEditionDate(dateKey);
   const topic = String(topicId || "").trim();
   if (!topic) throw new TypeError("assunto diário obrigatório");
+  if (!String(ruleset.catalogSchema || "").trim()) throw new TypeError("schema público diário obrigatório");
   const sortedCatalog = [...new Set((candidateIds || []).map((id) => String(id).trim()).filter(Boolean))].sort();
   const requiredCards = ruleset.rounds * ruleset.cardsPerRound;
   if (sortedCatalog.length < requiredCards) {
@@ -127,7 +134,7 @@ export function buildDailyEdition({ topicId, candidateIds, dateKey, ruleset = DA
   const seed = [ruleset.id, normalizedDate, topic, catalogHash].join("\n");
   const ordered = sortedCatalog
     .map((id) => ({ id, order: sha256(`${seed}\n${id}`) }))
-    .sort((left, right) => left.order.localeCompare(right.order) || left.id.localeCompare(right.id))
+    .sort((left, right) => compareCodePoints(left.order, right.order) || compareCodePoints(left.id, right.id))
     .slice(0, requiredCards)
     .map(({ id }) => id);
   const rounds = Array.from({ length: ruleset.rounds }, (_, index) => {
@@ -147,6 +154,7 @@ export function buildDailyEdition({ topicId, candidateIds, dateKey, ruleset = DA
     topicId: topic,
     rulesetId: ruleset.id,
     rulesetVersion: ruleset.version,
+    catalogSchema: ruleset.catalogSchema,
     catalogHash,
     catalogIds: Object.freeze(sortedCatalog),
     candidateCount: sortedCatalog.length,
@@ -166,6 +174,7 @@ export function publicDailyRuleset(ruleset = DAILY_SESSION_RULESET) {
     rounds: ruleset.rounds,
     cardsPerRound: ruleset.cardsPerRound,
     selection: ruleset.selection,
+    catalogSchema: ruleset.catalogSchema,
     quota: { ...ruleset.quota },
   };
 }

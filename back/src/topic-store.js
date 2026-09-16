@@ -1,12 +1,19 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import pg from "pg";
 import { eloTier, isZebra, ratingDeltas } from "../../shared/elo.js";
-import { CANDIDATES, TOPICS_BY_ID, candidateBelongsToTopic, candidatesForTopic } from "./candidates.js";
+import {
+  CANDIDATES,
+  TOPICS_BY_ID,
+  candidateBelongsToTopic,
+  candidateProjectorBySchema,
+  candidatesForTopic,
+} from "./candidates.js";
 import {
   DAILY_SESSION_RULESET,
   buildDailyEdition,
   dailyCutMethodology,
   dailyRulesetByIdentity,
+  editionWindow,
   editorialDateKey,
   publicDailyRuleset,
   validateEditionDate,
@@ -22,6 +29,7 @@ const SESSION_TTL_DAYS = 90;
 const NETWORK_HASH_PATTERN = /^[a-f0-9]{64}$/;
 const FEEDBACK_SCOPE_PERSONAL = "personal";
 const FEEDBACK_SCOPE_LEGACY_GLOBAL = "legacy-global";
+const DAILY_CUT_MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;
 const GLOBAL_RANKING_POLICY = Object.freeze({
   id: "elo-v1",
   label: "Elo do placar público",
@@ -47,12 +55,23 @@ function quotaError(message, code, retryAfterSeconds) {
   return error;
 }
 
-async function consumeQuota(client, { scope, subjectHash, window, limit, code, message, retryAfterSeconds }) {
-  const bucket = window === "minute"
-    ? "date_trunc('minute', now())"
-    : window === "editorial-day"
-      ? "(date_trunc('day', now() AT TIME ZONE 'America/Sao_Paulo') AT TIME ZONE 'America/Sao_Paulo')"
+async function consumeQuota(client, {
+  scope,
+  subjectHash,
+  window,
+  windowStart,
+  limit,
+  code,
+  message,
+  retryAfterSeconds,
+}) {
+  const bucket = windowStart
+    ? "$4::timestamptz"
+    : window === "minute"
+      ? "date_trunc('minute', now())"
       : "date_trunc('day', now())";
+  const parameters = [scope, subjectHash, limit];
+  if (windowStart) parameters.push(windowStart);
   const result = await client.query(
     `INSERT INTO abuse_quota_counters (scope, subject_hash, window_start, used)
      VALUES ($1, $2, ${bucket}, 1)
@@ -61,12 +80,36 @@ async function consumeQuota(client, { scope, subjectHash, window, limit, code, m
          updated_at = now()
      WHERE abuse_quota_counters.used < $3
      RETURNING used`,
-    [scope, subjectHash, limit],
+    parameters,
   );
   if (!result.rowCount) throw quotaError(message, code, retryAfterSeconds);
 }
 
-async function consumePlayerRoundQuota(client, playerId, mode = "free") {
+// A versão anterior guardava apenas um contador por dia UTC. Como esse bucket
+// não revela em que hora cada voto ocorreu, a migração para o dia editorial de
+// São Paulo soma todo bucket UTC que se sobreponha à nova janela. Isso pode
+// bloquear cedo algumas escolhas feitas fora da janela, mas nunca concede 30
+// escolhas extras no dia de deploy.
+async function carryForwardLegacyDailyQuota(client, playerId, { windowStart, windowEnd }) {
+  await client.query(
+    `INSERT INTO abuse_quota_counters (scope, subject_hash, window_start, used)
+     SELECT 'player-choice-editorial-day-v2', $1, $2::timestamptz,
+            LEAST($4, COALESCE(SUM(used), 0)::integer)
+     FROM abuse_quota_counters
+     WHERE scope = 'player-round-day'
+       AND subject_hash = $1
+       AND window_start < $3::timestamptz
+       AND window_start + interval '1 day' > $2::timestamptz
+     HAVING COALESCE(SUM(used), 0) > 0
+     ON CONFLICT (scope, subject_hash, window_start) DO UPDATE
+     SET used = GREATEST(abuse_quota_counters.used, EXCLUDED.used),
+         updated_at = now()`,
+    [playerId, windowStart, windowEnd, VOTE_ABUSE_LIMITS.editorialChoicesPerPlayerPerDay],
+  );
+}
+
+async function consumePlayerRoundQuota(client, playerId, mode = "free", editorialWindow) {
+  if (!editorialWindow?.opensAt || !editorialWindow?.closesAt) throw new Error("janela editorial da cota é obrigatória");
   await consumeQuota(client, {
     scope: "player-round-minute",
     subjectHash: playerId,
@@ -76,10 +119,14 @@ async function consumePlayerRoundQuota(client, playerId, mode = "free") {
     message: "muitas rodadas em pouco tempo; aguarde antes de continuar",
     retryAfterSeconds: 60,
   });
+  await carryForwardLegacyDailyQuota(client, playerId, {
+    windowStart: editorialWindow.opensAt,
+    windowEnd: editorialWindow.closesAt,
+  });
   await consumeQuota(client, {
     scope: "player-choice-editorial-day-v2",
     subjectHash: playerId,
-    window: "editorial-day",
+    windowStart: editorialWindow.opensAt,
     limit: VOTE_ABUSE_LIMITS.editorialChoicesPerPlayerPerDay,
     code: "VOTE_DAILY_LIMIT",
     message: "limite de escolhas do dia editorial atingido",
@@ -89,7 +136,7 @@ async function consumePlayerRoundQuota(client, playerId, mode = "free") {
   await consumeQuota(client, {
     scope: daily ? "player-daily-editorial-day-v2" : "player-free-editorial-day-v2",
     subjectHash: playerId,
-    window: "editorial-day",
+    windowStart: editorialWindow.opensAt,
     limit: daily ? VOTE_ABUSE_LIMITS.dailyChoicesPerPlayerPerDay : VOTE_ABUSE_LIMITS.freeChoicesPerPlayerPerDay,
     code: daily ? "DAILY_CHOICE_LIMIT" : "FREE_CHOICE_LIMIT",
     message: daily ? "as dez escolhas da rodada do dia já foram usadas" : "as vinte escolhas do modo livre já foram usadas",
@@ -193,9 +240,9 @@ function withRankingPositions(ranking) {
   });
 }
 
-export function rankingFromRows(topicId, duels, rows) {
+export function rankingFromRows(topicId, duels, rows, catalog = candidatesForTopic(topicId)) {
   const stats = new Map(rows.map((row) => [row.candidate_id, row]));
-  const ranking = candidatesForTopic(topicId).map((candidate) => {
+  const ranking = catalog.map((candidate) => {
     const row = stats.get(candidate.id) || {};
     const wins = Number(row.wins) || 0;
     const losses = Number(row.losses) || 0;
@@ -377,7 +424,7 @@ export function persistedRoundChannels(row) {
   };
 }
 
-async function createCleanSchema(client) {
+async function createCleanSchema(client, { candidateCatalog = candidatesForTopic } = {}) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       id text PRIMARY KEY,
@@ -552,14 +599,24 @@ async function createCleanSchema(client) {
         OR (choice_mode = 'daily' AND daily_edition_id IS NOT NULL AND daily_slot BETWEEN 1 AND 10)
       );
 
+    ALTER TABLE choice_rounds
+      DROP CONSTRAINT IF EXISTS choice_rounds_winner_in_candidates_check;
+
+    ALTER TABLE choice_rounds
+      ADD CONSTRAINT choice_rounds_winner_in_candidates_check
+      CHECK (winner_id = ANY(candidate_ids));
+
     CREATE TABLE IF NOT EXISTS daily_editions (
       id text PRIMARY KEY,
       edition_date date NOT NULL,
       topic_id text NOT NULL REFERENCES ranking_pools(topic_id) ON DELETE RESTRICT,
       ruleset_id text NOT NULL,
       ruleset_version integer NOT NULL CHECK (ruleset_version > 0),
+      catalog_schema text NOT NULL,
       catalog_hash char(64) NOT NULL,
       catalog_ids text[] NOT NULL,
+      catalog_snapshot jsonb NOT NULL,
+      catalog_snapshot_hash char(64) NOT NULL,
       candidate_count integer NOT NULL CHECK (candidate_count >= 40),
       total_rounds smallint NOT NULL CHECK (total_rounds = 10),
       cards_per_round smallint NOT NULL CHECK (cards_per_round = 4),
@@ -567,8 +624,26 @@ async function createCleanSchema(client) {
       closes_at timestamptz NOT NULL,
       created_at timestamptz NOT NULL DEFAULT now(),
       CHECK (closes_at > opens_at),
-      UNIQUE (topic_id, edition_date, ruleset_id, ruleset_version)
+      UNIQUE (topic_id, edition_date)
     );
+
+    ALTER TABLE daily_editions
+      DROP CONSTRAINT IF EXISTS daily_editions_topic_id_edition_date_ruleset_id_ruleset_version_key;
+
+    CREATE UNIQUE INDEX IF NOT EXISTS daily_editions_topic_date_uidx
+      ON daily_editions (topic_id, edition_date);
+
+    CREATE UNIQUE INDEX IF NOT EXISTS daily_editions_id_topic_uidx
+      ON daily_editions (id, topic_id);
+
+    ALTER TABLE daily_editions
+      ADD COLUMN IF NOT EXISTS catalog_schema text;
+
+    ALTER TABLE daily_editions
+      ADD COLUMN IF NOT EXISTS catalog_snapshot jsonb;
+
+    ALTER TABLE daily_editions
+      ADD COLUMN IF NOT EXISTS catalog_snapshot_hash char(64);
 
     CREATE TABLE IF NOT EXISTS daily_edition_rounds (
       edition_id text NOT NULL REFERENCES daily_editions(id) ON DELETE RESTRICT,
@@ -577,6 +652,9 @@ async function createCleanSchema(client) {
       selection_hash char(64) NOT NULL,
       PRIMARY KEY (edition_id, slot)
     );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS daily_edition_rounds_context_uidx
+      ON daily_edition_rounds (edition_id, slot, candidate_ids);
 
     CREATE TABLE IF NOT EXISTS daily_player_sessions (
       edition_id text NOT NULL REFERENCES daily_editions(id) ON DELETE RESTRICT,
@@ -619,8 +697,31 @@ async function createCleanSchema(client) {
 
     ALTER TABLE choice_rounds
       ADD CONSTRAINT choice_rounds_daily_round_fk
-      FOREIGN KEY (daily_edition_id, daily_slot)
-      REFERENCES daily_edition_rounds(edition_id, slot)
+      FOREIGN KEY (daily_edition_id, daily_slot, candidate_ids)
+      REFERENCES daily_edition_rounds(edition_id, slot, candidate_ids)
+      ON DELETE RESTRICT
+      DEFERRABLE INITIALLY IMMEDIATE;
+
+    ALTER TABLE choice_rounds
+      DROP CONSTRAINT IF EXISTS choice_rounds_daily_topic_fk;
+
+    ALTER TABLE choice_rounds
+      ADD CONSTRAINT choice_rounds_daily_topic_fk
+      FOREIGN KEY (daily_edition_id, topic_id)
+      REFERENCES daily_editions(id, topic_id)
+      ON DELETE RESTRICT
+      DEFERRABLE INITIALLY IMMEDIATE;
+
+    CREATE UNIQUE INDEX IF NOT EXISTS choice_rounds_daily_answer_context_uidx
+      ON choice_rounds (round_id, daily_edition_id, player_id, daily_slot, winner_id);
+
+    ALTER TABLE daily_answers
+      DROP CONSTRAINT IF EXISTS daily_answers_round_context_fk;
+
+    ALTER TABLE daily_answers
+      ADD CONSTRAINT daily_answers_round_context_fk
+      FOREIGN KEY (answer_id, edition_id, player_id, slot, winner_id)
+      REFERENCES choice_rounds (round_id, daily_edition_id, player_id, daily_slot, winner_id)
       ON DELETE RESTRICT
       DEFERRABLE INITIALLY IMMEDIATE;
 
@@ -745,7 +846,7 @@ async function createCleanSchema(client) {
 
   for (const topic of TOPICS_BY_ID.values()) {
     if (!topic.active) continue;
-    const playableCandidates = candidatesForTopic(topic.id);
+    const playableCandidates = candidateCatalog(topic.id);
     await client.query("INSERT INTO ranking_pools (topic_id) VALUES ($1) ON CONFLICT DO NOTHING", [topic.id]);
     for (const candidate of playableCandidates) {
       await client.query(
@@ -771,13 +872,17 @@ async function createCleanSchema(client) {
   return { resetApplied: !applied.rowCount, migrationId: RESET_MIGRATION_ID };
 }
 
-async function selectRanking(queryable, topicId, { playerId, pendingComparisons = [] } = {}) {
+async function selectRanking(queryable, topicId, {
+  playerId,
+  pendingComparisons = [],
+  catalog = candidatesForTopic(topicId),
+} = {}) {
   if (!playerId) {
     const [pool, stats] = await Promise.all([
       queryable.query("SELECT duels FROM ranking_pools WHERE topic_id = $1", [topicId]),
       queryable.query("SELECT candidate_id, rating, wins, losses, zebras FROM ranking_stats WHERE topic_id = $1", [topicId]),
     ]);
-    return rankingFromRows(topicId, pool.rows[0]?.duels, stats.rows);
+    return rankingFromRows(topicId, pool.rows[0]?.duels, stats.rows, catalog);
   }
 
   const params = [playerId, topicId];
@@ -800,7 +905,7 @@ async function selectRanking(queryable, topicId, { playerId, pendingComparisons 
   const result = personalRankingFromRows(
     topicId,
     pool.rows[0]?.duels,
-    candidatesForTopic(topicId),
+    catalog,
     stats.rows,
     pairs.rows,
     { pendingComparisons },
@@ -823,12 +928,12 @@ async function findPlayer(queryable, accessToken) {
   return result.rows[0];
 }
 
-async function createPlayerRecords(client, playerId, recoveryHash) {
+async function createPlayerRecords(client, playerId, recoveryHash, candidateCatalog = candidatesForTopic) {
   await client.query("INSERT INTO anonymous_players (id, recovery_hash) VALUES ($1, $2)", [playerId, recoveryHash]);
   for (const topic of TOPICS_BY_ID.values()) {
     if (!topic.active) continue;
     await client.query("INSERT INTO player_pools (player_id, topic_id) VALUES ($1, $2)", [playerId, topic.id]);
-    for (const candidate of candidatesForTopic(topic.id)) {
+    for (const candidate of candidateCatalog(topic.id)) {
       await client.query(
         "INSERT INTO player_stats (player_id, topic_id, candidate_id) VALUES ($1, $2, $3)",
         [playerId, topic.id, candidate.id],
@@ -860,12 +965,55 @@ function assertPlayerVersion(value, current) {
   }
 }
 
+export function persistedRoundCandidates(candidateIds, choiceMode = "free") {
+  return choiceMode === "daily" ? [...candidateIds] : [...candidateIds].sort();
+}
+
 function contractError(message, status, code, current) {
   const error = new Error(message);
   error.status = status;
   error.code = code;
   if (current !== undefined) error.current = current;
   return error;
+}
+
+function canonicalJsonValue(value) {
+  if (Array.isArray(value)) return value.map(canonicalJsonValue);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonicalJsonValue(value[key])]));
+  }
+  return value;
+}
+
+export function buildDailyCatalogSnapshot(candidates, {
+  catalogSchema = DAILY_SESSION_RULESET.catalogSchema,
+  projectorResolver = candidateProjectorBySchema,
+} = {}) {
+  const projector = projectorResolver(catalogSchema);
+  const snapshot = (candidates || [])
+    .map((candidate) => canonicalJsonValue(JSON.parse(JSON.stringify(projector(candidate)))))
+    .sort((left, right) => {
+      const leftId = String(left.id);
+      const rightId = String(right.id);
+      return leftId < rightId ? -1 : leftId > rightId ? 1 : 0;
+    });
+  const ids = snapshot.map(({ id }) => String(id || ""));
+  if (snapshot.some((candidate) => !String(candidate.id || "").trim() || !String(candidate.name || "").trim())
+    || new Set(ids).size !== snapshot.length) {
+    throw new Error("snapshot diário contém candidato inválido ou duplicado");
+  }
+  return {
+    candidates: snapshot,
+    hash: createHash("sha256").update(JSON.stringify(snapshot)).digest("hex"),
+  };
+}
+
+function mergeCandidateCatalogs(...catalogs) {
+  const merged = new Map();
+  for (const catalog of catalogs) {
+    for (const candidate of catalog || []) merged.set(candidate.id, candidate);
+  }
+  return [...merged.values()];
 }
 
 function clockInstant(clock, supplied) {
@@ -882,7 +1030,9 @@ function serializeDailyEdition(row) {
     topicId: row.topic_id,
     rulesetId: row.ruleset_id,
     rulesetVersion: Number(row.ruleset_version),
+    catalogSchema: row.catalog_schema,
     catalogHash: row.catalog_hash,
+    snapshotHash: row.catalog_snapshot_hash,
     candidateCount: Number(row.candidate_count),
     totalRounds: Number(row.total_rounds),
     cardsPerRound: Number(row.cards_per_round),
@@ -891,14 +1041,22 @@ function serializeDailyEdition(row) {
   };
 }
 
-export function validateMaterializedDailyEdition(row, roundRows) {
+export function validateMaterializedDailyEdition(row, roundRows, {
+  rulesetResolver = dailyRulesetByIdentity,
+  projectorResolver = candidateProjectorBySchema,
+} = {}) {
   if (!row) throw new Error("edição diária materializada ausente");
-  const ruleset = dailyRulesetByIdentity(row.ruleset_id, row.ruleset_version);
+  const ruleset = rulesetResolver(row.ruleset_id, row.ruleset_version);
   const expected = buildDailyEdition({
     topicId: row.topic_id,
     candidateIds: row.catalog_ids,
     dateKey: String(row.edition_date),
     ruleset,
+  });
+  if (!Array.isArray(row.catalog_snapshot)) throw new Error("snapshot da edição diária ausente");
+  const snapshot = buildDailyCatalogSnapshot(row.catalog_snapshot, {
+    catalogSchema: row.catalog_schema,
+    projectorResolver,
   });
   const actualRounds = [...roundRows]
     .sort((left, right) => Number(left.slot) - Number(right.slot))
@@ -909,6 +1067,9 @@ export function validateMaterializedDailyEdition(row, roundRows) {
     }));
   const identityMatches = row.id === expected.id
     && row.catalog_hash === expected.catalogHash
+    && row.catalog_snapshot_hash === snapshot.hash
+    && row.catalog_schema === ruleset.catalogSchema
+    && JSON.stringify(snapshot.candidates.map(({ id }) => id)) === JSON.stringify(expected.catalogIds)
     && Number(row.candidate_count) === expected.candidateCount
     && Number(row.total_rounds) === expected.totalRounds
     && Number(row.cards_per_round) === expected.cardsPerRound;
@@ -921,12 +1082,131 @@ export function validateMaterializedDailyEdition(row, roundRows) {
   if (!identityMatches || !roundsMatch) {
     throw new Error("edição diária materializada falhou na validação de integridade");
   }
-  return { edition: serializeDailyEdition(row), rounds: actualRounds, ruleset: publicDailyRuleset(ruleset) };
+  return {
+    edition: serializeDailyEdition(row),
+    rounds: actualRounds,
+    ruleset: publicDailyRuleset(ruleset),
+    catalog: snapshot.candidates,
+  };
 }
 
-async function loadMaterializedDailyEditionById(client, editionId) {
+function selectedDailyCatalog(materialized, { projectorResolver = candidateProjectorBySchema } = {}) {
+  const selectedIds = materialized.rounds.flatMap(({ candidateIds }) => candidateIds);
+  if (new Set(selectedIds).size !== selectedIds.length) {
+    throw new Error("edição diária repete cartas entre os slots");
+  }
+  const selected = new Set(selectedIds);
+  const catalog = materialized.catalog.filter(({ id }) => selected.has(id));
+  if (catalog.length !== selectedIds.length) {
+    throw new Error("snapshot diário não cobre todas as cartas materializadas");
+  }
+  return buildDailyCatalogSnapshot(catalog, {
+    catalogSchema: materialized.edition.catalogSchema,
+    projectorResolver,
+  });
+}
+
+export function validateDailyCutResults(materialized, results, {
+  completedPlayers,
+  completedAnswers,
+  projectorResolver = candidateProjectorBySchema,
+} = {}) {
+  if (!Number.isSafeInteger(completedPlayers) || completedPlayers < 0
+    || !Number.isSafeInteger(completedAnswers) || completedAnswers < 0) {
+    throw new Error("totais do recorte diário são inválidos");
+  }
+  if (!results || typeof results !== "object" || Array.isArray(results)) {
+    throw new Error("recorte diário persistido é inválido");
+  }
+  const publicSnapshot = buildDailyCatalogSnapshot(results.catalog, {
+    catalogSchema: materialized.edition.catalogSchema,
+    projectorResolver,
+  });
+  const expectedSnapshot = selectedDailyCatalog(materialized, { projectorResolver });
+  const snapshotMatches = results.editionSnapshotHash === materialized.edition.snapshotHash
+    && results.catalogSnapshotHash === publicSnapshot.hash
+    && publicSnapshot.hash === expectedSnapshot.hash;
+  const rounds = Array.isArray(results.rounds) ? results.rounds : [];
+  const roundsMatch = rounds.length === materialized.rounds.length
+    && rounds.every((round, index) => {
+      const expectedRound = materialized.rounds[index];
+      if (Number(round?.slot) !== expectedRound.slot
+        || JSON.stringify(round?.candidateIds) !== JSON.stringify(expectedRound.candidateIds)
+        || !Array.isArray(round?.choices)
+        || round.choices.length !== expectedRound.candidateIds.length) return false;
+      return round.choices.every((choice, choiceIndex) => (
+        choice?.candidateId === expectedRound.candidateIds[choiceIndex]
+        && Number.isSafeInteger(choice?.count)
+        && choice.count >= 0
+      ));
+    });
+  if (!snapshotMatches || !roundsMatch) {
+    throw new Error("recorte diário persistido falhou na validação de integridade");
+  }
+  const normalized = {
+    editionSnapshotHash: materialized.edition.snapshotHash,
+    catalogSnapshotHash: publicSnapshot.hash,
+    catalog: publicSnapshot.candidates,
+    rounds: rounds.map((round) => ({
+      slot: Number(round.slot),
+      candidateIds: [...round.candidateIds],
+      choices: round.choices.map(({ candidateId, count }) => ({ candidateId, count: Number(count) })),
+    })),
+  };
+  const slotTotalsMatch = normalized.rounds.every((round) => (
+    round.choices.reduce((sum, choice) => sum + choice.count, 0) === completedPlayers
+  ));
+  const countedAnswers = normalized.rounds.reduce(
+    (total, round) => total + round.choices.reduce((sum, choice) => sum + choice.count, 0),
+    0,
+  );
+  if (!slotTotalsMatch || countedAnswers !== completedAnswers
+    || completedAnswers !== completedPlayers * materialized.edition.totalRounds) {
+    throw new Error("totais do recorte diário falharam na validação de integridade");
+  }
+  return normalized;
+}
+
+export function validateDailyCutRecord(materialized, row, {
+  observedAt,
+  projectorResolver = candidateProjectorBySchema,
+} = {}) {
+  const databaseInteger = (value) => (
+    (typeof value === "number" || (typeof value === "string" && /^\d+$/.test(value)))
+      ? Number(value)
+      : Number.NaN
+  );
+  const completedPlayers = databaseInteger(row?.completed_players);
+  const completedAnswers = databaseInteger(row?.completed_answers);
+  const results = validateDailyCutResults(materialized, row?.results, {
+    completedPlayers,
+    completedAnswers,
+    projectorResolver,
+  });
+  const publishedAt = new Date(row?.published_at);
+  const observed = new Date(observedAt);
+  const closesAt = new Date(materialized.edition.closesAt);
+  if (row?.ruleset_id !== materialized.edition.rulesetId
+    || row?.methodology !== dailyCutMethodology(materialized.edition.date)
+    || !Number.isFinite(publishedAt.getTime()) || !Number.isFinite(observed.getTime())
+    || publishedAt < closesAt
+    || publishedAt.getTime() > observed.getTime() + DAILY_CUT_MAX_FUTURE_SKEW_MS) {
+    throw new Error("metadados do recorte diário falharam na validação de integridade");
+  }
+  return {
+    rulesetId: row.ruleset_id,
+    methodology: row.methodology,
+    completedPlayers,
+    completedAnswers,
+    results,
+    publishedAt: publishedAt.toISOString(),
+  };
+}
+
+async function loadMaterializedDailyEditionById(client, editionId, validationOptions) {
   const editionResult = await client.query(
-    `SELECT id, edition_date::text, topic_id, ruleset_id, ruleset_version, catalog_hash, catalog_ids,
+    `SELECT id, edition_date::text, topic_id, ruleset_id, ruleset_version, catalog_schema, catalog_hash, catalog_ids,
+            catalog_snapshot, catalog_snapshot_hash,
             candidate_count, total_rounds, cards_per_round, opens_at, closes_at
      FROM daily_editions WHERE id = $1`,
     [editionId],
@@ -936,32 +1216,50 @@ async function loadMaterializedDailyEditionById(client, editionId) {
     "SELECT slot, candidate_ids, selection_hash FROM daily_edition_rounds WHERE edition_id = $1 ORDER BY slot",
     [editionId],
   );
-  return validateMaterializedDailyEdition(editionResult.rows[0], rounds.rows);
+  return validateMaterializedDailyEdition(editionResult.rows[0], rounds.rows, validationOptions);
 }
 
-export async function materializeDailyEdition(client, topicId, dateKey, { candidateCatalog = candidatesForTopic } = {}) {
-  const editionLock = `daily-edition:${topicId}:${dateKey}:${DAILY_SESSION_RULESET.id}:v${DAILY_SESSION_RULESET.version}`;
+export async function materializeDailyEdition(client, topicId, dateKey, {
+  candidateCatalog = candidatesForTopic,
+  ruleset = DAILY_SESSION_RULESET,
+  rulesetResolver = dailyRulesetByIdentity,
+  projectorResolver = candidateProjectorBySchema,
+} = {}) {
+  // Uma data editorial tem uma única edição. O lock e a busca não incluem o
+  // ruleset ativo: um deploy de v2 no meio do dia precisa continuar servindo a
+  // v1 já materializada; o ruleset novo só estreia na próxima data sem edição.
+  const editionLock = `daily-edition:${topicId}:${dateKey}`;
   await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [editionLock]);
   const selectEdition = () => client.query(
-    `SELECT id, edition_date::text, topic_id, ruleset_id, ruleset_version, catalog_hash, catalog_ids,
+    `SELECT id, edition_date::text, topic_id, ruleset_id, ruleset_version, catalog_schema, catalog_hash, catalog_ids,
+            catalog_snapshot, catalog_snapshot_hash,
             candidate_count, total_rounds, cards_per_round, opens_at, closes_at
      FROM daily_editions
-     WHERE topic_id = $1 AND edition_date = $2::date AND ruleset_id = $3 AND ruleset_version = $4`,
-    [topicId, dateKey, DAILY_SESSION_RULESET.id, DAILY_SESSION_RULESET.version],
+     WHERE topic_id = $1 AND edition_date = $2::date`,
+    [topicId, dateKey],
   );
   let editionResult = await selectEdition();
   if (!editionResult.rowCount) {
+    const currentCatalog = candidateCatalog(topicId);
     const definition = buildDailyEdition({
       topicId,
-      candidateIds: candidateCatalog(topicId).map(({ id }) => id),
+      candidateIds: currentCatalog.map(({ id }) => id),
       dateKey,
+      ruleset,
     });
+    const snapshot = buildDailyCatalogSnapshot(currentCatalog, {
+      catalogSchema: ruleset.catalogSchema,
+      projectorResolver,
+    });
+    if (JSON.stringify(snapshot.candidates.map(({ id }) => id)) !== JSON.stringify(definition.catalogIds)) {
+      throw new Error("snapshot diário diverge do catálogo usado na seleção");
+    }
     const inserted = await client.query(
     `INSERT INTO daily_editions (
        id, edition_date, topic_id, ruleset_id, ruleset_version, catalog_hash, catalog_ids,
-       candidate_count, total_rounds, cards_per_round, opens_at, closes_at
-     ) VALUES ($1, $2::date, $3, $4, $5, $6, $7::text[], $8, $9, $10, $11::timestamptz, $12::timestamptz)
-     ON CONFLICT (topic_id, edition_date, ruleset_id, ruleset_version) DO NOTHING
+       catalog_schema, catalog_snapshot, catalog_snapshot_hash, candidate_count, total_rounds, cards_per_round, opens_at, closes_at
+     ) VALUES ($1, $2::date, $3, $4, $5, $6, $7::text[], $8, $9::jsonb, $10, $11, $12, $13, $14::timestamptz, $15::timestamptz)
+     ON CONFLICT (topic_id, edition_date) DO NOTHING
      RETURNING id`,
     [
       definition.id,
@@ -971,6 +1269,9 @@ export async function materializeDailyEdition(client, topicId, dateKey, { candid
       definition.rulesetVersion,
       definition.catalogHash,
       definition.catalogIds,
+      definition.catalogSchema,
+      JSON.stringify(snapshot.candidates),
+      snapshot.hash,
       definition.candidateCount,
       definition.totalRounds,
       definition.cardsPerRound,
@@ -990,15 +1291,35 @@ export async function materializeDailyEdition(client, topicId, dateKey, { candid
     editionResult = await selectEdition();
   }
   if (editionResult.rowCount !== 1) throw new Error("edição diária não foi materializada");
-  return loadMaterializedDailyEditionById(client, editionResult.rows[0].id);
+  return loadMaterializedDailyEditionById(client, editionResult.rows[0].id, {
+    rulesetResolver,
+    projectorResolver,
+  });
 }
 
-async function ensureDailyPlayerSession(client, editionId, playerId) {
+async function ensureDailyPlayerSession(client, materialized, playerId) {
+  const { edition, catalog } = materialized;
+  const candidateIds = catalog.map(({ id }) => id);
+  // O snapshot pode conter alguém retirado do catálogo corrente após a
+  // materialização. As linhas históricas continuam internas e votáveis nesta
+  // edição, sem voltar ao catálogo/ranking público do modo livre.
+  await client.query(
+    `INSERT INTO ranking_stats (topic_id, candidate_id)
+     SELECT $1, candidate_id FROM unnest($2::text[]) AS snapshot(candidate_id)
+     ON CONFLICT DO NOTHING`,
+    [edition.topicId, candidateIds],
+  );
+  await client.query(
+    `INSERT INTO player_stats (player_id, topic_id, candidate_id)
+     SELECT $1, $2, candidate_id FROM unnest($3::text[]) AS snapshot(candidate_id)
+     ON CONFLICT DO NOTHING`,
+    [playerId, edition.topicId, candidateIds],
+  );
   await client.query(
     `INSERT INTO daily_player_sessions (edition_id, player_id)
      VALUES ($1, $2)
      ON CONFLICT DO NOTHING`,
-    [editionId, playerId],
+    [edition.id, playerId],
   );
 }
 
@@ -1031,12 +1352,14 @@ async function selectDailyPlayerSession(client, materialized, playerId) {
   }
   const nextRound = completed ? null : rounds[answers.length];
   if (!completed && !nextRound) throw new Error("slot diário autoritativo ausente");
+  const catalog = selectedDailyCatalog(materialized).candidates;
   return {
     ruleset: materialized.ruleset,
     edition,
     status: completed ? "completed" : "active",
     progress: { answered: answers.length, total: edition.totalRounds },
     answers,
+    catalog,
     round: nextRound ? { slot: nextRound.slot, candidateIds: [...nextRound.candidateIds] } : null,
     completion: completed ? { completedAt: new Date(completionResult.rows[0].completed_at).toISOString() } : null,
     cut: {
@@ -1057,9 +1380,13 @@ async function applyFourCardRound(client, {
   choiceMode = "free",
   dailyEditionId = null,
   dailySlot = null,
+  quotaWindow,
+  publicCatalog = candidatesForTopic(topic),
+  feedbackCatalog = publicCatalog,
   lockRound = true,
 }) {
   const sortedCandidates = [...roundCandidates].sort();
+  const persistedCandidates = persistedRoundCandidates(roundCandidates, choiceMode);
   const loserIds = roundCandidates.filter((candidateId) => candidateId !== winnerId);
   if (lockRound) await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [roundId]);
   const previous = await client.query(
@@ -1079,8 +1406,8 @@ async function applyFourCardRound(client, {
       || (row.player_id || null) !== player.id || !sameContext) {
       throw contractError("roundId já utilizado com outra escolha", 409, "ROUND_REPLAY_DIVERGENT");
     }
-    const global = await selectRanking(client, topic);
-    const personal = await selectRanking(client, topic, { playerId: player.id });
+    const global = await selectRanking(client, topic, { catalog: publicCatalog });
+    const personal = await selectRanking(client, topic, { playerId: player.id, catalog: publicCatalog });
     const channels = persistedRoundChannels(row);
     const round = {
       id: roundId,
@@ -1095,9 +1422,9 @@ async function applyFourCardRound(client, {
     return { payload: { ...global, round, vote: round, player: personal }, created: false };
   }
 
-  await consumePlayerRoundQuota(client, player.id, choiceMode);
+  await consumePlayerRoundQuota(client, player.id, choiceMode, quotaWindow);
   await client.query("SELECT duels FROM ranking_pools WHERE topic_id = $1 FOR UPDATE", [topic]);
-  const globalBeforeRound = await selectRanking(client, topic);
+  const globalBeforeRound = await selectRanking(client, topic, { catalog: feedbackCatalog });
   const globalRows = await client.query(
     "SELECT candidate_id, rating FROM ranking_stats WHERE topic_id = $1 AND candidate_id = ANY($2::text[]) FOR UPDATE",
     [topic, roundCandidates],
@@ -1123,7 +1450,7 @@ async function applyFourCardRound(client, {
   const personalPool = await client.query("SELECT version FROM player_pools WHERE player_id = $1 AND topic_id = $2 FOR UPDATE", [player.id, topic]);
   const currentVersion = Number(personalPool.rows[0]?.version) || 0;
   assertPlayerVersion(playerVersion, currentVersion);
-  const personalBeforeRound = await selectRanking(client, topic, { playerId: player.id });
+  const personalBeforeRound = await selectRanking(client, topic, { playerId: player.id, catalog: feedbackCatalog });
   const personalRows = await client.query(
     "SELECT candidate_id, rating FROM player_stats WHERE player_id = $1 AND topic_id = $2 AND candidate_id = ANY($3::text[]) FOR UPDATE",
     [player.id, topic, roundCandidates],
@@ -1143,14 +1470,18 @@ async function applyFourCardRound(client, {
   await client.query("UPDATE player_pools SET version = version + 1, duels = duels + 1 WHERE player_id = $1 AND topic_id = $2", [player.id, topic]);
   await client.query("UPDATE anonymous_players SET last_seen_at = now() WHERE id = $1", [player.id]);
 
-  const global = await selectRanking(client, topic);
+  const globalAfterFeedback = await selectRanking(client, topic, { catalog: feedbackCatalog });
   const pendingComparisons = loserIds.map((loserId) => ({ winnerId, loserId }));
-  const personal = await selectRanking(client, topic, { playerId: player.id, pendingComparisons });
+  const personalAfterFeedback = await selectRanking(client, topic, {
+    playerId: player.id,
+    pendingComparisons,
+    catalog: feedbackCatalog,
+  });
   const channels = feedbackChannelsFromSnapshots({
     personalBefore: personalBeforeRound.ranking,
-    personalAfter: personal.ranking,
+    personalAfter: personalAfterFeedback.ranking,
     globalBefore: globalBeforeRound.ranking,
-    globalAfter: global.ranking,
+    globalAfter: globalAfterFeedback.ranking,
     candidateIds: roundCandidates,
     winnerId,
     personalZebra,
@@ -1175,7 +1506,7 @@ async function applyFourCardRound(client, {
       player.id,
       topic,
       winnerId,
-      sortedCandidates,
+      persistedCandidates,
       primaryWinnerDelta,
       personalZebra,
       rankingEvent,
@@ -1195,6 +1526,12 @@ async function applyFourCardRound(client, {
       [randomUUID(), roundId, player.id, topic, winnerId, comparison.loserId, comparison.winnerRating, comparison.loserRating, comparison.winnerDelta, comparison.loserDelta, comparison.zebra],
     );
   }
+  const global = feedbackCatalog === publicCatalog
+    ? globalAfterFeedback
+    : await selectRanking(client, topic, { catalog: publicCatalog });
+  const personal = feedbackCatalog === publicCatalog
+    ? personalAfterFeedback
+    : await selectRanking(client, topic, { playerId: player.id, pendingComparisons, catalog: publicCatalog });
   const round = {
     id: roundId,
     status: "created",
@@ -1215,6 +1552,7 @@ async function applyFourCardRound(client, {
 export function createTopicStore(connectionString = process.env.DATABASE_URL, {
   clock = () => new Date(),
   candidateCatalog = candidatesForTopic,
+  hooks = {},
 } = {}) {
   if (!connectionString) throw new Error("DATABASE_URL é obrigatória");
   const pool = new Pool({ connectionString, max: Number(process.env.PG_POOL_MAX) || 10 });
@@ -1224,7 +1562,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
-        const migration = await createCleanSchema(client);
+        const migration = await createCleanSchema(client, { candidateCatalog });
         await client.query("COMMIT");
         return migration;
       } catch (error) {
@@ -1260,7 +1598,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           message: "limite diário de novos jogadores nesta rede atingido",
           retryAfterSeconds: 86400,
         });
-        await createPlayerRecords(client, playerId, recoveryKeyHash(recoveryKey));
+        await createPlayerRecords(client, playerId, recoveryKeyHash(recoveryKey), candidateCatalog);
         await client.query("COMMIT");
         return { recoveryKey };
       } catch (error) {
@@ -1272,13 +1610,17 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
     },
 
     async ranking(topicId) {
-      return selectRanking(pool, validateTopic(topicId));
+      const topic = validateTopic(topicId);
+      return selectRanking(pool, topic, { catalog: candidateCatalog(topic) });
     },
 
     async playerRanking(recoveryKey, topicId) {
       const normalizedTopic = validateTopic(topicId);
       const player = await findPlayer(pool, recoveryKey);
-      const ranking = await selectRanking(pool, normalizedTopic, { playerId: player.id });
+      const ranking = await selectRanking(pool, normalizedTopic, {
+        playerId: player.id,
+        catalog: candidateCatalog(normalizedTopic),
+      });
       ranking.account = await accountForPlayer(pool, player.id);
       return ranking;
     },
@@ -1301,7 +1643,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
         if (!playerId && currentToken) playerId = (await findPlayer(client, currentToken)).id;
         if (!playerId) {
           playerId = randomUUID();
-          await createPlayerRecords(client, playerId, recoveryKeyHash(createRecoveryKey()));
+          await createPlayerRecords(client, playerId, recoveryKeyHash(createRecoveryKey()), candidateCatalog);
         }
         await client.query(
           `INSERT INTO player_identities (provider, subject, player_id, display_name, avatar_url)
@@ -1323,7 +1665,10 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           [accessTokenHash(sessionToken), playerId, SESSION_TTL_DAYS],
         );
         await client.query("DELETE FROM player_sessions WHERE expires_at <= now()");
-        const personal = await selectRanking(client, normalizedTopic, { playerId });
+        const personal = await selectRanking(client, normalizedTopic, {
+          playerId,
+          catalog: candidateCatalog(normalizedTopic),
+        });
         const account = { displayName: String(identity.displayName || "Jogador"), avatarUrl: String(identity.avatarUrl || "") };
         await client.query("COMMIT");
         return { sessionToken, account, player: { ...personal, account } };
@@ -1349,7 +1694,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
         await client.query("BEGIN");
         const player = await findPlayer(client, recoveryKey);
         const materialized = await materializeDailyEdition(client, topic, dateKey, { candidateCatalog });
-        await ensureDailyPlayerSession(client, materialized.edition.id, player.id);
+        await ensureDailyPlayerSession(client, materialized, player.id);
         const session = await selectDailyPlayerSession(client, materialized, player.id);
         await client.query("COMMIT");
         return session;
@@ -1375,7 +1720,8 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
       const answerId = normalizeVoteId(requestedAnswerId);
       const slot = Number(requestedSlot);
       if (!Number.isInteger(slot)) throw contractError("slot diário inválido", 400, "DAILY_SLOT_INVALID");
-      const initialDate = editorialDateKey(clockInstant(clock, now));
+      const admittedAt = clockInstant(clock, now);
+      const initialDate = editorialDateKey(admittedAt);
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
@@ -1412,6 +1758,9 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
             choiceMode: "daily",
             dailyEditionId: replayEdition.edition.id,
             dailySlot: slot,
+            quotaWindow: { opensAt: replayEdition.edition.opensAt, closesAt: replayEdition.edition.closesAt },
+            publicCatalog: candidateCatalog(topic),
+            feedbackCatalog: mergeCandidateCatalogs(candidateCatalog(topic), replayEdition.catalog),
             lockRound: false,
           });
           if (result.created) throw new Error("resposta diária existe sem rodada Elo correspondente");
@@ -1420,11 +1769,44 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           return { ...result.payload, dailySession };
         }
 
+        const requestedEditionId = String(editionId || "");
+        // A aquisição deste lock é a admissão transacional do voto. Um pedido
+        // admitido antes do closesAt mantém o lock até o COMMIT e o corte
+        // posterior espera; o relógio não invalida retroativamente trabalho já
+        // aceito. Se o corte venceu a corrida, o snapshot existente bloqueia a
+        // mutação tardia.
+        // Votos da mesma edição compartilham a barreira e continuam
+        // concorrentes entre jogadores. O corte usa o lock exclusivo e só
+        // publica depois que todos os votos já admitidos terminarem.
+        await client.query("SELECT pg_advisory_xact_lock_shared(hashtext($1))", [`daily-cut:${requestedEditionId}`]);
+        await hooks.afterDailyVoteAdmission?.({
+          editionId: requestedEditionId,
+          answerId,
+          slot,
+        });
+        const requestedEdition = await client.query(
+          `SELECT id, edition_date::text, topic_id, opens_at, closes_at
+           FROM daily_editions WHERE id = $1`,
+          [requestedEditionId],
+        );
+        const requestedRow = requestedEdition.rows[0];
+        if (!requestedRow || requestedRow.topic_id !== topic
+          || admittedAt < new Date(requestedRow.opens_at) || admittedAt >= new Date(requestedRow.closes_at)
+          || String(requestedRow.edition_date) !== initialDate) {
+          throw contractError("a rodada informada já fechou; carregue a edição atual", 409, "DAILY_EDITION_CLOSED");
+        }
+        const publishedCut = await client.query(
+          "SELECT 1 FROM daily_publication_cuts WHERE edition_id = $1",
+          [requestedEditionId],
+        );
+        if (publishedCut.rowCount) {
+          throw contractError("a rodada informada já foi publicada e não aceita novas respostas", 409, "DAILY_EDITION_CLOSED");
+        }
         const materialized = await materializeDailyEdition(client, topic, initialDate, { candidateCatalog });
-        if (String(editionId || "") !== materialized.edition.id) {
+        if (requestedEditionId !== materialized.edition.id) {
           throw contractError("a rodada informada já fechou; carregue a edição atual", 409, "DAILY_EDITION_CLOSED", materialized.edition.id);
         }
-        await ensureDailyPlayerSession(client, materialized.edition.id, player.id);
+        await ensureDailyPlayerSession(client, materialized, player.id);
         await client.query(
           "SELECT 1 FROM daily_player_sessions WHERE edition_id = $1 AND player_id = $2 FOR UPDATE",
           [materialized.edition.id, player.id],
@@ -1456,6 +1838,9 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           choiceMode: "daily",
           dailyEditionId: materialized.edition.id,
           dailySlot: slot,
+          quotaWindow: { opensAt: materialized.edition.opensAt, closesAt: materialized.edition.closesAt },
+          publicCatalog: candidateCatalog(topic),
+          feedbackCatalog: mergeCandidateCatalogs(candidateCatalog(topic), materialized.catalog),
           lockRound: false,
         });
         if (!result.created) throw contractError("answerId colide com uma rodada já confirmada", 409, "DAILY_REPLAY_DIVERGENT");
@@ -1472,10 +1857,12 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           );
         }
         const dailySession = await selectDailyPlayerSession(client, materialized, player.id);
-        const closingDate = editorialDateKey(clockInstant(clock));
-        if (closingDate !== initialDate) {
-          throw contractError("a rodada virou durante a confirmação; a escolha não foi aplicada", 409, "DAILY_EDITION_CLOSED");
-        }
+        await hooks.beforeDailyVoteCommit?.({
+          editionId: materialized.edition.id,
+          playerId: player.id,
+          slot,
+          answerId,
+        });
         await client.query("COMMIT");
         return { ...result.payload, dailySession };
       } catch (error) {
@@ -1489,7 +1876,8 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
     async dailyCut(topicId, requestedDate, { now } = {}) {
       const topic = validateTopic(topicId);
       const dateKey = validateEditionDate(requestedDate);
-      const currentDate = editorialDateKey(clockInstant(clock, now));
+      const requestedAt = clockInstant(clock, now);
+      const currentDate = editorialDateKey(requestedAt);
       if (dateKey >= currentDate) {
         throw contractError("o recorte só é publicado depois do fechamento em São Paulo", 409, "DAILY_CUT_NOT_CLOSED");
       }
@@ -1497,7 +1885,8 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
       try {
         await client.query("BEGIN");
         const editionResult = await client.query(
-          `SELECT id, edition_date::text, topic_id, ruleset_id, ruleset_version, catalog_hash, catalog_ids,
+          `SELECT id, edition_date::text, topic_id, ruleset_id, ruleset_version, catalog_schema, catalog_hash, catalog_ids,
+                  catalog_snapshot, catalog_snapshot_hash,
                   candidate_count, total_rounds, cards_per_round, opens_at, closes_at
            FROM daily_editions
            WHERE topic_id = $1 AND edition_date = $2::date
@@ -1508,35 +1897,39 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
         if (!editionResult.rowCount) throw contractError("edição diária não encontrada", 404, "DAILY_EDITION_NOT_FOUND");
         const editionRow = editionResult.rows[0];
         await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`daily-cut:${editionRow.id}`]);
+        const roundsResult = await client.query(
+          "SELECT slot, candidate_ids, selection_hash FROM daily_edition_rounds WHERE edition_id = $1 ORDER BY slot",
+          [editionRow.id],
+        );
+        const materialized = validateMaterializedDailyEdition(editionRow, roundsResult.rows);
+        if (requestedAt < new Date(materialized.edition.closesAt)) {
+          throw contractError("o recorte só é publicado depois do fechamento em São Paulo", 409, "DAILY_CUT_NOT_CLOSED");
+        }
         const storedCut = await client.query(
           `SELECT ruleset_id, methodology, completed_players, completed_answers, results, published_at
            FROM daily_publication_cuts WHERE edition_id = $1`,
           [editionRow.id],
         );
         if (storedCut.rowCount) {
-          const row = storedCut.rows[0];
+          const record = validateDailyCutRecord(materialized, storedCut.rows[0], { observedAt: requestedAt });
           await client.query("COMMIT");
           return {
-            edition: serializeDailyEdition(editionRow),
+            edition: materialized.edition,
             status: "published",
-            methodology: row.methodology,
-            completedPlayers: Number(row.completed_players),
-            completedAnswers: Number(row.completed_answers),
-            sampleNotice: Number(row.completed_players) === 0
+            methodology: record.methodology,
+            completedPlayers: record.completedPlayers,
+            completedAnswers: record.completedAnswers,
+            sampleNotice: record.completedPlayers === 0
               ? "Nenhuma sessão concluída; não há resultado a interpretar."
-              : Number(row.completed_players) < 30
+              : record.completedPlayers < 30
                 ? "Recorte de baixa participação; apresente contagens, não uma conclusão populacional."
                 : null,
-            rounds: row.results.rounds,
-            publishedAt: new Date(row.published_at).toISOString(),
+            catalogSnapshotHash: record.results.catalogSnapshotHash,
+            catalog: record.results.catalog,
+            rounds: record.results.rounds,
+            publishedAt: record.publishedAt,
           };
         }
-
-        const roundsResult = await client.query(
-          "SELECT slot, candidate_ids, selection_hash FROM daily_edition_rounds WHERE edition_id = $1 ORDER BY slot",
-          [editionRow.id],
-        );
-        const materialized = validateMaterializedDailyEdition(editionRow, roundsResult.rows);
         const [completionResult, choicesResult] = await Promise.all([
           client.query("SELECT COUNT(*)::bigint AS total FROM daily_completions WHERE edition_id = $1", [editionRow.id]),
           client.query(
@@ -1565,28 +1958,56 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           throw new Error("recorte diário não fecha com as sessões concluídas");
         }
         const methodology = dailyCutMethodology(dateKey);
-        const results = { rounds };
+        const selectedSnapshot = selectedDailyCatalog(materialized);
+        const results = validateDailyCutResults(materialized, {
+          editionSnapshotHash: materialized.edition.snapshotHash,
+          catalogSnapshotHash: selectedSnapshot.hash,
+          catalog: selectedSnapshot.candidates,
+          rounds,
+        }, { completedPlayers, completedAnswers });
         const inserted = await client.query(
           `INSERT INTO daily_publication_cuts (
-             edition_id, ruleset_id, methodology, completed_players, completed_answers, results
-           ) VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+             edition_id, ruleset_id, methodology, completed_players, completed_answers, results, published_at
+           ) VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::timestamptz)
            RETURNING published_at`,
-          [editionRow.id, editionRow.ruleset_id, methodology, completedPlayers, completedAnswers, JSON.stringify(results)],
+          [
+            editionRow.id,
+            editionRow.ruleset_id,
+            methodology,
+            completedPlayers,
+            completedAnswers,
+            JSON.stringify(results),
+            requestedAt.toISOString(),
+          ],
         );
+        await hooks.beforeDailyCutCommit?.({
+          editionId: materialized.edition.id,
+          date: materialized.edition.date,
+        });
+        const record = validateDailyCutRecord(materialized, {
+          ruleset_id: editionRow.ruleset_id,
+          methodology,
+          completed_players: completedPlayers,
+          completed_answers: completedAnswers,
+          results,
+          published_at: inserted.rows[0].published_at,
+        }, { observedAt: requestedAt });
         await client.query("COMMIT");
         return {
           edition: materialized.edition,
           status: "published",
-          methodology,
-          completedPlayers,
-          completedAnswers,
-          sampleNotice: completedPlayers === 0
+          methodology: record.methodology,
+          completedPlayers: record.completedPlayers,
+          completedAnswers: record.completedAnswers,
+          sampleNotice: record.completedPlayers === 0
             ? "Nenhuma sessão concluída; não há resultado a interpretar."
-            : completedPlayers < 30
+            : record.completedPlayers < 30
               ? "Recorte de baixa participação; apresente contagens, não uma conclusão populacional."
               : null,
-          rounds,
-          publishedAt: new Date(inserted.rows[0].published_at).toISOString(),
+          catalogSnapshotHash: record.results.catalogSnapshotHash,
+          catalog: record.results.catalog,
+          rounds: record.results.rounds,
+          publishedAt: record.publishedAt,
         };
       } catch (error) {
         await client.query("ROLLBACK");
@@ -1599,6 +2020,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
     async vote({ topicId, winnerId, loserId, voteId: requestedVoteId, recoveryKey, playerVersion }) {
       const topic = validateVote(topicId, winnerId, loserId);
       const voteId = normalizeVoteId(requestedVoteId);
+      const publicCatalog = candidateCatalog(topic);
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
@@ -1612,8 +2034,8 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
             error.status = 409;
             throw error;
           }
-          const global = await selectRanking(client, topic);
-          const personal = player ? await selectRanking(client, topic, { playerId: player.id }) : null;
+          const global = await selectRanking(client, topic, { catalog: publicCatalog });
+          const personal = player ? await selectRanking(client, topic, { playerId: player.id, catalog: publicCatalog }) : null;
           await client.query("COMMIT");
           return {
             ...global,
@@ -1665,8 +2087,8 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
           [voteId, player?.id || null, topic, winnerId, loserId, winnerRating, loserRating, deltas.winnerDelta, deltas.loserDelta, zebra],
         );
-        const global = await selectRanking(client, topic);
-        const personal = player ? await selectRanking(client, topic, { playerId: player.id }) : null;
+        const global = await selectRanking(client, topic, { catalog: publicCatalog });
+        const personal = player ? await selectRanking(client, topic, { playerId: player.id, catalog: publicCatalog }) : null;
         await client.query("COMMIT");
         return {
           ...global,
@@ -1687,11 +2109,15 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
       }
     },
 
-    async roundVote({ topicId, winnerId, candidateIds, roundId: requestedRoundId, recoveryKey, playerVersion }) {
+    async roundVote({ topicId, winnerId, candidateIds, roundId: requestedRoundId, recoveryKey, playerVersion, now }) {
       const validated = validateRoundVote(topicId, winnerId, candidateIds);
       const topic = validated.topic;
       const roundCandidates = validated.candidateIds;
       const roundId = normalizeVoteId(requestedRoundId);
+      // O modo livre usa o relógio injetado do store no início da requisição.
+      // A janela é passada como timestamp ao PostgreSQL, em vez de recalculada
+      // por `now()`, para edição e cota concordarem mesmo sob skew de relógio.
+      const quotaWindow = editionWindow(editorialDateKey(clockInstant(clock, now)));
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
@@ -1704,6 +2130,8 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           player,
           playerVersion,
           choiceMode: "free",
+          quotaWindow,
+          publicCatalog: candidateCatalog(topic),
         });
         await client.query("COMMIT");
         return result.payload;

@@ -2,7 +2,7 @@ import { createHmac, randomUUID } from "node:crypto";
 import { isIP } from "node:net";
 import cors from "cors";
 import express from "express";
-import { CANDIDATES, TOPICS, candidatesForTopic } from "./candidates.js";
+import { CANDIDATES, TOPICS, candidatesForTopic, publicCandidate } from "./candidates.js";
 
 const PRODUCTION_ORIGINS = ["https://polimatch.com.br"];
 const LOCAL_ORIGIN_PATTERN = /^http:\/\/(?:127\.0\.0\.1|localhost):\d+$/;
@@ -66,7 +66,14 @@ function safeStatus(error) {
   return Number.isInteger(status) && status >= 400 && status < 600 ? status : 500;
 }
 
-export function createHttpApp({ store, googleIdentity, env = process.env, logger = console, clock = () => new Date() } = {}) {
+export function createHttpApp({
+  store,
+  googleIdentity,
+  env = process.env,
+  logger = console,
+  clock = () => new Date(),
+  candidateCatalog = candidatesForTopic,
+} = {}) {
   if (!store) throw new Error("store é obrigatório");
   if (!googleIdentity) throw new Error("googleIdentity é obrigatório");
 
@@ -136,7 +143,7 @@ export function createHttpApp({ store, googleIdentity, env = process.env, logger
         service: "polimatch-api",
         database: "postgresql",
         candidates: CANDIDATES.length,
-        playableCandidates: TOPICS.filter(({ active }) => active).reduce((total, topic) => total + candidatesForTopic(topic.id).length, 0),
+        playableCandidates: TOPICS.filter(({ active }) => active).reduce((total, topic) => total + candidateCatalog(topic.id).length, 0),
         activeTopics: TOPICS.filter(({ active }) => active).length,
         googleLogin: googleIdentity.configured,
       });
@@ -150,12 +157,10 @@ export function createHttpApp({ store, googleIdentity, env = process.env, logger
 
   app.get("/api/candidates", (req, res) => {
     const topicId = String(req.query.topic || "eleicoes-2026");
-    const candidates = candidatesForTopic(topicId);
+    const candidates = candidateCatalog(topicId);
     res.json({
       topicId,
-      candidates: candidates.map(({ personId, id, name, displayName, affiliation, photo, role, summary, office, party, location, bio, relevance2026, facts, highlight, controversy, sources, reviewedAt, reviewStatus, topicIds }) => ({
-        personId, id, name, displayName, affiliation, photo, role, summary, office, party, location, bio, relevance2026, facts, highlight, controversy, sources, reviewedAt, reviewStatus, topicIds,
-      })),
+      candidates: candidates.map(publicCandidate),
     });
   });
 

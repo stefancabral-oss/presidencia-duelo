@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { patchCandidateSlot, showPersistentPanel } from "./persistent-dom.js";
+import { markPortraitFailed, markPortraitLoaded, patchCandidateSlot, showPersistentPanel } from "./persistent-dom.js";
 
 class FakeClassList {
   constructor() { this.values = new Set(); }
@@ -89,6 +89,28 @@ test("busy cards remain focusable DOM controls while their vote is unavailable",
   assert.equal(slot.button.getAttribute("aria-busy"), "true");
   assert.equal(slot.button.getAttribute("disabled"), null);
   assert.equal(slot.button.classList.contains("is-selected"), true);
+});
+
+test("a failed portrait stays hidden until a different source loads", () => {
+  const slot = fakeSlot();
+  patchCandidateSlot(slot, firstCandidate);
+  assert.equal(slot.image.hidden, true);
+
+  markPortraitLoaded(slot.image);
+  assert.equal(slot.image.hidden, false);
+  markPortraitFailed(slot.image);
+  assert.equal(slot.image.hidden, true);
+  assert.equal(slot.image.dataset.failedSrc, firstCandidate.photo);
+
+  patchCandidateSlot(slot, { ...firstCandidate, name: "Mesmo retrato, novo render" });
+  assert.equal(slot.image.hidden, true);
+  assert.equal(slot.image.dataset.failedSrc, firstCandidate.photo);
+
+  patchCandidateSlot(slot, { ...firstCandidate, photo: "/portraits/002.jpg", photoAlt: "Foto nova" });
+  assert.equal(slot.image.hidden, true);
+  assert.equal(slot.image.dataset.failedSrc, undefined);
+  markPortraitLoaded(slot.image);
+  assert.equal(slot.image.hidden, false);
 });
 
 test("screen changes hide persistent panels without replacing them", () => {

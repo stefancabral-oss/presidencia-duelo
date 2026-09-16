@@ -519,11 +519,12 @@ try {
       topbar: document.querySelector(".topbar"),
       nav: document.querySelector(".bottom-nav"),
       instruction: document.querySelector(".round-instruction"),
+      retryVote: document.querySelector("#retry-vote"),
       liveRegion: document.querySelector(".app-live-region"),
       slots: [...document.querySelectorAll("[data-candidate-slot]")],
       cards: [...document.querySelectorAll(".candidate-card")],
     };
-    const trackedNodes = [tracked.topbar, tracked.nav, tracked.instruction, tracked.liveRegion, ...tracked.slots, ...tracked.cards];
+    const trackedNodes = [tracked.topbar, tracked.nav, tracked.instruction, tracked.retryVote, tracked.liveRegion, ...tracked.slots, ...tracked.cards];
     const announcements = [];
     const substitutions = [];
     const observer = new MutationObserver((records) => {
@@ -659,6 +660,7 @@ try {
       topbar: probe.tracked.topbar === document.querySelector(".topbar"),
       nav: probe.tracked.nav === document.querySelector(".bottom-nav"),
       instruction: probe.tracked.instruction === document.querySelector(".round-instruction"),
+      retryVote: probe.tracked.retryVote === document.querySelector("#retry-vote"),
       liveRegion: probe.tracked.liveRegion === document.querySelector(".app-live-region"),
       slots: probe.tracked.slots.every((slot, index) => slot === document.querySelectorAll("[data-candidate-slot]")[index]),
       cards: probe.tracked.cards.every((card, index) => card === currentCards[index]),
@@ -671,8 +673,8 @@ try {
       statusCount: document.querySelectorAll('[role="status"]').length,
     };
   });
-  if (!persistence.topbar || !persistence.nav || !persistence.instruction || !persistence.liveRegion || !persistence.slots || !persistence.cards) {
-    throw new Error("Topbar, navegação, instrução, região viva ou slots foram substituídos durante o voto");
+  if (!persistence.topbar || !persistence.nav || !persistence.instruction || !persistence.retryVote || !persistence.liveRegion || !persistence.slots || !persistence.cards) {
+    throw new Error("Topbar, navegação, instrução, repetição, região viva ou slots foram substituídos durante o voto");
   }
   if (persistence.substitutions.length) throw new Error(`O MutationObserver detectou substituições persistentes: ${persistence.substitutions.join(", ")}`);
   if (!persistence.focused || !persistence.focusVisible) throw new Error("O botão votado perdeu o foco ou o anel visível durante a nova rodada");

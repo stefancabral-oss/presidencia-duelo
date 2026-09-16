@@ -10,7 +10,7 @@ import { googleClientId, mountGoogleButton } from "./google-login.js";
 import { isCurrentVoteIdentity, resetPendingVoteForIdentityChange, revokeSessionBeforeClearing } from "./logout.js";
 import { VOTE_ACTIONS, VOTE_PHASES, voteFailureState, voteRecoveryControl } from "./vote-flow.js";
 import { confirmedVoteData } from "./vote-response.js";
-import { patchCandidateSlot, showPersistentPanel } from "./persistent-dom.js";
+import { markPortraitFailed, markPortraitLoaded, patchCandidateSlot, showPersistentPanel } from "./persistent-dom.js";
 
 const app = document.querySelector("#app");
 const sound = createSoundController();
@@ -607,6 +607,7 @@ async function vote(winnerId, { retry = false } = {}) {
   state.globalFeedbackMessage = "";
   state.result = "Confirmando sua escolha…";
   state.resultTone = "";
+  if (!state.roundId) state.roundId = crypto.randomUUID();
   render();
   announceStatus(state.result);
   try {
@@ -641,6 +642,7 @@ async function vote(winnerId, { retry = false } = {}) {
       state.selectedId = "";
       state.roundOutcome = null;
       state.result = "Nova rodada disponível";
+      state.resultTone = "";
       render();
       announceStatus(state.result);
       resultTimer = setTimeout(() => {
@@ -698,6 +700,7 @@ async function recoverFromVoteFailure(error, winner, attemptIdentity) {
   state.result = failure.message;
   render();
   scheduleRetryUnlock();
+  announceStatus(state.result);
   sound.play("error");
 }
 
@@ -944,7 +947,10 @@ function installEvents() {
     if (event.key === "Escape" && state.authOpen) closeAuth();
   });
   app.addEventListener("error", (event) => {
-    if (event.target.matches?.(".candidate-card .portrait img")) event.target.hidden = true;
+    if (event.target.matches?.(".candidate-card .portrait img")) markPortraitFailed(event.target);
+  }, true);
+  app.addEventListener("load", (event) => {
+    if (event.target.matches?.(".candidate-card .portrait img")) markPortraitLoaded(event.target);
   }, true);
   refs.modal.addEventListener("close", () => {
     if (!modalSilentClose) sound.play("dismiss");
@@ -1032,6 +1038,9 @@ async function signOut() {
     state.authBusy = false;
     state.authOpen = false;
     state.result = "Você saiu. Um jogo novo começou neste aparelho.";
+    state.resultTone = "";
+    state.pendingWinnerId = "";
+    state.roundId = crypto.randomUUID();
     render();
     announceStatus(state.result);
   } catch (error) {
@@ -1085,6 +1094,7 @@ async function initialize() {
     state.matchQueue = firstMatch.queue;
     state.roundId = crypto.randomUUID();
     state.pendingWinnerId = "";
+    state.resultTone = "";
     state.ready = true;
   } catch (error) {
     state.error = error.message || "Falha desconhecida";

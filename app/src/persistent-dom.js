@@ -15,6 +15,17 @@ export function showPersistentPanel(panels, activeName) {
   });
 }
 
+export function markPortraitFailed(image) {
+  const source = image.getAttribute("src") || "";
+  if (source) image.dataset.failedSrc = source;
+  image.hidden = true;
+}
+
+export function markPortraitLoaded(image) {
+  delete image.dataset.failedSrc;
+  image.hidden = false;
+}
+
 export function patchCandidateSlot(slot, model) {
   const { root, button, fallback, image, name, affiliation, office, summary, outcome, outcomeValue, outcomeMessage } = slot;
   root.hidden = !model;
@@ -33,10 +44,15 @@ export function patchCandidateSlot(slot, model) {
 
   fallback.textContent = model.initials;
   if (model.photo) {
-    if (image.getAttribute("src") !== model.photo) image.setAttribute("src", model.photo);
+    if (image.getAttribute("src") !== model.photo) {
+      delete image.dataset.failedSrc;
+      image.hidden = true;
+      image.setAttribute("src", model.photo);
+    }
     image.setAttribute("alt", model.photoAlt);
-    image.hidden = false;
+    if (image.dataset.failedSrc === model.photo) image.hidden = true;
   } else {
+    delete image.dataset.failedSrc;
     image.removeAttribute("src");
     image.setAttribute("alt", "");
     image.hidden = true;

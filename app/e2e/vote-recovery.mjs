@@ -217,6 +217,11 @@ async function abrirDuelo(page) {
   await page.getByRole("heading", { name: "Quem você prefere?" }).waitFor();
   const coach = page.getByRole("button", { name: "Começar rodada" });
   if (await coach.count()) await coach.click();
+  const retry = page.locator("#retry-vote");
+  if (await retry.count() !== 1 || !await retry.isHidden()) {
+    throw new Error("o controle persistente de repetição deveria existir oculto antes de uma falha");
+  }
+  await retry.evaluate((node) => { window.__polimatchRetryNode = node; });
 }
 
 const votar = (page) => page.locator(".candidate-card").first().click();
@@ -260,13 +265,19 @@ try {
     if (await page.locator(".round-instruction.is-error").count() !== 1) {
       throw new Error("a falha do voto não recebeu grafia de erro");
     }
-    if (await page.locator("#retry-vote").count() !== 1) {
+    if (!await page.locator("#retry-vote").isVisible()) {
       throw new Error("a falha do voto não ofereceu Tentar de novo");
+    }
+    if (!await page.evaluate(() => window.__polimatchRetryNode === document.querySelector("#retry-vote"))) {
+      throw new Error("a falha substituiu o controle persistente Tentar de novo");
     }
 
     // O ponto central: o app precisa voltar a votar sem recarregar a página.
     await page.locator("#retry-vote").click();
     await page.waitForTimeout(2200);
+    if (!await page.locator("#retry-vote").isHidden()) {
+      throw new Error("Tentar de novo continuou exposto depois de a repetição ser confirmada");
+    }
     for (let rodada = 0; rodada < 3; rodada += 1) {
       const antes = servidor.duels;
       await votar(page);

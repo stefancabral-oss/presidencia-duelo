@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ApiError, requestJson } from "./api.js";
+import { ApiError, requestJson, submitRoundVote } from "./api.js";
 
 async function withFetch(fakeFetch, callback) {
   const originalFetch = globalThis.fetch;
@@ -121,4 +121,20 @@ test("an aborted response body remains a timeout, not BAD_PAYLOAD", async () => 
     globalThis.setTimeout = originalSetTimeout;
     globalThis.clearTimeout = originalClearTimeout;
   }
+});
+
+test("a supplied round id survives every retry request", async () => {
+  const payloads = [];
+  await withFetch(async (_url, options) => {
+    payloads.push(JSON.parse(options.body));
+    return { ok: true, status: 200, json: async () => ({ ok: true }) };
+  }, async () => {
+    const player = { recoveryKey: "pm2_test", version: 4 };
+    await submitRoundVote("stable-round-id", "winner", ["winner", "b", "c", "d"], "eleicoes-2026", player);
+    await submitRoundVote("stable-round-id", "winner", ["winner", "b", "c", "d"], "eleicoes-2026", player);
+  });
+
+  assert.equal(payloads.length, 2);
+  assert.deepEqual(payloads.map(({ roundId }) => roundId), ["stable-round-id", "stable-round-id"]);
+  assert.deepEqual(payloads.map(({ playerVersion }) => playerVersion), [4, 4]);
 });

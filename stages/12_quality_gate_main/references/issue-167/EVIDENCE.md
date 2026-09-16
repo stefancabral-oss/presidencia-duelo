@@ -13,7 +13,7 @@ Escopo: separar as ações de escolher e conhecer, tornar o coach realmente moda
 - O click de ponteiro que encerra a mesma pressão longa é suprimido, mas uma ativação posterior por teclado ou tecnologia assistiva (`detail === 0`) limpa o gesto e escolhe normalmente.
 - Durante envio ou recuperação pendente, voto e perfil compartilham o mesmo bloqueio `aria-disabled`; o handler também recusa a abertura do perfil nesses estados.
 - O coach inicial é um `<dialog>` aberto com `showModal()`, rotulado por `#coach-title`, focado em `Começar rodada` e fechado por `Escape` no roteiro automatizado.
-- O perfil é um `<dialog>` nativo sem ação de voto. `Escape`, o botão superior e `Voltar à rodada` fecham o diálogo e devolvem foco ao gatilho exato.
+- O perfil é um `<dialog>` nativo sem ação de voto. `Escape`, o botão superior e a ação inferior fecham o diálogo e devolvem foco ao gatilho exato. A copy inferior é `Voltar à rodada` no duelo e `Voltar ao ranking` quando a origem é o ranking.
 - O retorno de foco valida também a identidade do candidato, evitando focar um nó persistente que já represente outra pessoa.
 - Ao sair do coach, e somente nessa transição, o foco vai ao primeiro `.vote-target`.
 
@@ -28,9 +28,10 @@ Escopo: separar as ações de escolher e conhecer, tornar o coach realmente moda
 5. abertura dos quatro perfis com `Enter`, `Space` e `Shift+Enter`, sem trocar a semântica do controle;
 6. fechamento por `Escape` e por `Voltar à rodada`, com retorno ao gatilho exato;
 7. comparação negativa de contagem, IDs da rodada, ranking e requisições de voto antes/depois dos perfis;
-8. pressão longa, `Escape` e `Enter` no mesmo `.vote-target`: zero voto no click de ponteiro e exatamente um voto na ativação de teclado;
-9. resposta retida: os quatro perfis ficam `aria-disabled`, não abrem e a rodada não muda enquanto o voto está pendente;
-10. voto por `Shift+Enter` no controle explícito de escolha e chegada a uma segunda nova rodada.
+8. abertura a partir de uma linha do ranking, copy `Voltar ao ranking` e retorno de foco à linha exata;
+9. pressão longa, `Escape` e `Enter` no mesmo `.vote-target`: zero voto no click de ponteiro e exatamente um voto na ativação de teclado;
+10. resposta retida: os quatro perfis ficam `aria-disabled`, não abrem e a rodada não muda enquanto o voto está pendente;
+11. voto por `Shift+Enter` no controle explícito de escolha e chegada a uma segunda nova rodada.
 
 `app/e2e/vote-recovery.mjs` acrescenta a mesma invariante após uma confirmação 200 truncada: os quatro perfis permanecem bloqueados e uma ativação por teclado não abre o diálogo durante a recuperação.
 

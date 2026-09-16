@@ -300,6 +300,21 @@ try {
   await activateWithKeyboard(page, page.locator('.nav-button[data-screen="ranking"]'));
   await page.getByRole("heading", { name: "Ranking", exact: true }).waitFor();
   await page.locator("[data-ranking-total]", { hasText: "0 escolhas confirmadas" }).waitFor();
+  const rankingProfile = page.locator(".ranking-row[data-profile]").first();
+  await activateWithKeyboard(page, rankingProfile);
+  const rankingModal = page.locator("#modal");
+  await rankingModal.waitFor();
+  const rankingBack = page.locator("#close-modal");
+  if (await rankingBack.textContent() !== "Voltar ao ranking") {
+    throw new Error("O perfil aberto pelo ranking não expôs a ação contextual Voltar ao ranking");
+  }
+  await tabTo(page, rankingBack);
+  await page.keyboard.press("Enter");
+  await rankingModal.waitFor({ state: "hidden" });
+  await page.waitForTimeout(20);
+  if (!await rankingProfile.evaluate((button) => button === document.activeElement)) {
+    throw new Error("Fechar o perfil do ranking não devolveu foco à linha exata");
+  }
   await activateWithKeyboard(page, page.locator('[data-ranking-view="personal"]'));
   await page.getByText("Faça uma escolha para começar seu ranking pessoal.", { exact: true }).waitFor();
   if (voteRequests.length !== 0 || rankingReads !== 1) {
@@ -388,6 +403,7 @@ try {
     focusReturns,
     accessibilityTree,
     keyboard: { profileActivationKeys, longPressFollowUpKey: "Enter", voteActivationKey: "Shift+Enter" },
+    contextualReturnLabels: { duel: "Voltar à rodada", ranking: "Voltar ao ranking" },
     longPressRegression: {
       winnerId: chosenId,
       pointerVotesBeforeEscape: 0,

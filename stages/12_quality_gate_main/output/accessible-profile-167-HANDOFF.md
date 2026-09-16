@@ -17,13 +17,14 @@ Arquivos centrais:
 - O perfil não contém ação de voto. Conhecer nunca altera escolha, contagem, `roundId` ou ranking.
 - A pressão longa continua disponível, mas não é necessária para descobrir o perfil.
 - O retorno de foco é explícito para também funcionar quando o perfil foi aberto pelo atalho de pressão longa no WebKit.
+- A ação inferior é contextual: `Voltar à rodada` no duelo e `Voltar ao ranking` quando o perfil parte de uma linha do ranking.
 - O coach é persistente no DOM e usa `showModal()`, sem simular `aria-modal` em uma `div`.
 - A rodada de aposta mantém a dica `Toque para apostar`, não expõe o botão de perfil e não confunde aposta com voto.
 - Durante envio e recuperação, os dois controles do slot permanecem bloqueados; o perfil não abre enquanto a escolha está pendente.
 
 ## Estado dos gates
 
-- Gate automatizado: 9 fluxos × 2 motores, 18/18 aprovados em Chromium e WebKit.
+- Gate automatizado: 9 fluxos × 2 motores, 18/18 aprovados em Chromium e WebKit; o roteiro focado foi repetido após a copy contextual.
 - Build e testes de regressão: aprovados; `npm test` fechou 152/152 (`shared` 4, `back` 58, `app` 90).
 - Auditorias de produção: app e backend com 0 vulnerabilidades.
 - Preview isolado: HTTP 200 em `127.0.0.1:4282`, `--strictPort`, processo vinculado a esta worktree.

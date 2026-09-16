@@ -29,8 +29,8 @@
       "tag": "ARTICLE",
       "directButtons": 2,
       "nestedButtons": 0,
-      "voteName": "Escolher Renan Santos",
-      "profileName": "Conhecer Renan Santos",
+      "voteName": "Escolher Ronaldo Caiado",
+      "profileName": "Conhecer Ronaldo Caiado",
       "profileText": "ⓘConhecer perfil",
       "profileHeight": 44
     },
@@ -47,8 +47,8 @@
       "tag": "ARTICLE",
       "directButtons": 2,
       "nestedButtons": 0,
-      "voteName": "Escolher Romeu Zema",
-      "profileName": "Conhecer Romeu Zema",
+      "voteName": "Escolher Luiz Inácio Lula da Silva (Lula)",
+      "profileName": "Conhecer Luiz Inácio Lula da Silva (Lula)",
       "profileText": "ⓘConhecer perfil",
       "profileHeight": 44
     }
@@ -61,7 +61,7 @@
     },
     {
       "index": 1,
-      "expectedName": "Conhecer Renan Santos",
+      "expectedName": "Conhecer Ronaldo Caiado",
       "returned": true
     },
     {
@@ -71,11 +71,11 @@
     },
     {
       "index": 3,
-      "expectedName": "Conhecer Romeu Zema",
+      "expectedName": "Conhecer Luiz Inácio Lula da Silva (Lula)",
       "returned": true
     }
   ],
-  "accessibilityTree": "- article:\n  - button \"Escolher Tarcísio de Freitas\":\n    - text: TD\n    - img \"Foto de Tarcísio de Freitas\"\n    - strong: Tarcísio de Freitas\n    - text: Republicanos Governador de São Paulo; candidato à reeleição\n  - button \"Conhecer Tarcísio de Freitas\": Conhecer perfil\n- article:\n  - button \"Escolher Renan Santos\":\n    - text: RS\n    - img \"Foto de Renan Santos\"\n    - strong: Renan Santos\n    - text: Missão Ativista e fundador do MBL; candidato à Presidência\n  - button \"Conhecer Renan Santos\": Conhecer perfil\n- article:\n  - button \"Escolher Augusto Cury\":\n    - text: AC\n    - img \"Foto de Augusto Cury\"\n    - strong: Augusto Cury\n    - text: Avante Escritor e psiquiatra; candidato à Presidência\n  - button \"Conhecer Augusto Cury\": Conhecer perfil\n- article:\n  - button \"Escolher Romeu Zema\":\n    - text: RZ\n    - img \"Foto de Romeu Zema\"\n    - strong: Romeu Zema\n    - text: Novo Ex-governador de Minas Gerais; candidato à Presidência\n  - button \"Conhecer Romeu Zema\": Conhecer perfil",
+  "accessibilityTree": "- article:\n  - button \"Escolher Tarcísio de Freitas\":\n    - text: TD\n    - img \"Foto de Tarcísio de Freitas\"\n    - strong: Tarcísio de Freitas\n    - text: Republicanos Governador de São Paulo; candidato à reeleição\n  - button \"Conhecer Tarcísio de Freitas\": Conhecer perfil\n- article:\n  - button \"Escolher Ronaldo Caiado\":\n    - text: RC\n    - img \"Foto de Ronaldo Caiado\"\n    - strong: Ronaldo Caiado\n    - text: PSD Ex-governador de Goiás; candidato à Presidência\n  - button \"Conhecer Ronaldo Caiado\": Conhecer perfil\n- article:\n  - button \"Escolher Augusto Cury\":\n    - text: AC\n    - img \"Foto de Augusto Cury\"\n    - strong: Augusto Cury\n    - text: Avante Escritor e psiquiatra; candidato à Presidência\n  - button \"Conhecer Augusto Cury\": Conhecer perfil\n- article:\n  - button \"Escolher Luiz Inácio Lula da Silva (Lula)\":\n    - text: LI\n    - img \"Foto de Luiz Inácio Lula da Silva (Lula)\"\n    - strong: Lula\n    - text: PT Presidente da República (candidato à reeleição)\n  - button \"Conhecer Luiz Inácio Lula da Silva (Lula)\": Conhecer perfil",
   "keyboard": {
     "profileActivationKeys": [
       "Enter",
@@ -85,6 +85,10 @@
     ],
     "longPressFollowUpKey": "Enter",
     "voteActivationKey": "Shift+Enter"
+  },
+  "contextualReturnLabels": {
+    "duel": "Voltar à rodada",
+    "ranking": "Voltar ao ranking"
   },
   "longPressRegression": {
     "winnerId": "tarcisio-de-freitas",
@@ -102,9 +106,9 @@
       "modalOpen": false,
       "candidateIds": [
         "tarcisio-de-freitas",
-        "renan-santos",
+        "ronaldo-caiado",
         "augusto-cury",
-        "romeu-zema"
+        "lula"
       ]
     }
   },
@@ -113,9 +117,9 @@
       "progress": "0 escolhas",
       "candidateIds": [
         "tarcisio-de-freitas",
-        "renan-santos",
+        "ronaldo-caiado",
         "augusto-cury",
-        "romeu-zema"
+        "lula"
       ],
       "generatedRoundIds": [
         "00000000-0000-4000-8000-000000000001"
@@ -125,9 +129,9 @@
       "progress": "0 escolhas",
       "candidateIds": [
         "tarcisio-de-freitas",
-        "renan-santos",
+        "ronaldo-caiado",
         "augusto-cury",
-        "romeu-zema"
+        "lula"
       ],
       "generatedRoundIds": [
         "00000000-0000-4000-8000-000000000001"
@@ -142,30 +146,30 @@
       "roundId": "00000000-0000-4000-8000-000000000001",
       "before": [
         "tarcisio-de-freitas",
-        "renan-santos",
+        "ronaldo-caiado",
         "augusto-cury",
-        "romeu-zema"
+        "lula"
       ],
       "after": [
+        "romeu-zema",
         "flavio-bolsonaro",
-        "pablo-marcal",
-        "lula",
-        "ronaldo-caiado"
+        "renan-santos",
+        "pablo-marcal"
       ]
     },
     {
       "roundId": "00000000-0000-4000-8000-000000000002",
       "before": [
+        "romeu-zema",
         "flavio-bolsonaro",
-        "pablo-marcal",
-        "lula",
-        "ronaldo-caiado"
+        "renan-santos",
+        "pablo-marcal"
       ],
       "after": [
-        "renan-santos",
-        "romeu-zema",
-        "tarcisio-de-freitas",
-        "augusto-cury"
+        "lula",
+        "augusto-cury",
+        "ronaldo-caiado",
+        "tarcisio-de-freitas"
       ]
     }
   ],

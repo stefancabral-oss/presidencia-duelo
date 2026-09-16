@@ -20,8 +20,8 @@
       "tag": "ARTICLE",
       "directButtons": 2,
       "nestedButtons": 0,
-      "voteName": "Escolher Ronaldo Caiado",
-      "profileName": "Conhecer Ronaldo Caiado",
+      "voteName": "Escolher Augusto Cury",
+      "profileName": "Conhecer Augusto Cury",
       "profileText": "ⓘConhecer perfil",
       "profileHeight": 44
     },
@@ -38,8 +38,8 @@
       "tag": "ARTICLE",
       "directButtons": 2,
       "nestedButtons": 0,
-      "voteName": "Escolher Augusto Cury",
-      "profileName": "Conhecer Augusto Cury",
+      "voteName": "Escolher Ronaldo Caiado",
+      "profileName": "Conhecer Ronaldo Caiado",
       "profileText": "ⓘConhecer perfil",
       "profileHeight": 44
     },
@@ -56,7 +56,7 @@
   "focusReturns": [
     {
       "index": 0,
-      "expectedName": "Conhecer Ronaldo Caiado",
+      "expectedName": "Conhecer Augusto Cury",
       "returned": true
     },
     {
@@ -66,7 +66,7 @@
     },
     {
       "index": 2,
-      "expectedName": "Conhecer Augusto Cury",
+      "expectedName": "Conhecer Ronaldo Caiado",
       "returned": true
     },
     {
@@ -75,7 +75,7 @@
       "returned": true
     }
   ],
-  "accessibilityTree": "- article:\n  - button \"Escolher Ronaldo Caiado\":\n    - text: RC\n    - img \"Foto de Ronaldo Caiado\"\n    - strong: Ronaldo Caiado\n    - text: PSD Ex-governador de Goiás; candidato à Presidência\n  - button \"Conhecer Ronaldo Caiado\": Conhecer perfil\n- article:\n  - button \"Escolher Renan Santos\":\n    - text: RS\n    - img \"Foto de Renan Santos\"\n    - strong: Renan Santos\n    - text: Missão Ativista e fundador do MBL; candidato à Presidência\n  - button \"Conhecer Renan Santos\": Conhecer perfil\n- article:\n  - button \"Escolher Augusto Cury\":\n    - text: AC\n    - img \"Foto de Augusto Cury\"\n    - strong: Augusto Cury\n    - text: Avante Escritor e psiquiatra; candidato à Presidência\n  - button \"Conhecer Augusto Cury\": Conhecer perfil\n- article:\n  - button \"Escolher Pablo Marçal\":\n    - text: PM\n    - img \"Foto de Pablo Marçal\"\n    - strong: Pablo Marçal\n    - text: PRTB Empresário e coach; registro à Presidência indeferido\n  - button \"Conhecer Pablo Marçal\": Conhecer perfil",
+  "accessibilityTree": "- article:\n  - button \"Escolher Augusto Cury\":\n    - text: AC\n    - img \"Foto de Augusto Cury\"\n    - strong: Augusto Cury\n    - text: Avante Escritor e psiquiatra; candidato à Presidência\n  - button \"Conhecer Augusto Cury\": Conhecer perfil\n- article:\n  - button \"Escolher Renan Santos\":\n    - text: RS\n    - img \"Foto de Renan Santos\"\n    - strong: Renan Santos\n    - text: Missão Ativista e fundador do MBL; candidato à Presidência\n  - button \"Conhecer Renan Santos\": Conhecer perfil\n- article:\n  - button \"Escolher Ronaldo Caiado\":\n    - text: RC\n    - img \"Foto de Ronaldo Caiado\"\n    - strong: Ronaldo Caiado\n    - text: PSD Ex-governador de Goiás; candidato à Presidência\n  - button \"Conhecer Ronaldo Caiado\": Conhecer perfil\n- article:\n  - button \"Escolher Pablo Marçal\":\n    - text: PM\n    - img \"Foto de Pablo Marçal\"\n    - strong: Pablo Marçal\n    - text: PRTB Empresário e coach; registro à Presidência indeferido\n  - button \"Conhecer Pablo Marçal\": Conhecer perfil",
   "keyboard": {
     "profileActivationKeys": [
       "Enter",
@@ -86,8 +86,12 @@
     "longPressFollowUpKey": "Enter",
     "voteActivationKey": "Shift+Enter"
   },
+  "contextualReturnLabels": {
+    "duel": "Voltar à rodada",
+    "ranking": "Voltar ao ranking"
+  },
   "longPressRegression": {
-    "winnerId": "ronaldo-caiado",
+    "winnerId": "augusto-cury",
     "pointerVotesBeforeEscape": 0,
     "keyboardVotesAfterEscape": 1
   },
@@ -101,9 +105,9 @@
     "pendingRace": {
       "modalOpen": false,
       "candidateIds": [
-        "ronaldo-caiado",
-        "renan-santos",
         "augusto-cury",
+        "renan-santos",
+        "ronaldo-caiado",
         "pablo-marcal"
       ]
     }
@@ -112,9 +116,9 @@
     "before": {
       "progress": "0 escolhas",
       "candidateIds": [
-        "ronaldo-caiado",
-        "renan-santos",
         "augusto-cury",
+        "renan-santos",
+        "ronaldo-caiado",
         "pablo-marcal"
       ],
       "generatedRoundIds": [
@@ -124,9 +128,9 @@
     "after": {
       "progress": "0 escolhas",
       "candidateIds": [
-        "ronaldo-caiado",
-        "renan-santos",
         "augusto-cury",
+        "renan-santos",
+        "ronaldo-caiado",
         "pablo-marcal"
       ],
       "generatedRoundIds": [
@@ -141,31 +145,31 @@
     {
       "roundId": "00000000-0000-4000-8000-000000000001",
       "before": [
-        "ronaldo-caiado",
-        "renan-santos",
         "augusto-cury",
+        "renan-santos",
+        "ronaldo-caiado",
         "pablo-marcal"
       ],
       "after": [
-        "lula",
-        "tarcisio-de-freitas",
+        "flavio-bolsonaro",
         "romeu-zema",
-        "flavio-bolsonaro"
+        "tarcisio-de-freitas",
+        "lula"
       ]
     },
     {
       "roundId": "00000000-0000-4000-8000-000000000002",
       "before": [
-        "lula",
-        "tarcisio-de-freitas",
+        "flavio-bolsonaro",
         "romeu-zema",
-        "flavio-bolsonaro"
+        "tarcisio-de-freitas",
+        "lula"
       ],
       "after": [
-        "renan-santos",
-        "augusto-cury",
+        "ronaldo-caiado",
         "pablo-marcal",
-        "ronaldo-caiado"
+        "augusto-cury",
+        "renan-santos"
       ]
     }
   ],

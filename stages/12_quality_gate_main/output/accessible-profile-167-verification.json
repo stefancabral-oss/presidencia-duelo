@@ -33,7 +33,7 @@
     {
       "command": "POLIMATCH_E2E_BROWSER=<chromium|webkit> node app/e2e/accessible-profile.mjs",
       "status": "passed",
-      "coverage": "daily-first fallback, native dialogs, Escape, keyboard-only profiles, exact focus return, busy lock, negative state and next round"
+      "coverage": "daily-first fallback, native dialogs, Escape, contextual duel and ranking return labels, exact focus return, busy lock, negative state and next round"
     },
     {
       "command": "POLIMATCH_E2E_BROWSER=<chromium|webkit> node app/e2e/interaction-smoke.mjs",

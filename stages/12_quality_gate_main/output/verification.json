@@ -1,5 +1,5 @@
 {
-  "status": "local-passed-pr-and-ci-pending",
+  "status": "local-and-automatic-checks-passed-ready-to-merge",
   "issue": 165,
   "macroIssue": 175,
   "pullRequest": 186,
@@ -34,9 +34,17 @@
       "name": "visual-evidence",
       "command": "POLIMATCH_E2E_DUEL_SCREENSHOT=<path> POLIMATCH_E2E_OUTCOME_SCREENSHOT=<path> POLIMATCH_E2E_CARD_METRICS=<path> node app/e2e/interaction-smoke.mjs",
       "result": "passed; before/after screenshots and computed-style JSON stored under references/issue-165"
+    },
+    {
+      "name": "automatic-design-validator",
+      "command": "GitHub Actions pull_request run 35055331571",
+      "result": "passed on head 5513c7e"
+    },
+    {
+      "name": "automatic-ui-interaction",
+      "command": "GitHub Actions pull_request run 35055331595",
+      "result": "passed in Chromium and WebKit on head 5513c7e"
     }
   ],
-  "pending": [
-    "automatic CI on final head"
-  ]
+  "pending": []
 }

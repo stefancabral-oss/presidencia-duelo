@@ -2,7 +2,7 @@
 
 ## Status
 
-- Estado: `implementação e validação local aprovadas; CI final pendente`
+- Estado: `implementação, CI e human gate aprovados; pronta para merge`
 - Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/165
 - Macro: https://github.com/stefancabral-oss/presidencia-duelo/issues/175
 - Branch: `icm/12-u02-card-hierarchy-165`
@@ -35,6 +35,8 @@
 - `interaction-smoke.mjs` em WebKit: aprovado.
 - Viewports preservados pelo smoke: 320 × 568, 390 × 844, 1280 × 900 e 1440 × 900.
 - 54/54 nomes medidos; zero corte por `scrollHeight > clientHeight`.
+- Design Validator automático: aprovado no run [35055331571](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35055331571).
+- UI Interaction Smoke automático: Chromium e WebKit aprovados no run [35055331595](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35055331595).
 
 ## Riscos conhecidos
 
@@ -43,10 +45,9 @@
 
 ## Próximo passo exato
 
-1. Abrir a PR isolada da #165.
-2. Confirmar todos os checks automáticos no head final.
-3. Mesclar com a autorização permanente do human gate.
-4. Iniciar #168 somente a partir da nova `main`.
+1. Confirmar os checks automáticos do head documental final.
+2. Mesclar com a autorização permanente do human gate.
+3. Iniciar #168 somente a partir da nova `main`.
 
 ## Human gate
 

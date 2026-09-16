@@ -12,15 +12,18 @@
       header, article, .final-step { background: #103f36; border: 1px solid #b99b54; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; }
       h1, h2 { margin-top: 0; }
       .progress { color: #d9c98f; font-weight: 700; }
-      .test-card { position: relative; overflow: hidden; margin: 0 auto 1rem; border: 1px solid #e9cf78; background: #04382d; box-shadow: inset 0 0 0 4px #2417026b, inset 0 0 0 6px #ffe3806b, 0 12px 28px #0009; }
-      .test-card img { position: absolute; display: block; object-fit: cover; object-position: center top; }
-      .blind-plate { position: absolute; pointer-events: none; }
-      body[data-scenario="mobile-390x844"] .test-card { width: 184.5px; height: 246px; border-radius: 15px; }
-      body[data-scenario="mobile-390x844"] .test-card img { left: 8px; top: 8px; width: 168.5px; height: 230px; border-radius: 7px; }
-      body[data-scenario="mobile-390x844"] .blind-plate { left: 7px; right: 7px; bottom: 7px; height: 76px; border-radius: 0 0 8px 8px; background: linear-gradient(180deg, transparent, #001913e0 34%, #001611fa); }
-      body[data-scenario="desktop-1000x800"] .test-card { width: 226px; aspect-ratio: 5 / 7; border-radius: 19px; }
-      body[data-scenario="desktop-1000x800"] .test-card img { left: 11px; top: 11px; width: 204px; height: 187.4px; border-radius: 9px 9px 1px 1px; }
-      body[data-scenario="desktop-1000x800"] .blind-plate { left: 10px; right: 10px; bottom: 9px; height: 109px; border-radius: 2px 2px 10px 10px; background: linear-gradient(118deg, #fffefa, #eee9dd 65%, #fffdf8); }
+      .test-card { position: relative; overflow: hidden; display: grid; margin: 0 auto 1rem; border: 1px solid #e9cf78; background: #04382d; box-shadow: inset 0 0 0 4px #2417026b, inset 0 0 0 6px #ffe3806b, 0 12px 28px #0009; }
+      .art-window { position: relative; min-height: 0; overflow: hidden; border: 1px solid #e4c86f94; }
+      .test-card img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; object-position: center top; }
+      .blind-plate { position: relative; z-index: 2; min-height: 0; margin-top: -1px; pointer-events: none; border: 1px solid #ffffffc7; border-top-color: #c9ad59; }
+      body[data-scenario="mobile-390x844"] .test-card { width: 183.5px; height: 280px; grid-template-rows: minmax(0, 1fr) 104px; padding: 6px; border-radius: 15px; }
+      body[data-scenario="mobile-390x844"] .art-window { border-radius: 8px 8px 2px 2px; }
+      body[data-scenario="mobile-390x844"] .blind-plate { border-radius: 2px 2px 8px 8px; background: linear-gradient(118deg, #fffefa, #eee9dd 65%, #fffdf8); }
+      body[data-scenario="desktop-1000x800"] .test-card { width: 226px; height: 316.390625px; grid-template-rows: minmax(0, 1fr) 108px; padding: 9px 9px 8px; border-radius: 19px; }
+      body[data-scenario="desktop-1000x800"] .art-window { border-radius: 10px 10px 2px 2px; }
+      body[data-scenario="desktop-1000x800"] .blind-plate { border-radius: 2px 2px 10px 10px; background: linear-gradient(118deg, #fffefa, #eee9dd 65%, #fffdf8); }
+      .batch-blocked { border-color: #f0a39b; background: #4e211d; }
+      .batch-blocked strong { color: #ffd2cc; }
       label, fieldset { display: block; margin-top: 1rem; }
       input[type="text"], select { width: 100%; min-height: 2.75rem; padding: .65rem; border: 1px solid #d8cfb5; border-radius: .35rem; background: #fff; color: #102a22; font: inherit; }
       fieldset { border: 0; padding: 0; }
@@ -30,13 +33,18 @@
       [hidden] { display: none !important; }
     </style>
   </head>
-  <body>
+  <body data-batch-status="pilot-invalidated-regeneration-required" data-collection-allowed="false">
     <main>
       <header>
         <h1>Teste cego de reconhecimento</h1>
         <p>Não procure pistas nem abra o código da página. Cada imagem aparece no recorte e no tamanho efetivo de um dos cenários críticos do jogo. “Não sei” é uma resposta válida.</p>
         <p class="progress" id="progress" aria-live="polite"></p>
       </header>
+      <article class="batch-blocked" id="batch-blocked" role="alert">
+        <h2>Lote invalidado — não coletar respostas</h2>
+        <p><strong>Este primeiro lote não obedeceu integralmente ao guia versionado antes da geração.</strong> O guia <code>pilot-2</code> foi ajustado depois de observar as imagens, portanto estes arquivos servem somente como evidência de não conformidade.</p>
+        <p>É proibido recrutar participantes, exportar respostas ou registrar uma decisão <code>seguir</code> com P01–P08. Gere um novo lote depois de o guia vigente estar versionado.</p>
+      </article>
       <form id="image-step"></form>
       <form class="final-step" id="final-step" hidden>
         <h2>Etapa final</h2>
@@ -65,19 +73,18 @@
       <p class="status" id="status" role="status" aria-live="polite"></p>
     </main>
     <script>
+      const batchGate = Object.freeze({
+        status: "pilot-invalidated-regeneration-required",
+        collectionAllowed: false,
+        scaleDecisionAllowed: false
+      });
       const scenarioDefinitions = {
-        "mobile-390x844": {
-          viewport: { width: 390, height: 844 },
-          card: { width: 184.5, height: 246 },
-          artWindow: { width: 168.5, height: 230, objectFit: "cover", objectPosition: "center top", obscuredBottom: 76 }
-        },
-        "desktop-1000x800": {
-          viewport: { width: 1000, height: 800 },
-          card: { width: 226, height: 316.4 },
-          artWindow: { width: 204, height: 187.4, objectFit: "cover", objectPosition: "center top", obscuredBottom: 0 }
-        }
+        "mobile-390x844": { viewport: { width: 390, height: 844 } },
+        "desktop-1000x800": { viewport: { width: 1000, height: 800 } }
       };
-      const requestedScenario = new URLSearchParams(location.search).get("scenario");
+      const query = new URLSearchParams(location.search);
+      const requestedScenario = query.get("scenario");
+      const technicalPreview = query.get("technicalPreview") === "1";
       const scenarioIds = Object.keys(scenarioDefinitions);
       const scenarioId = scenarioIds.includes(requestedScenario)
         ? requestedScenario
@@ -96,9 +103,35 @@
       const responses = [];
       const imageStep = document.querySelector("#image-step");
       const finalStep = document.querySelector("#final-step");
+      const batchBlocked = document.querySelector("#batch-blocked");
       const progress = document.querySelector("#progress");
       const status = document.querySelector("#status");
       let currentIndex = 0;
+      let observedDisplayScenario = null;
+
+      function rounded(value) {
+        return Math.round(value * 10) / 10;
+      }
+
+      function captureDisplayScenario() {
+        const card = imageStep.querySelector(".test-card");
+        const artWindow = imageStep.querySelector(".art-window");
+        const image = imageStep.querySelector(".test-card img");
+        const plate = imageStep.querySelector(".blind-plate");
+        const box = (element) => {
+          const bounds = element.getBoundingClientRect();
+          return { width: rounded(bounds.width), height: rounded(bounds.height) };
+        };
+        const imageStyle = getComputedStyle(image);
+        return {
+          id: scenarioId,
+          viewport: scenarioDefinitions[scenarioId].viewport,
+          card: box(card),
+          artWindow: box(artWindow),
+          image: { ...box(image), objectFit: imageStyle.objectFit, objectPosition: imageStyle.objectPosition },
+          blindPlate: box(plate)
+        };
+      }
 
       function renderImageStep() {
         const asset = assets[currentIndex];
@@ -107,7 +140,7 @@
           <article data-code="${asset.code}">
             <h2>Observe antes de responder</h2>
             <div class="test-card">
-              <img src="${asset.source}" alt="Retrato sem identificação para o teste cego">
+              <div class="art-window"><img src="${asset.source}" alt="Retrato sem identificação para o teste cego"></div>
               <span class="blind-plate" aria-hidden="true"></span>
             </div>
             <label>Quem é esta pessoa?
@@ -121,12 +154,17 @@
             </fieldset>
             <button type="submit">${currentIndex + 1 === assets.length ? "Ir à etapa final" : "Próxima imagem"}</button>
           </article>`;
-        imageStep.querySelector("input[name=identity]").focus();
+        if (batchGate.collectionAllowed) imageStep.querySelector("input[name=identity]").focus();
       }
 
       imageStep.addEventListener("submit", (event) => {
         event.preventDefault();
+        if (!batchGate.collectionAllowed) {
+          status.textContent = "Coleta bloqueada: este lote precisa ser regenerado sob o guia já versionado.";
+          return;
+        }
         if (!imageStep.reportValidity()) return;
+        observedDisplayScenario = captureDisplayScenario();
         const data = new FormData(imageStep);
         responses.push({
           code: assets[currentIndex].code,
@@ -148,6 +186,10 @@
 
       finalStep.addEventListener("submit", (event) => {
         event.preventDefault();
+        if (!batchGate.collectionAllowed || !batchGate.scaleDecisionAllowed) {
+          status.textContent = "Exportação bloqueada: este lote foi invalidado antes do teste humano.";
+          return;
+        }
         if (!finalStep.reportValidity()) return;
         const data = new FormData(finalStep);
         const randomBytes = crypto.getRandomValues(new Uint8Array(16));
@@ -155,7 +197,7 @@
         const payload = {
           protocol: "card-art-pilot-176-v2-participant",
           responseId,
-          displayScenario: { id: scenarioId, ...scenarioDefinitions[scenarioId] },
+          displayScenario: observedDisplayScenario || captureDisplayScenario(),
           strata: {
             familiarity: String(data.get("familiarity")),
             region: String(data.get("region"))
@@ -174,7 +216,20 @@
         status.textContent = "Respostas salvas. Envie o arquivo ao responsável pelo piloto.";
       });
 
-      renderImageStep();
+      if (batchGate.collectionAllowed) {
+        batchBlocked.hidden = true;
+        renderImageStep();
+      } else if (technicalPreview) {
+        progress.textContent = "Prévia técnica — coleta e exportação desativadas";
+        renderImageStep();
+        imageStep.setAttribute("aria-disabled", "true");
+        imageStep.querySelectorAll("input, button").forEach((control) => { control.disabled = true; });
+      } else {
+        progress.textContent = "Coleta bloqueada até a geração de um novo lote";
+        imageStep.hidden = true;
+        finalStep.hidden = true;
+        status.textContent = "Nenhuma resposta pode ser coletada com P01–P08.";
+      }
     </script>
   </body>
 </html>

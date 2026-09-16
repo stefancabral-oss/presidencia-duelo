@@ -7,7 +7,13 @@ Issue: [#176](https://github.com/stefancabral-oss/presidencia-duelo/issues/176)
 
 A arte da carta serve ao jogo. Ela deve tornar a pessoa reconhecível em tamanho pequeno sem funcionar como elogio, crítica ou caricatura. A fotografia documental continua sendo um ativo separado, reservado ao perfil e acompanhada de fonte, crédito e licença.
 
-Este guia cobre somente o piloto de oito retratos sintéticos. Nenhuma imagem do piloto entra no catálogo público antes do teste cego, das revisões de identidade e dignidade, da regularização de proveniência e do gate humano.
+Este guia cobre somente o piloto de oito retratos sintéticos. A versão `pilot-2` é a especificação prévia para uma **nova geração**. Nenhuma imagem entra no catálogo público antes do teste cego, das revisões de identidade e dignidade, da regularização de proveniência e do gate humano.
+
+## Não conformidade do primeiro lote
+
+A versão `pilot-1` foi registrada antes da primeira geração e exigia fundo malaquita uniforme. As imagens P01–P08 foram geradas com gradiente. Depois de observar esse resultado, o texto foi alterado para `pilot-2` e passou a admitir um gradiente radial controlado.
+
+Essa alteração posterior não valida retroativamente o lote. P01–P08 ficam preservadas apenas como evidência de não conformidade, com coleta humana e decisão `seguir` bloqueadas. O próximo lote deve ser gerado do zero sob esta versão já registrada; somente ele poderá avançar ao teste cego.
 
 ## Gramática visual invariável
 
@@ -15,7 +21,7 @@ Este guia cobre somente o piloto de oito retratos sintéticos. Nenhuma imagem do
 - Câmera na altura dos olhos e rosto em três quartos suave, voltado 15 graus para a direita da pessoa.
 - Olhar para a câmera, boca fechada, expressão atenta e neutra.
 - Luz principal ampla no alto à esquerda da câmera, preenchimento uniforme e contraste moderado.
-- Fundo malaquita escuro, sem bandeira, arquitetura, multidão, slogan, número, brasão ou símbolo partidário. O lote observado usa um gradiente radial discreto, mais claro atrás da cabeça e mais escuro nas bordas; isso é tolerado desde que direção, intensidade e contraste permaneçam equivalentes em todas as pessoas. `#103f36` é referência cromática, não promessa de cor chapada pixel a pixel.
+- Fundo malaquita escuro, sem bandeira, arquitetura, multidão, slogan, número, brasão ou símbolo partidário. `pilot-2` admite um gradiente radial discreto, mais claro atrás da cabeça e mais escuro nas bordas, desde que direção, intensidade e contraste permaneçam equivalentes em todas as pessoas. `#103f36` é referência cromática, não promessa de cor chapada pixel a pixel.
 - Roupa civil lisa em carvão ou malaquita muito escura, sem gravata, joias chamativas, uniforme, insígnia ou cor de campanha.
 - Realismo editorial com linha fina inspirada em gravura de cédula: textura controlada, poros e idade preservados, sem embelezamento, dramatização ou traço cômico.
 - Mesma nitidez, saturação, contraste, tamanho de cabeça e quantidade de detalhe para todas as pessoas.
@@ -54,7 +60,8 @@ Este guia cobre somente o piloto de oito retratos sintéticos. Nenhuma imagem do
 - Saída mestre: PNG ou WebP em retrato 4:5, sem transparência.
 - Arquivos cegos: `stages/12_quality_gate_main/evidence/card-art-pilot-176/P01.png` a `P08.png`.
 - Armazenamento: evidência de teste fora de `app/public`; o build deve falhar se qualquer hash do lote aparecer em `app/dist`.
-- Estado editorial: `pilot`, nunca `approved`.
+- Estado editorial do primeiro lote: `pilot-invalidated-regeneration-required`, nunca `approved` e nunca apto a coleta.
+- Estado editorial de uma futura regeneração: `pilot`, ainda não `approved`.
 - Proveniência obrigatória: SHA-256 da arte e da referência, caminho exato da referência, prompt, data, ferramenta, fonte fotográfica, autoria e licença quando documentadas.
 - `license-pending` é obrigatório quando origem fotográfica, autoria ou licença do arquivo efetivamente usado não estiverem documentadas. Uma ficha editorial de outra fotografia da mesma pessoa não sana essa lacuna.
 

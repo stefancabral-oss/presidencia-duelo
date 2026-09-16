@@ -2,6 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://polimatch.com.br/schemas/card-art-pilot-176-results.schema.json",
   "title": "Resultado consolidado do piloto de arte de carta #176",
+  "$comment": "Este schema valida a estrutura. Cobertura, aritmetica e gates de decisao sao obrigatoriamente verificados por app/scripts/validate-card-art-pilot-results.mjs.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -44,6 +45,7 @@
       "required": [
         "participantCount",
         "displayScenarios",
+        "externalRecruitment",
         "privacy",
         "strata"
       ],
@@ -67,6 +69,32 @@
             "desktop-1000x800": {
               "type": "integer",
               "minimum": 20
+            }
+          }
+        },
+        "externalRecruitment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "externalParticipantsOnly",
+            "productionTeamExcluded",
+            "attestedBy",
+            "attestedAt"
+          ],
+          "properties": {
+            "externalParticipantsOnly": {
+              "const": true
+            },
+            "productionTeamExcluded": {
+              "const": true
+            },
+            "attestedBy": {
+              "type": "string",
+              "minLength": 1
+            },
+            "attestedAt": {
+              "type": "string",
+              "format": "date-time"
             }
           }
         },
@@ -366,6 +394,7 @@
       "properties": {
         "status": {
           "enum": [
+            "pending",
             "approved",
             "rejected"
           ]

@@ -1,10 +1,10 @@
 {
-  "status": "human-test-and-license-review-required",
+  "status": "pilot-invalidated-regeneration-required",
   "issue": 176,
   "checks": [
     {
       "name": "style-guide-before-assets",
-      "result": "passed; the guide now records the observed malachite gradient tolerance, synthetic-photography disclosure and prohibited bias cues"
+      "result": "failed; pilot-1 required a uniform background, the generated batch used gradients, and pilot-2 admitted that gradient only after the batch was observed; P01-P08 cannot be tested or support a scale decision"
     },
     {
       "name": "pilot-evidence-isolation",
@@ -14,7 +14,7 @@
     {
       "name": "pilot-asset-and-reference-integrity",
       "command": "npm test",
-      "result": "passed; 84 of 84 tests (4 shared, 28 backend, 52 app), including anonymous filenames, 4:5 dimensions, generated-asset SHA-256, reference SHA-256 and provenance state"
+      "result": "pending rerun after final restack; the suite includes anonymous filenames, 4:5 dimensions, hashes, invalidation state and negative semantic-validation fixtures"
     },
     {
       "name": "reference-provenance",
@@ -23,7 +23,7 @@
     {
       "name": "blind-form-breakpoints",
       "command": "npm run test:card-art-pilot-form --prefix app",
-      "result": "passed in Chromium; mobile 390x844 rendered a 184.5x246 card with 168.5x230 visible image, desktop 1000x800 rendered a 226x316.4 card with 204x187.4 visible image, no identity leaked through filenames, and familiarity remained hidden until the eighth response"
+      "result": "pending rerun in Chromium and WebKit; the smoke derives expected geometry by rendering app/src/styles.css, then requires mobile 183.5x280 with a 167.5x160 image and desktop 226x316.4 with a 204x187.4 image while collection remains blocked"
     },
     {
       "name": "result-governance-schema",
@@ -31,12 +31,17 @@
       "result": "passed; valid Draft 2020-12 schema requiring aggregate privacy controls, regional/familiarity strata, per-asset identity and dignity reviewers, dates, and an authored final decision"
     },
     {
+      "name": "result-semantic-validator",
+      "command": "npm run card-art-pilot:validate-results --prefix app -- <result.json>",
+      "result": "implemented with negative fixtures; requires complete unique P01-P08 coverage, coherent counts/rates/strata, at least 20 external participants per scenario with accountable dated attestation, and blocks seguir for low recognition, non-approved reviews, pending licenses or a blocked manifest"
+    },
+    {
       "name": "blind-recognition-test",
-      "result": "pending external human sample of at least 20 participants in each display scenario"
+      "result": "blocked; P01-P08 are nonconforming and no external participant may be recruited before a new batch is generated under the already-versioned guide"
     },
     {
       "name": "neutrality-and-dignity-test",
-      "result": "pending external human sample and named human reviewers"
+      "result": "blocked; human review starts only after regeneration, provenance review and an explicit technical unlock"
     }
   ]
 }

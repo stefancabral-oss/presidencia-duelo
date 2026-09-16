@@ -15,15 +15,16 @@ Os slots locais atuais ficam em `app/public/portraits/001.jpg` a `125.jpg`. A ex
 
 ## Arte de carta — piloto da Issue #176
 
-O diretório de evidência `stages/12_quality_gate_main/evidence/card-art-pilot-176/` contém oito retratos sintéticos experimentais gerados com a ferramenta integrada de geração de imagens da OpenAI. Eles usam fotografias locais somente como referência de identidade e seguem o guia `docs/design/CARD_ART_NEUTRALITY_GUIDE.md`.
+O diretório de evidência `stages/12_quality_gate_main/evidence/card-art-pilot-176/` contém oito retratos sintéticos experimentais gerados com a ferramenta integrada de geração de imagens da OpenAI. Eles usam fotografias locais somente como referência de identidade. O lote foi invalidado porque o guia `pilot-2` foi ajustado depois de as imagens serem observadas; ele não comprova conformidade com uma regra prévia.
 
 Esses arquivos:
 
-- têm estado `pilot-not-published` no manifesto;
+- têm estado `pilot-invalidated-regeneration-required` no manifesto;
 - ficam fora de `app/public`, não são servidos pelo catálogo e não substituem fotografias de perfil;
 - são verificados depois de cada build para garantir que nenhum dos oito hashes entre em `app/dist`;
 - não foram aprovados para produção;
-- dependem de teste cego externo de reconhecimento e neutralidade;
+- não podem ser usados em coleta humana nem sustentar uma decisão `seguir`;
+- precisam ser substituídos por um lote novo gerado sob o guia já versionado antes de qualquer teste cego;
 - possuem referência, ferramenta, dimensões e SHA-256 da arte e da referência no manifesto de evidência.
 
 As referências de João Campos (`017`), Douglas Ruas (`019`) e Sônia Guajajara (`052`) mantêm fonte fotográfica, autoria e licença documentadas no catálogo auditado. As referências de Lula (`001`), Michelle Bolsonaro (`028`), Marina Silva (`033`), Jair Bolsonaro (`063`) e Tabata Amaral (`084`) vieram de arquivos editados entregues pelo usuário; o arquivo recebido é conhecido, mas a origem fotográfica, a autoria e a licença não estão documentadas. Por isso, essas cinco estão marcadas `license-pending`. As fontes editoriais listadas anteriormente para outras fotografias dessas pessoas não são apresentadas como licença dos arquivos substitutos.

@@ -1,7 +1,9 @@
 # Protocolo do teste dos oito — Issue #176
 
 Versão: `card-art-pilot-176-v2`
-Estado: `lote de evidência gerado; teste humano externo pendente`
+Estado: `primeiro lote invalidado; regeneração obrigatória antes de qualquer teste humano`
+
+> **Coleta bloqueada.** O lote P01–P08 foi gerado sob `pilot-1`, que exigia fundo uniforme. `pilot-2` passou a admitir gradiente somente depois de as imagens terem sido observadas. A mudança não valida o lote retroativamente: não recrute participantes, não consolide respostas e não registre `seguir` com estes oito arquivos.
 
 ## Hipótese
 
@@ -22,28 +24,33 @@ Uma arte editorial uniforme e não caricatural consegue manter reconhecimento su
 
 O lote equilibra quatro mulheres e quatro homens e inclui diferentes regiões, idades, tons de pele, tipos de cabelo, níveis de fama e posições no debate público. Essas categorias orientam a cobertura; não são rótulos exibidos no produto.
 
-Os arquivos entregues ao formulário chamam-se somente `P01.png` a `P08.png`. A relação entre código e pessoa fica no manifesto de evidência, que o aplicador não deve entregar nem mostrar ao participante. O formulário embaralha os oito códigos em cada execução e nunca contém nomes de pessoa em caminhos, texto alternativo ou ordem fixa.
+Os arquivos invalidados preservados chamam-se somente `P01.png` a `P08.png`. A relação entre código e pessoa fica no manifesto de evidência. Eles não podem ser entregues a participantes. O formulário permanece bloqueado e oferece apenas uma prévia técnica desabilitada para conferir recorte e cegamento.
 
 ## Cenários efetivos de carta
 
-Cada pessoa vê o lote inteiro uma única vez, em apenas um cenário. O aplicador balanceia os grupos usando o parâmetro `scenario` do formulário:
+Depois de uma regeneração válida e de o bloqueio ser removido, cada pessoa deverá ver o novo lote inteiro uma única vez, em apenas um cenário. O aplicador balanceará os grupos usando o parâmetro `scenario` do formulário:
 
-- `?scenario=mobile-390x844`: simula o breakpoint de 390 × 844 CSS px, carta de 184,5 × 246 px, imagem efetivamente visível de 168,5 × 230 px, `object-fit: cover`, topo central e placa sobre os 76 px inferiores;
-- `?scenario=desktop-1000x800`: simula o início desktop de 1000 × 800 CSS px, carta de 226 × 316,4 px e imagem efetivamente visível de 204 × 187,4 px, `object-fit: cover` e topo central.
+- `?scenario=mobile-390x844`: simula o breakpoint de 390 × 844 CSS px pós-#165: carta de 183,5 × 280 px, janela externa de arte de 169,5 × 162 px, imagem de 167,5 × 160 px, placa de 169,5 × 105 px, `object-fit: cover` e topo central;
+- `?scenario=desktop-1000x800`: simula o início desktop de 1000 × 800 CSS px: carta de 226 × 316,4 px, janela externa de arte de 206 × 189,4 px, imagem de 204 × 187,4 px, placa de 206 × 109 px, `object-fit: cover` e topo central.
 
-O modo sem parâmetro sorteia um cenário e serve apenas para inspeção. Na coleta oficial, o aplicador deve usar o parâmetro explícito para fechar exatamente os dois estratos. O formulário não apresenta o PNG em 28 rem nem em resolução mestre.
+Enquanto o lote estiver invalidado, o modo normal mostra somente o bloqueio. `technicalPreview=1` permite aos testes automatizados renderizar uma carta, mas mantém todos os campos desabilitados e nunca exporta respostas. O smoke mede o formulário contra uma fixture renderizada com `app/src/styles.css`, a fonte canônica da anatomia da carta; ele não aceita constantes geométricas duplicadas.
 
-Se a anatomia de carta da #165 ou os breakpoints da #168 mudarem essas medidas antes do teste, este protocolo e o formulário precisam ser atualizados antes de recrutar participantes.
+Se a anatomia ou os breakpoints mudarem, o smoke falhará até que o formulário e este protocolo acompanhem a fonte canônica. Depois da regeneração, a coleta oficial deverá usar o parâmetro explícito para fechar exatamente os dois estratos.
 
 ## Participantes
+
+Esta seção só entra em vigor para um novo lote cujo manifesto tenha `collectionAllowed: true`:
 
 - Mínimo total: 40 adultos que não participaram da geração, curadoria nem revisão das imagens.
 - Mínimo por cenário: 20 em `mobile-390x844` e 20 em `desktop-1000x800`.
 - Recrutar pessoas de macrorregiões e níveis de familiaridade política variados.
 - Não informar quais nomes aparecem antes do teste.
 - Não mostrar fotografia de referência, manifesto nem mapeamento dos códigos.
+- O consolidado deve trazer `sample.externalRecruitment` com confirmação de que só participaram pessoas externas à produção, responsável e data. A atestação identifica o responsável pela coleta, não os participantes, e não pode conter PII deles.
 
 ## Execução cega
+
+Execução suspensa para P01–P08. Após uma regeneração válida:
 
 1. Abrir o formulário com o parâmetro do cenário designado ao participante.
 2. Entregar o dispositivo sem DevTools, explorador de arquivos ou manifesto abertos.
@@ -82,12 +89,12 @@ O consolidado deve obedecer a `card-art-pilot-results.schema.json` e conter, par
 - revisão de dignidade com os mesmos campos;
 - contagens brutas e taxas de reconhecimento e neutralidade.
 
-A decisão do lote exige `seguir`, `iterar` ou `abandonar`, acompanhada por `decidedBy`, `decidedAt` e justificativa. O agente que preparou o piloto não pode preencher a amostra, assinar as revisões humanas nem decidir o próprio gate.
+A decisão de um lote válido exige `seguir`, `iterar` ou `abandonar`, acompanhada por `decidedBy`, `decidedAt` e justificativa. O agente que preparou o piloto não pode preencher a amostra, assinar as revisões humanas nem decidir o próprio gate. O validador semântico `app/scripts/validate-card-art-pilot-results.mjs` impede `seguir` com reconhecimento inferior a 70% em qualquer cenário, licença pendente, revisão não aprovada ou bloqueio no manifesto.
 
 Além dos limiares, `seguir` continua bloqueado enquanto qualquer referência tiver `licenseStatus: license-pending`. Isso hoje vale para cinco arquivos editados recebidos do usuário; o registro de uma fonte editorial anterior não substitui a licença da fotografia efetivamente usada.
 
 ## Registro esperado
 
-Os resultados devem ser anexados à issue #176 e copiados para `stages/12_quality_gate_main/output/card-art-pilot-results.json`, validados contra o schema. O arquivo consolidado não existe enquanto o teste humano estiver pendente; não se cria resultado vazio ou hipotético.
+Depois da regeneração e da coleta autorizada, os resultados devem ser anexados à issue #176 e copiados para `stages/12_quality_gate_main/output/card-art-pilot-results.json`, validados contra o schema e pelo comando `npm run card-art-pilot:validate-results --prefix app -- <caminho-do-resultado>`. O arquivo consolidado não existe para o lote invalidado; não se cria resultado vazio ou hipotético.
 
-O formulário offline está em `references/card-art-pilot-176.html`. As oito imagens e o manifesto ficam em `evidence/card-art-pilot-176/`, fora de `app/public` e fora do build Vite.
+O formulário bloqueado está em `references/card-art-pilot-176.html`. As oito imagens invalidadas e o manifesto ficam em `evidence/card-art-pilot-176/`, fora de `app/public` e fora do build Vite.

@@ -1,8 +1,7 @@
 /**
  * Recuperação do voto quando a rede falha.
  *
- * Três caminhos que já quebraram em produção e não têm cobertura em teste de
- * unidade, porque só aparecem na conversa entre cliente e servidor:
+ * Caminhos que só aparecem na conversa entre cliente e servidor:
  *
  *   1. Resposta que chega depois do tempo limite. O servidor gravou; o cliente
  *      desistiu. Antes, a versão pessoal ficava para trás e todo voto seguinte
@@ -10,11 +9,15 @@
  *   2. Indisponibilidade passageira ao iniciar. Antes, qualquer falha de
  *      `/api/player/state` apagava a chave de recuperação — a única credencial
  *      do jogador — e o histórico ficava órfão.
- *   3. Repetição do mesmo voto. O `roundId` precisa nascer com a rodada, senão
+ *   3. Credencial realmente inválida. Um 401 precisa continuar criando um
+ *      jogador novo, para a proteção contra 503 não ir longe demais.
+ *   4. Conflito real de versão. O servidor rejeita a escolha antes de gravá-la;
+ *      o cliente precisa ressincronizar e manter a mesma escolha para retry.
+ *   5. Repetição do mesmo voto. O `roundId` precisa nascer com a rodada, senão
  *      a idempotência do servidor não reconhece a segunda tentativa.
  *
  * O servidor aqui é falso, mas guarda estado: versão, contagem de rodadas e os
- * roundIds já vistos. Sem isso nenhum dos três cenários é observável.
+ * roundIds já vistos. Sem isso nenhum dos cinco cenários é observável.
  */
 import { chromium, webkit } from "playwright";
 
@@ -45,6 +48,7 @@ function criarServidor() {
     version: 0,
     duels: 0,
     rounds: new Map(),
+    requests: [],
     chaves: new Set([RECOVERY_KEY]),
     /** Falha a ser aplicada na próxima chamada de /api/player/state. */
     falhaNoEstado: null,
@@ -121,6 +125,7 @@ async function instalarServidor(page, servidor) {
 
     if (pathname === "/api/round-vote" && request.method() === "POST") {
       const { roundId, winnerId, candidateIds, playerVersion } = request.postDataJSON();
+      servidor.requests.push({ roundId, winnerId, playerVersion });
 
       // Repetição: devolve o resultado guardado sem contar de novo, como o
       // servidor real faz com a trava consultiva e o UNIQUE em round_id.
@@ -269,6 +274,44 @@ try {
   }
 
   // ------------------------------------------------------------ cenário 4
+  // Um 409 real rejeita a rodada antes de gravá-la. Depois de ressincronizar,
+  // o app deve preservar escolha e roundId para uma nova confirmação explícita.
+  {
+    const servidor = criarServidor();
+    const { context, page, pageErrors } = await novaSessao(browser, servidor, { chaveInicial: RECOVERY_KEY });
+    await abrirDuelo(page);
+
+    // Simula outra aba avançando a versão depois que esta tela carregou.
+    servidor.version = 1;
+    await votar(page);
+    await page.waitForTimeout(900);
+
+    if (servidor.duels !== 0 || servidor.rounds.size !== 0) {
+      throw new Error("o servidor não deveria gravar a escolha rejeitada por conflito de versão");
+    }
+    if (await page.locator("#retry-vote").count() !== 1) {
+      throw new Error("o 409 descartou a escolha em vez de oferecer nova confirmação");
+    }
+
+    await page.locator("#retry-vote").click();
+    await page.waitForTimeout(2200);
+
+    if (servidor.duels !== 1 || servidor.rounds.size !== 1) {
+      throw new Error("a escolha não foi registrada uma única vez depois da ressincronização");
+    }
+    const [rejeitada, confirmada] = servidor.requests;
+    if (!rejeitada || !confirmada) throw new Error("o cenário 409 não realizou as duas tentativas esperadas");
+    if (rejeitada.roundId !== confirmada.roundId || rejeitada.winnerId !== confirmada.winnerId) {
+      throw new Error("o retry do 409 trocou a rodada ou a escolha original");
+    }
+    if (Number(rejeitada.playerVersion) !== 0 || Number(confirmada.playerVersion) !== 1) {
+      throw new Error("o retry do 409 não usou a versão pessoal ressincronizada");
+    }
+    if (pageErrors.length) throw new Error(`erros na página: ${pageErrors.join(" | ")}`);
+    await context.close();
+  }
+
+  // ------------------------------------------------------------ cenário 5
   // O roundId nasce com a rodada: repetir o mesmo voto não conta duas vezes.
   {
     const servidor = criarServidor();
@@ -296,7 +339,7 @@ try {
     await context.close();
   }
 
-  console.log(`${browserName}: recuperação de voto validada — tempo esgotado, 503 passageiro, 401 real e repetição idempotente`);
+  console.log(`${browserName}: recuperação de voto validada — timeout, 503, 401, 409 e repetição idempotente`);
 } finally {
   await browser.close();
 }

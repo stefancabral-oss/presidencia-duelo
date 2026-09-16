@@ -1,6 +1,6 @@
 # PoliMatch
 
-PoliMatch é um jogo web casual de comparação entre personalidades públicas. A pessoa escolhe uma das duas cartas, recebe o próximo duelo imediatamente e acompanha rankings geral e pessoal. É entretenimento: **não constitui pesquisa eleitoral**.
+PoliMatch é um jogo web casual de comparação entre personalidades públicas. A pessoa escolhe sua preferida entre quatro cartas, recebe uma nova rodada imediatamente e acompanha rankings geral e pessoal. É entretenimento: **não constitui pesquisa eleitoral**.
 
 ## Produto atual
 
@@ -10,6 +10,7 @@ PoliMatch é um jogo web casual de comparação entre personalidades públicas. 
 - Toque na carta escolhe; pressão longa abre a ficha educativa sem votar.
 - Carta padrão neutra para todos.
 - Chromas são personalizações pessoais e futuras; não alteram Elo, pareamento ou voto.
+- O acesso com Google é opcional: preserva o jogador anônimo atual e permite recuperar o mesmo progresso em outro aparelho.
 
 O catálogo mestre possui 125 pessoas:
 
@@ -42,7 +43,9 @@ npm install --prefix back
 API:
 
 ```sh
-DATABASE_URL=postgresql://usuario:senha@localhost:5432/polimatch npm run dev:back
+DATABASE_URL=postgresql://usuario:senha@localhost:5432/polimatch \
+GOOGLE_CLIENT_ID=seu-cliente-web.apps.googleusercontent.com \
+npm run dev:back
 ```
 
 App:
@@ -87,6 +90,8 @@ Não edite essas saídas manualmente. Corrija a entrada e execute o importador n
 | `GET` | `/api/ranking?topic=eleicoes-2026` | ranking agregado |
 | `POST` | `/api/player` | cria identidade anônima e chave de recuperação |
 | `GET` | `/api/player/state?topic=eleicoes-2026` | ranking pessoal; exige chave Bearer |
+| `POST` | `/api/auth/google` | valida a credencial Google no servidor, liga a conta ao jogador atual e emite uma sessão própria |
+| `POST` | `/api/auth/logout` | revoga a sessão própria atual |
 | `POST` | `/api/round-vote` | confirma uma escolha entre quatro pessoas numa transação; exige `roundId`, `winnerId`, quatro `candidateIds` únicos e `playerVersion` |
 | `POST` | `/api/vote` | endpoint binário aposentado; responde `410 ROUND_V4_REQUIRED` para impedir contagem incompatível por clientes antigos |
 
@@ -102,7 +107,7 @@ Exemplo do corpo atual:
 }
 ```
 
-O PostgreSQL guarda somente o hash da chave de recuperação. A rodada é idempotente e imutável; ela avança a escolha uma vez e mantém três comparações Elo vinculadas ao mesmo `roundId`.
+O PostgreSQL guarda somente hashes das chaves de recuperação e sessões. O token de identidade do Google não é persistido; a ligação usa o `sub` validado pelo servidor. A rodada é idempotente e imutável; ela avança a escolha uma vez e mantém três comparações Elo vinculadas ao mesmo `roundId`.
 
 ## Deploy no Dokploy
 
@@ -112,6 +117,8 @@ API:
 - Dockerfile: `back/Dockerfile`;
 - porta: `3001`;
 - variável obrigatória: `DATABASE_URL`;
+- para ativar o login: `GOOGLE_CLIENT_ID=<OAuth Web Client ID>`;
+- origens permitidas, se houver ambiente adicional: `APP_ORIGINS=https://polimatch.com.br,https://staging.exemplo`;
 - healthcheck: `GET /api/health`.
 
 App:
@@ -119,7 +126,10 @@ App:
 - contexto: repositório inteiro;
 - Dockerfile: `app/Dockerfile`;
 - porta: `80`;
-- build arg: `VITE_API_URL=https://api.polimatch.com.br`.
+- build arg: `VITE_API_URL=https://api.polimatch.com.br`;
+- para ativar o botão oficial: `VITE_GOOGLE_CLIENT_ID=<mesmo OAuth Web Client ID>`.
+
+No Google Cloud, o cliente OAuth deve ser do tipo aplicação Web e autorizar a origem JavaScript `https://polimatch.com.br`. Se as duas variáveis de Google estiverem ausentes, o jogo anônimo continua funcionando e nenhuma entrada quebrada é exibida.
 
 O domínio público `polimatch.com.br` aponta para o app; `api.polimatch.com.br`, para a API. HTTPS é obrigatório para o PWA. A publicação só deve ocorrer depois do gate visual e fotográfico.
 
@@ -131,3 +141,5 @@ Decisões e estado da reconstrução:
 - `stages/10_rebuild_eleicoes_2026/CONTEXT.md`
 - `stages/10_rebuild_eleicoes_2026/output/HANDOFF.md`
 - `stages/10_rebuild_eleicoes_2026/output/verification.json`
+- `stages/11_google_login/CONTEXT.md`
+- `stages/11_google_login/output/HANDOFF.md`

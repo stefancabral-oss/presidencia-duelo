@@ -1,0 +1,40 @@
+{
+  "status": "configuration-and-human-gate-required",
+  "checks": [
+    {
+      "name": "backend-unit",
+      "command": "npm test --prefix back",
+      "result": "22 passed; includes Google token verification boundaries, stable subject identity, opaque session hashing and schema separation"
+    },
+    {
+      "name": "frontend-unit",
+      "command": "npm test --prefix app",
+      "result": "41 passed; includes optional configuration, official GIS button rendering contract and logout failure preserving the local session"
+    },
+    {
+      "name": "production-build",
+      "command": "npm run build --prefix app",
+      "result": "passed both without a Google Client ID and with a test Client ID"
+    },
+    {
+      "name": "postgres-integration",
+      "command": "DATABASE_URL=<isolated-postgres> npm run test:integration --prefix back",
+      "result": "passed; first Google sign-in preserved 3 anonymous rounds, invalidated the previous anonymous credential, returning sign-in recovered the same player, logout revoked the prior session and only hashes remained active"
+    },
+    {
+      "name": "browser-fallback",
+      "command": "sh app/e2e/run-interaction-smoke.sh",
+      "result": "passed in Chromium and WebKit; Google configuration absence did not block anonymous play"
+    },
+    {
+      "name": "browser-google-flow",
+      "command": "VITE_GOOGLE_CLIENT_ID=<test> build plus POLIMATCH_E2E_GOOGLE=1 browser smoke",
+      "result": "passed in Chromium and WebKit; Google credential was exchanged for a PoliMatch session and was not persisted in localStorage"
+    },
+    {
+      "name": "mobile-visual",
+      "command": "Playwright WebKit at 390x844",
+      "result": "passed technically; optional panel fits without covering its own actions; evidence saved as login-optional-mobile.png; human approval pending"
+    }
+  ]
+}

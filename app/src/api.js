@@ -35,19 +35,29 @@ export async function requestJson(path, options = {}) {
   try {
     const response = await fetch(apiUrl(path), { ...options, signal: controller.signal });
     if (!response.ok) {
-      const body = await response.json().catch(() => null);
+      let body = null;
+      try {
+        body = await response.json();
+      } catch (error) {
+        // Cabeçalhos podem chegar antes do prazo e o corpo continuar pendente.
+        // Se o timer abortou a leitura, a incerteza ainda é de transporte —
+        // não uma resposta HTTP válida nem um payload malformado.
+        if (controller.signal.aborted) throw error;
+      }
       throw new ApiError(body?.error || `Servidor respondeu ${response.status}`, {
         status: response.status,
         code: body?.code || "",
         body,
       });
     }
+    if (response.status === 204) return null;
     try {
       return await response.json();
     } catch (error) {
       // Resposta 2xx com corpo ilegível: proxy, portal cativo ou deploy quebrado.
       // A conexão está de pé, então dizer "sem conexão" manda a pessoa
       // consertar a coisa errada.
+      if (controller.signal.aborted) throw error;
       throw new ApiError("O servidor respondeu em um formato inesperado", {
         status: response.status,
         code: "BAD_PAYLOAD",
@@ -84,6 +94,24 @@ export function createPlayer() {
 export function loadPlayerRanking(recoveryKey, topicId = "eleicoes-2026") {
   return requestJson(`/api/player/state?topic=${encodeURIComponent(topicId)}`, {
     headers: { Authorization: `Bearer ${recoveryKey}` },
+  });
+}
+
+export function exchangeGoogleCredential(credential, currentToken, topicId = "eleicoes-2026") {
+  return requestJson("/api/auth/google", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
+    },
+    body: JSON.stringify({ credential, topicId }),
+  });
+}
+
+export function endSession(accessToken) {
+  return requestJson("/api/auth/logout", {
+    method: "POST",
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
   });
 }
 

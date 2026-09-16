@@ -29,7 +29,7 @@ PoliMatch é um jogo casual de comparação entre personalidades públicas. Não
 - A identidade sonora usa impactos graves, atrito curto e brilho metálico discreto, sintetizados localmente após interação do usuário; nunca varia por pessoa e oferece controle persistente para desligar.
 - O resultado da rodada permanece por um instante nas quatro cartas: a escolhida sobe e acende, as outras três descem e perdem saturação, sempre com os deltas reais de Elo e sem cobrir os rostos.
 - Faixas de Elo e eventos de ultrapassagem, subida, queda e baixa pontuação recebem respostas visuais, sonoras e hápticas próprias. O texto pode provocar com humor leve, mas nunca julga ideologia ou dignidade da pessoa.
-- Login social e publicação automática ficam fora do primeiro corte; compartilhamento será iniciado pelo usuário.
+- Por decisão do usuário em 15/09/2026, o acesso com Google entra como opção simples para salvar e recuperar progresso; jogar anonimamente continua permitido. Publicação automática permanece fora do primeiro corte e compartilhamento será iniciado pelo usuário.
 
 ## Referências visuais aprovadas
 
@@ -56,7 +56,7 @@ Construir do zero um frontend coerente e testável para `Eleições 2026`, prese
 
 ## Fora de escopo desta rodada
 
-- SSO real e escolha de provedor OIDC.
+- Outros provedores de identidade além do acesso opcional com Google aprovado na etapa 11.
 - Migração de banco motivada apenas por autenticação.
 - Construção das edições independentes `Influenciadores` e `Escândalos`.
 - Manipulação de ranking para favorecer qualquer pessoa.

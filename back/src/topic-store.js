@@ -7,6 +7,8 @@ const { Pool } = pg;
 const RESET_MIGRATION_ID = "20260913_eleicoes_2026_clean_start";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const RECOVERY_KEY_PATTERN = /^pm2_[A-Za-z0-9_-]{43}$/;
+const SESSION_TOKEN_PATTERN = /^pms_[A-Za-z0-9_-]{43}$/;
+const SESSION_TTL_DAYS = 90;
 
 export function validateTopic(topicId) {
   const topic = TOPICS_BY_ID.get(String(topicId || ""));
@@ -63,6 +65,10 @@ export function createRecoveryKey(random = randomBytes) {
   return `pm2_${random(32).toString("base64url")}`;
 }
 
+export function createSessionToken(random = randomBytes) {
+  return `pms_${random(32).toString("base64url")}`;
+}
+
 export function recoveryKeyHash(value) {
   const key = String(value || "").trim();
   if (!RECOVERY_KEY_PATTERN.test(key)) {
@@ -71,6 +77,16 @@ export function recoveryKeyHash(value) {
     throw error;
   }
   return createHash("sha256").update(key).digest("hex");
+}
+
+export function accessTokenHash(value) {
+  const token = String(value || "").trim();
+  if (!RECOVERY_KEY_PATTERN.test(token) && !SESSION_TOKEN_PATTERN.test(token)) {
+    const error = new Error("sessão inválida");
+    error.status = 401;
+    throw error;
+  }
+  return createHash("sha256").update(token).digest("hex");
 }
 
 export function rankingFromRows(topicId, duels, rows) {
@@ -202,6 +218,25 @@ async function createCleanSchema(client) {
       last_seen_at timestamptz NOT NULL DEFAULT now()
     );
 
+    CREATE TABLE IF NOT EXISTS player_identities (
+      provider text NOT NULL,
+      subject text NOT NULL,
+      player_id uuid NOT NULL REFERENCES anonymous_players(id) ON DELETE CASCADE,
+      display_name text NOT NULL DEFAULT '',
+      avatar_url text NOT NULL DEFAULT '',
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (provider, subject),
+      UNIQUE (provider, player_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS player_sessions (
+      session_hash char(64) PRIMARY KEY,
+      player_id uuid NOT NULL REFERENCES anonymous_players(id) ON DELETE CASCADE,
+      expires_at timestamptz NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
+
     CREATE TABLE IF NOT EXISTS player_pools (
       player_id uuid NOT NULL REFERENCES anonymous_players(id) ON DELETE CASCADE,
       topic_id text NOT NULL REFERENCES ranking_pools(topic_id) ON DELETE CASCADE,
@@ -322,6 +357,7 @@ async function createCleanSchema(client) {
     CREATE INDEX IF NOT EXISTS votes_player_created_idx ON votes (player_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS choice_rounds_topic_created_idx ON choice_rounds (topic_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS chroma_catalog_release_idx ON chroma_catalog (topic_id, status, available_from, available_until);
+    CREATE INDEX IF NOT EXISTS player_sessions_player_idx ON player_sessions (player_id, expires_at DESC);
 
     CREATE OR REPLACE FUNCTION reject_vote_mutation()
     RETURNS trigger AS $$
@@ -383,14 +419,42 @@ async function selectRanking(queryable, topicId, { playerId } = {}) {
   return result;
 }
 
-async function findPlayer(queryable, recoveryKey) {
-  const result = await queryable.query("SELECT id FROM anonymous_players WHERE recovery_hash = $1", [recoveryKeyHash(recoveryKey)]);
+async function findPlayer(queryable, accessToken) {
+  const token = String(accessToken || "").trim();
+  const hash = accessTokenHash(token);
+  const result = SESSION_TOKEN_PATTERN.test(token)
+    ? await queryable.query("SELECT player_id AS id FROM player_sessions WHERE session_hash = $1 AND expires_at > now()", [hash])
+    : await queryable.query("SELECT id FROM anonymous_players WHERE recovery_hash = $1", [hash]);
   if (!result.rowCount) {
-    const error = new Error("chave de recuperação não encontrada");
+    const error = new Error("sessão não encontrada ou expirada");
     error.status = 401;
     throw error;
   }
   return result.rows[0];
+}
+
+async function createPlayerRecords(client, playerId, recoveryHash) {
+  await client.query("INSERT INTO anonymous_players (id, recovery_hash) VALUES ($1, $2)", [playerId, recoveryHash]);
+  for (const topic of TOPICS_BY_ID.values()) {
+    if (!topic.active) continue;
+    await client.query("INSERT INTO player_pools (player_id, topic_id) VALUES ($1, $2)", [playerId, topic.id]);
+    for (const candidate of candidatesForTopic(topic.id)) {
+      await client.query(
+        "INSERT INTO player_stats (player_id, topic_id, candidate_id) VALUES ($1, $2, $3)",
+        [playerId, topic.id, candidate.id],
+      );
+    }
+  }
+}
+
+async function accountForPlayer(queryable, playerId) {
+  const result = await queryable.query(
+    "SELECT display_name, avatar_url FROM player_identities WHERE provider = 'google' AND player_id = $1",
+    [playerId],
+  );
+  if (!result.rowCount) return null;
+  const row = result.rows[0];
+  return { displayName: row.display_name, avatarUrl: row.avatar_url };
 }
 
 function assertPlayerVersion(value, current) {
@@ -436,17 +500,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
-        await client.query("INSERT INTO anonymous_players (id, recovery_hash) VALUES ($1, $2)", [playerId, recoveryKeyHash(recoveryKey)]);
-        for (const topic of TOPICS_BY_ID.values()) {
-          if (!topic.active) continue;
-          await client.query("INSERT INTO player_pools (player_id, topic_id) VALUES ($1, $2)", [playerId, topic.id]);
-          for (const candidate of candidatesForTopic(topic.id)) {
-            await client.query(
-              "INSERT INTO player_stats (player_id, topic_id, candidate_id) VALUES ($1, $2, $3)",
-              [playerId, topic.id, candidate.id],
-            );
-          }
-        }
+        await createPlayerRecords(client, playerId, recoveryKeyHash(recoveryKey));
         await client.query("COMMIT");
         return { recoveryKey };
       } catch (error) {
@@ -464,7 +518,67 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL) {
     async playerRanking(recoveryKey, topicId) {
       const normalizedTopic = validateTopic(topicId);
       const player = await findPlayer(pool, recoveryKey);
-      return selectRanking(pool, normalizedTopic, { playerId: player.id });
+      const ranking = await selectRanking(pool, normalizedTopic, { playerId: player.id });
+      ranking.account = await accountForPlayer(pool, player.id);
+      return ranking;
+    },
+
+    async signInWithGoogle({ identity, currentToken, topicId }) {
+      const normalizedTopic = validateTopic(topicId);
+      const subject = String(identity?.subject || "").trim();
+      if (!subject) {
+        const error = new Error("identidade Google inválida");
+        error.status = 400;
+        throw error;
+      }
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`google:${subject}`]);
+        const linked = await client.query("SELECT player_id FROM player_identities WHERE provider = 'google' AND subject = $1", [subject]);
+        let playerId = linked.rows[0]?.player_id;
+        const firstLink = !playerId;
+        if (!playerId && currentToken) playerId = (await findPlayer(client, currentToken)).id;
+        if (!playerId) {
+          playerId = randomUUID();
+          await createPlayerRecords(client, playerId, recoveryKeyHash(createRecoveryKey()));
+        }
+        await client.query(
+          `INSERT INTO player_identities (provider, subject, player_id, display_name, avatar_url)
+           VALUES ('google', $1, $2, $3, $4)
+           ON CONFLICT (provider, subject) DO UPDATE
+           SET display_name = EXCLUDED.display_name, avatar_url = EXCLUDED.avatar_url, updated_at = now()`,
+          [subject, playerId, String(identity.displayName || ""), String(identity.avatarUrl || "")],
+        );
+        if (firstLink) {
+          await client.query(
+            "UPDATE anonymous_players SET recovery_hash = $1 WHERE id = $2",
+            [recoveryKeyHash(createRecoveryKey()), playerId],
+          );
+        }
+        const sessionToken = createSessionToken();
+        await client.query(
+          `INSERT INTO player_sessions (session_hash, player_id, expires_at)
+           VALUES ($1, $2, now() + ($3 * interval '1 day'))`,
+          [accessTokenHash(sessionToken), playerId, SESSION_TTL_DAYS],
+        );
+        await client.query("DELETE FROM player_sessions WHERE expires_at <= now()");
+        const personal = await selectRanking(client, normalizedTopic, { playerId });
+        const account = { displayName: String(identity.displayName || "Jogador"), avatarUrl: String(identity.avatarUrl || "") };
+        await client.query("COMMIT");
+        return { sessionToken, account, player: { ...personal, account } };
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
+
+    async signOut(accessToken) {
+      const token = String(accessToken || "").trim();
+      if (!SESSION_TOKEN_PATTERN.test(token)) return;
+      await pool.query("DELETE FROM player_sessions WHERE session_hash = $1", [accessTokenHash(token)]);
     },
 
     async vote({ topicId, winnerId, loserId, voteId: requestedVoteId, recoveryKey, playerVersion }) {

@@ -109,6 +109,28 @@ assert.equal(repeatedRound.round.status, "alreadyProcessed");
 assert.equal(repeatedRound.duels, 3);
 assert.deepEqual(repeatedRound.round.feedback, round.round.feedback);
 
+const firstGoogleSession = await restartedStore.signInWithGoogle({
+  identity: { subject: "google-sub-integration", displayName: "Bia", avatarUrl: "https://example.com/bia.jpg" },
+  currentToken: recoveryKey,
+  topicId: "eleicoes-2026",
+});
+assert.match(firstGoogleSession.sessionToken, /^pms_/);
+assert.equal(firstGoogleSession.player.duels, 3);
+assert.deepEqual(firstGoogleSession.account, { displayName: "Bia", avatarUrl: "https://example.com/bia.jpg" });
+assert.equal(Object.hasOwn(firstGoogleSession.account, "email"), false);
+await assert.rejects(restartedStore.playerRanking(recoveryKey, "eleicoes-2026"), /expirada/);
+const recoveredWithSession = await restartedStore.playerRanking(firstGoogleSession.sessionToken, "eleicoes-2026");
+assert.equal(recoveredWithSession.duels, 3);
+assert.equal(recoveredWithSession.account.displayName, "Bia");
+await restartedStore.signOut(firstGoogleSession.sessionToken);
+await assert.rejects(restartedStore.playerRanking(firstGoogleSession.sessionToken, "eleicoes-2026"), /expirada/);
+const returningGoogleSession = await restartedStore.signInWithGoogle({
+  identity: { subject: "google-sub-integration", displayName: "Bia", avatarUrl: "" },
+  currentToken: "",
+  topicId: "eleicoes-2026",
+});
+assert.equal(returningGoogleSession.player.duels, 3);
+
 const auditPool = new pg.Pool({ connectionString });
 const audit = await auditPool.query(
   `SELECT
@@ -116,7 +138,9 @@ const audit = await auditPool.query(
     (SELECT count(*) FROM choice_rounds) AS rounds,
     (SELECT count(*) FROM votes WHERE round_id = $1) AS linked_comparisons,
     (SELECT count(DISTINCT winner_rating_before) FROM votes WHERE round_id = $1) AS winner_snapshots,
-    (SELECT jsonb_array_length(feedback->'outcomes') FROM choice_rounds WHERE round_id = $1) AS feedback_outcomes`,
+    (SELECT jsonb_array_length(feedback->'outcomes') FROM choice_rounds WHERE round_id = $1) AS feedback_outcomes,
+    (SELECT count(*) FROM player_identities WHERE provider = 'google') AS google_identities,
+    (SELECT count(*) FROM player_sessions) AS active_sessions`,
   [roundId],
 );
 assert.equal(Number(audit.rows[0].comparisons), 5);
@@ -124,6 +148,8 @@ assert.equal(Number(audit.rows[0].rounds), 1);
 assert.equal(Number(audit.rows[0].linked_comparisons), 3);
 assert.equal(Number(audit.rows[0].winner_snapshots), 1);
 assert.equal(Number(audit.rows[0].feedback_outcomes), 4);
+assert.equal(Number(audit.rows[0].google_identities), 1);
+assert.equal(Number(audit.rows[0].active_sessions), 1);
 await auditPool.end();
 await restartedStore.close();
 
@@ -142,4 +168,4 @@ assert.equal(Number(migrationAudit.rows[0].applied), 1);
 await upgradedAuditPool.end();
 await upgradedStore.close();
 
-console.log("Smoke PostgreSQL aprovado: reset único, jogador antigo, backfill, rodada de quatro idempotente, vínculo retroativo e rankings persistentes.");
+console.log("Smoke PostgreSQL aprovado: reset único, jogador antigo, login Google preservando progresso, credencial anônima invalidada, sessão revogável, rodada idempotente e rankings persistentes.");

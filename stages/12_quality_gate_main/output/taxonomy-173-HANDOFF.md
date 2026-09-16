@@ -34,7 +34,7 @@ O gerador copiava `partido_ou_area` simultaneamente para cargo, afiliação e pa
 - Busca restrita a nome, partido e área, com filtros combináveis por partido/área e limpeza dos três filtros na troca entre ranking geral e pessoal.
 - Um único validador compartilhado pelo gerador, teste e CI.
 - Contrato de serialização exercitado sobre os 125 registros reais, incluindo Lula e Antonia Fontenelle.
-- Screenshot comparativo em `references/taxonomy-comparison.png`, regenerado com quatro registros reais do catálogo usados pelo smoke de hierarquia móvel.
+- Screenshot comparativo em `references/taxonomy-comparison.png`, regenerado com quatro registros reais: Lindbergh Farias (`PT`), Alexandre de Moraes (`Justiça`, partido ambíguo/nulo), Paulo Guedes (`Economia`, sem promover `órbita PL` a partido) e Gracyanne Barbosa (`REPUBLICANOS`).
 
 ## Estado editorial explícito
 
@@ -47,8 +47,8 @@ Nenhum valor foi criado para um atributo ambíguo. `ambiguous` significa falta d
 
 ## Testes e evidências
 
-- `npm run test:shared`: 14/14 testes e validação estrutural/evidencial/semântica dos 125 registros.
-- `npm test`: 96/96 testes (14 shared, 31 back, 51 app).
+- `npm run test:shared`: 16/16 testes e validação estrutural/evidencial/semântica dos 125 registros, incluindo paridade bidirecional e duplicatas nas quatro fontes.
+- `npm test`: 98/98 testes (16 shared, 31 back, 51 app).
 - Regressões negativas reais: Paulo Guedes não pode receber `PL` a partir de `órbita PL`; Guilherme Boulos, Jones Manoel, Carla Zambelli e Deltan Dallagnol não podem recuperar rótulos categoriais como contexto; a filiação explícita de Gracyanne continua válida.
 - `npm run build`: aprovado; 99/125 retratos presentes e bundle Vite produzido.
 - E2E Chromium e WebKit: navegação, rodada, perfil estruturado, busca, filtros, ranking, anatomia móvel atual e limpeza de filtros na troca de visão aprovados.

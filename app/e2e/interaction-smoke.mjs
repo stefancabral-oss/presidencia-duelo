@@ -115,9 +115,14 @@ function assertOutcomeSemantics(outcomes, viewportLabel) {
   }
 }
 
-const shortViewportCandidateIds = new Set([46, 48, 95, 125]);
+const shortViewportCandidateIds = new Set([46, 53, 90, 125]);
 const candidates = CATALOG.filter(({ personId }) => shortViewportCandidateIds.has(personId));
 if (candidates.length !== 4) throw new Error("O catálogo não contém as quatro pessoas do smoke de hierarquia");
+if (!candidates.some(({ party }) => party)
+  || !candidates.some(({ party, primaryArea }) => !party && primaryArea)
+  || !candidates.some(({ party, taxonomyProvenance }) => !party && taxonomyProvenance.party.status === "ambiguous")) {
+  throw new Error("A amostra taxonômica precisa cobrir partido, área sem partido e partido ambíguo");
+}
 const firstCandidate = candidates[0];
 
 function ranking(decisions = 0, winnerId = "") {

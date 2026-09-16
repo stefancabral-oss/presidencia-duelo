@@ -185,6 +185,66 @@ function indexEvidence(records, nameField) {
   return indexed;
 }
 
+function indexTaxonomySource(records, nameField, sourceLabel, errors) {
+  const indexed = new Map();
+  for (const [index, record] of records.entries()) {
+    const sourceName = clean(record?.[nameField]);
+    const key = normalizePersonName(sourceName);
+    if (!key) {
+      errors.push(`${sourceLabel}[${index}]: nome ausente`);
+      continue;
+    }
+    if (indexed.has(key)) {
+      errors.push(`${sourceLabel}: nome duplicado: ${sourceName}`);
+      continue;
+    }
+    indexed.set(key, { record, sourceName });
+  }
+  return indexed;
+}
+
+export function catalogTaxonomySourceErrors(records, {
+  profiles = [],
+  master = [],
+  taxonomy = [],
+} = {}) {
+  const errors = [];
+  const sources = [
+    ["artefato gerado", records, "name"],
+    ["perfis editoriais", profiles, "nome_exibicao"],
+    ["catálogo mestre", master, "nome"],
+    ["fonte taxonômica", taxonomy, "name"],
+  ];
+  for (const [sourceLabel, sourceRecords] of sources) {
+    if (!Array.isArray(sourceRecords)) errors.push(`${sourceLabel}: fonte deve ser uma lista`);
+  }
+  if (errors.length) return errors;
+
+  const indexedSources = sources.map(([sourceLabel, sourceRecords, nameField]) => ({
+    sourceLabel,
+    records: indexTaxonomySource(sourceRecords, nameField, sourceLabel, errors),
+  }));
+  const reference = indexedSources[0].records;
+
+  for (const { sourceLabel, records: sourceRecords } of indexedSources.slice(1)) {
+    for (const [key, { sourceName }] of reference) {
+      if (!sourceRecords.has(key)) errors.push(`${sourceLabel}: pessoa ausente: ${sourceName}`);
+    }
+    for (const [key, { sourceName }] of sourceRecords) {
+      if (!reference.has(key)) errors.push(`${sourceLabel}: pessoa fora do artefato gerado: ${sourceName}`);
+    }
+  }
+  return errors;
+}
+
+export function assertValidCatalogTaxonomySources(records, options) {
+  const errors = catalogTaxonomySourceErrors(records, options);
+  if (errors.length) {
+    throw new Error(`fontes taxonômicas dessincronizadas:\n- ${errors.join("\n- ")}`);
+  }
+  return records;
+}
+
 export function resolveTaxonomySources(source, { profile, master } = {}) {
   return splitSourcePointers(source).map((pointer) => {
     const target = SOURCE_POINTER_FIELDS.get(pointer);

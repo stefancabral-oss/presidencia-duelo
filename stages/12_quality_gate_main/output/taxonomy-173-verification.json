@@ -25,12 +25,12 @@
     {
       "name": "shared-taxonomy",
       "command": "npm run test:shared",
-      "result": "passed; 14 of 14 tests, 125 generated records synchronized, source pointers resolved, and extracted values checked for field-specific semantic relationships against real evidence"
+      "result": "passed; 16 of 16 tests, all four 125-record sources have bidirectional membership and unique normalized names, source pointers resolve, and extracted values have field-specific semantic relationships with real evidence"
     },
     {
       "name": "root-unit",
       "command": "npm test",
-      "result": "passed; 96 of 96 tests (14 shared, 31 back, 51 app), including real 125-record API serialization and negative regressions for Paulo Guedes, Guilherme Boulos, Jones Manoel, Carla Zambelli and Deltan Dallagnol"
+      "result": "passed; 98 of 98 tests (16 shared, 31 back, 51 app), including source-parity negatives, real 125-record API serialization and regressions for Paulo Guedes, Guilherme Boulos, Jones Manoel, Carla Zambelli and Deltan Dallagnol"
     },
     {
       "name": "app-build",
@@ -50,7 +50,7 @@
     {
       "name": "taxonomy-screenshot",
       "command": "POLIMATCH_E2E_TAXONOMY_SCREENSHOT=stages/12_quality_gate_main/references/taxonomy-comparison.png",
-      "result": "passed; regenerated from the current real-catalog smoke records and displays PT, PSOL, NOVO and REPUBLICANOS compact labels without replacing their distinct roles or areas"
+      "result": "passed; regenerated from real records and displays PT and REPUBLICANOS beside the area fallbacks Justiça and Economia, while Paulo Guedes remains without a guessed PL despite the legacy text órbita PL"
     },
     {
       "name": "workflow-yaml",

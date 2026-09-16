@@ -5,6 +5,7 @@ import {
   TAXONOMY_SCHEMA_VERSION,
   assertValidCatalogTaxonomy,
   assertValidCatalogTaxonomyEvidence,
+  assertValidCatalogTaxonomySources,
   materializeCandidateTaxonomy,
 } from "./catalog-taxonomy.js";
 
@@ -53,6 +54,11 @@ for (const profile of profiles) {
 
 assert.equal(taxonomyByName.size, profiles.length, "há taxonomia fora dos perfis editoriais");
 assert.equal(generatedByName.size, profiles.length, "há pessoa extra ou duplicada no artefato gerado");
+assertValidCatalogTaxonomySources(generated, {
+  profiles,
+  master,
+  taxonomy: taxonomySource.records,
+});
 assertValidCatalogTaxonomy(generated, { expectedCount: profiles.length });
 assertValidCatalogTaxonomyEvidence(generated, { profiles, master });
 

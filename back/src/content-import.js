@@ -1,6 +1,7 @@
 import {
   assertValidCatalogTaxonomy,
   assertValidCatalogTaxonomyEvidence,
+  assertValidCatalogTaxonomySources,
   materializeCandidateTaxonomy,
 } from "../../shared/catalog-taxonomy.js";
 
@@ -111,6 +112,7 @@ export function buildContentCatalog(master, profiles, taxonomy, rawChromas) {
     };
   });
 
+  assertValidCatalogTaxonomySources(candidates, { profiles, master, taxonomy });
   assertValidCatalogTaxonomy(candidates, { expectedCount: master.length });
   assertValidCatalogTaxonomyEvidence(candidates, { profiles, master });
 

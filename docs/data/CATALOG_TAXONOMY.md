@@ -19,6 +19,7 @@ Os ponteiros de fonte usados na proveniência significam:
 | `polimatch-catalogo-125.json#area` | `area` do catálogo mestre |
 
 O validador resolve esses ponteiros contra o registro da mesma pessoa. Ponteiro desconhecido, registro ausente ou fonte vazia interrompem a geração.
+As quatro coleções — catálogo mestre, perfis, taxonomia e artefato gerado — também precisam ter exatamente as mesmas 125 pessoas após normalização dos nomes. Pessoa extra, ausente ou duplicada em qualquer fonte interrompe a geração e o CI.
 
 ## Campos estruturados
 
@@ -95,6 +96,7 @@ O mesmo validador é chamado pelo gerador, pelo teste compartilhado e pelo workf
 - área fora do vocabulário;
 - partido/área vazando para `role`;
 - atributo sem proveniência ou fonte;
+- pessoa extra, ausente ou duplicada em qualquer uma das quatro fontes;
 - ponteiro desconhecido, fonte irresolúvel ou vazia;
 - partido `extracted` sem declaração partidária direta ou filiação explícita;
 - contexto `extracted` fora do registro editorial institucional versionado;

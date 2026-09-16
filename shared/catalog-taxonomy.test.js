@@ -6,6 +6,7 @@ import {
   assertValidCatalogTaxonomy,
   catalogTaxonomyErrors,
   catalogTaxonomyEvidenceErrors,
+  catalogTaxonomySourceErrors,
 } from "./catalog-taxonomy.js";
 import { readFileSync } from "node:fs";
 
@@ -59,6 +60,33 @@ test("rejects unknown source pointers", () => {
   invalid.taxonomyProvenance.party = { status: "extracted", source: "arquivo-inexistente.json#partido" };
   const errors = catalogTaxonomyErrors([invalid], { expectedCount: 1 });
   assert.equal(errors.some((error) => error.includes("ponteiro de fonte desconhecido")), true);
+});
+
+test("rejects people missing from or added to any taxonomy source", () => {
+  const record = validRecord();
+  const profile = { nome_exibicao: record.name };
+  const master = { nome: record.name };
+  const taxonomy = { name: record.name };
+  const errors = catalogTaxonomySourceErrors([record], {
+    profiles: [profile, { nome_exibicao: "Perfil sem artefato" }],
+    master: [],
+    taxonomy: [taxonomy],
+  });
+
+  assert.equal(errors.some((error) => error.includes("perfis editoriais: pessoa fora do artefato gerado: Perfil sem artefato")), true);
+  assert.equal(errors.some((error) => error.includes(`catálogo mestre: pessoa ausente: ${record.name}`)), true);
+  assert.equal(errors.some((error) => error.includes("fonte taxonômica")), false);
+});
+
+test("rejects normalized duplicate names in every taxonomy source", () => {
+  const record = validRecord();
+  const errors = catalogTaxonomySourceErrors([record], {
+    profiles: [{ nome_exibicao: record.name }],
+    master: [{ nome: record.name }, { nome: "Pessoa Exemplo (apelido)" }],
+    taxonomy: [{ name: record.name }],
+  });
+
+  assert.equal(errors.some((error) => error.includes("catálogo mestre: nome duplicado: Pessoa Exemplo (apelido)")), true);
 });
 
 test("checks extracted values against the pointed source", () => {

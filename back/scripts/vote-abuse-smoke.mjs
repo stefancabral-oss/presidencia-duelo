@@ -88,8 +88,8 @@ await audit.query(
 await audit.query(
   `UPDATE abuse_quota_counters
    SET used = $2
-   WHERE scope = 'player-round-day' AND subject_hash = $1`,
-  [playerId, VOTE_ABUSE_LIMITS.roundsPerPlayerPerDay],
+   WHERE scope = 'player-choice-editorial-day-v2' AND subject_hash = $1`,
+  [playerId, VOTE_ABUSE_LIMITS.editorialChoicesPerPlayerPerDay],
 );
 await expectCode(() => store.roundVote(blockedRound), "VOTE_DAILY_LIMIT");
 
@@ -100,7 +100,8 @@ const persisted = await audit.query(
 assert.deepEqual(
   persisted.rows.map(({ scope, used }) => [scope, Number(used)]),
   [
-    ["player-round-day", VOTE_ABUSE_LIMITS.roundsPerPlayerPerDay],
+    ["player-choice-editorial-day-v2", VOTE_ABUSE_LIMITS.editorialChoicesPerPlayerPerDay],
+    ["player-free-editorial-day-v2", VOTE_ABUSE_LIMITS.roundsPerPlayerPerMinute],
     ["player-round-minute", VOTE_ABUSE_LIMITS.roundsPerPlayerPerMinute],
   ],
 );

@@ -2,7 +2,7 @@
   "stage": "ICM 03",
   "status": "approved",
   "human_gate": "approved-2026-09-15",
-  "release": "082c80eca21ebd3a9af7c4ea55261034c7c8705b",
+  "release": "4c192204c7d2262de9caf5965341314de9c59544",
   "issue": 158,
   "pull_request": 159,
   "branch": "fix/desktop-duel-158",

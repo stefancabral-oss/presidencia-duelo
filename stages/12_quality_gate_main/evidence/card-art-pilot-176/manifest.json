@@ -1,0 +1,198 @@
+{
+  "version": "pilot-2",
+  "status": "pilot-not-published",
+  "issue": 176,
+  "tool": "OpenAI built-in image generation",
+  "generatedOn": "2026-09-16",
+  "styleGuide": "docs/design/CARD_ART_NEUTRALITY_GUIDE.md",
+  "testProtocol": "stages/12_quality_gate_main/references/card-art-pilot-176.md",
+  "resultSchema": "stages/12_quality_gate_main/references/card-art-pilot-results.schema.json",
+  "storage": {
+    "purpose": "test-evidence-only",
+    "directory": "stages/12_quality_gate_main/evidence/card-art-pilot-176",
+    "servedByApplication": false,
+    "expectedInViteDist": false
+  },
+  "commonPrompt": "Identity comes only from the named local reference. Match the locked pilot anchor for 4:5 crop, eye-level three-quarter pose, closed-mouth neutral expression, charcoal high-collar clothing, deep-malachite background, broad soft camera-left light and restrained realistic editorial finish. Do not copy reference pose, expression, clothing or background. No text, logo, symbols, campaign cues, caricature or beautification.",
+  "disclosure": "Retrato sintetico gerado por IA a partir de referencia de identidade; nao e fotografia documental.",
+  "assets": [
+    {
+      "blindCode": "P01",
+      "personId": "019",
+      "slug": "douglas-ruas",
+      "file": "P01.png",
+      "identityReference": {
+        "path": "app/public/portraits/019.jpg",
+        "sha256": "c4981caa63fa6912ffaccf190acf515807a8a3dc7028ab8b444893c433e14f2b",
+        "derivation": "audited-catalog-import",
+        "editorialRecord": "stages/10_rebuild_eleicoes_2026/input/polimatch-fotos-catalogo-125.md#douglas-ruas",
+        "photoSource": "https://commons.wikimedia.org/wiki/File%3AEntrevista_do_Secretario_de_Cidades_do_RJ%2C_Douglas_Ruas_2_%28cropped%29.png",
+        "photographer": "TV ALERJ",
+        "license": "CC BY 3.0",
+        "licenseStatus": "documented"
+      },
+      "styleAnchor": "P06.png",
+      "sourceOutput": "exec-e94cb1ee-2a25-4941-87b3-69293809c234.png",
+      "width": 1122,
+      "height": 1402,
+      "sha256": "3b853beeda66b6e8346c11126081359fd0955ce51a13832798690a0ab288a99d"
+    },
+    {
+      "blindCode": "P02",
+      "personId": "033",
+      "slug": "marina-silva",
+      "file": "P02.png",
+      "identityReference": {
+        "path": "app/public/portraits/033.jpg",
+        "sha256": "7c22b5ecbb8fe8a7f9a95b7922699db6f066abf9e0b79df14df7458f4efa20c7",
+        "derivation": "user-edited-file",
+        "receivedFile": "Marina Silva.tif",
+        "editorialRecord": "docs/design/USER_EDITED_PHOTOS.md#fotos-aplicadas",
+        "photoSource": null,
+        "photographer": null,
+        "license": null,
+        "licenseStatus": "license-pending",
+        "provenanceNote": "O registro editorial confirma apenas o arquivo editado recebido; origem fotografica, autoria e licenca do retrato permanecem sem documentacao. As fontes do catalogo anterior nao licenciam este arquivo substituto."
+      },
+      "styleAnchor": "P06.png",
+      "sourceOutput": "exec-1e2a1c48-ce2a-44a4-8942-7f5d5e926a4f.png",
+      "width": 1122,
+      "height": 1402,
+      "sha256": "4adc80542a5dafdf38c8a7043f61cc403d168e43677c7238be5bec7d25344359"
+    },
+    {
+      "blindCode": "P03",
+      "personId": "017",
+      "slug": "joao-campos",
+      "file": "P03.png",
+      "identityReference": {
+        "path": "app/public/portraits/017.jpg",
+        "sha256": "dcba3108226083df56089ca8f912007cac1a1e3a560cc4a0cbef11ec20f386e6",
+        "derivation": "audited-catalog-import",
+        "editorialRecord": "stages/10_rebuild_eleicoes_2026/input/polimatch-fotos-catalogo-125.md#joao-campos",
+        "photoSource": "https://commons.wikimedia.org/wiki/File%3AJo%C3%A3o_Henrique_Campos%2C_January_2025_%28cropped%29.jpg",
+        "photographer": "Cadu Gomes/VPR",
+        "license": "CC BY 2.0",
+        "licenseStatus": "documented"
+      },
+      "styleAnchor": "P06.png",
+      "sourceOutput": "exec-76dcf191-e576-4503-bf27-4aa5afc9737e.png",
+      "width": 1122,
+      "height": 1402,
+      "sha256": "5f9a90f4f7fca8df44a34be98314e1e297ee938ad5f46a2f50b299fb675b4849"
+    },
+    {
+      "blindCode": "P04",
+      "personId": "063",
+      "slug": "jair-bolsonaro",
+      "file": "P04.png",
+      "identityReference": {
+        "path": "app/public/portraits/063.jpg",
+        "sha256": "616356e291469cc3745dc37cc0163041dde07fa9e71caf6b781b0f2c3adc4761",
+        "derivation": "user-edited-file",
+        "receivedFile": "Jair Messias Bolsonaro.tif",
+        "editorialRecord": "docs/design/USER_EDITED_PHOTOS.md#fotos-aplicadas",
+        "photoSource": null,
+        "photographer": null,
+        "license": null,
+        "licenseStatus": "license-pending",
+        "provenanceNote": "O registro editorial confirma apenas o arquivo editado recebido; origem fotografica, autoria e licenca do retrato permanecem sem documentacao. As fontes do catalogo anterior nao licenciam este arquivo substituto."
+      },
+      "styleAnchor": "P06.png",
+      "sourceOutput": "exec-3811a55a-a2ad-4b28-a045-1aa8a1b025ca.png",
+      "width": 1122,
+      "height": 1402,
+      "sha256": "3df81201f7f8eed54f6e57e005c00177cf5dece31beee6713bda9851e0e8ce0f"
+    },
+    {
+      "blindCode": "P05",
+      "personId": "052",
+      "slug": "sonia-guajajara",
+      "file": "P05.png",
+      "identityReference": {
+        "path": "app/public/portraits/052.jpg",
+        "sha256": "d2eaf98cab1c4a6b2c052c214dad1cbcf38e47899511bef85718ee0064ac68d3",
+        "derivation": "audited-catalog-import",
+        "editorialRecord": "stages/10_rebuild_eleicoes_2026/input/polimatch-fotos-catalogo-125.md#sonia-guajajara",
+        "photoSource": "https://commons.wikimedia.org/wiki/File:COP30%20-%20S%C3%B4nia%20Guajajara%2001.jpg",
+        "photographer": "Xuthoria",
+        "license": "CC BY-SA 4.0",
+        "licenseStatus": "documented"
+      },
+      "styleAnchor": "P06.png",
+      "sourceOutput": "exec-d20cd003-495c-4447-ada9-d45c5d2af0a4.png",
+      "width": 1122,
+      "height": 1402,
+      "sha256": "ab702e68d6ae41b44468c09fa4d38a9fde4048fbdc8fca51cdeb25af71a48020"
+    },
+    {
+      "blindCode": "P06",
+      "personId": "001",
+      "slug": "lula",
+      "file": "P06.png",
+      "identityReference": {
+        "path": "app/public/portraits/001.jpg",
+        "sha256": "a791320d1beae02329bfb64f4318179f9a668635df537c6b8072e78f7669c6c1",
+        "derivation": "user-edited-file",
+        "receivedFile": "Lula.tif",
+        "editorialRecord": "docs/design/USER_EDITED_PHOTOS.md#fotos-aplicadas",
+        "photoSource": null,
+        "photographer": null,
+        "license": null,
+        "licenseStatus": "license-pending",
+        "provenanceNote": "O registro editorial confirma apenas o arquivo editado recebido; origem fotografica, autoria e licenca do retrato permanecem sem documentacao. As fontes do catalogo anterior nao licenciam este arquivo substituto."
+      },
+      "styleAnchor": null,
+      "sourceOutput": "exec-86020b89-e5ad-40bd-a30b-e6ce08fce77a.png",
+      "width": 1122,
+      "height": 1402,
+      "sha256": "18a6fcfea115538c6c0b8780264ddf6606012e40c6f69a4d79b22f90f3cce785"
+    },
+    {
+      "blindCode": "P07",
+      "personId": "084",
+      "slug": "tabata-amaral",
+      "file": "P07.png",
+      "identityReference": {
+        "path": "app/public/portraits/084.jpg",
+        "sha256": "c632402df925b4b63bc3f4358b0a2a559cf4a0faa2f6f40844f121babaa76537",
+        "derivation": "user-edited-file",
+        "receivedFile": "Tabata Amaral.tif",
+        "editorialRecord": "docs/design/USER_EDITED_PHOTOS.md#fotos-aplicadas",
+        "photoSource": null,
+        "photographer": null,
+        "license": null,
+        "licenseStatus": "license-pending",
+        "provenanceNote": "O registro editorial confirma apenas o arquivo editado recebido; origem fotografica, autoria e licenca do retrato permanecem sem documentacao. As fontes do catalogo anterior nao licenciam este arquivo substituto."
+      },
+      "styleAnchor": "P06.png",
+      "sourceOutput": "exec-7c73597a-3f19-49b1-88ac-c11b35e56697e.png",
+      "width": 1122,
+      "height": 1402,
+      "sha256": "9a44bc13cc801a19a0c36cafc406f4bde76c714376110ec29b53bd186f1719b9"
+    },
+    {
+      "blindCode": "P08",
+      "personId": "028",
+      "slug": "michelle-bolsonaro",
+      "file": "P08.png",
+      "identityReference": {
+        "path": "app/public/portraits/028.jpg",
+        "sha256": "6657871c921c3f3efa349d1f24e8e73ec57f100fbf422544de5322645f871b53",
+        "derivation": "user-edited-file",
+        "receivedFile": "Michele Bolsonaro.tif",
+        "editorialRecord": "docs/design/USER_EDITED_PHOTOS.md#fotos-aplicadas",
+        "photoSource": null,
+        "photographer": null,
+        "license": null,
+        "licenseStatus": "license-pending",
+        "provenanceNote": "O registro editorial confirma apenas o arquivo editado recebido; origem fotografica, autoria e licenca do retrato permanecem sem documentacao. As fontes do catalogo anterior nao licenciam este arquivo substituto."
+      },
+      "styleAnchor": "P06.png",
+      "sourceOutput": "exec-7bfbe0fa-5f19-4378-95bf-92daf83c5942.png",
+      "width": 1122,
+      "height": 1402,
+      "sha256": "7a6a5ef6b4ea167221afcef89e6b98717e95f4c20db3de854c21addc6723220a"
+    }
+  ]
+}

@@ -1,0 +1,418 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://polimatch.com.br/schemas/card-art-pilot-176-results.schema.json",
+  "title": "Resultado consolidado do piloto de arte de carta #176",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "issue",
+    "sample",
+    "assets",
+    "decision"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "card-art-pilot-176-v2"
+    },
+    "issue": {
+      "const": 176
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sample": {
+      "$ref": "#/$defs/sample"
+    },
+    "assets": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "$ref": "#/$defs/assetResult"
+      }
+    },
+    "decision": {
+      "$ref": "#/$defs/decision"
+    }
+  },
+  "$defs": {
+    "sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "participantCount",
+        "displayScenarios",
+        "privacy",
+        "strata"
+      ],
+      "properties": {
+        "participantCount": {
+          "type": "integer",
+          "minimum": 40
+        },
+        "displayScenarios": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mobile-390x844",
+            "desktop-1000x800"
+          ],
+          "properties": {
+            "mobile-390x844": {
+              "type": "integer",
+              "minimum": 20
+            },
+            "desktop-1000x800": {
+              "type": "integer",
+              "minimum": 20
+            }
+          }
+        },
+        "privacy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "containsParticipantRecords",
+            "minimumPublishedCellSize",
+            "crossTabsPublished",
+            "rawExportsDeletedAfterConsolidation"
+          ],
+          "properties": {
+            "containsParticipantRecords": {
+              "const": false
+            },
+            "minimumPublishedCellSize": {
+              "const": 5
+            },
+            "crossTabsPublished": {
+              "const": false
+            },
+            "rawExportsDeletedAfterConsolidation": {
+              "const": true
+            }
+          }
+        },
+        "strata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "regional",
+            "familiarity"
+          ],
+          "properties": {
+            "regional": {
+              "$ref": "#/$defs/regionalStrata"
+            },
+            "familiarity": {
+              "$ref": "#/$defs/familiarityStrata"
+            }
+          }
+        }
+      }
+    },
+    "regionalStrata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "published",
+        "suppressedCount"
+      ],
+      "properties": {
+        "published": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "participantCount"
+            ],
+            "properties": {
+              "key": {
+                "enum": [
+                  "norte",
+                  "nordeste",
+                  "centro-oeste",
+                  "sudeste",
+                  "sul",
+                  "exterior",
+                  "prefiro-nao-informar"
+                ]
+              },
+              "participantCount": {
+                "type": "integer",
+                "minimum": 5
+              }
+            }
+          }
+        },
+        "suppressedCount": {
+          "description": "Soma sem rotulo das celulas regionais com menos de cinco participantes.",
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "familiarityStrata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "published",
+        "suppressedCount"
+      ],
+      "properties": {
+        "published": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "participantCount"
+            ],
+            "properties": {
+              "key": {
+                "enum": [
+                  "baixa",
+                  "media",
+                  "alta",
+                  "prefiro-nao-informar"
+                ]
+              },
+              "participantCount": {
+                "type": "integer",
+                "minimum": 5
+              }
+            }
+          }
+        },
+        "suppressedCount": {
+          "description": "Soma sem rotulo das celulas de familiaridade com menos de cinco participantes.",
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "metricCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "rate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "assetResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blindCode",
+        "validResponses",
+        "recognition",
+        "neutrality",
+        "byDisplayScenario",
+        "identityReview",
+        "dignityReview"
+      ],
+      "properties": {
+        "blindCode": {
+          "pattern": "^P0[1-8]$",
+          "type": "string"
+        },
+        "validResponses": {
+          "$ref": "#/$defs/metricCount"
+        },
+        "recognition": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "correct",
+            "incorrect",
+            "unknown",
+            "rate"
+          ],
+          "properties": {
+            "correct": {
+              "$ref": "#/$defs/metricCount"
+            },
+            "incorrect": {
+              "$ref": "#/$defs/metricCount"
+            },
+            "unknown": {
+              "$ref": "#/$defs/metricCount"
+            },
+            "rate": {
+              "$ref": "#/$defs/rate"
+            }
+          }
+        },
+        "neutrality": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "favorece",
+            "neutra",
+            "prejudica",
+            "favoreceRate",
+            "neutraRate",
+            "prejudicaRate",
+            "balancePercentagePoints"
+          ],
+          "properties": {
+            "favorece": {
+              "$ref": "#/$defs/metricCount"
+            },
+            "neutra": {
+              "$ref": "#/$defs/metricCount"
+            },
+            "prejudica": {
+              "$ref": "#/$defs/metricCount"
+            },
+            "favoreceRate": {
+              "$ref": "#/$defs/rate"
+            },
+            "neutraRate": {
+              "$ref": "#/$defs/rate"
+            },
+            "prejudicaRate": {
+              "$ref": "#/$defs/rate"
+            },
+            "balancePercentagePoints": {
+              "type": "number",
+              "minimum": -100,
+              "maximum": 100
+            }
+          }
+        },
+        "byDisplayScenario": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mobile-390x844",
+            "desktop-1000x800"
+          ],
+          "properties": {
+            "mobile-390x844": {
+              "$ref": "#/$defs/scenarioMetrics"
+            },
+            "desktop-1000x800": {
+              "$ref": "#/$defs/scenarioMetrics"
+            }
+          }
+        },
+        "identityReview": {
+          "$ref": "#/$defs/humanReview"
+        },
+        "dignityReview": {
+          "$ref": "#/$defs/humanReview"
+        }
+      }
+    },
+    "scenarioMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validResponses",
+        "recognized",
+        "recognitionRate",
+        "favorece",
+        "neutra",
+        "prejudica",
+        "favoreceRate",
+        "neutraRate",
+        "prejudicaRate"
+      ],
+      "properties": {
+        "validResponses": {
+          "$ref": "#/$defs/metricCount"
+        },
+        "recognized": {
+          "$ref": "#/$defs/metricCount"
+        },
+        "recognitionRate": {
+          "$ref": "#/$defs/rate"
+        },
+        "favorece": {
+          "$ref": "#/$defs/metricCount"
+        },
+        "neutra": {
+          "$ref": "#/$defs/metricCount"
+        },
+        "prejudica": {
+          "$ref": "#/$defs/metricCount"
+        },
+        "favoreceRate": {
+          "$ref": "#/$defs/rate"
+        },
+        "neutraRate": {
+          "$ref": "#/$defs/rate"
+        },
+        "prejudicaRate": {
+          "$ref": "#/$defs/rate"
+        }
+      }
+    },
+    "humanReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reviewedBy",
+        "reviewedAt",
+        "notes"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "approved",
+            "rejected"
+          ]
+        },
+        "reviewedBy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "decidedBy",
+        "decidedAt",
+        "rationale"
+      ],
+      "properties": {
+        "value": {
+          "enum": [
+            "seguir",
+            "iterar",
+            "abandonar"
+          ]
+        },
+        "decidedBy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decidedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

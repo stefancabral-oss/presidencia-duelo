@@ -1,32 +1,41 @@
 {
-  "status": "human-test-required",
+  "status": "human-test-and-license-review-required",
   "issue": 176,
   "checks": [
     {
       "name": "style-guide-before-assets",
-      "result": "passed; neutral visual grammar and prohibited bias cues are versioned"
+      "result": "passed; the guide now records the observed malachite gradient tolerance, synthetic-photography disclosure and prohibited bias cues"
     },
     {
-      "name": "eight-person-coverage",
-      "result": "passed; pilot list spans national recognition through a regional tail and balances four women/four men"
-    },
-    {
-      "name": "pilot-asset-integrity",
-      "command": "npm test --prefix app",
-      "result": "passed; 42 of 42 tests, including eight unpublished assets, 4:5 dimensions, identity references and SHA-256"
-    },
-    {
-      "name": "app-build",
+      "name": "pilot-evidence-isolation",
       "command": "npm run build --prefix app",
-      "result": "passed; pilot remains outside the application catalog and bundle"
+      "result": "passed; all eight PNGs and the manifest are outside app/public; post-build verification scanned 156 dist files and found no pilot SHA-256 or evidence path"
+    },
+    {
+      "name": "pilot-asset-and-reference-integrity",
+      "command": "npm test --prefix app",
+      "result": "passed; 43 of 43 tests, including anonymous filenames, 4:5 dimensions, generated-asset SHA-256, reference SHA-256 and provenance state"
+    },
+    {
+      "name": "reference-provenance",
+      "result": "partial by design; 3 references have documented source, author and license; 5 user-edited references are explicitly license-pending and block production approval"
+    },
+    {
+      "name": "blind-form-breakpoints",
+      "command": "npm run test:card-art-pilot-form --prefix app",
+      "result": "passed in Chromium; mobile 390x844 rendered a 184.5x246 card with 168.5x230 visible image, desktop 1000x800 rendered a 226x316.4 card with 204x187.4 visible image, no identity leaked through filenames, and familiarity remained hidden until the eighth response"
+    },
+    {
+      "name": "result-governance-schema",
+      "result": "passed; schema requires aggregate privacy controls, regional/familiarity strata, per-asset identity and dignity reviewers, dates, and an authored final decision"
     },
     {
       "name": "blind-recognition-test",
-      "result": "pending external human sample"
+      "result": "pending external human sample of at least 20 participants in each display scenario"
     },
     {
-      "name": "neutrality-test",
-      "result": "pending external human sample"
+      "name": "neutrality-and-dignity-test",
+      "result": "pending external human sample and named human reviewers"
     }
   ]
 }

@@ -8,90 +8,173 @@
       :root { color-scheme: dark; font: 16px/1.45 system-ui, sans-serif; background: #092d27; color: #f7f2e8; }
       * { box-sizing: border-box; }
       body { margin: 0; }
-      main { width: min(46rem, 100%); margin: auto; padding: 1rem; }
-      header, article { background: #103f36; border: 1px solid #b99b54; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; }
+      main { width: min(38rem, 100%); margin: auto; padding: 1rem; }
+      header, article, .final-step { background: #103f36; border: 1px solid #b99b54; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; }
       h1, h2 { margin-top: 0; }
-      img { display: block; width: min(100%, 28rem); aspect-ratio: 4 / 5; object-fit: cover; margin: 0 auto 1rem; border-radius: .75rem; }
+      .progress { color: #d9c98f; font-weight: 700; }
+      .test-card { position: relative; overflow: hidden; margin: 0 auto 1rem; border: 1px solid #e9cf78; background: #04382d; box-shadow: inset 0 0 0 4px #2417026b, inset 0 0 0 6px #ffe3806b, 0 12px 28px #0009; }
+      .test-card img { position: absolute; display: block; object-fit: cover; object-position: center top; }
+      .blind-plate { position: absolute; pointer-events: none; }
+      body[data-scenario="mobile-390x844"] .test-card { width: 184.5px; height: 246px; border-radius: 15px; }
+      body[data-scenario="mobile-390x844"] .test-card img { left: 8px; top: 8px; width: 168.5px; height: 230px; border-radius: 7px; }
+      body[data-scenario="mobile-390x844"] .blind-plate { left: 7px; right: 7px; bottom: 7px; height: 76px; border-radius: 0 0 8px 8px; background: linear-gradient(180deg, transparent, #001913e0 34%, #001611fa); }
+      body[data-scenario="desktop-1000x800"] .test-card { width: 226px; aspect-ratio: 5 / 7; border-radius: 19px; }
+      body[data-scenario="desktop-1000x800"] .test-card img { left: 11px; top: 11px; width: 204px; height: 187.4px; border-radius: 9px 9px 1px 1px; }
+      body[data-scenario="desktop-1000x800"] .blind-plate { left: 10px; right: 10px; bottom: 9px; height: 109px; border-radius: 2px 2px 10px 10px; background: linear-gradient(118deg, #fffefa, #eee9dd 65%, #fffdf8); }
       label, fieldset { display: block; margin-top: 1rem; }
-      input[type="text"] { width: 100%; min-height: 2.75rem; padding: .65rem; font: inherit; }
+      input[type="text"], select { width: 100%; min-height: 2.75rem; padding: .65rem; border: 1px solid #d8cfb5; border-radius: .35rem; background: #fff; color: #102a22; font: inherit; }
       fieldset { border: 0; padding: 0; }
-      fieldset label { display: inline-flex; gap: .4rem; margin: .5rem 1rem .25rem 0; }
-      button { min-height: 2.75rem; padding: .65rem 1rem; border: 0; border-radius: .5rem; font: 700 1rem system-ui; cursor: pointer; }
+      fieldset label { display: flex; gap: .5rem; align-items: start; margin: .65rem 0; }
+      button { width: 100%; min-height: 2.75rem; padding: .65rem 1rem; border: 0; border-radius: .5rem; background: #e5c86c; color: #173127; font: 700 1rem system-ui; cursor: pointer; }
       .status { min-height: 1.5rem; }
+      [hidden] { display: none !important; }
     </style>
   </head>
   <body>
     <main>
       <header>
         <h1>Teste cego de reconhecimento</h1>
-        <p>Não procure pistas nem abra o código da página. Para cada imagem, escreva quem você acha que é — “não sei” é uma resposta válida — e registre sua leitura visual.</p>
-        <label>Familiaridade com política (1 a 5)
-          <input id="familiarity" type="range" min="1" max="5" value="3">
-        </label>
+        <p>Não procure pistas nem abra o código da página. Cada imagem aparece no recorte e no tamanho efetivo de um dos cenários críticos do jogo. “Não sei” é uma resposta válida.</p>
+        <p class="progress" id="progress" aria-live="polite"></p>
       </header>
-      <form id="test-form"></form>
-      <button id="export" type="button">Concluir e salvar respostas</button>
+      <form id="image-step"></form>
+      <form class="final-step" id="final-step" hidden>
+        <h2>Etapa final</h2>
+        <p>As imagens vistas eram retratos sintéticos gerados por IA a partir de referências de identidade; não eram fotografias documentais. Agora informe somente estratos amplos. Não escreva nome, e-mail, cidade ou outro dado pessoal.</p>
+        <fieldset>
+          <legend>Familiaridade com política</legend>
+          <label><input name="familiarity" type="radio" value="baixa" required> Baixa — acompanho raramente</label>
+          <label><input name="familiarity" type="radio" value="media"> Média — acompanho às vezes</label>
+          <label><input name="familiarity" type="radio" value="alta"> Alta — acompanho com frequência</label>
+          <label><input name="familiarity" type="radio" value="prefiro-nao-informar"> Prefiro não informar</label>
+        </fieldset>
+        <label>Macrorregião onde vive
+          <select name="region" required>
+            <option value="">Selecione</option>
+            <option value="norte">Norte</option>
+            <option value="nordeste">Nordeste</option>
+            <option value="centro-oeste">Centro-Oeste</option>
+            <option value="sudeste">Sudeste</option>
+            <option value="sul">Sul</option>
+            <option value="exterior">Exterior</option>
+            <option value="prefiro-nao-informar">Prefiro não informar</option>
+          </select>
+        </label>
+        <button type="submit">Concluir e salvar respostas</button>
+      </form>
       <p class="status" id="status" role="status" aria-live="polite"></p>
     </main>
     <script>
-      const assets = [
-        ["P01", "../../../app/public/card-art/pilot/001-lula-pilot-v1.png"],
-        ["P02", "../../../app/public/card-art/pilot/063-jair-bolsonaro-pilot-v1.png"],
-        ["P03", "../../../app/public/card-art/pilot/033-marina-silva-pilot-v1.png"],
-        ["P04", "../../../app/public/card-art/pilot/028-michelle-bolsonaro-pilot-v1.png"],
-        ["P05", "../../../app/public/card-art/pilot/084-tabata-amaral-pilot-v1.png"],
-        ["P06", "../../../app/public/card-art/pilot/052-sonia-guajajara-pilot-v1.png"],
-        ["P07", "../../../app/public/card-art/pilot/017-joao-campos-pilot-v1.png"],
-        ["P08", "../../../app/public/card-art/pilot/019-douglas-ruas-pilot-v1.png"]
-      ];
+      const scenarioDefinitions = {
+        "mobile-390x844": {
+          viewport: { width: 390, height: 844 },
+          card: { width: 184.5, height: 246 },
+          artWindow: { width: 168.5, height: 230, objectFit: "cover", objectPosition: "center top", obscuredBottom: 76 }
+        },
+        "desktop-1000x800": {
+          viewport: { width: 1000, height: 800 },
+          card: { width: 226, height: 316.4 },
+          artWindow: { width: 204, height: 187.4, objectFit: "cover", objectPosition: "center top", obscuredBottom: 0 }
+        }
+      };
+      const requestedScenario = new URLSearchParams(location.search).get("scenario");
+      const scenarioIds = Object.keys(scenarioDefinitions);
+      const scenarioId = scenarioIds.includes(requestedScenario)
+        ? requestedScenario
+        : scenarioIds[crypto.getRandomValues(new Uint32Array(1))[0] % scenarioIds.length];
+      document.body.dataset.scenario = scenarioId;
 
+      const assets = Array.from({ length: 8 }, (_, index) => {
+        const code = `P${String(index + 1).padStart(2, "0")}`;
+        return { code, source: `../evidence/card-art-pilot-176/${code}.png` };
+      });
       for (let index = assets.length - 1; index > 0; index -= 1) {
         const target = crypto.getRandomValues(new Uint32Array(1))[0] % (index + 1);
         [assets[index], assets[target]] = [assets[target], assets[index]];
       }
 
-      const form = document.querySelector("#test-form");
-      form.innerHTML = assets.map(([code, source], index) => `
-        <article data-code="${code}">
-          <h2>Imagem ${index + 1} de ${assets.length}</h2>
-          <img src="${source}" alt="Retrato sem identificação para o teste cego">
-          <label>Quem é esta pessoa?
-            <input name="identity-${code}" type="text" autocomplete="off" required>
-          </label>
-          <fieldset>
-            <legend>Como a imagem trata esta pessoa?</legend>
-            <label><input name="tone-${code}" type="radio" value="favorece" required> Favorece</label>
-            <label><input name="tone-${code}" type="radio" value="neutra"> Neutra</label>
-            <label><input name="tone-${code}" type="radio" value="prejudica"> Prejudica</label>
-          </fieldset>
-          <label>Observação opcional
-            <input name="note-${code}" type="text" autocomplete="off">
-          </label>
-        </article>`).join("");
+      const responses = [];
+      const imageStep = document.querySelector("#image-step");
+      const finalStep = document.querySelector("#final-step");
+      const progress = document.querySelector("#progress");
+      const status = document.querySelector("#status");
+      let currentIndex = 0;
 
-      document.querySelector("#export").addEventListener("click", () => {
-        if (!form.reportValidity()) return;
-        const data = new FormData(form);
+      function renderImageStep() {
+        const asset = assets[currentIndex];
+        progress.textContent = `Imagem ${currentIndex + 1} de ${assets.length}`;
+        imageStep.innerHTML = `
+          <article data-code="${asset.code}">
+            <h2>Observe antes de responder</h2>
+            <div class="test-card">
+              <img src="${asset.source}" alt="Retrato sem identificação para o teste cego">
+              <span class="blind-plate" aria-hidden="true"></span>
+            </div>
+            <label>Quem é esta pessoa?
+              <input name="identity" type="text" autocomplete="off" required>
+            </label>
+            <fieldset>
+              <legend>Como a imagem trata esta pessoa?</legend>
+              <label><input name="tone" type="radio" value="favorece" required> Favorece</label>
+              <label><input name="tone" type="radio" value="neutra"> Neutra</label>
+              <label><input name="tone" type="radio" value="prejudica"> Prejudica</label>
+            </fieldset>
+            <button type="submit">${currentIndex + 1 === assets.length ? "Ir à etapa final" : "Próxima imagem"}</button>
+          </article>`;
+        imageStep.querySelector("input[name=identity]").focus();
+      }
+
+      imageStep.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!imageStep.reportValidity()) return;
+        const data = new FormData(imageStep);
+        responses.push({
+          code: assets[currentIndex].code,
+          identity: String(data.get("identity")).trim(),
+          tone: String(data.get("tone"))
+        });
+        currentIndex += 1;
+        if (currentIndex < assets.length) {
+          renderImageStep();
+          scrollTo({ top: 0, behavior: "instant" });
+          return;
+        }
+        imageStep.hidden = true;
+        finalStep.hidden = false;
+        progress.textContent = "Etapa final — familiaridade e macrorregião";
+        finalStep.querySelector("input[name=familiarity]").focus();
+        scrollTo({ top: 0, behavior: "instant" });
+      });
+
+      finalStep.addEventListener("submit", (event) => {
+        event.preventDefault();
+        if (!finalStep.reportValidity()) return;
+        const data = new FormData(finalStep);
+        const randomBytes = crypto.getRandomValues(new Uint8Array(16));
+        const responseId = [...randomBytes].map((value) => value.toString(16).padStart(2, "0")).join("");
         const payload = {
-          protocol: "card-art-pilot-176-v1",
-          completedAt: new Date().toISOString(),
-          familiarity: Number(document.querySelector("#familiarity").value),
-          responses: assets.map(([code]) => ({
-            code,
-            identity: String(data.get(`identity-${code}`)).trim(),
-            tone: data.get(`tone-${code}`),
-            note: String(data.get(`note-${code}`) || "").trim()
-          }))
+          protocol: "card-art-pilot-176-v2-participant",
+          responseId,
+          displayScenario: { id: scenarioId, ...scenarioDefinitions[scenarioId] },
+          strata: {
+            familiarity: String(data.get("familiarity")),
+            region: String(data.get("region"))
+          },
+          responses,
+          disclosureSeen: true
         };
         const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
         const link = Object.assign(document.createElement("a"), {
           href: URL.createObjectURL(blob),
-          download: `polimatch-card-art-test-${Date.now()}.json`
+          download: `polimatch-card-art-blind-${responseId}.json`
         });
         link.click();
         URL.revokeObjectURL(link.href);
-        document.querySelector("#status").textContent = "Respostas salvas. Envie o arquivo ao responsável pelo piloto.";
+        finalStep.querySelector("button").disabled = true;
+        status.textContent = "Respostas salvas. Envie o arquivo ao responsável pelo piloto.";
       });
+
+      renderImageStep();
     </script>
   </body>
 </html>

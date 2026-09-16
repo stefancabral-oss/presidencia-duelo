@@ -4,9 +4,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run portraits:check && vite build",
+    "build": "npm run portraits:check && vite build && node scripts/verify-card-art-pilot-excluded.mjs",
     "portraits:check": "node scripts/validate-portrait-slots.mjs",
     "test": "node --test src/*.test.js",
+    "test:card-art-pilot-form": "node scripts/card-art-pilot-form-smoke.mjs",
     "preview": "vite preview"
   },
   "devDependencies": {

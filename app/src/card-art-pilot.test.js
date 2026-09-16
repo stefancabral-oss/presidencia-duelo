@@ -1,10 +1,17 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
-const publicRoot = new URL("../public/", import.meta.url);
-const manifestUrl = new URL("card-art/pilot/manifest.json", publicRoot);
+const repoRoot = new URL("../../", import.meta.url);
+const evidenceRoot = new URL("stages/12_quality_gate_main/evidence/card-art-pilot-176/", repoRoot);
+const manifestUrl = new URL("manifest.json", evidenceRoot);
+const resultSchemaUrl = new URL("stages/12_quality_gate_main/references/card-art-pilot-results.schema.json", repoRoot);
+const publicPilotUrl = new URL("app/public/card-art/pilot/", repoRoot);
+
+function sha256(buffer) {
+  return createHash("sha256").update(buffer).digest("hex");
+}
 
 function pngDimensions(buffer) {
   assert.deepEqual([...buffer.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
@@ -12,24 +19,56 @@ function pngDimensions(buffer) {
   return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
 }
 
-test("the eight card-art pilots are immutable, unpublished and ready for blind testing", async () => {
+test("the eight pilot assets stay immutable in evidence storage outside app/public", async () => {
   const manifest = JSON.parse(await readFile(manifestUrl, "utf8"));
 
   assert.equal(manifest.status, "pilot-not-published");
   assert.equal(manifest.issue, 176);
+  assert.equal(manifest.storage.purpose, "test-evidence-only");
+  assert.equal(manifest.storage.servedByApplication, false);
+  assert.equal(manifest.storage.expectedInViteDist, false);
   assert.equal(manifest.assets.length, 8);
   assert.equal(new Set(manifest.assets.map(({ personId }) => personId)).size, 8);
+  assert.equal(new Set(manifest.assets.map(({ blindCode }) => blindCode)).size, 8);
   assert.equal(new Set(manifest.assets.map(({ file }) => file)).size, 8);
+  await assert.rejects(access(publicPilotUrl), { code: "ENOENT" });
 
+  const licensePending = new Set(["001", "028", "033", "063", "084"]);
   for (const asset of manifest.assets) {
-    const image = await readFile(new URL(`card-art/pilot/${asset.file}`, publicRoot));
-    const reference = await readFile(new URL(asset.identityReference.replace(/^app\/public\//, ""), publicRoot));
-    const dimensions = pngDimensions(image);
-    const sha256 = createHash("sha256").update(image).digest("hex");
+    assert.match(asset.blindCode, /^P0[1-8]$/);
+    assert.equal(asset.file, `${asset.blindCode}.png`);
+    assert.ok(!asset.file.includes(asset.slug), `${asset.blindCode}: filename leaks identity`);
 
-    assert.ok(reference.length > 0, `${asset.slug}: referência de identidade ausente`);
+    const image = await readFile(new URL(asset.file, evidenceRoot));
+    const reference = await readFile(new URL(asset.identityReference.path, repoRoot));
+    const dimensions = pngDimensions(image);
+
     assert.deepEqual(dimensions, { width: asset.width, height: asset.height });
-    assert.ok(Math.abs((dimensions.width / dimensions.height) - 0.8) < 0.001, `${asset.slug}: proporção fora de 4:5`);
-    assert.equal(sha256, asset.sha256, `${asset.slug}: arte mudou sem atualizar a proveniência`);
+    assert.ok(Math.abs((dimensions.width / dimensions.height) - 0.8) < 0.001, `${asset.blindCode}: ratio is not 4:5`);
+    assert.equal(sha256(image), asset.sha256, `${asset.blindCode}: generated asset changed without provenance update`);
+    assert.equal(sha256(reference), asset.identityReference.sha256, `${asset.blindCode}: identity reference changed without provenance update`);
+
+    if (licensePending.has(asset.personId)) {
+      assert.equal(asset.identityReference.licenseStatus, "license-pending");
+      assert.equal(asset.identityReference.photoSource, null);
+      assert.equal(asset.identityReference.photographer, null);
+      assert.equal(asset.identityReference.license, null);
+      assert.match(asset.identityReference.provenanceNote, /nao licenciam este arquivo substituto/i);
+    } else {
+      assert.equal(asset.identityReference.licenseStatus, "documented");
+      assert.match(asset.identityReference.photoSource, /^https:\/\//);
+      assert.ok(asset.identityReference.photographer);
+      assert.ok(asset.identityReference.license);
+    }
   }
+});
+
+test("the consolidation schema requires accountable reviews and a human decision", async () => {
+  const schema = JSON.parse(await readFile(resultSchemaUrl, "utf8"));
+  assert.equal(schema.$schema, "https://json-schema.org/draft/2020-12/schema");
+  assert.deepEqual(schema.required, ["protocol", "issue", "sample", "assets", "decision"]);
+  assert.ok(schema.$defs.assetResult.required.includes("byDisplayScenario"));
+  assert.deepEqual(schema.$defs.assetResult.properties.byDisplayScenario.required, ["mobile-390x844", "desktop-1000x800"]);
+  assert.deepEqual(schema.$defs.humanReview.required, ["status", "reviewedBy", "reviewedAt", "notes"]);
+  assert.deepEqual(schema.$defs.decision.required, ["value", "decidedBy", "decidedAt", "rationale"]);
 });

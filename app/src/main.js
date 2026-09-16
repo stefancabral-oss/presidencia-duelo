@@ -672,7 +672,15 @@ function bindEvents() {
     state.resultTone = "";
     render();
   }));
-  document.querySelectorAll("[data-ranking-view]").forEach((button) => button.addEventListener("click", () => { sound.play("navigation"); state.rankingView = button.dataset.rankingView; state.rankingQuery = ""; state.rankingExpanded = false; render(); }));
+  document.querySelectorAll("[data-ranking-view]").forEach((button) => button.addEventListener("click", () => {
+    sound.play("navigation");
+    state.rankingView = button.dataset.rankingView;
+    state.rankingQuery = "";
+    state.rankingParty = "";
+    state.rankingArea = "";
+    state.rankingExpanded = false;
+    render();
+  }));
   if (state.screen === "collection") installChromaMotion(document);
   document.querySelector("#enable-chroma-motion")?.addEventListener("click", async (event) => {
     const status = document.querySelector("#motion-status");

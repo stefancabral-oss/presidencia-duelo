@@ -2,24 +2,28 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
   TAXONOMY_FIELDS,
+  TAXONOMY_SCHEMA_VERSION,
   assertValidCatalogTaxonomy,
+  assertValidCatalogTaxonomyEvidence,
   materializeCandidateTaxonomy,
 } from "./catalog-taxonomy.js";
 
 const paths = {
+  master: new URL("../stages/10_rebuild_eleicoes_2026/input/polimatch-catalogo-125.json", import.meta.url),
   profiles: new URL("../stages/10_rebuild_eleicoes_2026/input/polimatch-perfis-editoriais-125.json", import.meta.url),
   taxonomy: new URL("../stages/10_rebuild_eleicoes_2026/input/polimatch-taxonomia-125.json", import.meta.url),
   generated: new URL("./elections-2026.json", import.meta.url),
 };
 
 const readJson = async (path) => JSON.parse(await readFile(path, "utf8"));
-const [profiles, taxonomySource, generated] = await Promise.all([
+const [master, profiles, taxonomySource, generated] = await Promise.all([
+  readJson(paths.master),
   readJson(paths.profiles),
   readJson(paths.taxonomy),
   readJson(paths.generated),
 ]);
 
-assert.equal(taxonomySource.schemaVersion, 1, "versão da fonte taxonômica não suportada");
+assert.equal(taxonomySource.schemaVersion, TAXONOMY_SCHEMA_VERSION, "versão da fonte taxonômica não suportada");
 assert.equal(Array.isArray(taxonomySource.records), true, "fonte taxonômica deve expor records[]");
 assert.equal(taxonomySource.records.length, profiles.length, "fonte taxonômica e perfis devem ter a mesma cardinalidade");
 
@@ -50,6 +54,7 @@ for (const profile of profiles) {
 assert.equal(taxonomyByName.size, profiles.length, "há taxonomia fora dos perfis editoriais");
 assert.equal(generatedByName.size, profiles.length, "há pessoa extra ou duplicada no artefato gerado");
 assertValidCatalogTaxonomy(generated, { expectedCount: profiles.length });
+assertValidCatalogTaxonomyEvidence(generated, { profiles, master });
 
 const statusCounts = Object.fromEntries(TAXONOMY_FIELDS.map((field) => [
   field,

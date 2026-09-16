@@ -1,4 +1,8 @@
-import { assertValidCatalogTaxonomy, materializeCandidateTaxonomy } from "../../shared/catalog-taxonomy.js";
+import {
+  assertValidCatalogTaxonomy,
+  assertValidCatalogTaxonomyEvidence,
+  materializeCandidateTaxonomy,
+} from "../../shared/catalog-taxonomy.js";
 
 export const CHROMAS_PER_PERSON = 12;
 
@@ -108,6 +112,7 @@ export function buildContentCatalog(master, profiles, taxonomy, rawChromas) {
   });
 
   assertValidCatalogTaxonomy(candidates, { expectedCount: master.length });
+  assertValidCatalogTaxonomyEvidence(candidates, { profiles, master });
 
   const candidateByName = new Map(master.map((entry, index) => [normalizePersonName(entry.nome), candidates[index]]));
   const chromas = rawChromas.map((raw) => {

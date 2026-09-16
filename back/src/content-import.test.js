@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { PRIMARY_AREA_INFERENCE_SOURCE, TAXONOMY_SOURCE_POINTERS } from "../../shared/catalog-taxonomy.js";
 import { buildContentCatalog, displayName, normalizePersonName } from "./content-import.js";
 
 const profile = (name) => ({
   nome_exibicao: name,
   ocupacao_atual: "Cargo atual",
-  partido_ou_area: "Área",
+  partido_ou_area: "PT",
   frase_card: "Frase curta",
   resumo_30s: "Resumo",
   relevancia_2026: "Relevância",
@@ -37,9 +38,9 @@ const taxonomy = (name) => ({
   primaryArea: "Política institucional",
   contextAffiliation: null,
   taxonomyProvenance: {
-    party: { status: "extracted", source: "profile.partyOrArea" },
-    primaryArea: { status: "inferred", source: "master.group + profile.currentOccupation" },
-    contextAffiliation: { status: "ambiguous", source: "profile.partyOrArea" },
+    party: { status: "extracted", source: TAXONOMY_SOURCE_POINTERS.profilePartyOrArea },
+    primaryArea: { status: "inferred", source: PRIMARY_AREA_INFERENCE_SOURCE },
+    contextAffiliation: { status: "ambiguous", source: TAXONOMY_SOURCE_POINTERS.profilePartyOrArea },
   },
 });
 
@@ -82,5 +83,14 @@ test("refuses taxonomy prose in the party slot", () => {
   assert.throws(
     () => buildContentCatalog([{ nome: name, grupo: "politica" }], [profile(name)], [invalid], chromas(name)),
     /sigla fora do vocabulário/,
+  );
+});
+
+test("refuses an extracted party that is absent from the real source field", () => {
+  const name = "Luiz Inácio Lula da Silva (Lula)";
+  const tampered = { ...taxonomy(name), party: "PL" };
+  assert.throws(
+    () => buildContentCatalog([{ nome: name, grupo: "politica" }], [profile(name)], [tampered], chromas(name)),
+    /party: valor extracted não é literal na fonte/,
   );
 });

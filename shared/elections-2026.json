@@ -16,15 +16,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -81,15 +81,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -146,15 +146,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.currentOccupation"
+        "source": "polimatch-perfis-editoriais-125.json#ocupacao_atual"
       }
     },
     "location": "Brasil",
@@ -211,15 +211,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -276,15 +276,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -341,15 +341,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -406,15 +406,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -471,15 +471,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -532,15 +532,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -597,15 +597,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -658,15 +658,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -723,15 +723,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -788,15 +788,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -853,15 +853,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -914,15 +914,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -975,15 +975,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1036,15 +1036,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1097,15 +1097,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1158,15 +1158,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1219,15 +1219,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1280,15 +1280,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1341,15 +1341,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1402,15 +1402,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1463,15 +1463,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1528,15 +1528,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1593,15 +1593,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1654,15 +1654,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1715,15 +1715,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1776,15 +1776,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1837,15 +1837,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1898,15 +1898,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -1959,15 +1959,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2020,15 +2020,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2081,15 +2081,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2142,15 +2142,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2203,15 +2203,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2264,15 +2264,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2325,15 +2325,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2386,15 +2386,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2447,15 +2447,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2508,15 +2508,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2569,15 +2569,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2630,15 +2630,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2691,15 +2691,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2752,15 +2752,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2813,15 +2813,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2874,15 +2874,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2935,15 +2935,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -2996,15 +2996,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3057,15 +3057,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3118,15 +3118,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3179,15 +3179,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3240,15 +3240,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3301,15 +3301,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3362,15 +3362,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3423,15 +3423,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3484,15 +3484,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3545,15 +3545,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3606,15 +3606,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3667,15 +3667,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3728,15 +3728,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3789,15 +3789,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3850,15 +3850,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3911,15 +3911,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -3972,15 +3972,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4033,15 +4033,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4094,15 +4094,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4155,15 +4155,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4216,15 +4216,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4277,15 +4277,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4338,15 +4338,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4399,15 +4399,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4460,15 +4460,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4521,15 +4521,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4582,15 +4582,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4643,15 +4643,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4704,15 +4704,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4765,15 +4765,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4826,15 +4826,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4875,7 +4875,7 @@
     "role": "Deputado federal (Rede-MG); articulação digital governista",
     "party": "REDE",
     "primaryArea": "Política institucional",
-    "contextAffiliation": "articulação digital governista",
+    "contextAffiliation": null,
     "taxonomyProvenance": {
       "role": {
         "status": "extracted",
@@ -4883,15 +4883,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
-        "status": "extracted",
-        "source": "profile.currentOccupation"
+        "status": "ambiguous",
+        "source": "polimatch-perfis-editoriais-125.json#ocupacao_atual"
       }
     },
     "location": "Brasil",
@@ -4944,15 +4944,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -4993,7 +4993,7 @@
     "role": "Historiador, youtuber e candidato a deputado federal (PSOL-PE)",
     "party": "PSOL",
     "primaryArea": "Comunicação digital",
-    "contextAffiliation": "esquerda radical",
+    "contextAffiliation": null,
     "taxonomyProvenance": {
       "role": {
         "status": "extracted",
@@ -5001,15 +5001,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "profile.currentOccupation"
+        "source": "polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "ambiguous",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5054,7 +5054,7 @@
     "role": "Ex-deputada federal; figura bolsonarista (fora do país)",
     "party": "PL",
     "primaryArea": "Política institucional",
-    "contextAffiliation": "digital",
+    "contextAffiliation": null,
     "taxonomyProvenance": {
       "role": {
         "status": "extracted",
@@ -5062,15 +5062,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "ambiguous",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5123,15 +5123,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5184,15 +5184,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5245,15 +5245,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5306,15 +5306,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5367,15 +5367,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5424,15 +5424,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5481,15 +5481,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5538,15 +5538,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.currentOccupation"
+        "source": "polimatch-perfis-editoriais-125.json#ocupacao_atual"
       }
     },
     "location": "Brasil",
@@ -5599,15 +5599,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "contextAffiliation": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5656,15 +5656,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5717,15 +5717,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5770,7 +5770,7 @@
     "role": "Ex-procurador/ex-deputado; candidato ao Senado (Novo-PR)",
     "party": "NOVO",
     "primaryArea": "Política institucional",
-    "contextAffiliation": "direita",
+    "contextAffiliation": null,
     "taxonomyProvenance": {
       "role": {
         "status": "extracted",
@@ -5778,15 +5778,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "ambiguous",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5839,15 +5839,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5900,15 +5900,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -5961,15 +5961,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6018,15 +6018,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6079,15 +6079,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "inferred",
-        "source": "master.group + profile.currentOccupation"
+        "source": "polimatch-catalogo-125.json#grupo + polimatch-perfis-editoriais-125.json#ocupacao_atual"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6140,15 +6140,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "master.area"
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6201,15 +6201,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "master.area"
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6262,15 +6262,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "master.area"
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6323,15 +6323,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "master.area"
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6384,15 +6384,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6445,15 +6445,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6506,15 +6506,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6567,15 +6567,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6628,15 +6628,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6689,15 +6689,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6750,15 +6750,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "master.area"
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6811,15 +6811,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6872,15 +6872,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6933,15 +6933,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "master.area"
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -6994,15 +6994,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "master.area"
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -7055,15 +7055,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
         "status": "extracted",
-        "source": "master.area"
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -7116,15 +7116,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -7177,15 +7177,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -7238,15 +7238,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -7299,15 +7299,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -7360,15 +7360,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -7425,15 +7425,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -7486,15 +7486,15 @@
       },
       "party": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -7547,15 +7547,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
         "status": "ambiguous",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",
@@ -7608,15 +7608,15 @@
       },
       "party": {
         "status": "extracted",
-        "source": "profile.partyOrArea"
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       },
       "primaryArea": {
-        "status": "extracted",
-        "source": "master.area"
+        "status": "inferred",
+        "source": "polimatch-catalogo-125.json#area"
       },
       "contextAffiliation": {
-        "status": "extracted",
-        "source": "profile.partyOrArea"
+        "status": "inferred",
+        "source": "polimatch-perfis-editoriais-125.json#partido_ou_area"
       }
     },
     "location": "Brasil",

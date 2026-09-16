@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { CANDIDATES, TOPICS, candidateBelongsToTopic, candidatesForTopic } from "./candidates.js";
+import { CANDIDATES, TOPICS, candidateBelongsToTopic, candidatesForTopic, serializeCandidate } from "./candidates.js";
 
 test("the rebuild exposes one active topic and two announced expansions", () => {
   assert.deepEqual(TOPICS.filter(({ active }) => active).map(({ id }) => id), ["eleicoes-2026"]);
@@ -31,4 +31,22 @@ test("every candidate exposes a reviewable editorial profile", () => {
     assert.equal(typeof candidate.primaryArea, "string");
     assert.equal(typeof candidate.taxonomyProvenance, "object");
   }
+});
+
+test("serializes the real catalog through the public API allowlist", () => {
+  const serialized = CANDIDATES.map(serializeCandidate);
+  assert.equal(serialized.length, 125);
+  assert.ok(serialized.every((candidate) => (
+    !("affiliation" in candidate) && !("area" in candidate) && !("office" in candidate)
+  )));
+
+  const lula = serialized.find(({ id }) => id === "lula");
+  assert.equal(lula.party, "PT");
+  assert.equal(lula.taxonomyProvenance.party.status, "extracted");
+
+  const antonia = serialized.find(({ id }) => id === "antonia-fontenelle");
+  assert.equal(antonia.role, "Influenciadora digital e candidata a deputada federal (RJ)");
+  assert.equal(antonia.party, "PSDB");
+  assert.equal(antonia.primaryArea, "Comunicação digital");
+  assert.equal(antonia.taxonomyProvenance.primaryArea.status, "inferred");
 });

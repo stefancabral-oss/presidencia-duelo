@@ -56,3 +56,51 @@ export function candidateBelongsToTopic(candidateId, topicId) {
   const candidate = CANDIDATES_BY_ID.get(candidateId);
   return candidate?.photoApproved === true && candidate.topicIds.includes(topicId);
 }
+
+export function serializeCandidate({
+  personId,
+  id,
+  name,
+  displayName,
+  photo,
+  role,
+  party,
+  primaryArea,
+  contextAffiliation,
+  taxonomyProvenance,
+  summary,
+  location,
+  bio,
+  relevance2026,
+  facts,
+  highlight,
+  controversy,
+  sources,
+  reviewedAt,
+  reviewStatus,
+  topicIds,
+}) {
+  return {
+    personId,
+    id,
+    name,
+    displayName,
+    photo,
+    role,
+    party,
+    primaryArea,
+    contextAffiliation,
+    taxonomyProvenance,
+    summary,
+    location,
+    bio,
+    relevance2026,
+    facts,
+    highlight,
+    controversy,
+    sources,
+    reviewedAt,
+    reviewStatus,
+    topicIds,
+  };
+}

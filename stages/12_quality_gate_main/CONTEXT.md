@@ -95,4 +95,4 @@ Substituir a sobrecarga de `partido_ou_area` por um contrato editorial validáve
 
 ### Human gate
 
-Pendente: revisar as 78 classificações de área marcadas como `inferred`, as ausências ambíguas preservadas e o comportamento visual antes da integração em `main`.
+Pendente: revisar as 111 classificações de área marcadas como `inferred`, as ausências ambíguas preservadas e o comportamento visual antes da integração em `main`.

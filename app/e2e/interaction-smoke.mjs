@@ -633,7 +633,18 @@ try {
   if (!expectedRejected.every((name) => rejected.includes(name)) || !rejected.includes("−1")) {
     throw new Error("As três comparações negativas não apareceram no resumo do ranking");
   }
-  await page.getByRole("button", { name: "Seu ranking" }).click();
+  await page.locator("#ranking-search").fill(firstCandidate.displayName || firstCandidate.name);
+  await page.locator("#ranking-party").selectOption(firstCandidate.party);
+  await page.locator("#ranking-area").selectOption(firstCandidate.primaryArea);
+  await page.getByRole("button", { name: "Seu ranking", exact: true }).click();
+  const normalizedFilters = await Promise.all([
+    page.locator("#ranking-search").inputValue(),
+    page.locator("#ranking-party").inputValue(),
+    page.locator("#ranking-area").inputValue(),
+  ]);
+  if (normalizedFilters.some(Boolean)) {
+    throw new Error("A troca entre ranking geral e pessoal preservou filtros incompatíveis");
+  }
   await page.getByText("Ordenado por maioria nos confrontos observados").waitFor();
   if (process.env.POLIMATCH_E2E_PERSONAL_RANKING_SCREENSHOT) {
     await page.evaluate(() => {

@@ -33,12 +33,37 @@ export const PRIMARY_AREAS = Object.freeze([
 
 export const PROVENANCE_STATUSES = Object.freeze(["extracted", "inferred", "ambiguous"]);
 export const TAXONOMY_FIELDS = Object.freeze(["role", "party", "primaryArea", "contextAffiliation"]);
-export const ROLE_SOURCE = "polimatch-perfis-editoriais-125.json#ocupacao_atual";
+export const TAXONOMY_SCHEMA_VERSION = 2;
+export const TAXONOMY_SOURCE_POINTERS = Object.freeze({
+  profileCurrentOccupation: "polimatch-perfis-editoriais-125.json#ocupacao_atual",
+  profilePartyOrArea: "polimatch-perfis-editoriais-125.json#partido_ou_area",
+  masterGroup: "polimatch-catalogo-125.json#grupo",
+  masterArea: "polimatch-catalogo-125.json#area",
+});
+export const ROLE_SOURCE = TAXONOMY_SOURCE_POINTERS.profileCurrentOccupation;
+export const PRIMARY_AREA_INFERENCE_SOURCE = `${TAXONOMY_SOURCE_POINTERS.masterGroup} + ${ROLE_SOURCE}`;
+export const TAXONOMY_NORMALIZATIONS = Object.freeze({
+  version: 1,
+  party: Object.freeze({
+    Avante: "AVANTE",
+    Missão: "MISSÃO",
+    Novo: "NOVO",
+    Rede: "REDE",
+    Republicanos: "REPUBLICANOS",
+    "União Brasil": "UNIÃO",
+  }),
+});
 
 const PARTY_SET = new Set(PARTY_CODES);
 const PRIMARY_AREA_SET = new Set(PRIMARY_AREAS);
 const PROVENANCE_SET = new Set(PROVENANCE_STATUSES);
 const LEGACY_TAXONOMY_FIELDS = ["affiliation", "area", "office"];
+const SOURCE_POINTER_FIELDS = new Map([
+  [TAXONOMY_SOURCE_POINTERS.profileCurrentOccupation, ["profile", "ocupacao_atual"]],
+  [TAXONOMY_SOURCE_POINTERS.profilePartyOrArea, ["profile", "partido_ou_area"]],
+  [TAXONOMY_SOURCE_POINTERS.masterGroup, ["master", "grupo"]],
+  [TAXONOMY_SOURCE_POINTERS.masterArea, ["master", "area"]],
+]);
 
 function clean(value) {
   return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : value;
@@ -50,6 +75,62 @@ function present(value) {
 
 function recordLabel(record, index) {
   return record?.id || record?.name || `registro ${index + 1}`;
+}
+
+function normalizePersonName(value = "") {
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function splitSourcePointers(source) {
+  if (!present(source)) return [];
+  return clean(source).split(/\s+\+\s+/u);
+}
+
+function containsLiteral(sourceValue, expectedValue) {
+  const source = clean(sourceValue);
+  const expected = clean(expectedValue);
+  if (!present(source) || !present(expected)) return false;
+  let offset = source.indexOf(expected);
+  while (offset !== -1) {
+    const before = offset > 0 ? source[offset - 1] : "";
+    const after = source[offset + expected.length] || "";
+    if ((!before || !/[\p{L}\p{N}]/u.test(before)) && (!after || !/[\p{L}\p{N}]/u.test(after))) return true;
+    offset = source.indexOf(expected, offset + 1);
+  }
+  return false;
+}
+
+function extractedValueMatches(field, value, sourceValue) {
+  if (field === "role") return clean(value) === clean(sourceValue);
+  if (containsLiteral(sourceValue, value)) return true;
+  if (field !== "party") return false;
+  return Object.entries(TAXONOMY_NORMALIZATIONS.party)
+    .some(([literal, normalized]) => normalized === clean(value) && containsLiteral(sourceValue, literal));
+}
+
+function indexEvidence(records, nameField) {
+  const indexed = new Map();
+  for (const record of records || []) {
+    const key = normalizePersonName(record?.[nameField]);
+    if (key && !indexed.has(key)) indexed.set(key, record);
+  }
+  return indexed;
+}
+
+export function resolveTaxonomySources(source, { profile, master } = {}) {
+  return splitSourcePointers(source).map((pointer) => {
+    const target = SOURCE_POINTER_FIELDS.get(pointer);
+    if (!target) return { pointer, known: false, value: undefined };
+    const [recordType, field] = target;
+    const record = recordType === "profile" ? profile : master;
+    return { pointer, known: true, value: record?.[field] };
+  });
 }
 
 function validateProvenance(record, field, label, errors) {
@@ -64,6 +145,12 @@ function validateProvenance(record, field, label, errors) {
   }
   if (!present(provenance.source)) {
     errors.push(`${label}.${field}: fonte de proveniência ausente`);
+  } else {
+    for (const pointer of splitSourcePointers(provenance.source)) {
+      if (!SOURCE_POINTER_FIELDS.has(pointer)) {
+        errors.push(`${label}.${field}: ponteiro de fonte desconhecido: ${pointer}`);
+      }
+    }
   }
   if (provenance.status === "ambiguous" && value !== null && value !== "") {
     errors.push(`${label}.${field}: valor ambíguo deve ficar sem valor`);
@@ -136,6 +223,51 @@ export function assertValidCatalogTaxonomy(records, options) {
   const errors = catalogTaxonomyErrors(records, options);
   if (errors.length) {
     throw new Error(`taxonomia editorial inválida:\n- ${errors.join("\n- ")}`);
+  }
+  return records;
+}
+
+export function catalogTaxonomyEvidenceErrors(records, { profiles = [], master = [] } = {}) {
+  const errors = [];
+  if (!Array.isArray(records)) return ["catálogo taxonômico deve ser uma lista"];
+  if (!Array.isArray(profiles) || !Array.isArray(master)) return ["fontes editoriais devem ser listas"];
+  const profilesByName = indexEvidence(profiles, "nome_exibicao");
+  const masterByName = indexEvidence(master, "nome");
+
+  for (const [index, record] of records.entries()) {
+    const label = recordLabel(record, index);
+    const key = normalizePersonName(record?.name);
+    const profile = profilesByName.get(key);
+    const masterRecord = masterByName.get(key);
+    if (!profile) errors.push(`${label}: perfil editorial de origem não encontrado`);
+    if (!masterRecord) errors.push(`${label}: registro mestre de origem não encontrado`);
+    if (!profile || !masterRecord) continue;
+
+    for (const field of TAXONOMY_FIELDS) {
+      const provenance = record.taxonomyProvenance?.[field];
+      if (!provenance || !present(provenance.source)) continue;
+      const sources = resolveTaxonomySources(provenance.source, { profile, master: masterRecord });
+      if (sources.some(({ known }) => !known)) continue;
+      for (const source of sources) {
+        if (!present(source.value)) errors.push(`${label}.${field}: fonte sem valor: ${source.pointer}`);
+      }
+      if (provenance.status !== "extracted") continue;
+      if (sources.length !== 1) {
+        errors.push(`${label}.${field}: extracted exige um único ponteiro de fonte`);
+        continue;
+      }
+      if (!extractedValueMatches(field, record[field], sources[0].value)) {
+        errors.push(`${label}.${field}: valor extracted não é literal na fonte ${sources[0].pointer}`);
+      }
+    }
+  }
+  return errors;
+}
+
+export function assertValidCatalogTaxonomyEvidence(records, options) {
+  const errors = catalogTaxonomyEvidenceErrors(records, options);
+  if (errors.length) {
+    throw new Error(`evidência taxonômica inválida:\n- ${errors.join("\n- ")}`);
   }
   return records;
 }

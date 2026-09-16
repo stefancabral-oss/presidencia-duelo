@@ -26,7 +26,7 @@ function recoveryKeyFrom(req) {
 function sendError(res, err) {
   const body = { error: err.message || "erro interno" };
   if (err.code) body.code = err.code;
-  if (err.current) body.current = err.current;
+  if (Object.hasOwn(err, "current")) body.current = err.current;
   res.status(err.status || 500).json(body);
 }
 

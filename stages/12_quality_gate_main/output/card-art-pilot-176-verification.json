@@ -13,8 +13,8 @@
     },
     {
       "name": "pilot-asset-and-reference-integrity",
-      "command": "npm test --prefix app",
-      "result": "passed; 43 of 43 tests, including anonymous filenames, 4:5 dimensions, generated-asset SHA-256, reference SHA-256 and provenance state"
+      "command": "npm test",
+      "result": "passed; 84 of 84 tests (4 shared, 28 backend, 52 app), including anonymous filenames, 4:5 dimensions, generated-asset SHA-256, reference SHA-256 and provenance state"
     },
     {
       "name": "reference-provenance",
@@ -27,7 +27,8 @@
     },
     {
       "name": "result-governance-schema",
-      "result": "passed; schema requires aggregate privacy controls, regional/familiarity strata, per-asset identity and dignity reviewers, dates, and an authored final decision"
+      "command": "npx --yes --package=ajv-cli@5.0.0 --package=ajv-formats@3.0.1 ajv compile -s stages/12_quality_gate_main/references/card-art-pilot-results.schema.json --spec=draft2020 -c ajv-formats",
+      "result": "passed; valid Draft 2020-12 schema requiring aggregate privacy controls, regional/familiarity strata, per-asset identity and dignity reviewers, dates, and an authored final decision"
     },
     {
       "name": "blind-recognition-test",

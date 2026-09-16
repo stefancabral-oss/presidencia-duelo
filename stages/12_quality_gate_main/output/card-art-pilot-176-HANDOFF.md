@@ -20,9 +20,10 @@
 
 ## Verificação técnica
 
-- `npm test --prefix app`: 43/43 testes aprovados.
+- `npm test`: 84/84 testes aprovados (4 compartilhados, 28 do backend e 52 do app).
 - `npm run build --prefix app`: aprovado; 156 arquivos do `dist` inspecionados e nenhum hash do piloto empacotado.
 - `npm run test:card-art-pilot-form --prefix app`: aprovado em Chromium nos dois cenários, com dimensões, cegamento e sequência final validados.
+- `npx --yes --package=ajv-cli@5.0.0 --package=ajv-formats@3.0.1 ajv compile -s stages/12_quality_gate_main/references/card-art-pilot-results.schema.json --spec=draft2020 -c ajv-formats`: schema Draft 2020-12 válido.
 - `git diff --check`: aprovado.
 
 ## Proveniência que ainda bloqueia produção

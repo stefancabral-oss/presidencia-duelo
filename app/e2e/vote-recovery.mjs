@@ -24,6 +24,7 @@
  * roundIds já vistos. Sem isso nenhum dos sete cenários é observável.
  */
 import { chromium, webkit } from "playwright";
+import { completedDailySession } from "./daily-fixture.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -162,6 +163,9 @@ async function instalarServidor(page, servidor) {
         json: { topicId: "eleicoes-2026", duels: servidor.duels, rankingPolicy: personalRankingPolicy, ranking: servidor.ranking(), version: servidor.version },
       });
     }
+    if (pathname === "/api/daily-session") {
+      return route.fulfill({ status: 200, json: completedDailySession(candidates) });
+    }
 
     if (pathname === "/api/round-vote" && request.method() === "POST") {
       const { roundId, winnerId, candidateIds, playerVersion } = request.postDataJSON();
@@ -214,6 +218,7 @@ async function instalarServidor(page, servidor) {
 async function abrirDuelo(page) {
   await page.goto(appUrl, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Duelo" }).click();
+  await page.getByRole("button", { name: "Continuar no modo livre" }).click();
   await page.getByRole("heading", { name: "Quem você prefere?" }).waitFor();
   const coach = page.getByRole("button", { name: "Começar rodada" });
   if (await coach.count()) await coach.click();

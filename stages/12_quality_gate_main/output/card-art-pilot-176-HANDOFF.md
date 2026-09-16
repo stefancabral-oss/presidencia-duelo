@@ -5,7 +5,7 @@
 - Estado: `primeiro lote invalidado; regeneração obrigatória antes de coleta humana`
 - Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/176
 - Branch: `icm/12-u05-card-art-pilot-176`
-- Base validada: `origin/main` em `8f7ba527`.
+- Base integrada e validada: `origin/main` em `f86aec40`.
 - Gate humano: **não iniciado e não autorizado para P01–P08**.
 
 ## Entregue
@@ -35,12 +35,13 @@
 
 ## Verificação técnica
 
-- `npm test`: 169/169 aprovados (4 compartilhados, 39 backend, 126 app), incluindo derivação quantitativa integral, aliases ambíguos/pós-fato, commits fora de `HEAD`, replace refs desativados, paths codificados/symlink, IDs opacos, ausência de slots string irrestritos, remoção de narrativa pública, todos os exemplos adversariais de PII, bundle vazio/legado, replay renomeado, custódia, geometria, cronologia e gates.
+- Matriz unitária: 207/207 aprovados (4 compartilhados, 58 backend, 145 app), incluindo a integração das sessões/apostas diárias e, no piloto, derivação quantitativa integral, aliases ambíguos/pós-fato, commits fora de `HEAD`, replace refs desativados, paths codificados/symlink, IDs opacos, ausência de slots string irrestritos, remoção de narrativa pública, todos os exemplos adversariais de PII, bundle vazio/legado, replay renomeado, custódia, geometria, cronologia e gates.
 - `npm run build --prefix app`: aprovado; 157 arquivos do `dist` inspecionados e nenhum hash do piloto empacotado.
 - `npm run test:card-art-pilot-form --prefix app`: aprovado em Chromium e WebKit nos dois cenários; geometria canônica igual ao CSS do app e coleta/exportação bloqueadas.
+- Matriz de interação integrada: os oito fluxos do app (interação normal, login/logout com falha diária, sessão diária, aposta diária, troca de identidade, responsividade, recuperação e estados de confiança) e o formulário bloqueado do piloto foram aprovados localmente em Chromium e WebKit.
 - `npm run test:card-art-pilot-contract --prefix app`: 64/64 aprovados; Ajv 8.20.0 e ajv-formats 3.0.1 lockados validam generation plan/receipt, registro, regras de reconhecimento, resposta individual, bundle e consolidado sem narrativa livre em Draft 2020-12, além de derivação, custódia, histórico sem replace refs, confinamento de paths e contexto Docker.
 - `npm audit --prefix app`: zero vulnerabilidades após travar Ajv 8.20.0 e Playwright 1.55.1.
-- `docker build -f app/Dockerfile .`: não executado localmente porque o binário Docker não está instalado neste ambiente; o teste automatizado confirma estaticamente o `COPY` a partir do contexto-raiz, sua ordem antes do build, o `.dockerignore` que exclui as artes e readmite só o manifesto, e que o manifesto não entra no estágio final nginx. O mesmo build real é obrigatório no runner Ubuntu de `design-validator.yml`; seu resultado remoto ainda não foi observado nesta branch sem push/PR.
+- `docker build -f app/Dockerfile .`: não executado localmente porque o binário Docker não está instalado neste ambiente; o teste automatizado confirma estaticamente o `COPY` a partir do contexto-raiz, sua ordem antes do build, o `.dockerignore` que exclui as artes e readmite só o manifesto, e que o manifesto não entra no estágio final nginx. O mesmo build real é obrigatório no runner Ubuntu de `design-validator.yml`; seu resultado remoto ainda não foi observado na revisão integrada.
 - `git diff --check`: aprovado.
 
 ## Proveniência que ainda bloqueia produção

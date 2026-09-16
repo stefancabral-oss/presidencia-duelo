@@ -1,7 +1,7 @@
 {
   "status": "pilot-invalidated-regeneration-required",
   "issue": 176,
-  "validatedBase": "8f7ba527e03851370b5f5476adc68cd21d655634",
+  "validatedBase": "f86aec40ba4770fc71de6deca55175e356ac942d",
   "checks": [
     {
       "name": "style-guide-before-assets",
@@ -20,7 +20,7 @@
     {
       "name": "pilot-asset-and-reference-integrity",
       "command": "npm test",
-      "result": "passed; 169 of 169 tests (4 shared, 39 backend, 126 app), including canonical quantitative derivation, ambiguous or post-hoc aliases, commits outside real HEAD, encoded and symlink path escapes, opaque governance IDs, no unrestricted public string slots, removal of public narratives, all reported trivial PII examples, empty or renamed bundles, reused receipts, detached custody roots, geometry and chronology"
+      "result": "passed; 207 of 207 unit tests (4 shared, 58 backend, 145 app), including the integrated daily session and prediction contracts plus canonical pilot derivation, ambiguous or post-hoc aliases, commits outside real HEAD, encoded and symlink path escapes, opaque governance IDs, no unrestricted public string slots, removal of public narratives, all reported trivial PII examples, empty or renamed bundles, reused receipts, detached custody roots, geometry and chronology"
     },
     {
       "name": "reference-provenance",
@@ -44,7 +44,7 @@
     {
       "name": "continuous-integration-enforcement",
       "command": "design-validator.yml and ui-interaction-smoke.yml",
-      "result": "configured; path triggers cover app, shared, .dockerignore, credits, the style guide, protocol, result, all six schemas, manifest and evidence; CI runs the result contract, dist isolation, a real repository-root Docker image build and the canonical-geometry form smoke in Chromium and WebKit"
+      "result": "configured; path triggers cover app, shared, .dockerignore, credits, the style guide, protocol, result, all six schemas, manifest and evidence; the local workflow-equivalent matrix passed the eight integrated app flows and the blocked pilot form in Chromium and WebKit, while CI remains responsible for the real repository-root Docker image build"
     },
     {
       "name": "blind-recognition-test",

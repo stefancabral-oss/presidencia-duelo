@@ -1,5 +1,7 @@
 import "./styles.css";
-import { createPlayer, endSession, exchangeGoogleCredential, loadCandidates, loadPlayerRanking, loadRanking, submitRoundVote } from "./api.js";
+import { createPlayer, endSession, exchangeGoogleCredential, loadCandidates, loadDailyPredictionResults, loadDailySession, loadPlayerRanking, loadRanking, submitDailyPrediction, submitDailyVote, submitRoundVote } from "./api.js";
+import { confirmedDailyVoteData, dailyPendingPredictionCandidates, dailyRoundCandidates, dailySessionRoundChanged, validateDailySession } from "./daily-session.js";
+import { confirmedDailyPredictionData, validateDailyPredictionResults } from "./daily-prediction.js";
 import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, rankingPodium, shortName } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
@@ -15,6 +17,21 @@ const app = document.querySelector("#app");
 const sound = createSoundController();
 const state = {
   screen: "topics",
+  gameMode: "daily",
+  dailySession: null,
+  dailyCandidates: [],
+  pendingDailySession: null,
+  pendingDailyRefresh: false,
+  dailyLoadEpoch: 0,
+  dailyLoading: false,
+  dailyLoadError: "",
+  predictionId: "",
+  predictionBusy: false,
+  predictionError: "",
+  pendingPredictionAction: null,
+  predictionResults: null,
+  predictionResultsLoading: false,
+  predictionResultsError: "",
   candidates: [],
   round: [],
   matchQueue: [],
@@ -69,6 +86,45 @@ function clearVoteTimers() {
   clearTimeout(resultTimer);
   clearTimeout(roundAdvanceTimer);
   clearTimeout(retryEnableTimer);
+}
+
+function installDailySession(session, { createAnswerId = true } = {}) {
+  const previousPendingKey = state.dailySession?.pendingPrediction
+    ? `${state.dailySession.edition.id}:${state.dailySession.pendingPrediction.slot}`
+    : "";
+  state.dailySession = validateDailySession(session);
+  state.dailyCandidates = state.dailySession.catalog;
+  state.dailyLoading = false;
+  state.dailyLoadError = "";
+  state.pendingDailyRefresh = false;
+  const pendingKey = state.dailySession.pendingPrediction
+    ? `${state.dailySession.edition.id}:${state.dailySession.pendingPrediction.slot}`
+    : "";
+  if (state.dailySession.pendingPrediction) {
+    state.round = dailyPendingPredictionCandidates(state.dailySession);
+    if (pendingKey !== previousPendingKey || !state.predictionId) state.predictionId = crypto.randomUUID();
+    state.roundId = "";
+  } else if (state.dailySession.status === "active") {
+    state.round = dailyRoundCandidates(state.dailySession);
+    state.previousRound = [];
+    state.matchQueue = [];
+    if (createAnswerId) state.roundId = crypto.randomUUID();
+  } else {
+    state.round = [];
+    state.roundId = "";
+  }
+  if (!state.dailySession.pendingPrediction) state.predictionId = "";
+  state.predictionBusy = false;
+  state.predictionError = "";
+  state.pendingPredictionAction = null;
+}
+
+function prepareFreeRound() {
+  const firstMatch = nextBalancedGroup(state.candidates);
+  state.round = firstMatch.group;
+  state.matchQueue = firstMatch.queue;
+  state.previousRound = [];
+  state.roundId = crypto.randomUUID();
 }
 
 const chromaPreviews = [
@@ -126,14 +182,25 @@ function portrait(candidate) {
   </div>`;
 }
 
-function card(candidate) {
-  const outcome = state.roundOutcome?.outcomes.find(({ id }) => id === candidate.id);
+function card(candidate, { mode = "vote" } = {}) {
+  const prediction = mode === "prediction";
+  const outcome = prediction ? null : state.roundOutcome?.outcomes.find(({ id }) => id === candidate.id);
   const outcomeClass = outcome ? ` is-round-${outcome.winner ? "winner" : "loser"}` : "";
   const delta = Number(outcome?.delta);
   const outcomeStamp = outcome ? `<span class="card-outcome ${outcome.tone}" aria-live="polite"><b>${Number.isFinite(delta) ? `${delta > 0 ? "+" : ""}${delta} Elo` : outcome.winner ? "Escolhida" : "Não foi desta vez"}</b><small>${escapeHtml(outcome.shortMessage)}</small></span>` : "";
-  const locked = state.busy || Boolean(state.pendingWinnerId);
+  const locked = prediction
+    ? state.predictionBusy || Boolean(state.pendingPredictionAction)
+    : state.busy || Boolean(state.pendingWinnerId);
+  const dataAttribute = prediction ? "data-predict" : "data-vote";
+  const ariaInstruction = prediction
+    ? "Toque para apostar."
+    : "Toque para escolher; segure para saber quem é.";
+  const interactionHint = prediction
+    ? '<small class="candidate-profile-hint">Toque para apostar</small>'
+    : '<small class="candidate-profile-hint"><span aria-hidden="true">ⓘ</span> Segure para conhecer</small>';
+  const activelySending = prediction ? state.predictionBusy : state.busy;
   return `<div class="candidate-wrap">
-    <button class="candidate-card basic-card${state.selectedId === candidate.id ? " is-selected" : ""}${outcomeClass}" type="button" data-vote="${escapeHtml(candidate.id)}" ${locked ? `disabled${state.busy ? ' aria-busy="true"' : ""}` : ""} aria-label="${escapeHtml(candidate.name)}, carta básica. Toque para escolher; segure para saber quem é.">
+    <button class="candidate-card basic-card${state.selectedId === candidate.id ? " is-selected" : ""}${outcomeClass}" type="button" ${dataAttribute}="${escapeHtml(candidate.id)}" ${locked ? `disabled${activelySending ? ' aria-busy="true"' : ""}` : ""} aria-label="${escapeHtml(candidate.name)}, carta básica. ${ariaInstruction}">
       <span class="card-material" aria-hidden="true"></span>
       <span class="card-facets" aria-hidden="true"></span>
       <span class="card-brand" aria-hidden="true">${brandSymbol("card-brand-symbol")}<b>PoliMatch</b></span>
@@ -143,7 +210,7 @@ function card(candidate) {
         <span class="candidate-affiliation">${escapeHtml(candidateAffiliation(candidate))}</span>
         <span class="candidate-office">${escapeHtml(candidate.office || candidateRole(candidate))}</span>
         <small class="candidate-summary">${escapeHtml(candidateCardSummary(candidate))}</small>
-        <small class="candidate-profile-hint"><span aria-hidden="true">ⓘ</span> Segure para conhecer</small>
+        ${interactionHint}
         ${outcomeStamp}
       </span>
       <span class="card-corners" aria-hidden="true"></span>
@@ -193,6 +260,12 @@ function topicsScreen() {
     </article>`;
   }).join("");
   const approvedCount = approvedCandidates.length;
+  const dailyAnswered = Number(state.dailySession?.progress?.answered) || 0;
+  const dailyTotal = Number(state.dailySession?.progress?.total) || 10;
+  const dailyComplete = state.dailySession?.status === "completed";
+  const dailyAction = state.dailySession?.pendingPrediction
+    ? `Responder aposta · ${state.dailySession.pendingPrediction.slot}/${dailyTotal}`
+    : dailyComplete ? "Ver fechamento de hoje" : dailyAnswered ? `Continuar · ${dailyAnswered}/${dailyTotal}` : "Jogar rodada do dia";
   return `<main class="screen home-screen">
     <section class="home-hero">
       <div class="home-hero-copy">
@@ -200,11 +273,12 @@ function topicsScreen() {
         <h1>Quem representa o Brasil que você imagina?</h1>
         <p class="lead">Escolha entre pessoas públicas, conheça cada perfil e veja seu ranking ganhar forma — uma decisão por vez.</p>
         <div class="home-actions">
-          <button class="primary home-primary" type="button" id="start-election">${state.personalDuels ? "Continuar escolhendo" : "Começar agora"}<span aria-hidden="true">→</span></button>
+          <button class="primary home-primary" type="button" id="start-election">${dailyAction}<span aria-hidden="true">→</span></button>
           <button class="home-ranking-link" type="button" id="open-ranking">Ver ranking do público</button>
+          <button class="home-ranking-link" type="button" id="open-prediction-results">Meu placar de apostas</button>
         </div>
         <div class="home-trust" aria-label="Informações da edição">
-          <span><strong>${approvedCount}</strong> perfis com foto aprovada</span>
+          <span><strong>${dailyAnswered}/${dailyTotal}</strong> rodada do dia</span>
           <span><strong>${state.globalDuels}</strong> escolhas confirmadas</span>
         </div>
       </div>
@@ -220,38 +294,146 @@ function topicsScreen() {
         <div><p class="eyebrow">Edição disponível</p><h2 id="home-topic-title">Eleições 2026</h2></div>
         <span class="home-live"><i aria-hidden="true"></i> no ar</span>
       </div>
-      <p>Compare políticos e influenciadores que já passaram pelo gate de fotografia. Segure qualquer carta para conhecer o perfil completo antes de escolher.</p>
-      <button class="home-topic-cta" type="button" id="start-election-secondary"><span>Entrar na rodada</span><b aria-hidden="true">→</b></button>
+      <p>Dez escolhas fixas, iguais para todo mundo, fechadas à meia-noite de São Paulo. Segure qualquer carta para conhecer o perfil antes de escolher.</p>
+      <button class="home-topic-cta" type="button" id="start-election-secondary"><span>${dailyAction}</span><b aria-hidden="true">→</b></button>
     </section>
 
     <section class="home-how" aria-labelledby="home-how-title">
       <div><p class="eyebrow">Como funciona</p><h2 id="home-how-title">Rápido de jogar. Fácil de entender.</h2></div>
       <ol>
-        <li><span>01</span><strong>Observe as cartas</strong><small>As opções mudam a cada rodada.</small></li>
+        <li><span>01</span><strong>Jogue as mesmas dez</strong><small>O baralho do dia é igual para todos.</small></li>
         <li><span>02</span><strong>Escolha sua preferida</strong><small>Um toque confirma a sua decisão.</small></li>
-        <li><span>03</span><strong>Acompanhe o ranking</strong><small>Veja seu retrato pessoal e o placar do público.</small></li>
+        <li><span>03</span><strong>Feche 10/10</strong><small>O recorte só inclui sessões concluídas.</small></li>
       </ol>
     </section>
 
     <section class="home-next" aria-label="Perfis disponíveis nesta edição">
       <p class="eyebrow">Todos no ar</p>
-      <div><strong>Políticos + influenciadores</strong><span>54 perfis com foto aprovada</span><small>Disponível</small></div>
+      <div><strong>Políticos + influenciadores</strong><span>${approvedCount} perfis com foto aprovada</span><small>Disponível</small></div>
     </section>
     <p class="legal-note home-legal">Experiência lúdica de opinião. Não constitui pesquisa eleitoral.</p>
   </main>`;
 }
 
+function dailyClosingScreen() {
+  const session = state.dailySession;
+  const byId = new Map(state.dailyCandidates.map((candidate) => [candidate.id, candidate]));
+  const choices = session.answers.map((answer) => {
+    const candidate = byId.get(answer.winnerId);
+    return `<li><span>${String(answer.slot).padStart(2, "0")}</span><strong>${escapeHtml(candidate?.displayName || shortName(candidate?.name || answer.winnerId))}</strong></li>`;
+  }).join("");
+  return `<main class="screen daily-close-screen">
+    <section class="daily-close-hero">
+      <p class="eyebrow">Rodada do dia · 10/10</p>
+      <span class="daily-close-mark" aria-hidden="true">✓</span>
+      <h1>Você fechou a rodada.</h1>
+      <p class="lead">Suas dez preferências e ${session.predictionProgress.predicted} aposta${session.predictionProgress.predicted === 1 ? "" : "s"} ficaram registradas. Este é um recorte fechado — amanhã, todo mundo recebe outro baralho.</p>
+      <p class="daily-methodology">${escapeHtml(session.cut.methodology)}</p>
+      <small>O resultado público final fica disponível depois de ${new Date(session.cut.availableAt).toLocaleString("pt-BR", { timeZone: session.ruleset.timeZone, hour: "2-digit", minute: "2-digit" })}. Somente sessões 10/10 entram no recorte.</small>
+    </section>
+    <section class="daily-receipt" aria-labelledby="daily-receipt-title">
+      <div><p class="eyebrow">Seu comprovante</p><h2 id="daily-receipt-title">As dez escolhidas</h2></div>
+      <ol>${choices}</ol>
+    </section>
+    <div class="daily-close-actions">
+      <button class="primary" id="open-prediction-results" type="button">Ver meu placar de apostas</button>
+      <button class="primary" id="start-free-mode" type="button">Continuar no modo livre</button>
+      <button class="secondary" id="daily-open-ranking" type="button">Ver meu ranking</button>
+    </div>
+    <p class="legal-note">Experiência lúdica de opinião. Não constitui pesquisa eleitoral.</p>
+  </main>`;
+}
+
+function dailyPredictionScreen() {
+  const pending = state.dailySession.pendingPrediction;
+  const failed = Boolean(state.pendingPredictionAction && state.predictionError);
+  const instruction = state.predictionBusy
+    ? "Guardando sua aposta…"
+    : state.predictionError || "Aposte em quem será a pessoa mais escolhida neste slot.";
+  return `<main class="screen duel-screen prediction-screen" data-game-mode="daily-prediction" aria-busy="${state.predictionBusy ? "true" : "false"}">
+    <div class="duel-head"><div><p class="eyebrow">Aposta opcional · slot ${pending.slot}</p><h1>E o Brasil, escolhe quem?</h1></div><span class="progress-pill">${pending.slot}/${state.dailySession.progress.total}</span></div>
+    <section class="prediction-baseline" aria-label="Linha de base da aposta"><strong>25%</strong><span>é a chance de acertar ao acaso entre quatro cartas</span></section>
+    <p class="round-instruction${state.predictionError ? " is-error" : ""}" role="${state.predictionError ? "alert" : "status"}">${escapeHtml(instruction)}</p>
+    ${failed ? '<button class="retry-vote" id="retry-prediction" type="button">Tentar a mesma aposta novamente</button><button class="secondary prediction-refresh" id="refresh-prediction" type="button">Atualizar estado</button>' : ""}
+    <div class="arena arena-four prediction-arena">${state.round.map((candidate) => card(candidate, { mode: "prediction" })).join("")}</div>
+    <button class="skip-button" type="button" id="skip-prediction" ${state.predictionBusy || state.pendingPredictionAction ? "disabled" : ""}>Pular esta aposta</button>
+    <p class="daily-fixed-note">Sua preferência já foi confirmada. A aposta é separada, opcional e não altera ranking nem progresso.</p>
+    <p class="prediction-sealed">O resultado só aparece depois do fechamento do recorte diário — nunca ao vivo.</p>
+  </main>`;
+}
+
+function predictionResultLabel(round, byId) {
+  if (round.result === "correct") return "Acertou";
+  if (round.result === "incorrect") return "Não acertou";
+  if (round.result === "skipped") return "Pulou";
+  if (round.result === "tie") return "Empate — não pontua";
+  if (round.result === "no-sample") return "Sem amostra — não pontua";
+  if (!round.preference) return "Não jogou este slot";
+  const predicted = byId.get(round.prediction?.candidateId);
+  return predicted ? `Apostou em ${predicted.displayName || shortName(predicted.name)}` : "Sem aposta";
+}
+
+function dailyPredictionResultsScreen() {
+  if (state.predictionResultsLoading || state.predictionResultsError) {
+    return `<main class="screen connection prediction-results-state"><section class="panel"><p class="eyebrow">Seu placar de apostas</p><h1>${state.predictionResultsError ? "Não conseguimos abrir o placar." : "Apurando recortes fechados…"}</h1>${state.predictionResultsError ? `<p role="alert">${escapeHtml(state.predictionResultsError)}</p><button class="primary" id="retry-prediction-results" type="button">Tentar novamente</button>` : '<p role="status">Nenhum resultado ao vivo será exibido.</p>'}<button class="secondary" id="prediction-results-home" type="button">Voltar ao início</button></section></main>`;
+  }
+  const results = state.predictionResults;
+  if (!results?.sessions.length) {
+    return `<main class="screen prediction-results-screen"><section class="prediction-score-card"><p class="eyebrow">Seu placar de apostas</p><h1>Ainda não há recorte fechado.</h1><p>Faça apostas opcionais na rodada do dia. Elas só serão apuradas depois da meia-noite de São Paulo.</p><strong class="prediction-baseline-copy">Linha de base: 25%</strong></section><button class="primary" id="prediction-results-home" type="button">Voltar ao início</button></main>`;
+  }
+  const score = results.score;
+  const accuracy = score.accuracyPercent === null ? "—" : `${String(score.accuracyPercent).replace(".", ",")}%`;
+  const sessions = results.sessions.map((session) => {
+    const byId = new Map(session.catalog.map((candidate) => [candidate.id, candidate]));
+    const rounds = session.rounds.map((round) => {
+      const predicted = byId.get(round.prediction?.candidateId);
+      const winner = byId.get(round.winnerId);
+      const distribution = round.choices.map((choice) => {
+        const candidate = byId.get(choice.candidateId);
+        return `<li><span><b>${escapeHtml(candidate?.displayName || shortName(candidate?.name || choice.candidateId))}</b><small>${String(choice.percent).replace(".", ",")}% · ${choice.count}</small></span><i aria-hidden="true"><em style="width:${choice.percent}%"></em></i></li>`;
+      }).join("");
+      const actual = round.outcome === "decided"
+        ? `Mais escolhida: ${winner?.displayName || shortName(winner?.name || round.winnerId)}`
+        : round.outcome === "tie" ? "Empate na liderança" : "Sem sessão 10/10 na amostra";
+      const predictionCopy = round.prediction?.skipped
+        ? "Você pulou"
+        : predicted ? `Sua aposta: ${predicted.displayName || shortName(predicted.name)}` : "Você não respondeu";
+      return `<li class="prediction-result-round is-${escapeHtml(round.result)}"><div><span>Slot ${round.slot}</span><strong>${escapeHtml(predictionResultLabel(round, byId))}</strong><small>${escapeHtml(predictionCopy)} · ${escapeHtml(actual)}</small></div><ul aria-label="Distribuição do slot ${round.slot}">${distribution}</ul></li>`;
+    }).join("");
+    const date = new Date(`${session.edition.date}T12:00:00`).toLocaleDateString("pt-BR");
+    return `<details class="prediction-session"${results.sessions[0] === session ? " open" : ""}><summary><span><strong>${escapeHtml(date)}</strong><small>${escapeHtml(session.methodology)}</small></span><b>${session.completedPlayers} sessão${session.completedPlayers === 1 ? "" : "ões"} 10/10</b></summary>${session.sampleNotice ? `<p class="prediction-sample-note">${escapeHtml(session.sampleNotice)}</p>` : ""}<ol>${rounds}</ol></details>`;
+  }).join("");
+  return `<main class="screen prediction-results-screen">
+    <section class="prediction-score-card"><p class="eyebrow">Seu placar de apostas</p><h1>${accuracy}</h1><p><strong>${score.correct} de ${score.scored}</strong> apostas apuráveis corretas.</p><span>Acima de <b>${results.baselinePercent}%</b>, você supera a escolha ao acaso entre quatro.</span><small>Empates, ausência de amostra, pulos e slots sem resposta não contam como acerto nem erro.</small></section>
+    <section class="prediction-history" aria-labelledby="prediction-history-title"><div><p class="eyebrow">Recortes fechados</p><h2 id="prediction-history-title">Preferência × consenso percebido</h2></div>${sessions}</section>
+    <button class="primary" id="prediction-results-home" type="button">Voltar ao início</button>
+    <p class="legal-note">Este placar mede apenas a precisão das suas apostas. Não altera Elo, ranking ou contagem de confrontos.</p>
+  </main>`;
+}
+
 function duelScreen() {
+  if (state.gameMode === "daily" && (state.dailyLoading || state.dailyLoadError)) {
+    const error = state.dailyLoadError
+      ? `<p>${escapeHtml(state.dailyLoadError)}</p><button class="primary" id="retry-daily" type="button">Tentar novamente</button><button class="secondary" id="daily-loading-free" type="button">Ir para o modo livre</button>`
+      : '<p role="status">Atualizando o baralho do dia…</p>';
+    return `<main class="screen connection"><section class="panel"><p class="eyebrow">Rodada do dia</p><h1>${state.dailyLoadError ? "Não conseguimos atualizar a rodada." : "Buscando a edição vigente…"}</h1>${error}</section></main>`;
+  }
+  if (state.gameMode === "daily" && state.dailySession?.pendingPrediction) return dailyPredictionScreen();
+  if (state.gameMode === "daily" && state.dailySession?.status === "completed") return dailyClosingScreen();
   const recovery = voteRecoveryControl(state);
   const feedback = state.personalFeedbackMessage
     ? `<section class="round-feedback" aria-live="polite" aria-atomic="true"><p class="feedback-channel feedback-personal"><strong>No seu ranking</strong><span>${escapeHtml(state.personalFeedbackMessage)}</span></p>${state.globalFeedbackMessage ? `<p class="feedback-channel feedback-global"><strong>No placar do público</strong><span>${escapeHtml(state.globalFeedbackMessage)}</span></p>` : ""}</section>`
     : `<p class="round-instruction${state.result ? " is-result" : ""}${state.resultTone === "erro" ? " is-error" : ""}" role="status">${escapeHtml(state.result || "Toque na sua preferida. Segure para conhecer o perfil.")}</p>`;
-  return `<main class="screen duel-screen" data-vote-phase="${escapeHtml(state.votePhase)}" aria-busy="${state.busy ? "true" : "false"}">
-    <div class="duel-head"><div><p class="eyebrow">Escolha uma entre quatro</p><h1>Quem você prefere?</h1></div><span class="progress-pill">${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}</span></div>
+  const daily = state.gameMode === "daily";
+  const progress = daily
+    ? `${state.dailySession.progress.answered + 1}/${state.dailySession.progress.total}`
+    : `${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}`;
+  return `<main class="screen duel-screen" data-game-mode="${daily ? "daily" : "free"}" data-vote-phase="${escapeHtml(state.votePhase)}" aria-busy="${state.busy ? "true" : "false"}">
+    <div class="duel-head"><div><p class="eyebrow">${daily ? "Rodada do dia" : "Modo livre"}</p><h1>Quem você prefere?</h1></div><span class="progress-pill">${progress}</span></div>
     ${feedback}
     ${recovery.visible ? `<button class="retry-vote" type="button" id="${recovery.id}" ${recovery.disabled ? "disabled" : ""}>${escapeHtml(recovery.label)}</button>` : ""}
     <div class="arena arena-four">${state.round.map(card).join("")}</div>
-    <button class="skip-button" type="button" id="skip-round" ${state.busy || state.pendingWinnerId ? "disabled" : ""}>Nenhuma destas · trocar as quatro</button>
+    ${daily ? '<p class="daily-fixed-note">Este slot é igual para todos e não pode ser trocado.</p>' : `<button class="skip-button" type="button" id="skip-round" ${state.busy || state.pendingWinnerId ? "disabled" : ""}>Nenhuma destas · trocar as quatro</button>`}
   </main>`;
 }
 
@@ -319,21 +501,33 @@ function connectionScreen() {
 
 function coachOverlay() {
   if (!state.showCoach) return "";
-  return `<div class="coach-overlay" role="dialog" aria-modal="true" aria-labelledby="coach-title"><section class="coach-card"><span class="coach-icon" aria-hidden="true">${brandSymbol("coach-symbol")}</span><p class="eyebrow">Primeira rodada</p><h2 id="coach-title">Escolha uma entre quatro.</h2><p>Toque na sua preferida. Segure qualquer carta para conhecer a pessoa. Se nenhuma fizer sentido, troque as quatro.</p><button class="primary" id="dismiss-coach" type="button">Começar rodada</button></section></div>`;
+  const finalInstruction = state.gameMode === "daily"
+    ? "Esta combinação é fixa e igual para todos: não há troca no modo diário."
+    : "Se nenhuma fizer sentido, troque as quatro.";
+  return `<div class="coach-overlay" role="dialog" aria-modal="true" aria-labelledby="coach-title"><section class="coach-card"><span class="coach-icon" aria-hidden="true">${brandSymbol("coach-symbol")}</span><p class="eyebrow">Primeira rodada</p><h2 id="coach-title">Escolha uma entre quatro.</h2><p>Toque na sua preferida. Segure qualquer carta para conhecer a pessoa. ${finalInstruction}</p><button class="primary" id="dismiss-coach" type="button">Começar rodada</button></section></div>`;
 }
 
 function render() {
   if (!state.ready) {
     app.innerHTML = `<div class="app-shell">${header()}${state.error ? connectionScreen() : '<main class="connection"><p>Preparando o duelo…</p></main>'}</div>`;
   } else {
-    const screen = state.screen === "duel" ? duelScreen() : state.screen === "ranking" ? rankingScreen() : state.screen === "collection" ? collectionScreen() : topicsScreen();
+    const screen = state.screen === "duel"
+      ? duelScreen()
+      : state.screen === "ranking"
+        ? rankingScreen()
+        : state.screen === "collection"
+          ? collectionScreen()
+          : state.screen === "prediction-results"
+            ? dailyPredictionResultsScreen()
+            : topicsScreen();
     app.innerHTML = `<div class="app-shell">${header()}${screen}${nav()}</div><dialog id="modal"></dialog>${coachOverlay()}${authOverlay()}`;
   }
   bindEvents();
 }
 
 function showProfile(id) {
-  const person = state.candidates.find((candidate) => candidate.id === id);
+  const person = state.dailyCandidates.find((candidate) => candidate.id === id)
+    || state.candidates.find((candidate) => candidate.id === id);
   if (!person) return;
   sound.play("profile");
   const modal = document.querySelector("#modal");
@@ -344,7 +538,8 @@ function showProfile(id) {
     const label = typeof source === "string" ? "Fonte" : source.label || source.publisher || "Fonte";
     return href ? `<li><a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a></li>` : "";
   }).join("");
-  const canVote = state.screen === "duel" && state.round.some((candidate) => candidate.id === person.id) && !state.busy && !state.pendingWinnerId;
+  const canVote = state.screen === "duel" && !state.dailySession?.pendingPrediction
+    && state.round.some((candidate) => candidate.id === person.id) && !state.busy && !state.pendingWinnerId;
   modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar resumo">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2>${escapeHtml(person.name)}</h2><p class="profile-role"><strong>${escapeHtml(candidateRole(person))}</strong></p>${metadata.length ? `<p class="profile-meta">${metadata.map(escapeHtml).join(" · ")}</p>` : ""}${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions">${canVote ? `<button class="primary" id="vote-from-profile" data-candidate="${escapeHtml(person.id)}" type="button">Escolher esta pessoa</button>` : ""}<button class="secondary" id="close-modal" type="button">Voltar ao duelo</button></div>`;
   let silentClose = false;
   modal.showModal();
@@ -367,6 +562,7 @@ function showProfile(id) {
 }
 
 function chooseNextRound() {
+  if (state.gameMode !== "free") throw new Error("rodada diária só avança pela resposta autoritativa do servidor");
   state.previousRound = state.round.map(({ id }) => id);
   const next = nextBalancedGroup(state.candidates, state.matchQueue, state.previousRound);
   state.round = next.group;
@@ -380,11 +576,49 @@ function chooseNextRound() {
   state.sessionRecoveryMode = "";
 }
 
-function enterDuel() {
-  sound.play("enter");
-  state.screen = "duel";
-  state.showCoach = localStorage.getItem("polimatch:v4:round-coach") !== "seen";
+async function refreshDailySession(identity, { showCoach = false } = {}) {
+  const loadEpoch = Number(state.dailyLoadEpoch || 0) + 1;
+  state.dailyLoadEpoch = loadEpoch;
+  state.dailyLoading = true;
+  state.dailyLoadError = "";
   render();
+  try {
+    const session = await loadDailySession(identity.recoveryKey);
+    if (state.dailyLoadEpoch !== loadEpoch || !isCurrentVoteIdentity(state, identity)) return false;
+    installDailySession(session);
+    state.showCoach = showCoach && state.dailySession.status === "active"
+      && localStorage.getItem("polimatch:v4:round-coach") !== "seen";
+    render();
+    return true;
+  } catch (error) {
+    if (state.dailyLoadEpoch !== loadEpoch || !isCurrentVoteIdentity(state, identity)) return false;
+    state.dailyLoading = false;
+    state.dailyLoadError = error.message || "Falha desconhecida";
+    state.showCoach = false;
+    render();
+    return false;
+  }
+}
+
+async function enterDuel(mode = state.gameMode) {
+  if (state.busy) return;
+  sound.play("enter");
+  const previousMode = state.gameMode;
+  state.dailyLoadEpoch = Number(state.dailyLoadEpoch || 0) + 1;
+  state.gameMode = mode;
+  state.screen = "duel";
+  state.dailyLoadError = "";
+  if (mode === "free") {
+    state.dailyLoading = false;
+    if (previousMode !== "free" || state.round.length !== 4) prepareFreeRound();
+    state.showCoach = localStorage.getItem("polimatch:v4:round-coach") !== "seen";
+    render();
+    return;
+  }
+
+  const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+  state.showCoach = false;
+  await refreshDailySession(identity, { showCoach: true });
 }
 
 async function vote(winnerId, { retry = false } = {}) {
@@ -392,9 +626,14 @@ async function vote(winnerId, { retry = false } = {}) {
   const winner = state.round.find(({ id }) => id === winnerId);
   if (!winner || state.round.length !== 4) return;
   const attempt = {
+    gameMode: state.gameMode,
     roundId: state.roundId,
     winnerId: winner.id,
     candidateIds: state.round.map(({ id }) => id),
+    ...(state.gameMode === "daily" ? {
+      editionId: state.dailySession.edition.id,
+      slot: state.dailySession.round.slot,
+    } : {}),
   };
   const attemptIdentity = {
     epoch: state.identityEpoch,
@@ -416,12 +655,35 @@ async function vote(winnerId, { retry = false } = {}) {
   state.resultTone = "";
   render();
   try {
-    const response = await submitRoundVote(attempt.roundId, attempt.winnerId, attempt.candidateIds, "eleicoes-2026", {
-      recoveryKey: attemptIdentity.recoveryKey,
-      version: attemptPlayerVersion,
-    });
+    const response = attempt.gameMode === "daily"
+      ? await submitDailyVote(attempt.roundId, attempt.editionId, attempt.slot, attempt.winnerId, "eleicoes-2026", {
+        recoveryKey: attemptIdentity.recoveryKey,
+        version: attemptPlayerVersion,
+      })
+      : await submitRoundVote(attempt.roundId, attempt.winnerId, attempt.candidateIds, "eleicoes-2026", {
+        recoveryKey: attemptIdentity.recoveryKey,
+        version: attemptPlayerVersion,
+      });
     if (!isCurrentVoteIdentity(state, attemptIdentity)) return;
-    const confirmed = confirmedVoteData(response, state.candidates, attempt, state);
+    const dailyMode = attempt.gameMode === "daily";
+    const confirmed = dailyMode
+      ? confirmedDailyVoteData(response, state.candidates, attempt, state)
+      : confirmedVoteData(response, state.candidates, attempt, state);
+    let landingDailySession = dailyMode ? confirmed.dailySession : null;
+    let forceDailyRefresh = false;
+    if (dailyMode && response.round?.status === "alreadyProcessed") {
+      try {
+        const currentDailySession = validateDailySession(await loadDailySession(attemptIdentity.recoveryKey));
+        if (!isCurrentVoteIdentity(state, attemptIdentity)) return;
+        landingDailySession = currentDailySession;
+      } catch {
+        // Um replay pode pertencer à edição que acabou de fechar. Sem uma
+        // leitura autoritativa, nunca instalamos a sessão histórica como se
+        // ainda aceitasse o próximo slot.
+        forceDailyRefresh = true;
+        landingDailySession = null;
+      }
+    }
     state.pendingWinnerId = "";
     state.votePhase = VOTE_PHASES.CONFIRMED;
     state.resultTone = "";
@@ -431,6 +693,8 @@ async function vote(winnerId, { retry = false } = {}) {
     state.playerVersion = confirmed.playerVersion;
     state.globalDuels = confirmed.globalDuels;
     state.personalDuels = confirmed.personalDuels;
+    state.pendingDailySession = landingDailySession;
+    state.pendingDailyRefresh = forceDailyRefresh;
     const { channels } = confirmed;
     state.roundOutcome = channels.personal;
     state.personalFeedbackMessage = channels.personal.message;
@@ -441,7 +705,23 @@ async function vote(winnerId, { retry = false } = {}) {
     sound.play(feedbackEvent);
     try { navigator.vibrate?.(hapticPattern(feedbackEvent)); } catch {}
     roundAdvanceTimer = setTimeout(() => {
-      chooseNextRound();
+      if (dailyMode) {
+        if (state.pendingDailyRefresh || !state.pendingDailySession) {
+          state.pendingDailySession = null;
+          state.pendingDailyRefresh = false;
+          state.busy = false;
+          state.selectedId = "";
+          state.roundOutcome = null;
+          state.personalFeedbackMessage = "";
+          state.globalFeedbackMessage = "";
+          enterDuel("daily");
+          return;
+        }
+        installDailySession(state.pendingDailySession);
+        state.pendingDailySession = null;
+      } else {
+        chooseNextRound();
+      }
       state.busy = false;
       state.selectedId = "";
       state.roundOutcome = null;
@@ -457,7 +737,134 @@ async function vote(winnerId, { retry = false } = {}) {
     }, 1050);
   } catch (error) {
     if (!isCurrentVoteIdentity(state, attemptIdentity)) return;
-    await recoverFromVoteFailure(error, winner, attemptIdentity);
+    await recoverFromVoteFailure(error, winner, attemptIdentity, attempt.gameMode);
+  }
+}
+
+async function answerDailyPrediction(candidateId, { retry = false } = {}) {
+  if (state.predictionBusy || !state.dailySession?.pendingPrediction) return;
+  const action = retry ? state.pendingPredictionAction : { candidateId };
+  if (!action || (state.pendingPredictionAction && !retry)) return;
+  const pending = state.dailySession.pendingPrediction;
+  const attempt = {
+    predictionId: state.predictionId,
+    editionId: state.dailySession.edition.id,
+    slot: pending.slot,
+    candidateId: action.candidateId,
+  };
+  if (attempt.candidateId !== null && !pending.candidateIds.includes(attempt.candidateId)) return;
+  const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+  state.predictionBusy = true;
+  state.predictionError = "";
+  state.pendingPredictionAction = action;
+  state.selectedId = attempt.candidateId || "";
+  render();
+  try {
+    const response = await submitDailyPrediction(
+      attempt.predictionId,
+      attempt.editionId,
+      attempt.slot,
+      attempt.candidateId,
+      "eleicoes-2026",
+      { recoveryKey: identity.recoveryKey },
+    );
+    if (!isCurrentVoteIdentity(state, identity)) return;
+    const confirmed = confirmedDailyPredictionData(response, attempt, state.dailySession);
+    const replayed = confirmed.prediction.status === "alreadyProcessed";
+    installDailySession(confirmed.dailySession);
+    if (replayed) {
+      // A sessão antiga está confirmada, mas não pode voltar a ficar interativa
+      // enquanto a edição vigente é consultada.
+      state.busy = true;
+      state.predictionBusy = true;
+      state.dailyLoading = true;
+    }
+    const confirmationMessage = attempt.candidateId === null
+      ? "Aposta pulada. Sua preferência continua registrada."
+      : "Aposta guardada. O resultado só aparece depois do fechamento.";
+    state.result = confirmationMessage;
+    state.resultTone = "";
+    state.selectedId = "";
+    sound.play("confirm");
+    render();
+    if (replayed) {
+      // Primeiro instala a resposta antiga que acabou de ser correlacionada.
+      // Só então consulta a edição vigente: atravessar a meia-noite não pode
+      // transformar uma confirmação idempotente em falha nem reabrir o retry.
+      const confirmedEditionId = confirmed.dailySession.edition.id;
+      const resynced = await resyncDailyState(identity);
+      if (!isCurrentVoteIdentity(state, identity)) return;
+      state.busy = false;
+      state.predictionBusy = false;
+      state.dailyLoading = !resynced;
+      state.dailyLoadError = resynced
+        ? ""
+        : "A aposta foi confirmada, mas não conseguimos abrir a edição vigente.";
+      const editionChanged = resynced && state.dailySession.edition.id !== confirmedEditionId;
+      if (editionChanged) {
+        state.personalFeedbackMessage = "";
+        state.globalFeedbackMessage = "";
+        state.roundOutcome = null;
+      }
+      state.result = editionChanged
+        ? `${confirmationMessage} A edição vigente já foi aberta.`
+        : resynced
+          ? confirmationMessage
+          : `${confirmationMessage} Atualize para abrir a edição vigente.`;
+      state.resultTone = "";
+      render();
+    }
+  } catch (error) {
+    if (!isCurrentVoteIdentity(state, identity)) return;
+    if (error?.status === 409 && [
+      "DAILY_PREDICTION_ALREADY_RECORDED",
+      "DAILY_PREDICTION_OUT_OF_ORDER",
+      "DAILY_PREDICTION_CLOSED",
+    ].includes(error.code)) {
+      const resynced = await resyncDailyState(identity);
+      if (!isCurrentVoteIdentity(state, identity)) return;
+      state.predictionBusy = false;
+      state.pendingPredictionAction = null;
+      state.selectedId = "";
+      state.predictionError = "";
+      state.result = resynced
+        ? error.code === "DAILY_PREDICTION_CLOSED"
+          ? "O recorte fechou. Abrimos o baralho vigente sem registrar aposta retroativa."
+          : "Outro acesso já respondeu. Seu jogo foi atualizado."
+        : "Não conseguimos atualizar a rodada do dia.";
+      state.resultTone = resynced ? "" : "erro";
+      render();
+      sound.play(resynced ? "navigation" : "error");
+      return;
+    }
+    state.predictionBusy = false;
+    state.selectedId = "";
+    state.predictionError = error?.unreachable
+      ? "Não sabemos se a aposta chegou. Repita a mesma tentativa ou atualize o estado."
+      : error?.message || "Não foi possível guardar a aposta.";
+    render();
+    sound.play("error");
+  }
+}
+
+async function openDailyPredictionResults() {
+  if (state.predictionResultsLoading) return;
+  const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+  state.screen = "prediction-results";
+  state.predictionResultsLoading = true;
+  state.predictionResultsError = "";
+  render();
+  try {
+    const results = validateDailyPredictionResults(await loadDailyPredictionResults(identity.recoveryKey));
+    if (!isCurrentVoteIdentity(state, identity)) return;
+    state.predictionResults = results;
+    state.predictionResultsLoading = false;
+    render();
+  } catch (error) {
+    if (!isCurrentVoteIdentity(state, identity)) return;
+    state.predictionResultsLoading = false;
+    state.predictionResultsError = error.message || "Falha desconhecida";
+    render();
   }
 }
 
@@ -468,7 +875,7 @@ async function vote(winnerId, { retry = false } = {}) {
  * contado" — e nenhum deles oferecia saída. Pior: quando o tempo se esgota, o
  * servidor pode já ter gravado a rodada, e afirmar que não contou é falso.
  */
-async function recoverFromVoteFailure(error, winner, attemptIdentity) {
+async function recoverFromVoteFailure(error, winner, attemptIdentity, attemptGameMode) {
   state.busy = false;
   state.selectedId = "";
   state.roundOutcome = null;
@@ -476,6 +883,25 @@ async function recoverFromVoteFailure(error, winner, attemptIdentity) {
   state.globalFeedbackMessage = "";
   state.resultTone = "erro";
   state.pendingWinnerId = winner.id;
+  if (attemptGameMode === "daily" && error?.status === 409
+    && ["DAILY_EDITION_CLOSED", "DAILY_SLOT_OUT_OF_ORDER", "DAILY_PREDICTION_REQUIRED"].includes(error?.code)) {
+    const resynced = await resyncDailyState(attemptIdentity);
+    if (!isCurrentVoteIdentity(state, attemptIdentity)) return;
+    state.pendingWinnerId = "";
+    state.votePhase = VOTE_PHASES.READY;
+    state.voteAction = "";
+    state.resultTone = resynced ? "" : "erro";
+    state.result = resynced
+      ? error.code === "DAILY_EDITION_CLOSED"
+        ? "Virou o dia em São Paulo. O novo baralho já está na mesa."
+        : error.code === "DAILY_PREDICTION_REQUIRED"
+          ? "Sua preferência já foi confirmada. Retomamos na aposta opcional."
+        : "Seu outro acesso já avançou a rodada. Retomamos do próximo slot."
+      : "Não conseguimos atualizar a rodada do dia. Recarregue para continuar.";
+    render();
+    sound.play(resynced ? "navigation" : "error");
+    return;
+  }
   const failure = voteFailureState(error);
   state.votePhase = failure.phase;
   state.voteAction = failure.action;
@@ -530,12 +956,34 @@ async function restoreVoteSession() {
       state.sessionRecoveryMode = "load";
       localStorage.setItem("polimatch:v3:recovery-key", recoveryKey);
     }
-    const personal = await loadPlayerRanking(recoveryKey);
+    const restoringDailyVote = state.gameMode === "daily";
+    const [personal, dailySession] = await Promise.all([
+      loadPlayerRanking(recoveryKey),
+      // O modo livre não depende da disponibilidade do serviço diário. Só uma
+      // tentativa diária precisa restaurar ambos os estados em conjunto.
+      restoringDailyVote ? loadDailySession(recoveryKey) : Promise.resolve(null),
+    ]);
     if (Number(state.identityEpoch || 0) !== recoveryEpoch || state.recoveryKey !== recoveryKey) return;
     state.playerVersion = personal.version ?? 0;
     state.personalRanking = rankingForCatalog(personal, state.candidates);
     state.personalRankingPolicy = personal.rankingPolicy || null;
     state.personalDuels = Number(personal.duels) || 0;
+    if (dailySession) {
+      const validatedDaily = validateDailySession(dailySession);
+      const changedRound = dailySessionRoundChanged(state.dailySession, validatedDaily);
+      if (state.gameMode === "daily" && changedRound) {
+        installDailySession(validatedDaily);
+        state.pendingWinnerId = "";
+        state.busy = false;
+        state.votePhase = VOTE_PHASES.READY;
+        state.voteAction = "";
+        state.sessionRecoveryMode = "";
+        state.result = "A rodada do dia mudou enquanto a sessão era restabelecida.";
+        render();
+        return;
+      }
+      state.dailySession = validatedDaily;
+    }
     state.busy = false;
     state.votePhase = VOTE_PHASES.RETRY_READY;
     state.voteAction = VOTE_ACTIONS.RETRY;
@@ -573,6 +1021,25 @@ async function resyncPlayer(attemptIdentity) {
   }
 }
 
+async function resyncDailyState(attemptIdentity) {
+  try {
+    const [personal, session] = await Promise.all([
+      loadPlayerRanking(attemptIdentity.recoveryKey),
+      loadDailySession(attemptIdentity.recoveryKey),
+    ]);
+    if (!isCurrentVoteIdentity(state, attemptIdentity)) return false;
+    state.playerVersion = personal.version ?? state.playerVersion;
+    state.personalRanking = rankingForCatalog(personal, state.candidates);
+    state.personalRankingPolicy = personal.rankingPolicy || state.personalRankingPolicy;
+    state.personalDuels = Number(personal.duels) || 0;
+    state.pendingDailySession = null;
+    installDailySession(session);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function bindEvents() {
   document.querySelector("#account-button")?.addEventListener("click", () => {
     sound.play("navigation");
@@ -599,16 +1066,54 @@ function bindEvents() {
     document.querySelector("#sound-toggle")?.focus();
   });
   document.querySelector("#retry")?.addEventListener("click", () => { sound.play("navigation"); initialize(); });
-  document.querySelector("#start-election")?.addEventListener("click", enterDuel);
-  document.querySelector("#start-election-secondary")?.addEventListener("click", enterDuel);
+  document.querySelector("#start-election")?.addEventListener("click", () => enterDuel("daily"));
+  document.querySelector("#start-election-secondary")?.addEventListener("click", () => enterDuel("daily"));
   document.querySelector("#open-ranking")?.addEventListener("click", () => { sound.play("navigation"); state.screen = "ranking"; state.result = ""; state.resultTone = ""; render(); });
+  document.querySelector("#open-prediction-results")?.addEventListener("click", () => { sound.play("navigation"); openDailyPredictionResults(); });
+  document.querySelector("#retry-prediction-results")?.addEventListener("click", openDailyPredictionResults);
+  document.querySelector("#prediction-results-home")?.addEventListener("click", () => {
+    sound.play("navigation");
+    state.screen = "topics";
+    state.predictionResultsError = "";
+    render();
+  });
   document.querySelector("#continue-duels")?.addEventListener("click", () => { state.result = ""; state.resultTone = ""; enterDuel(); });
+  document.querySelector("#start-free-mode")?.addEventListener("click", () => {
+    state.result = "";
+    state.resultTone = "";
+    enterDuel("free");
+  });
+  document.querySelector("#retry-daily")?.addEventListener("click", () => enterDuel("daily"));
+  document.querySelector("#daily-loading-free")?.addEventListener("click", () => enterDuel("free"));
+  document.querySelector("#daily-open-ranking")?.addEventListener("click", () => {
+    sound.play("navigation");
+    state.screen = "ranking";
+    state.rankingView = "personal";
+    state.result = "";
+    state.resultTone = "";
+    render();
+  });
   document.querySelector("#retry-vote")?.addEventListener("click", () => {
     if (state.busy || !state.pendingWinnerId) return;
     // Mesmo `state.roundId` da tentativa anterior: se aquela chegou ao servidor,
     // esta é reconhecida como repetição e devolve o mesmo resultado.
     vote(state.pendingWinnerId, { retry: true });
   });
+  document.querySelector("#retry-prediction")?.addEventListener("click", () => answerDailyPrediction(null, { retry: true }));
+  document.querySelector("#refresh-prediction")?.addEventListener("click", async () => {
+    if (state.predictionBusy) return;
+    state.predictionBusy = true;
+    render();
+    const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+    const resynced = await resyncDailyState(identity);
+    if (!isCurrentVoteIdentity(state, identity)) return;
+    state.predictionBusy = false;
+    if (!resynced) {
+      state.predictionError = "Não conseguimos atualizar o estado. Tente novamente.";
+    }
+    render();
+  });
+  document.querySelector("#skip-prediction")?.addEventListener("click", () => answerDailyPrediction(null));
   document.querySelector("#restore-session")?.addEventListener("click", restoreVoteSession);
   document.querySelector("#skip-round")?.addEventListener("click", () => {
     if (state.busy || state.pendingWinnerId) return;
@@ -643,6 +1148,9 @@ function bindEvents() {
       try { navigator.vibrate?.(18); } catch {}
       showProfile(button.dataset.vote);
     },
+  }));
+  document.querySelectorAll("[data-predict]").forEach((button) => installPressGesture(button, {
+    onTap: () => answerDailyPrediction(button.dataset.predict),
   }));
   document.querySelectorAll("[data-profile]").forEach((button) => button.addEventListener("click", () => showProfile(button.dataset.profile)));
   document.querySelectorAll("[data-screen]").forEach((button) => button.addEventListener("click", () => {
@@ -688,26 +1196,35 @@ async function handleGoogleCredential(response) {
   state.authBusy = true;
   state.authError = "";
   render();
+  let result;
   try {
-    const result = await exchangeGoogleCredential(response.credential, state.recoveryKey);
-    clearVoteTimers();
-    resetPendingVoteForIdentityChange(state);
-    localStorage.setItem("polimatch:v3:recovery-key", result.sessionToken);
-    state.recoveryKey = result.sessionToken;
-    state.account = result.account;
-    state.personalRanking = rankingForCatalog(result.player, state.candidates);
-    state.personalRankingPolicy = result.player.rankingPolicy || state.personalRankingPolicy;
-    state.playerVersion = result.player.version;
-    state.personalDuels = Number(result.player.duels) || 0;
-    state.authBusy = false;
-    sound.play("confirm");
-    render();
+    result = await exchangeGoogleCredential(response.credential, state.recoveryKey);
   } catch (error) {
     state.authBusy = false;
     state.authError = error.message || "Não foi possível salvar seu jogo agora.";
     sound.play("error");
     render();
+    return;
   }
+  clearVoteTimers();
+  resetPendingVoteForIdentityChange(state);
+  localStorage.setItem("polimatch:v3:recovery-key", result.sessionToken);
+  state.recoveryKey = result.sessionToken;
+  state.account = result.account;
+  state.predictionResults = null;
+  state.predictionResultsError = "";
+  state.personalRanking = rankingForCatalog(result.player, state.candidates);
+  state.personalRankingPolicy = result.player.rankingPolicy || state.personalRankingPolicy;
+  state.playerVersion = result.player.version;
+  state.personalDuels = Number(result.player.duels) || 0;
+  state.gameMode = "daily";
+  state.dailyLoading = true;
+  state.authBusy = false;
+  sound.play("confirm");
+  render();
+  // A identidade já foi confirmada e persistida. Uma indisponibilidade só do
+  // serviço diário não pode desfazer o login nem bloquear ranking/modo livre.
+  await refreshDailySession({ epoch: state.identityEpoch, recoveryKey: state.recoveryKey });
 }
 
 async function signOut() {
@@ -725,14 +1242,21 @@ async function signOut() {
     resetPendingVoteForIdentityChange(state);
     state.recoveryKey = player.recoveryKey;
     state.account = null;
+    state.predictionResults = null;
+    state.predictionResultsError = "";
     state.personalRanking = rankingForCatalog(player.personal, state.candidates);
     state.personalRankingPolicy = player.personal.rankingPolicy || state.personalRankingPolicy;
     state.playerVersion = player.personal.version;
     state.personalDuels = Number(player.personal.duels) || 0;
+    state.gameMode = "daily";
+    state.dailyLoading = true;
     state.authBusy = false;
     state.authOpen = false;
     state.result = "Você saiu. Um jogo novo começou neste aparelho.";
     render();
+    // A sessão antiga já foi revogada e a identidade anônima já está ativa.
+    // O diário tem retry próprio e jamais pode restaurar visualmente a conta.
+    await refreshDailySession({ epoch: state.identityEpoch, recoveryKey: state.recoveryKey });
   } catch (error) {
     state.authBusy = false;
     state.authError = error.message || "Não foi possível sair agora.";
@@ -767,6 +1291,7 @@ async function initialize() {
   state.error = "";
   state.ready = false;
   render();
+  let identity = null;
   try {
     const [candidates, snapshot, player] = await Promise.all([loadCandidates(), loadRanking(), ensurePlayer()]);
     state.candidates = catalogForTopic(candidates);
@@ -779,16 +1304,19 @@ async function initialize() {
     state.personalRankingPolicy = player.personal.rankingPolicy || null;
     state.account = player.personal.account || null;
     state.personalDuels = Number(player.personal.duels) || 0;
-    const firstMatch = nextBalancedGroup(state.candidates);
-    state.round = firstMatch.group;
-    state.matchQueue = firstMatch.queue;
-    state.roundId = crypto.randomUUID();
+    state.gameMode = "daily";
+    state.dailyLoading = true;
     state.pendingWinnerId = "";
     state.ready = true;
+    identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
   } catch (error) {
     state.error = error.message || "Falha desconhecida";
   }
   render();
+  // O catálogo, os rankings e a identidade são o núcleo do app. O endpoint
+  // diário é opcional nesta etapa e expõe sua própria falha/retry sem derrubar
+  // home, ranking ou modo livre.
+  if (identity) await refreshDailySession(identity);
 }
 
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));

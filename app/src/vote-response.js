@@ -92,7 +92,7 @@ function requireMatchingRound(response, { roundId, winnerId, candidateIds }) {
   return { legacyReplay };
 }
 
-export function confirmedVoteData(response, candidates, attempt, current = {}) {
+export function confirmedVoteData(response, candidates, attempt, current = {}, { feedbackCandidates = candidates } = {}) {
   if (!response || !Array.isArray(response.ranking) || !Array.isArray(response.player?.ranking)) {
     throw new TypeError("resposta de voto inválida: rankings");
   }
@@ -109,7 +109,7 @@ export function confirmedVoteData(response, candidates, attempt, current = {}) {
     throw new TypeError("resposta de voto inválida: progresso sem avanço");
   }
 
-  const channels = roundFeedbackChannels(response.vote, candidates, attempt.winnerId);
+  const channels = roundFeedbackChannels(response.vote, feedbackCandidates, attempt.winnerId);
   if (legacyReplay) channels.personal.message = LEGACY_REPLAY_MESSAGE;
   return {
     ranking: rankingForCatalog(response, candidates),

@@ -62,6 +62,7 @@ test("Google identities and revocable sessions are separate from anonymous progr
   assert.match(source, /CREATE TABLE IF NOT EXISTS player_sessions/);
   assert.match(source, /session_hash char\(64\) PRIMARY KEY/);
   assert.match(source, /SELECT player_id FROM player_identities WHERE provider = 'google' AND subject = \$1/);
+  assert.match(source, /UPDATE anonymous_players SET recovery_hash = \$1 WHERE id = \$2/);
   assert.doesNotMatch(source, /credential[^\n]*INSERT INTO/i);
 });
 

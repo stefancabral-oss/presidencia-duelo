@@ -7,6 +7,7 @@
 - Branch: `feat/google-login-160`
 - PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/161
 - Commit da implementação: `d4469e6`
+- Correção de segurança: Issue https://github.com/stefancabral-oss/presidencia-duelo/issues/163, branch `fix/google-session-security-163`
 
 ## Entregue
 
@@ -18,6 +19,8 @@
 - Preservação idempotente do jogador anônimo e de seu ranking no primeiro login.
 - Recuperação do mesmo jogador por uma nova sessão em outro aparelho.
 - Sessões PoliMatch opacas, com apenas hash no PostgreSQL, validade de 90 dias e logout revogável.
+- Credencial anônima anterior rotacionada no primeiro vínculo, impedindo que ela continue acessando a conta depois do logout.
+- Logout local confirmado somente depois da revogação no servidor; falhas de rede mantêm a sessão e oferecem nova tentativa.
 - Token Google descartado após a troca e nunca persistido.
 - Fallback seguro: sem configuração Google, o jogo anônimo continua funcionando.
 
@@ -31,9 +34,9 @@
 ## Testes executados
 
 - Backend: 22 testes unitários aprovados.
-- Frontend: 39 testes unitários aprovados.
+- Frontend: 41 testes unitários aprovados.
 - Build de produção aprovado com e sem Client ID público.
-- PostgreSQL isolado: progresso anônimo preservado no primeiro login, retorno pela mesma identidade, sessão recuperável e logout revogável.
+- PostgreSQL isolado: progresso anônimo preservado no primeiro login, chave anônima anterior invalidada, retorno pela mesma identidade, sessão recuperável e logout revogável.
 - Chromium e WebKit: login opcional ausente de bloqueio e fluxo completo com provedor simulado; rodada de quatro e ranking permaneceram íntegros.
 - Evidência visual: `login-optional-mobile.png`.
 

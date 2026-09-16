@@ -7,6 +7,7 @@ import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
 import { approvedBasicCards } from "./approved-chromas.js";
 import { createSoundController } from "./sound.js";
 import { googleClientId, mountGoogleButton } from "./google-login.js";
+import { revokeSessionBeforeClearing } from "./logout.js";
 
 const app = document.querySelector("#app");
 const sound = createSoundController();
@@ -525,10 +526,13 @@ async function handleGoogleCredential(response) {
 async function signOut() {
   if (state.authBusy) return;
   state.authBusy = true;
+  state.authError = "";
   render();
-  try { await endSession(state.recoveryKey); } catch {}
-  localStorage.removeItem("polimatch:v3:recovery-key");
   try {
+    await revokeSessionBeforeClearing(state.recoveryKey, {
+      endSession,
+      clearLocalSession: () => localStorage.removeItem("polimatch:v3:recovery-key"),
+    });
     const player = await ensurePlayer();
     state.recoveryKey = player.recoveryKey;
     state.account = null;

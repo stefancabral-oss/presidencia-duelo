@@ -7,7 +7,13 @@ const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
 const browserType = { chromium, webkit }[browserName];
 const googleEnabled = process.env.POLIMATCH_E2E_GOOGLE === "1";
+const includeGlobalEvent = process.env.POLIMATCH_E2E_GLOBAL_EVENT !== "0";
 if (!browserType) throw new Error(`Navegador não suportado: ${browserName}`);
+const personalRankingPolicy = {
+  id: "pairwise-majority-scc-v1",
+  label: "maioria nos confrontos observados",
+  explanation: "A ordem usa os confrontos diretos e mantém empates sem usar exposição.",
+};
 
 const playableDisplayNames = CATALOG
   .filter(({ personId }) => hasCuratedPortrait(personId))
@@ -163,7 +169,8 @@ function ranking(decisions = 0, winnerId = "") {
     losses: decisions && candidate.id !== winnerId ? 1 : 0,
     decisions: decisions ? (candidate.id === winnerId ? 3 : 1) : 0,
     winRate: decisions && candidate.id === winnerId ? 100 : 0,
-  }));
+    rank: decisions ? (candidate.id === winnerId ? 1 : 2) : null,
+  })).sort((left, right) => (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER) || left.id.localeCompare(right.id));
 }
 
 const browser = await browserType.launch();
@@ -192,8 +199,8 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
   if (path === "/api/candidates") body = { candidates };
   else if (path === "/api/ranking") body = { duels: 0, ranking: ranking() };
   else if (path === "/api/player" && request.method() === "POST") body = { recoveryKey: "e2e-recovery-key" };
-  else if (path === "/api/player/state") body = { version: 0, duels: 0, ranking: ranking() };
-  else if (path === "/api/auth/google" && request.method() === "POST") body = { sessionToken: `pms_${"s".repeat(43)}`, account: { displayName: "Bia", avatarUrl: "" }, player: { version: 0, duels: 0, ranking: ranking(), account: { displayName: "Bia", avatarUrl: "" } } };
+  else if (path === "/api/player/state") body = { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking() };
+  else if (path === "/api/auth/google" && request.method() === "POST") body = { sessionToken: `pms_${"s".repeat(43)}`, account: { displayName: "Bia", avatarUrl: "" }, player: { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking(), account: { displayName: "Bia", avatarUrl: "" } } };
   else if (path === "/api/auth/logout" && request.method() === "POST") {
     await route.fulfill({ status: 204 });
     return;
@@ -226,12 +233,24 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
         tierChange: id === payload.winnerId ? "up" : null,
       })),
     };
+    const globalFeedback = { ...feedback, primaryEvent: "top10", rankingEvent: "top10" };
     body = {
       duels: 1,
       ranking: ranking(1, payload.winnerId),
-      player: { version: 1, duels: 1, ranking: ranking(1, payload.winnerId) },
+      player: { version: 1, duels: 1, rankingPolicy: personalRankingPolicy, ranking: ranking(1, payload.winnerId) },
       round: { winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "overtake" },
-      vote: { winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "overtake", feedback },
+      vote: {
+        winnerDelta: 45,
+        zebra: false,
+        comparisons: 3,
+        rankingEvent: "overtake",
+        feedback,
+        personalFeedback: feedback,
+        feedbackScope: "personal",
+        globalEvent: includeGlobalEvent
+          ? { scope: "global", rankingEvent: "top10", winnerDelta: 45, zebra: false, feedback: globalFeedback }
+          : null,
+      },
     };
   } else {
     await route.fulfill({ status: 404, json: { error: "mock não encontrado" } });
@@ -440,6 +459,10 @@ try {
     };
   });
   await page.getByText(/subiu de patente/i).waitFor();
+  const feedbackChannels = page.locator(".feedback-channel");
+  if (await feedbackChannels.count() !== (includeGlobalEvent ? 2 : 1)) throw new Error("Os canais de feedback não respeitaram o contrato da resposta");
+  if (!await feedbackChannels.nth(0).getByText("No seu ranking").isVisible()) throw new Error("O feedback pessoal não veio primeiro");
+  if (includeGlobalEvent && !await feedbackChannels.nth(1).getByText("No placar do público").isVisible()) throw new Error("O evento público não veio rotulado como secundário");
   if (!await page.locator("#skip-round").isDisabled()) throw new Error("A troca de rodada permaneceu ativa durante o resultado");
   if (await page.locator(".card-outcome").count() !== 4) throw new Error("O resultado visual não apareceu nas quatro cartas");
   if (await page.locator(".candidate-card.is-round-winner").count() !== 1 || await page.locator(".candidate-card.is-round-loser").count() !== 3) {
@@ -454,6 +477,12 @@ try {
   }
   if (process.env.POLIMATCH_E2E_OUTCOME_SCREENSHOT) {
     await page.waitForTimeout(180);
+    await page.evaluate(() => {
+      document.activeElement?.blur();
+      document.documentElement.style.scrollBehavior = "auto";
+      window.scrollTo(0, 0);
+    });
+    await page.waitForTimeout(60);
     await page.screenshot({ path: process.env.POLIMATCH_E2E_OUTCOME_SCREENSHOT });
   }
   await page.locator(".card-outcome").first().waitFor({ state: "hidden", timeout: 2500 });
@@ -465,6 +494,17 @@ try {
   const expectedRejected = candidates.filter(({ id }) => id !== selectedWinnerId).map(({ displayName }) => displayName);
   if (!expectedRejected.every((name) => rejected.includes(name)) || !rejected.includes("−1")) {
     throw new Error("As três comparações negativas não apareceram no resumo do ranking");
+  }
+  await page.getByRole("button", { name: "Seu ranking" }).click();
+  await page.getByText("Ordenado por maioria nos confrontos observados").waitFor();
+  if (process.env.POLIMATCH_E2E_PERSONAL_RANKING_SCREENSHOT) {
+    await page.evaluate(() => {
+      document.activeElement?.blur();
+      document.documentElement.style.scrollBehavior = "auto";
+      window.scrollTo(0, 0);
+    });
+    await page.waitForTimeout(60);
+    await page.screenshot({ path: process.env.POLIMATCH_E2E_PERSONAL_RANKING_SCREENSHOT });
   }
 
   await page.setViewportSize({ width: 1280, height: 900 });

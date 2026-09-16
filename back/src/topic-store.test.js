@@ -4,7 +4,10 @@ import {
   accessTokenHash,
   createRecoveryKey,
   createSessionToken,
+  feedbackChannelsFromSnapshots,
+  globalEventFromFeedback,
   normalizeVoteId,
+  persistedRoundChannels,
   rankingEventFromSnapshots,
   rankingFromRows,
   roundFeedbackFromSnapshots,
@@ -121,4 +124,99 @@ test("round feedback exposes real gains, losses and Elo tier crossings", () => {
   assert.equal(feedback.outcomes[0].tierChange, "up");
   assert.equal(feedback.outcomes[1].tierChange, "down");
   assert.equal(feedback.outcomes[2].tier.id, "recovery");
+});
+
+test("personal feedback is contractually derived from personal snapshots, never global ones", () => {
+  const candidateIds = ["a", "b", "c", "d"];
+  const snapshot = (winnerElo, loserElo, winnerRank) => [
+    { id: "a", elo: winnerElo, wins: 1, losses: 0, decisions: 1, rank: winnerRank },
+    ...candidateIds.slice(1).map((id, index) => ({ id, elo: loserElo - index, wins: 0, losses: 1, decisions: 1, rank: winnerRank + index + 1 })),
+  ];
+  const channels = feedbackChannelsFromSnapshots({
+    personalBefore: snapshot(1000, 1000, 4),
+    personalAfter: snapshot(1018, 994, 1),
+    globalBefore: snapshot(1100, 1060, 8),
+    globalAfter: snapshot(1145, 1045, 3),
+    candidateIds,
+    winnerId: "a",
+  });
+
+  assert.equal(channels.personalFeedback.outcomes.find(({ id }) => id === "a").delta, 18);
+  assert.equal(channels.winnerDelta, 18);
+  assert.equal(channels.globalFeedback.outcomes.find(({ id }) => id === "a").delta, 45);
+  assert.equal(channels.globalEvent.winnerDelta, 45);
+  assert.notDeepEqual(channels.personalFeedback, channels.globalFeedback);
+});
+
+test("global feedback is secondary and appears only for a relevant public event", () => {
+  const confirm = { rankingEvent: "confirm", primaryEvent: "confirm", zebra: false, outcomes: [] };
+  assert.equal(globalEventFromFeedback({ feedback: confirm }), null);
+  const leader = { ...confirm, rankingEvent: "leader", primaryEvent: "leader" };
+  assert.deepEqual(globalEventFromFeedback({ rankingEvent: "leader", winnerDelta: 17, feedback: leader }), {
+    scope: "global",
+    rankingEvent: "leader",
+    winnerDelta: 17,
+    zebra: false,
+    feedback: leader,
+  });
+});
+
+test("an idempotent legacy round is never relabelled as personal feedback", () => {
+  const legacyFeedback = {
+    rankingEvent: "top10",
+    primaryEvent: "top10",
+    zebra: false,
+    outcomes: [{ id: "lula", result: "winner", delta: 45, elo: 1100 }],
+  };
+  const channels = persistedRoundChannels({
+    ranking_event: "top10",
+    feedback: legacyFeedback,
+    feedback_scope: "legacy-global",
+    winner_delta: 45,
+    zebra: false,
+    global_ranking_event: null,
+    global_feedback: null,
+  });
+
+  assert.deepEqual(channels.personalFeedback, {
+    rankingEvent: "confirm",
+    primaryEvent: "confirm",
+    zebra: false,
+    outcomes: [],
+  });
+  assert.deepEqual(channels.feedback, channels.personalFeedback);
+  assert.notDeepEqual(channels.personalFeedback, legacyFeedback);
+  assert.equal(channels.rankingEvent, "confirm");
+  assert.equal(channels.globalEvent.scope, "global");
+  assert.equal(channels.globalEvent.rankingEvent, "top10");
+  assert.deepEqual(channels.globalEvent.feedback, legacyFeedback);
+});
+
+test("a persisted personal round restores personal and public channels independently", () => {
+  const personalFeedback = {
+    rankingEvent: "leader",
+    primaryEvent: "leader",
+    zebra: false,
+    outcomes: [{ id: "lula", result: "winner", delta: 18, elo: 1018 }],
+  };
+  const globalFeedback = {
+    rankingEvent: "top10",
+    primaryEvent: "top10",
+    zebra: false,
+    outcomes: [{ id: "lula", result: "winner", delta: 12, elo: 1110 }],
+  };
+  const channels = persistedRoundChannels({
+    ranking_event: "leader",
+    feedback: personalFeedback,
+    feedback_scope: "personal",
+    winner_delta: 18,
+    zebra: false,
+    global_ranking_event: "top10",
+    global_feedback: globalFeedback,
+  });
+
+  assert.deepEqual(channels.personalFeedback, personalFeedback);
+  assert.deepEqual(channels.feedback, personalFeedback);
+  assert.equal(channels.rankingEvent, "leader");
+  assert.deepEqual(channels.globalEvent.feedback, globalFeedback);
 });

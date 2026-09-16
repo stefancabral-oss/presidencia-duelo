@@ -1,6 +1,6 @@
 import "./styles.css";
 import { createPlayer, endSession, exchangeGoogleCredential, loadCandidates, loadPlayerRanking, loadRanking, submitRoundVote } from "./api.js";
-import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, roundOutcome, shortName } from "./domain.js";
+import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, rankingPodium, roundFeedbackChannels, shortName } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
 import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
@@ -19,6 +19,7 @@ const state = {
   previousRound: [],
   ranking: [],
   personalRanking: [],
+  personalRankingPolicy: null,
   globalDuels: 0,
   personalDuels: 0,
   rankingView: "general",
@@ -36,6 +37,8 @@ const state = {
   // "erro" faz a mensagem ser grafada como falha. Sem isso, "seu voto não foi
   // contado" sai no mesmo dourado de "invadiu o Top 10".
   resultTone: "",
+  personalFeedbackMessage: "",
+  globalFeedbackMessage: "",
   // Chave de idempotência da rodada atual. Nasce junto com as quatro cartas e
   // sobrevive às tentativas, para que repetir um voto que já chegou ao servidor
   // seja reconhecido como repetição em vez de virar uma segunda rodada.
@@ -223,9 +226,12 @@ function topicsScreen() {
 }
 
 function duelScreen() {
+  const feedback = state.personalFeedbackMessage
+    ? `<section class="round-feedback" aria-live="polite" aria-atomic="true"><p class="feedback-channel feedback-personal"><strong>No seu ranking</strong><span>${escapeHtml(state.personalFeedbackMessage)}</span></p>${state.globalFeedbackMessage ? `<p class="feedback-channel feedback-global"><strong>No placar do público</strong><span>${escapeHtml(state.globalFeedbackMessage)}</span></p>` : ""}</section>`
+    : `<p class="round-instruction${state.result ? " is-result" : ""}${state.resultTone === "erro" ? " is-error" : ""}" role="status">${escapeHtml(state.result || "Toque na sua preferida. Segure para conhecer o perfil.")}</p>`;
   return `<main class="screen duel-screen">
     <div class="duel-head"><div><p class="eyebrow">Escolha uma entre quatro</p><h1>Quem você prefere?</h1></div><span class="progress-pill">${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}</span></div>
-    <p class="round-instruction${state.result ? " is-result" : ""}${state.resultTone === "erro" ? " is-error" : ""}" role="status">${escapeHtml(state.result || "Toque na sua preferida. Segure para conhecer o perfil.")}</p>
+    ${feedback}
     ${state.pendingWinnerId ? '<button class="retry-vote" type="button" id="retry-vote">Tentar de novo</button>' : ""}
     <div class="arena arena-four">${state.round.map(card).join("")}</div>
     <button class="skip-button" type="button" id="skip-round" ${state.busy ? "disabled" : ""}>Nenhuma destas · trocar as quatro</button>
@@ -237,16 +243,19 @@ function rankingScreen() {
   const ranking = displayRanking(personal ? state.personalRanking : state.ranking, { personal });
   const filtered = filterRanking(ranking, state.rankingQuery);
   const visible = state.rankingExpanded || state.rankingQuery ? filtered : filtered.slice(0, 25);
-  const podium = ranking.filter(({ decisions }) => decisions > 0).slice(0, 3);
+  const podium = rankingPodium(ranking);
   const highlights = rankingHighlights(ranking);
   const totalDuels = personal ? state.personalDuels : state.globalDuels;
   const rows = visible.map((person) => `<button class="ranking-row" type="button" data-profile="${escapeHtml(person.id)}"><strong class="rank-position">${person.displayRank ?? "—"}</strong><span class="rank-person">${escapeHtml(person.displayName || shortName(person.name))}<small>${escapeHtml(person.affiliation || person.party || candidateRole(person))}</small>${person.decisions ? `<span class="vote-counts"><b class="vote-positive">+ ${person.wins} vitória${person.wins === 1 ? "" : "s"}</b><b class="vote-negative">− ${person.losses} derrota${person.losses === 1 ? "" : "s"}</b></span>` : '<span class="not-played">Ainda sem comparações</span>'}</span><strong class="rank-score">${person.decisions ? `${person.winRate}%<small>${person.elo} Elo</small>` : "—"}</strong></button>`).join("");
-  const podiumCards = podium.map((person, index) => `<button class="podium-card podium-${index + 1}" type="button" data-profile="${escapeHtml(person.id)}"><span>${index + 1}º</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><small>${person.winRate}%</small></button>`).join("");
+  const podiumCards = podium.map((person) => `<button class="podium-card podium-${Math.min(person.displayRank, 3)}" type="button" data-profile="${escapeHtml(person.id)}"><span>${person.displayRank}º</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><small>${person.winRate}%</small></button>`).join("");
   const highlightColumn = (title, type, people) => `<section class="ranking-highlight ranking-highlight-${type}"><p>${title}</p>${people.length ? people.map((person, index) => `<button type="button" data-profile="${escapeHtml(person.id)}"><span>${index + 1}</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><b>${type === "chosen" ? `+${person.wins}` : `−${person.losses}`}</b></button>`).join("") : '<small>Aguardando duelos</small>'}</section>`;
   const publicPulse = !personal && (highlights.chosen.length || highlights.rejected.length) ? `<section class="public-pulse" aria-label="Resumo das comparações"><div class="section-title"><span>Placar do público</span><small>cada rodada compara a escolhida com as outras três</small></div><div class="pulse-grid">${highlightColumn("Mais vitórias", "chosen", highlights.chosen)}${highlightColumn("Mais derrotas", "rejected", highlights.rejected)}</div></section>` : "";
   const empty = state.rankingQuery ? "Nenhum nome encontrado." : personal ? "Faça uma escolha para começar seu ranking pessoal." : "Ainda não há resultados confirmados.";
   const reveal = !state.rankingQuery && !state.rankingExpanded && filtered.length > visible.length ? `<button class="secondary reveal-ranking" id="reveal-ranking" type="button">Ver ranking completo (${filtered.length})</button>` : "";
-  return `<main class="screen ranking-screen">${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}<section class="ranking-overview"><header class="ranking-heading"><p class="eyebrow">Eleições 2026</p><h1>Ranking</h1><p>${personal ? "O retrato das comparações que você fez." : "O placar vivo das escolhas do público."}</p><strong>${totalDuels} ${totalDuels === 1 ? "escolha confirmada" : "escolhas confirmadas"}</strong></header><div class="segmented" aria-label="Tipo de ranking"><button class="${personal ? "" : "active"}" data-ranking-view="general">Geral</button><button class="${personal ? "active" : ""}" data-ranking-view="personal">Seu ranking</button></div>${publicPulse}${podiumCards ? `<section class="podium" aria-label="Pódio">${podiumCards}</section>` : ""}</section><section class="ranking-results"><label class="ranking-search"><span>Todos os nomes</span><input id="ranking-search" type="search" value="${escapeHtml(state.rankingQuery)}" placeholder="Buscar nome ou partido" autocomplete="off"></label><section class="panel ranking-list">${rows || `<p class="empty">${empty}</p>`}</section>${reveal}<button class="primary continue-duels" id="continue-duels" type="button">Voltar às escolhas</button></section></main>`;
+  const policy = personal && state.personalRankingPolicy
+    ? `<p class="ranking-policy"><strong>Ordenado por ${escapeHtml(state.personalRankingPolicy.label)}</strong><span>${escapeHtml(state.personalRankingPolicy.explanation)}</span></p>`
+    : "";
+  return `<main class="screen ranking-screen">${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}<section class="ranking-overview"><header class="ranking-heading"><p class="eyebrow">Eleições 2026</p><h1>Ranking</h1><p>${personal ? "O retrato das comparações que você fez." : "O placar vivo das escolhas do público."}</p><strong>${totalDuels} ${totalDuels === 1 ? "escolha confirmada" : "escolhas confirmadas"}</strong></header><div class="segmented" aria-label="Tipo de ranking"><button class="${personal ? "" : "active"}" data-ranking-view="general">Geral</button><button class="${personal ? "active" : ""}" data-ranking-view="personal">Seu ranking</button></div>${policy}${publicPulse}${podiumCards ? `<section class="podium" aria-label="Pódio">${podiumCards}</section>` : ""}</section><section class="ranking-results"><label class="ranking-search"><span>Todos os nomes</span><input id="ranking-search" type="search" value="${escapeHtml(state.rankingQuery)}" placeholder="Buscar nome ou partido" autocomplete="off"></label><section class="panel ranking-list">${rows || `<p class="empty">${empty}</p>`}</section>${reveal}<button class="primary continue-duels" id="continue-duels" type="button">Voltar às escolhas</button></section></main>`;
 }
 
 function collectionScreen() {
@@ -365,6 +374,8 @@ async function vote(winnerId) {
   clearTimeout(resultTimer);
   clearTimeout(roundAdvanceTimer);
   state.roundOutcome = null;
+  state.personalFeedbackMessage = "";
+  state.globalFeedbackMessage = "";
   state.result = "Confirmando sua escolha…";
   state.resultTone = "";
   render();
@@ -377,17 +388,19 @@ async function vote(winnerId) {
     state.resultTone = "";
     state.ranking = rankingForCatalog(response, state.candidates);
     state.personalRanking = rankingForCatalog(response.player, state.candidates);
+    state.personalRankingPolicy = response.player?.rankingPolicy || state.personalRankingPolicy;
     state.playerVersion = response.player?.version ?? state.playerVersion;
     state.globalDuels = Number(response.duels) || state.globalDuels;
     state.personalDuels = Number(response.player?.duels) || state.personalDuels + 1;
-    const feedback = response.vote?.feedback || null;
-    const outcome = roundOutcome(feedback, state.round, winner.id);
-    state.roundOutcome = outcome;
-    state.result = outcome.outcomes.length
-      ? outcome.message
-      : `${winner.displayName || shortName(winner.name)} confirmado · +${Number(response.vote?.winnerDelta) || 0} Elo`;
+    const channels = roundFeedbackChannels(response.vote, state.round, winner.id);
+    state.roundOutcome = channels.personal;
+    state.personalFeedbackMessage = channels.personal.outcomes.length
+      ? channels.personal.message
+      : `${winner.displayName || shortName(winner.name)} confirmado no seu ranking.`;
+    state.globalFeedbackMessage = channels.global?.message || "";
+    state.result = "";
     render();
-    const feedbackEvent = outcome.primaryEvent || response.vote?.rankingEvent || (response.vote?.zebra ? "zebra" : "confirm");
+    const feedbackEvent = channels.personal.primaryEvent || response.vote?.rankingEvent || (response.vote?.zebra ? "zebra" : "confirm");
     sound.play(feedbackEvent);
     try { navigator.vibrate?.(hapticPattern(feedbackEvent)); } catch {}
     roundAdvanceTimer = setTimeout(() => {
@@ -400,6 +413,8 @@ async function vote(winnerId) {
         if (state.busy) return;
         state.result = "";
         state.resultTone = "";
+        state.personalFeedbackMessage = "";
+        state.globalFeedbackMessage = "";
         render();
       }, 1800);
     }, 1050);
@@ -419,6 +434,8 @@ async function recoverFromVoteFailure(error, winner) {
   state.busy = false;
   state.selectedId = "";
   state.roundOutcome = null;
+  state.personalFeedbackMessage = "";
+  state.globalFeedbackMessage = "";
   state.resultTone = "erro";
   state.pendingWinnerId = winner.id;
 
@@ -451,6 +468,7 @@ async function resyncPlayer() {
     const personal = await loadPlayerRanking(state.recoveryKey);
     state.playerVersion = personal.version ?? state.playerVersion;
     state.personalRanking = rankingForCatalog(personal, state.candidates);
+    state.personalRankingPolicy = personal.rankingPolicy || state.personalRankingPolicy;
     state.personalDuels = Number(personal.duels) || state.personalDuels;
     return true;
   } catch {
@@ -578,6 +596,7 @@ async function handleGoogleCredential(response) {
     state.recoveryKey = result.sessionToken;
     state.account = result.account;
     state.personalRanking = rankingForCatalog(result.player, state.candidates);
+    state.personalRankingPolicy = result.player.rankingPolicy || state.personalRankingPolicy;
     state.playerVersion = result.player.version;
     state.personalDuels = Number(result.player.duels) || 0;
     resetPendingVoteForIdentityChange(state);
@@ -606,6 +625,7 @@ async function signOut() {
     state.recoveryKey = player.recoveryKey;
     state.account = null;
     state.personalRanking = rankingForCatalog(player.personal, state.candidates);
+    state.personalRankingPolicy = player.personal.rankingPolicy || state.personalRankingPolicy;
     state.playerVersion = player.personal.version;
     state.personalDuels = Number(player.personal.duels) || 0;
     resetPendingVoteForIdentityChange(state);
@@ -656,6 +676,7 @@ async function initialize() {
     state.recoveryKey = player.recoveryKey;
     state.playerVersion = player.personal.version;
     state.personalRanking = rankingForCatalog(player.personal, state.candidates);
+    state.personalRankingPolicy = player.personal.rankingPolicy || null;
     state.account = player.personal.account || null;
     state.personalDuels = Number(player.personal.duels) || 0;
     const firstMatch = nextBalancedGroup(state.candidates);

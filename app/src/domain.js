@@ -59,6 +59,9 @@ export function rankingForCatalog(snapshot, candidates) {
 export function displayRanking(ranking, { personal = false } = {}) {
   const played = ranking.filter(({ decisions = 0 }) => decisions > 0);
   const unplayed = personal ? [] : ranking.filter(({ decisions = 0 }) => decisions === 0);
+  if (personal && played.every(({ rank }) => Number.isInteger(rank) && rank > 0)) {
+    return played.map((person) => ({ ...person, displayRank: person.rank }));
+  }
   let previousScore = null;
   let previousRank = 0;
   const ranked = played.map((person, index) => {
@@ -68,6 +71,15 @@ export function displayRanking(ranking, { personal = false } = {}) {
     return { ...person, displayRank: previousRank };
   });
   return [...ranked, ...unplayed.map((person) => ({ ...person, displayRank: null }))];
+}
+
+export function rankingPodium(ranking, maximumRank = 3) {
+  return ranking.filter(({ decisions, displayRank }) => (
+    decisions > 0
+    && Number.isInteger(displayRank)
+    && displayRank > 0
+    && displayRank <= maximumRank
+  ));
 }
 
 export function filterRanking(ranking, query = "") {
@@ -135,6 +147,16 @@ export function roundOutcome(feedback, candidates = [], winnerId = "") {
   else if (winner?.tierChange === "up") message = `${winner.name} subiu de patente: ${winner.tier.label}.`;
   else if (dropped) message = `${dropped.name} escorregou para ${dropped.tier.label}. O ranking não perdoa.`;
   return { outcomes, message, primaryEvent };
+}
+
+export function roundFeedbackChannels(round, candidates = [], winnerId = "") {
+  if (!round?.personalFeedback) throw new Error("feedback pessoal ausente na resposta da rodada");
+  return {
+    personal: roundOutcome(round.personalFeedback, candidates, winnerId),
+    global: round.globalEvent?.feedback
+      ? roundOutcome(round.globalEvent.feedback, candidates, winnerId)
+      : null,
+  };
 }
 
 export function hapticPattern(event) {

@@ -33,6 +33,8 @@ test("login and logout rotate the round and abandon a pending vote from the prev
       busy: true,
       result: "Não foi possível confirmar",
       resultTone: "erro",
+      personalFeedbackMessage: "Lula subiu no seu ranking",
+      globalFeedbackMessage: "Lula entrou no Top 10 público",
     };
 
     resetPendingVoteForIdentityChange(state, () => `${transition}-new-round`);
@@ -45,6 +47,8 @@ test("login and logout rotate the round and abandon a pending vote from the prev
       busy: false,
       result: "",
       resultTone: "",
+      personalFeedbackMessage: "",
+      globalFeedbackMessage: "",
     });
   }
 });

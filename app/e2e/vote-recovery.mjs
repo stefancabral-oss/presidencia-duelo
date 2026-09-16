@@ -29,6 +29,11 @@ if (!browserType) throw new Error(`Navegador não suportado: ${browserName}`);
 /** Acima de `TIMEOUT_MS` de app/src/api.js, para o cliente desistir primeiro. */
 const ALEM_DO_TEMPO_LIMITE = 9000;
 const RECOVERY_KEY = "pm2_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const personalRankingPolicy = {
+  id: "pairwise-majority-scc-v1",
+  label: "maioria nos confrontos observados",
+  explanation: "A ordem usa os confrontos diretos e mantém empates sem usar exposição.",
+};
 
 const candidates = ["lula", "jair-bolsonaro", "anitta", "neymar-jr"].map((id, index) => ({
   personId: index + 1,
@@ -60,6 +65,7 @@ function criarServidor() {
         losses: 0,
         decisions: this.duels ? 1 : 0,
         winRate: 0,
+        rank: this.duels ? 1 : null,
       }));
     },
   };
@@ -70,7 +76,7 @@ function corpoDaRodada(servidor, roundId, winnerId, candidateIds) {
     topicId: "eleicoes-2026",
     duels: servidor.duels,
     ranking: servidor.ranking(),
-    player: { version: servidor.version, duels: servidor.duels, ranking: servidor.ranking() },
+    player: { version: servidor.version, duels: servidor.duels, rankingPolicy: personalRankingPolicy, ranking: servidor.ranking() },
     round: { id: roundId, winnerDelta: 45, zebra: false, comparisons: 3, rankingEvent: "overtake" },
     vote: {
       id: roundId,
@@ -92,6 +98,22 @@ function corpoDaRodada(servidor, roundId, winnerId, candidateIds) {
           tierChange: null,
         })),
       },
+      personalFeedback: {
+        primaryEvent: "overtake",
+        rankingEvent: "overtake",
+        zebra: false,
+        outcomes: candidateIds.map((id) => ({
+          id,
+          result: id === winnerId ? "winner" : "loser",
+          delta: id === winnerId ? 45 : -15,
+          elo: id === winnerId ? 1045 : 985,
+          previousTier: { id: "contender", label: "No páreo", level: 2 },
+          tier: { id: "contender", label: "No páreo", level: 2 },
+          tierChange: null,
+        })),
+      },
+      feedbackScope: "personal",
+      globalEvent: null,
     },
   };
 }
@@ -119,7 +141,7 @@ async function instalarServidor(page, servidor) {
       }
       return route.fulfill({
         status: 200,
-        json: { topicId: "eleicoes-2026", duels: servidor.duels, ranking: servidor.ranking(), version: servidor.version },
+        json: { topicId: "eleicoes-2026", duels: servidor.duels, rankingPolicy: personalRankingPolicy, ranking: servidor.ranking(), version: servidor.version },
       });
     }
 

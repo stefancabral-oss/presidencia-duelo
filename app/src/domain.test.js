@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { catalogForTopic, displayRanking, eloTier, filterRanking, hapticPattern, nextBalancedGroup, nextBalancedPair, nextPair, rankingForCatalog, rankingHighlights, roundOutcome, shortName, shuffledCandidates, voteFeedback } from "./domain.js";
+import { catalogForTopic, displayRanking, eloTier, filterRanking, hapticPattern, nextBalancedGroup, nextBalancedPair, nextPair, rankingForCatalog, rankingHighlights, rankingPodium, roundFeedbackChannels, roundOutcome, shortName, shuffledCandidates, voteFeedback } from "./domain.js";
 
 const people = [
   { id: "a", name: "Ana Um" },
@@ -55,11 +55,31 @@ test("shortName keeps the first and last names", () => {
 
 test("personal ranking hides people the player has not compared", () => {
   const ranking = [
-    { id: "a", elo: 1016, wins: 1, losses: 0, decisions: 1 },
+    { id: "a", rank: 1, elo: 1016, wins: 1, losses: 0, decisions: 1 },
     { id: "b", elo: 1000, wins: 0, losses: 0, decisions: 0 },
-    { id: "c", elo: 984, wins: 0, losses: 1, decisions: 1 },
+    { id: "c", rank: 2, elo: 984, wins: 0, losses: 1, decisions: 1 },
   ];
   assert.deepEqual(displayRanking(ranking, { personal: true }).map(({ id, displayRank }) => [id, displayRank]), [["a", 1], ["c", 2]]);
+});
+
+test("personal ranking preserves server order and shared ranks despite Elo or rates", () => {
+  const ranking = [
+    { id: "haddad", rank: 1, elo: 900, wins: 1, losses: 4, decisions: 5 },
+    { id: "janja", rank: 1, elo: 1400, wins: 9, losses: 0, decisions: 9 },
+    { id: "lula", rank: 3, elo: 1600, wins: 20, losses: 1, decisions: 21 },
+  ];
+  assert.deepEqual(
+    displayRanking(ranking, { personal: true }).map(({ id, displayRank }) => [id, displayRank]),
+    [["haddad", 1], ["janja", 1], ["lula", 3]],
+  );
+});
+
+test("podium includes every shared top-three rank", () => {
+  const ranking = [
+    ...["a", "b", "c", "d", "e"].map((id) => ({ id, decisions: 1, displayRank: 1 })),
+    { id: "f", decisions: 1, displayRank: 6 },
+  ];
+  assert.deepEqual(rankingPodium(ranking).map(({ id }) => id), ["a", "b", "c", "d", "e"]);
 });
 
 test("untested people have no false ordinal position in the general ranking", () => {
@@ -127,4 +147,23 @@ test("primary ranking achievements keep message, sound and haptic semantics alig
   assert.equal(view.primaryEvent, "leader");
   assert.deepEqual(hapticPattern("leaderDefense"), [28, 22, 28]);
   assert.equal(roundOutcome(null, people, "a").primaryEvent, null);
+});
+
+test("round channels require personal feedback and keep public feedback secondary", () => {
+  const personalFeedback = {
+    primaryEvent: "leader",
+    outcomes: [{ id: "a", result: "winner", delta: 18, elo: 1018, tier: eloTier(1018) }],
+  };
+  const onlyPersonal = roundFeedbackChannels({ personalFeedback, globalEvent: null }, people, "a");
+  assert.match(onlyPersonal.personal.message, /liderança/i);
+  assert.equal(onlyPersonal.global, null);
+
+  const globalFeedback = {
+    primaryEvent: "top10",
+    outcomes: [{ id: "a", result: "winner", delta: 12, elo: 1110, tier: eloTier(1110) }],
+  };
+  const both = roundFeedbackChannels({ personalFeedback, globalEvent: { feedback: globalFeedback } }, people, "a");
+  assert.match(both.personal.message, /liderança/i);
+  assert.match(both.global.message, /Top 10/i);
+  assert.throws(() => roundFeedbackChannels({ feedback: globalFeedback }, people, "a"), /feedback pessoal ausente/);
 });

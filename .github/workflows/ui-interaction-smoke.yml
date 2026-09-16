@@ -4,7 +4,6 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'front/**'
       - 'app/**'
       # `shared/` entra no bundle do app (domain.js importa elo.js), então
       # mudanças ali mudam o que este smoke exercita. `back/` fica de fora de

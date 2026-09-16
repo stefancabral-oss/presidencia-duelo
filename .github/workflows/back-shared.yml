@@ -1,0 +1,81 @@
+name: Backend and Shared
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'back/**'
+      - 'shared/**'
+      - 'package.json'
+      - '.github/workflows/back-shared.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  back-unit:
+    name: back-unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: back/package-lock.json
+      - name: Install backend
+        run: npm ci --prefix back
+      - name: Test backend
+        run: npm test --prefix back
+
+  shared-data:
+    name: shared-data
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test shared domain
+        run: npm run test:shared
+
+  back-integration-postgres:
+    name: back-integration-postgres
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: polimatch_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d polimatch_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/polimatch_test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: back/package-lock.json
+      - name: Install backend
+        run: npm ci --prefix back
+      - name: Test PostgreSQL integration
+        run: npm run test:integration --prefix back

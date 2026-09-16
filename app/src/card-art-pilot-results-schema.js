@@ -34,14 +34,20 @@ export function validateCardArtPilotResultSchema(result, schema) {
   return validate.errors.map(schemaError);
 }
 
-export function validateCardArtPilotResultDocument(result, manifest, schema) {
-  const schemaErrors = validateCardArtPilotResultSchema(result, schema);
-  if (schemaErrors.length) return schemaErrors;
-  return validateCardArtPilotResults(result, manifest);
+export function validateCardArtPilotParticipantResponseSchema(response, schema) {
+  const validate = compileSchema(schema);
+  if (validate(response)) return [];
+  return validate.errors.map(schemaError);
 }
 
-export function assertCardArtPilotResultDocument(result, manifest, schema) {
-  const errors = validateCardArtPilotResultDocument(result, manifest, schema);
+export function validateCardArtPilotResultDocument(result, manifest, schema, options) {
+  const schemaErrors = validateCardArtPilotResultSchema(result, schema);
+  if (schemaErrors.length) return schemaErrors;
+  return validateCardArtPilotResults(result, manifest, options);
+}
+
+export function assertCardArtPilotResultDocument(result, manifest, schema, options) {
+  const errors = validateCardArtPilotResultDocument(result, manifest, schema, options);
   if (!errors.length) return;
   const error = new Error(`Resultado do piloto #176 inválido:\n- ${errors.join("\n- ")}`);
   error.validationErrors = errors;

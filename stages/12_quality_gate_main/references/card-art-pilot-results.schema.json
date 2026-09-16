@@ -25,13 +25,28 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "manifestSha256"
+        "version",
+        "manifestSha256",
+        "assets"
       ],
       "properties": {
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
         "manifestSha256": {
           "description": "SHA-256 do JSON canônico do manifesto completo usado na coleta.",
           "type": "string",
           "pattern": "^[a-f0-9]{64}$"
+        },
+        "assets": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/batchAsset"
+          }
         }
       }
     },
@@ -55,6 +70,32 @@
     }
   },
   "$defs": {
+    "batchAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blindCode",
+        "sha256"
+      ],
+      "properties": {
+        "blindCode": {
+          "enum": [
+            "P01",
+            "P02",
+            "P03",
+            "P04",
+            "P05",
+            "P06",
+            "P07",
+            "P08"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
     "sample": {
       "type": "object",
       "additionalProperties": false,

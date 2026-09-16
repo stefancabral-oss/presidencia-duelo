@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
+import { cardArtPilotBatchIdentity } from "../src/card-art-pilot-validation.js";
 
 const browserName = process.env.POLIMATCH_PILOT_BROWSER || "chromium";
 const browserType = { chromium, webkit }[browserName];
@@ -11,6 +12,9 @@ const qualityRoot = new URL("../../stages/12_quality_gate_main/", import.meta.ur
 const formUrl = new URL("references/card-art-pilot-176.html", qualityRoot);
 const evidenceRoot = new URL("evidence/card-art-pilot-176/", qualityRoot);
 const manifest = JSON.parse(await readFile(new URL("manifest.json", evidenceRoot), "utf8"));
+const expectedBatchIdentity = cardArtPilotBatchIdentity(manifest);
+const formSource = await readFile(formUrl, "utf8");
+assert.match(formSource, /batch:\s*batchIdentity/, "participant export must carry the immutable batch identity");
 const canonicalCss = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
 const cases = [
   { scenario: "mobile-390x844", viewport: { width: 390, height: 844 } },
@@ -94,7 +98,19 @@ try {
     assert.equal(await page.locator("#image-step").isHidden(), true);
     assert.equal(await page.locator(".test-card").count(), 0);
     assert.equal(await page.locator("body").getAttribute("data-batch-status"), manifest.status);
+    assert.equal(await page.locator("body").getAttribute("data-batch-version"), manifest.version);
+    assert.equal(await page.locator("body").getAttribute("data-manifest-sha256"), expectedBatchIdentity.manifestSha256);
     assert.equal(await page.locator("body").getAttribute("data-collection-allowed"), String(manifest.collectionAllowed));
+    const browserBatch = await page.evaluate(() => ({
+      value: globalThis.__CARD_ART_PILOT_BATCH__,
+      frozen: Object.isFrozen(globalThis.__CARD_ART_PILOT_BATCH__),
+      assetsFrozen: Object.isFrozen(globalThis.__CARD_ART_PILOT_BATCH__.assets),
+      assetItemsFrozen: globalThis.__CARD_ART_PILOT_BATCH__.assets.every(Object.isFrozen)
+    }));
+    assert.deepEqual(browserBatch.value, expectedBatchIdentity);
+    assert.equal(browserBatch.frozen, true);
+    assert.equal(browserBatch.assetsFrozen, true);
+    assert.equal(browserBatch.assetItemsFrozen, true);
 
     await page.goto(`${baseUrl}&technicalPreview=1`);
     await page.locator(".test-card img").waitFor({ state: "visible" });

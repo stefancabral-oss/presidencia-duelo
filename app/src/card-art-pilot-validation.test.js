@@ -127,9 +127,14 @@ test("the Draft schema requires a lowercase SHA-256 manifest fingerprint at the 
   delete missing.batch;
   const malformed = validResultFixture();
   malformed.batch.manifestSha256 = "ABC123";
+  const legacy = validResultFixture();
+  delete legacy.batch.version;
+  delete legacy.batch.assets;
 
   assert.ok(validateCardArtPilotResultSchema(missing, schema).some((error) => error.includes("batch") && error.includes("obrigatório")));
   assert.ok(validateCardArtPilotResultSchema(malformed, schema).some((error) => error.includes("batch/manifestSha256")));
+  assert.ok(validateCardArtPilotResultSchema(legacy, schema).some((error) => error.includes("version") && error.includes("obrigatório")));
+  assert.ok(validateCardArtPilotResultSchema(legacy, schema).some((error) => error.includes("assets") && error.includes("obrigatório")));
 });
 
 test("the CLI prints the canonical fingerprint of the committed manifest", async () => {
@@ -274,6 +279,50 @@ test("human chronology is attestation and reviews, then decision, then consolida
   assert.ok(errors.some((error) => error.includes("decision.decidedAt") && error.includes("posterior à geração do consolidado")));
 });
 
+test("all accountable timestamps reject the future through an injectable clock with five minutes tolerance", () => {
+  const now = Date.parse("2026-09-16T03:00:00Z");
+  const manifest = readyManifestFixture();
+  const result = validResultFixture("iterar", manifest);
+  result.sample.externalRecruitment.attestedAt = "2026-09-16T03:06:00Z";
+  for (const asset of result.assets) {
+    asset.identityReview.reviewedAt = "2026-09-16T03:07:00Z";
+    asset.dignityReview.reviewedAt = "2026-09-16T03:07:00Z";
+  }
+  result.decision.decidedAt = "2026-09-16T03:08:00Z";
+  result.generatedAt = "2026-09-16T03:09:00Z";
+
+  const errors = validateCardArtPilotResults(result, manifest, { clock: () => now });
+  for (const path of [
+    "sample.externalRecruitment.attestedAt",
+    "identityReview.reviewedAt",
+    "dignityReview.reviewedAt",
+    "decision.decidedAt",
+    "generatedAt"
+  ]) {
+    assert.ok(errors.some((error) => error.includes(path) && error.includes("futuro")), path);
+  }
+
+  result.sample.externalRecruitment.attestedAt = "2026-09-16T03:01:00Z";
+  for (const asset of result.assets) {
+    asset.identityReview.reviewedAt = "2026-09-16T03:02:00Z";
+    asset.dignityReview.reviewedAt = "2026-09-16T03:02:00Z";
+  }
+  result.decision.decidedAt = "2026-09-16T03:04:00Z";
+  result.generatedAt = "2026-09-16T03:05:00Z";
+  assert.equal(validateCardArtPilotResults(result, manifest, { clock: () => now })
+    .some((error) => error.includes("não pode estar no futuro")), false);
+});
+
+test("manifest generation and guide timestamps use the same injectable future bound", () => {
+  const now = Date.parse("2026-09-16T03:00:00Z");
+  const manifest = readyManifestFixture();
+  manifest.styleGuideVersionedAt = "2026-09-16T03:06:00Z";
+  manifest.generatedAt = "2026-09-16T03:07:00Z";
+  const errors = validateCardArtPilotResults(validResultFixture("iterar", manifest), manifest, { now });
+  assert.ok(errors.some((error) => error.includes("manifest.styleGuideVersionedAt") && error.includes("futuro")));
+  assert.ok(errors.some((error) => error.includes("manifest.generatedAt") && error.includes("futuro")));
+});
+
 test("seguir is blocked by a pending reference license", () => {
   const result = validResultFixture("seguir");
   const manifest = readyManifestFixture();
@@ -293,7 +342,14 @@ test("a result cannot legitimize an originally hashless or style-incoherent read
   const manifest = readyManifestFixture();
   manifest.styleGuide = "docs/design/OUTRO_GUIA.md";
   manifest.styleGuideAtGeneration = "pilot-1";
+  manifest.tool = " ";
+  manifest.commonPrompt = "";
+  manifest.participantResponseSchema = "schema-inventado.json";
+  delete manifest.generationCommit;
+  delete manifest.styleGuideCommitAtGeneration;
+  delete manifest.styleGuideSha256AtGeneration;
   delete manifest.assets[0].sha256;
+  delete manifest.assets[0].generationPath;
   delete manifest.assets[0].sourceOutput;
   delete manifest.assets[0].identityReference.sha256;
   delete manifest.assets[0].identityReference.path;
@@ -302,7 +358,14 @@ test("a result cannot legitimize an originally hashless or style-incoherent read
   const errors = validateCardArtPilotResults(result, manifest);
   assert.ok(errors.some((error) => error.includes("manifest.styleGuide") && error.includes("guia canônico")));
   assert.ok(errors.some((error) => error.includes("manifest.styleGuideAtGeneration") && error.includes("versão vigente")));
+  assert.ok(errors.some((error) => error.includes("manifest.tool")));
+  assert.ok(errors.some((error) => error.includes("manifest.commonPrompt")));
+  assert.ok(errors.some((error) => error.includes("manifest.participantResponseSchema")));
+  assert.ok(errors.some((error) => error.includes("manifest.generationCommit")));
+  assert.ok(errors.some((error) => error.includes("manifest.styleGuideCommitAtGeneration")));
+  assert.ok(errors.some((error) => error.includes("manifest.styleGuideSha256AtGeneration")));
   assert.ok(errors.some((error) => error.includes("manifest.assets.P01.sha256")));
+  assert.ok(errors.some((error) => error.includes("manifest.assets.P01.generationPath")));
   assert.ok(errors.some((error) => error.includes("manifest.assets.P01.sourceOutput")));
   assert.ok(errors.some((error) => error.includes("manifest.assets.P01.identityReference.sha256")));
   assert.ok(errors.some((error) => error.includes("manifest.assets.P01.identityReference.path")));
@@ -396,6 +459,22 @@ test("free-text fields reject phone, RG, IPv6 and explicit participant or addres
   for (const expected of ["telefone", "RG", "IPv6", "marcador de participante", "nome de participante", "endereço postal"]) {
     assert.ok(errors.some((error) => error.includes(expected)), expected);
   }
+});
+
+test("natural participant identification and common Brazilian address variants are rejected without generic prose false positives", () => {
+  const manifest = readyManifestFixture();
+  const result = validResultFixture("iterar", manifest);
+  result.assets[0].identityReview.notes = "A respondente Ana Silva mora na Praça da Sé, 1";
+  result.assets[0].dignityReview.notes = "O participante João Souza reside na Av. Paulista, nº 1000";
+  result.decision.rationale = "Contato informado na Alameda Santos 42";
+  const errors = validateCardArtPilotResults(result, manifest);
+  assert.ok(errors.some((error) => error.includes("identificação natural de participante")));
+  assert.ok(errors.some((error) => error.includes("endereço postal")));
+
+  const safe = validResultFixture("iterar", manifest);
+  safe.assets[0].identityReview.notes = "Participantes externos foram recrutados sem coleta de texto livre.";
+  safe.assets[0].dignityReview.notes = "Revisão agregada sem nome, telefone ou endereço de participante.";
+  assert.deepEqual(validateCardArtPilotResults(safe, manifest), []);
 });
 
 test("PII detection descends into arrays of primitive text", () => {

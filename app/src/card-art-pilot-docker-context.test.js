@@ -38,6 +38,7 @@ test("the root Docker context explicitly supplies the isolation manifest before 
   assert.match(finalStage, /COPY --from=build \/repo\/app\/dist \/usr\/share\/nginx\/html/);
 
   assert.match(workflow, /docker build --file app\/Dockerfile --tag polimatch-app:pilot-176 \./);
+  assert.match(workflow, /fetch-depth:\s*0/, "provenance tests require the complete Git history");
   for (const trigger of [
     "'app/**'",
     "'shared/**'",
@@ -45,6 +46,7 @@ test("the root Docker context explicitly supplies the isolation manifest before 
     "'CREDITS.md'",
     "'stages/12_quality_gate_main/evidence/card-art-pilot-176/**'",
     "'stages/12_quality_gate_main/output/card-art-pilot-results.json'",
+    "'stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json'",
     "'stages/12_quality_gate_main/references/card-art-pilot-results.schema.json'"
   ]) {
     assert.ok(workflow.includes(trigger), `remote Docker gate must run when ${trigger} changes`);

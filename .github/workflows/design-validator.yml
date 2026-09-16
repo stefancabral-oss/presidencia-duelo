@@ -13,6 +13,7 @@ on:
       - 'stages/12_quality_gate_main/output/card-art-pilot-176*'
       - 'stages/12_quality_gate_main/output/card-art-pilot-results.json'
       - 'stages/12_quality_gate_main/references/card-art-pilot-176.*'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json'
       - 'stages/12_quality_gate_main/references/card-art-pilot-results.schema.json'
       - '.github/workflows/design-validator.yml'
   workflow_dispatch:
@@ -23,6 +24,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

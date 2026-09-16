@@ -7,6 +7,7 @@ const repoRoot = new URL("../../", import.meta.url);
 const evidenceRoot = new URL("stages/12_quality_gate_main/evidence/card-art-pilot-176/", repoRoot);
 const manifestUrl = new URL("manifest.json", evidenceRoot);
 const resultSchemaUrl = new URL("stages/12_quality_gate_main/references/card-art-pilot-results.schema.json", repoRoot);
+const participantSchemaUrl = new URL("stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json", repoRoot);
 const publicPilotUrl = new URL("app/public/card-art/pilot/", repoRoot);
 
 function sha256(buffer) {
@@ -28,6 +29,11 @@ test("the eight pilot assets stay immutable in evidence storage outside app/publ
   assert.equal(manifest.scaleDecisionAllowed, false);
   assert.equal(manifest.styleGuideAtGeneration, "pilot-1");
   assert.equal(manifest.currentStyleGuideVersion, "pilot-2");
+  assert.match(manifest.generationCommit, /^[a-f0-9]{40}$/);
+  assert.match(manifest.styleGuideCommitAtGeneration, /^[a-f0-9]{40}$/);
+  assert.match(manifest.styleGuideSha256AtGeneration, /^[a-f0-9]{64}$/);
+  assert.ok(manifest.tool.trim());
+  assert.ok(manifest.commonPrompt.trim());
   assert.equal(manifest.nonconformance.code, "style-guide-changed-after-generation");
   assert.match(manifest.nonconformance.requiredRemediation, /nao reutilizar P01-P08/i);
   assert.equal(manifest.storage.purpose, "nonconforming-evidence-only");
@@ -43,6 +49,7 @@ test("the eight pilot assets stay immutable in evidence storage outside app/publ
   for (const asset of manifest.assets) {
     assert.match(asset.blindCode, /^P0[1-8]$/);
     assert.equal(asset.file, `${asset.blindCode}.png`);
+    assert.ok(asset.generationPath);
     assert.ok(!asset.file.includes(asset.slug), `${asset.blindCode}: filename leaks identity`);
 
     const image = await readFile(new URL(asset.file, evidenceRoot));
@@ -73,8 +80,9 @@ test("the consolidation schema requires accountable reviews and a human decision
   const schema = JSON.parse(await readFile(resultSchemaUrl, "utf8"));
   assert.equal(schema.$schema, "https://json-schema.org/draft/2020-12/schema");
   assert.deepEqual(schema.required, ["protocol", "issue", "batch", "generatedAt", "sample", "assets", "decision"]);
-  assert.deepEqual(schema.properties.batch.required, ["manifestSha256"]);
+  assert.deepEqual(schema.properties.batch.required, ["version", "manifestSha256", "assets"]);
   assert.equal(schema.properties.batch.properties.manifestSha256.pattern, "^[a-f0-9]{64}$");
+  assert.equal(schema.properties.batch.properties.assets.minItems, 8);
   assert.ok(schema.$defs.sample.required.includes("externalRecruitment"));
   assert.deepEqual(schema.$defs.sample.properties.externalRecruitment.required, ["externalParticipantsOnly", "productionTeamExcluded", "attestedBy", "attestedAt"]);
   assert.ok(schema.$defs.assetResult.required.includes("byDisplayScenario"));
@@ -84,4 +92,14 @@ test("the consolidation schema requires accountable reviews and a human decision
   assert.deepEqual(schema.$defs.humanReview.required, ["status", "reviewedBy", "reviewedAt", "notes"]);
   assert.ok(schema.$defs.humanReview.properties.status.enum.includes("pending"));
   assert.deepEqual(schema.$defs.decision.required, ["value", "decidedBy", "decidedAt", "rationale"]);
+});
+
+test("the individual response schema requires the same version, manifest and eight art hashes", async () => {
+  const schema = JSON.parse(await readFile(participantSchemaUrl, "utf8"));
+  assert.equal(schema.$schema, "https://json-schema.org/draft/2020-12/schema");
+  assert.ok(schema.required.includes("batch"));
+  assert.deepEqual(schema.$defs.batchIdentity.required, ["version", "manifestSha256", "assets"]);
+  assert.equal(schema.$defs.batchIdentity.properties.assets.minItems, 8);
+  assert.equal(schema.$defs.batchIdentity.properties.assets.maxItems, 8);
+  assert.equal(schema.$defs.batchAsset.properties.sha256.pattern, "^[a-f0-9]{64}$");
 });

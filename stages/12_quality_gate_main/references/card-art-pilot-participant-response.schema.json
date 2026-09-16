@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://polimatch.com.br/schemas/card-art-pilot-176-participant-response.schema.json",
+  "title": "Resposta individual do piloto de arte de carta #176",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "batch",
+    "responseId",
+    "displayScenario",
+    "strata",
+    "responses",
+    "disclosureSeen"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "card-art-pilot-176-v2-participant"
+    },
+    "batch": {
+      "$ref": "#/$defs/batchIdentity"
+    },
+    "responseId": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{32}$"
+    },
+    "displayScenario": {
+      "$ref": "#/$defs/displayScenario"
+    },
+    "strata": {
+      "$ref": "#/$defs/strata"
+    },
+    "responses": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "$ref": "#/$defs/blindResponse"
+      }
+    },
+    "disclosureSeen": {
+      "const": true
+    }
+  },
+  "$defs": {
+    "batchIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "manifestSha256",
+        "assets"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "manifestSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "assets": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/batchAsset"
+          }
+        }
+      }
+    },
+    "batchAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blindCode",
+        "sha256"
+      ],
+      "properties": {
+        "blindCode": {
+          "enum": [
+            "P01",
+            "P02",
+            "P03",
+            "P04",
+            "P05",
+            "P06",
+            "P07",
+            "P08"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "width",
+        "height"
+      ],
+      "properties": {
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "displayScenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "viewport",
+        "card",
+        "artWindow",
+        "image",
+        "blindPlate"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "mobile-390x844",
+            "desktop-1000x800"
+          ]
+        },
+        "viewport": {
+          "$ref": "#/$defs/dimensions"
+        },
+        "card": {
+          "$ref": "#/$defs/dimensions"
+        },
+        "artWindow": {
+          "$ref": "#/$defs/dimensions"
+        },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "width",
+            "height",
+            "objectFit",
+            "objectPosition"
+          ],
+          "properties": {
+            "width": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "height": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "objectFit": {
+              "const": "cover"
+            },
+            "objectPosition": {
+              "const": "50% 0%"
+            }
+          }
+        },
+        "blindPlate": {
+          "$ref": "#/$defs/dimensions"
+        }
+      }
+    },
+    "strata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "familiarity",
+        "region"
+      ],
+      "properties": {
+        "familiarity": {
+          "enum": [
+            "baixa",
+            "media",
+            "alta",
+            "prefiro-nao-informar"
+          ]
+        },
+        "region": {
+          "enum": [
+            "norte",
+            "nordeste",
+            "centro-oeste",
+            "sudeste",
+            "sul",
+            "exterior",
+            "prefiro-nao-informar"
+          ]
+        }
+      }
+    },
+    "blindResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "identity",
+        "tone"
+      ],
+      "properties": {
+        "code": {
+          "enum": [
+            "P01",
+            "P02",
+            "P03",
+            "P04",
+            "P05",
+            "P06",
+            "P07",
+            "P08"
+          ]
+        },
+        "identity": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "tone": {
+          "enum": [
+            "favorece",
+            "neutra",
+            "prejudica"
+          ]
+        }
+      }
+    }
+  }
+}

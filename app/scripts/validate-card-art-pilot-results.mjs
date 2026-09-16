@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
 import { assertCardArtPilotResultDocument } from "../src/card-art-pilot-results-schema.js";
 import { cardArtPilotManifestSha256 } from "../src/card-art-pilot-validation.js";
+import { assertCardArtPilotManifestProvenance } from "../src/card-art-pilot-manifest-provenance.js";
 
 const resultPath = process.argv[2];
 const manifestUrl = new URL("../../stages/12_quality_gate_main/evidence/card-art-pilot-176/manifest.json", import.meta.url);
@@ -26,6 +27,7 @@ if (resultPath === "--manifest-sha256") {
     const manifest = JSON.parse(await readFile(manifestUrl, "utf8"));
     const schema = JSON.parse(await readFile(schemaUrl, "utf8"));
     assertCardArtPilotResultDocument(result, manifest, schema);
+    await assertCardArtPilotManifestProvenance(manifest);
     console.log(`Draft 2020-12 schema and semantic validation passed: ${absoluteResultPath}`);
   } catch (error) {
     const source = absoluteResultPath ? ` (${absoluteResultPath})` : "";

@@ -8,7 +8,7 @@ const RATE_TOLERANCE = 1e-6;
 const PERCENTAGE_POINT_TOLERANCE = 1e-4;
 const MINIMUM_VALID_RESPONSES_PER_ASSET_SCENARIO = 20;
 const PILOT_GUIDE_VERSIONED_AT = Date.UTC(2026, 8, 16);
-const MAXIMUM_CLOCK_SKEW_MS = 24 * 60 * 60 * 1000;
+const MAXIMUM_CLOCK_SKEW_MS = 5 * 60 * 1000;
 const FORBIDDEN_PARTICIPANT_KEYS = new Set([
   "participant",
   "participants",
@@ -50,9 +50,10 @@ const FORBIDDEN_PII_PATTERNS = [
   { label: "RG", pattern: /\bRG\s*(?:n[.º°o]?\s*)?[:#=-]?\s*\d{1,2}[.\s-]?\d{3}[.\s-]?\d{3}[-.\s]?[0-9X]\b/i },
   { label: "endereço IPv4", pattern: /\b(?:\d{1,3}\.){3}\d{1,3}\b/ },
   { label: "marcador de participante", pattern: /\b(?:participante|respondente|nome do participante|id do participante)\s*[:#=-]\s*\S+/i },
-  { label: "nome de participante", pattern: /\bParticipante\s+(?!(?:extern[oa]s?|anônim[oa]s?|sem|não)\b)(?:[A-ZÀ-ÖØ-Þ][\p{L}'-]+\s+){1,3}[A-ZÀ-ÖØ-Þ][\p{L}'-]+\b/u },
+  { label: "nome de participante", pattern: /\b(?:A\s+|O\s+)?(?:Participante|Respondente)\s+(?!(?:extern[oa]s?|anônim[oa]s?|sem|não)\b)(?:[A-ZÀ-ÖØ-Þ][\p{L}'-]+\s+){1,3}[A-ZÀ-ÖØ-Þ][\p{L}'-]+\b/u },
+  { label: "identificação natural de participante", pattern: /\b(?:a|o)\s+(?:participante|respondente)\s+(?!(?:extern[oa]s?|anônim[oa]s?|não|sem)\b)(?:[\p{L}'-]+\s+){2,5}(?:mora|reside|vive)\b/iu },
   { label: "marcador de endereço", pattern: /\b(?:endereço|endereco|logradouro|CEP)\s*[:#=-]\s*\S+/i },
-  { label: "endereço postal", pattern: /\b(?:Rua|Avenida|Av\.|Travessa|Alameda|Rodovia)\s+[\p{L}\d][^\r\n,;]{1,80}(?:,\s*)?\d+\b/iu }
+  { label: "endereço postal", pattern: /\b(?:Rua|R\.|Avenida|Av\.|Travessa|Trav\.|Alameda|Al\.|Rodovia|Rod\.|Praça|Pç\.|Largo|Estrada|Beco|Viela|Quadra|Condomínio|Setor|Sítio|Fazenda)\s+[\p{L}\d][^\r\n,;]{1,80}(?:,\s*)?(?:n(?:[.º°o])?\s*)?\d+\b/iu }
 ];
 
 function isRecord(value) {
@@ -77,6 +78,17 @@ function canonicalJson(value) {
 
 export function cardArtPilotManifestSha256(manifest) {
   return createHash("sha256").update(canonicalJson(manifest), "utf8").digest("hex");
+}
+
+export function cardArtPilotBatchIdentity(manifest) {
+  return {
+    version: manifest?.version,
+    manifestSha256: cardArtPilotManifestSha256(manifest),
+    assets: CARD_ART_PILOT_CODES.map((blindCode) => {
+      const asset = manifest?.assets?.find((candidate) => candidate?.blindCode === blindCode);
+      return { blindCode, sha256: asset?.sha256 };
+    })
+  };
 }
 
 function isCount(value) {
@@ -163,23 +175,37 @@ function parsedCivilDate(value) {
 }
 
 function validateManifestBinding(errors, result, manifest) {
-  const supplied = result?.batch?.manifestSha256;
+  const suppliedBatch = result?.batch;
+  const supplied = suppliedBatch?.manifestSha256;
   if (!/^[a-f0-9]{64}$/.test(supplied || "")) {
     addError(errors, "batch.manifestSha256", "SHA-256 canônico do manifesto obrigatório");
     return;
   }
   if (!isRecord(manifest)) return;
   try {
-    const expected = cardArtPilotManifestSha256(manifest);
-    if (supplied !== expected) {
-      addError(errors, "batch.manifestSha256", `resultado pertence a outro lote; esperado ${expected}`);
+    const expected = cardArtPilotBatchIdentity(manifest);
+    if (supplied !== expected.manifestSha256) {
+      addError(errors, "batch.manifestSha256", `resultado pertence a outro lote; esperado ${expected.manifestSha256}`);
+    }
+    if (suppliedBatch?.version !== expected.version) {
+      addError(errors, "batch.version", `resultado declara versão diferente do manifesto; esperado ${expected.version || "missing"}`);
+    }
+    if (!Array.isArray(suppliedBatch?.assets) || suppliedBatch.assets.length !== expected.assets.length) {
+      addError(errors, "batch.assets", "resultado deve vincular os oito hashes de arte do manifesto");
+    } else {
+      for (const [index, expectedAsset] of expected.assets.entries()) {
+        const suppliedAsset = suppliedBatch.assets[index];
+        if (suppliedAsset?.blindCode !== expectedAsset.blindCode || suppliedAsset?.sha256 !== expectedAsset.sha256) {
+          addError(errors, `batch.assets[${index}]`, `${expectedAsset.blindCode} ou seu SHA-256 não corresponde ao manifesto`);
+        }
+      }
     }
   } catch (error) {
     addError(errors, "manifest", `não foi possível calcular o SHA-256 canônico: ${error.message}`);
   }
 }
 
-function validateManifestForCollection(errors, manifest) {
+function validateManifestForCollection(errors, manifest, now) {
   if (!isRecord(manifest)) return;
   if (!hasText(manifest.version)) addError(errors, "manifest.version", "versão do lote obrigatória");
   if (manifest.status !== "pilot-ready-for-human-decision") {
@@ -191,15 +217,36 @@ function validateManifestForCollection(errors, manifest) {
     addError(errors, "manifest.generatedOn", "data ISO do lote obrigatória");
   } else {
     if (manifestDate < PILOT_GUIDE_VERSIONED_AT) addError(errors, "manifest.generatedOn", "lote não pode anteceder o guia versionado");
-    if (manifestDate > Date.now() + MAXIMUM_CLOCK_SKEW_MS) addError(errors, "manifest.generatedOn", "lote não pode ter data futura");
+    if (manifestDate > now + MAXIMUM_CLOCK_SKEW_MS) addError(errors, "manifest.generatedOn", "lote não pode ter data futura");
   }
+  const generatedAt = parsedDate(manifest.generatedAt);
+  const styleGuideVersionedAt = parsedDate(manifest.styleGuideVersionedAt);
+  if (generatedAt === null) addError(errors, "manifest.generatedAt", "instante de geração válido obrigatório");
+  if (styleGuideVersionedAt === null) addError(errors, "manifest.styleGuideVersionedAt", "instante de versão do guia válido obrigatório");
+  if (generatedAt !== null && generatedAt > now + MAXIMUM_CLOCK_SKEW_MS) addError(errors, "manifest.generatedAt", "geração não pode estar no futuro");
+  if (styleGuideVersionedAt !== null && styleGuideVersionedAt > now + MAXIMUM_CLOCK_SKEW_MS) addError(errors, "manifest.styleGuideVersionedAt", "versionamento do guia não pode estar no futuro");
+  if (generatedAt !== null && manifestDate !== null && new Date(generatedAt).toISOString().slice(0, 10) !== manifest.generatedOn) {
+    addError(errors, "manifest.generatedOn", "data civil deve corresponder ao instante UTC de geração");
+  }
+  if (generatedAt !== null && styleGuideVersionedAt !== null && styleGuideVersionedAt >= generatedAt) {
+    addError(errors, "manifest.styleGuideVersionedAt", "guia precisa estar versionado antes da geração");
+  }
+  if (!/^[a-f0-9]{40}$/.test(manifest.generationCommit || "")) addError(errors, "manifest.generationCommit", "commit da geração obrigatório");
   if (manifest.styleGuide !== "docs/design/CARD_ART_NEUTRALITY_GUIDE.md") {
     addError(errors, "manifest.styleGuide", "deve apontar para o guia canônico versionado");
   }
   if (!hasText(manifest.styleGuideAtGeneration)) addError(errors, "manifest.styleGuideAtGeneration", "versão do guia usada na geração obrigatória");
+  if (!/^[a-f0-9]{40}$/.test(manifest.styleGuideCommitAtGeneration || "")) addError(errors, "manifest.styleGuideCommitAtGeneration", "commit prévio do guia obrigatório");
+  if (!isSha256(manifest.styleGuideSha256AtGeneration)) addError(errors, "manifest.styleGuideSha256AtGeneration", "SHA-256 do conteúdo prévio do guia obrigatório");
+  if (manifest.styleGuideCommitAtGeneration === manifest.generationCommit) addError(errors, "manifest.styleGuideCommitAtGeneration", "guia e geração precisam estar em commits distintos e ordenados");
   if (!hasText(manifest.currentStyleGuideVersion)) addError(errors, "manifest.currentStyleGuideVersion", "versão vigente do guia obrigatória");
   if (manifest.styleGuideAtGeneration !== manifest.currentStyleGuideVersion) {
     addError(errors, "manifest.styleGuideAtGeneration", "coleta exige que a versão usada na geração seja a versão vigente");
+  }
+  if (!hasText(manifest.tool)) addError(errors, "manifest.tool", "ferramenta de geração obrigatória");
+  if (!hasText(manifest.commonPrompt)) addError(errors, "manifest.commonPrompt", "prompt comum imutável obrigatório");
+  if (manifest.participantResponseSchema !== "stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json") {
+    addError(errors, "manifest.participantResponseSchema", "schema canônico das respostas individuais obrigatório");
   }
   if (manifest.collectionAllowed !== true) {
     addError(errors, "manifest.collectionAllowed", "nenhum resultado pode ser consolidado enquanto a coleta não estiver explicitamente autorizada");
@@ -237,6 +284,7 @@ function validateManifestForCollection(errors, manifest) {
     const assetPath = `manifest.assets.${code}`;
     if (!hasText(asset.personId)) addError(errors, `${assetPath}.personId`, "pessoa vinculada obrigatória");
     if (asset.file !== `${code}.png`) addError(errors, `${assetPath}.file`, `arquivo cego deve ser ${code}.png`);
+    if (!hasText(asset.generationPath)) addError(errors, `${assetPath}.generationPath`, "caminho da arte no commit de geração obrigatório");
     if (!isSha256(asset.sha256)) addError(errors, `${assetPath}.sha256`, "SHA-256 da arte obrigatório");
     if (!Number.isInteger(asset.width) || asset.width <= 0) addError(errors, `${assetPath}.width`, "largura positiva obrigatória");
     if (!Number.isInteger(asset.height) || asset.height <= 0) addError(errors, `${assetPath}.height`, "altura positiva obrigatória");
@@ -345,7 +393,7 @@ function parsedDate(value) {
   return Number.isNaN(timestamp) ? null : timestamp;
 }
 
-function validateHumanAccountability(errors, result, manifest) {
+function validateHumanAccountability(errors, result, manifest, now) {
   const decision = result?.decision;
   if (!isRecord(decision)) {
     addError(errors, "decision", "decisão humana ausente");
@@ -394,6 +442,12 @@ function validateHumanAccountability(errors, result, manifest) {
         addError(errors, `${path}.reviewedAt`, "revisão não pode ser posterior à decisão");
       }
       boundedDates.push([`${path}.reviewedAt`, reviewedAt]);
+    }
+  }
+
+  for (const [path, timestamp] of boundedDates) {
+    if (timestamp !== null && timestamp > now + MAXIMUM_CLOCK_SKEW_MS) {
+      addError(errors, path, "data não pode estar no futuro");
     }
   }
 
@@ -548,13 +602,21 @@ function validateFollowDecision(errors, result, manifest) {
   }
 }
 
-export function validateCardArtPilotResults(result, manifest) {
+function resolveValidationNow({ now, clock = Date.now } = {}) {
+  const supplied = now ?? (typeof clock === "function" ? clock() : clock);
+  const timestamp = supplied instanceof Date ? supplied.getTime() : supplied;
+  if (!Number.isFinite(timestamp)) throw new TypeError("relógio de validação inválido");
+  return timestamp;
+}
+
+export function validateCardArtPilotResults(result, manifest, options) {
+  const now = resolveValidationNow(options);
   const errors = [];
   if (!isRecord(result)) return ["result: deve ser um objeto"];
   if (!isRecord(manifest)) addError(errors, "manifest", "manifesto obrigatório para validar licenças e gates");
   validateNoParticipantPii(errors, result);
   validateManifestBinding(errors, result, manifest);
-  validateManifestForCollection(errors, manifest);
+  validateManifestForCollection(errors, manifest, now);
 
   const sample = result.sample;
   if (!isRecord(sample)) {
@@ -605,13 +667,13 @@ export function validateCardArtPilotResults(result, manifest) {
     result.assets.forEach((asset, index) => validateAssetMetrics(errors, asset, index, sample));
   }
 
-  validateHumanAccountability(errors, result, manifest);
+  validateHumanAccountability(errors, result, manifest, now);
   validateFollowDecision(errors, result, manifest);
   return errors;
 }
 
-export function assertCardArtPilotResults(result, manifest) {
-  const errors = validateCardArtPilotResults(result, manifest);
+export function assertCardArtPilotResults(result, manifest, options) {
+  const errors = validateCardArtPilotResults(result, manifest, options);
   if (!errors.length) return;
   const error = new Error(`Resultado do piloto #176 inválido:\n- ${errors.join("\n- ")}`);
   error.validationErrors = errors;

@@ -4,8 +4,13 @@
   "issue": 176,
   "tool": "OpenAI built-in image generation",
   "generatedOn": "2026-09-16",
+  "generatedAt": "2026-09-15T23:55:15-03:00",
+  "generationCommit": "d9f13c7283816ed6c22f6cee355c5aaeb7764e73",
   "styleGuide": "docs/design/CARD_ART_NEUTRALITY_GUIDE.md",
   "styleGuideAtGeneration": "pilot-1",
+  "styleGuideCommitAtGeneration": "de0ef263a1f774262ecb6f36bbdc1a3452713536",
+  "styleGuideSha256AtGeneration": "0d86a0b1aef1dc46893b64400016ca5fee75a7a047c2a4c87adba9ceabf513cf",
+  "styleGuideVersionedAt": "2026-09-15T23:55:14-03:00",
   "currentStyleGuideVersion": "pilot-2",
   "collectionAllowed": false,
   "scaleDecisionAllowed": false,
@@ -15,6 +20,7 @@
     "requiredRemediation": "Gerar oito novas imagens somente depois de pilot-2 estar versionado; nao reutilizar P01-P08 em coleta humana nem em decisao seguir."
   },
   "testProtocol": "stages/12_quality_gate_main/references/card-art-pilot-176.md",
+  "participantResponseSchema": "stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json",
   "resultSchema": "stages/12_quality_gate_main/references/card-art-pilot-results.schema.json",
   "storage": {
     "purpose": "nonconforming-evidence-only",
@@ -30,6 +36,7 @@
       "personId": "019",
       "slug": "douglas-ruas",
       "file": "P01.png",
+      "generationPath": "app/public/card-art/pilot/019-douglas-ruas-pilot-v1.png",
       "identityReference": {
         "path": "app/public/portraits/019.jpg",
         "sha256": "c4981caa63fa6912ffaccf190acf515807a8a3dc7028ab8b444893c433e14f2b",
@@ -51,6 +58,7 @@
       "personId": "033",
       "slug": "marina-silva",
       "file": "P02.png",
+      "generationPath": "app/public/card-art/pilot/033-marina-silva-pilot-v1.png",
       "identityReference": {
         "path": "app/public/portraits/033.jpg",
         "sha256": "7c22b5ecbb8fe8a7f9a95b7922699db6f066abf9e0b79df14df7458f4efa20c7",
@@ -74,6 +82,7 @@
       "personId": "017",
       "slug": "joao-campos",
       "file": "P03.png",
+      "generationPath": "app/public/card-art/pilot/017-joao-campos-pilot-v1.png",
       "identityReference": {
         "path": "app/public/portraits/017.jpg",
         "sha256": "dcba3108226083df56089ca8f912007cac1a1e3a560cc4a0cbef11ec20f386e6",
@@ -95,6 +104,7 @@
       "personId": "063",
       "slug": "jair-bolsonaro",
       "file": "P04.png",
+      "generationPath": "app/public/card-art/pilot/063-jair-bolsonaro-pilot-v1.png",
       "identityReference": {
         "path": "app/public/portraits/063.jpg",
         "sha256": "616356e291469cc3745dc37cc0163041dde07fa9e71caf6b781b0f2c3adc4761",
@@ -118,6 +128,7 @@
       "personId": "052",
       "slug": "sonia-guajajara",
       "file": "P05.png",
+      "generationPath": "app/public/card-art/pilot/052-sonia-guajajara-pilot-v1.png",
       "identityReference": {
         "path": "app/public/portraits/052.jpg",
         "sha256": "d2eaf98cab1c4a6b2c052c214dad1cbcf38e47899511bef85718ee0064ac68d3",
@@ -139,6 +150,7 @@
       "personId": "001",
       "slug": "lula",
       "file": "P06.png",
+      "generationPath": "app/public/card-art/pilot/001-lula-pilot-v1.png",
       "identityReference": {
         "path": "app/public/portraits/001.jpg",
         "sha256": "a791320d1beae02329bfb64f4318179f9a668635df537c6b8072e78f7669c6c1",
@@ -162,6 +174,7 @@
       "personId": "084",
       "slug": "tabata-amaral",
       "file": "P07.png",
+      "generationPath": "app/public/card-art/pilot/084-tabata-amaral-pilot-v1.png",
       "identityReference": {
         "path": "app/public/portraits/084.jpg",
         "sha256": "c632402df925b4b63bc3f4358b0a2a559cf4a0faa2f6f40844f121babaa76537",
@@ -185,6 +198,7 @@
       "personId": "028",
       "slug": "michelle-bolsonaro",
       "file": "P08.png",
+      "generationPath": "app/public/card-art/pilot/028-michelle-bolsonaro-pilot-v1.png",
       "identityReference": {
         "path": "app/public/portraits/028.jpg",
         "sha256": "6657871c921c3f3efa349d1f24e8e73ec57f100fbf422544de5322645f871b53",

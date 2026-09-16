@@ -5,10 +5,11 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run portraits:check && vite build && node scripts/verify-card-art-pilot-excluded.mjs",
+    "card-art-pilot:validate-participants": "node scripts/validate-card-art-pilot-participants.mjs",
     "card-art-pilot:validate-results": "node scripts/validate-card-art-pilot-results.mjs",
     "portraits:check": "node scripts/validate-portrait-slots.mjs",
     "test": "node --test src/*.test.js",
-    "test:card-art-pilot-contract": "node --test src/card-art-pilot.test.js src/card-art-pilot-validation.test.js src/card-art-pilot-docker-context.test.js",
+    "test:card-art-pilot-contract": "node --test src/card-art-pilot.test.js src/card-art-pilot-validation.test.js src/card-art-pilot-participant-validation.test.js src/card-art-pilot-manifest-provenance.test.js src/card-art-pilot-docker-context.test.js",
     "test:card-art-pilot-form": "node scripts/card-art-pilot-form-smoke.mjs",
     "preview": "vite preview"
   },

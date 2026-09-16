@@ -604,7 +604,11 @@ try {
   if (!googleEnabled && await page.locator(".app-live-region").innerText()) throw new Error("A região viva deveria nascer vazia antes do primeiro anúncio");
   const selectedRoundIds = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => card.dataset.vote));
   const votingCard = page.locator(".candidate-card").nth(1);
-  await votingCard.focus();
+  await page.keyboard.press("Tab");
+  if (!await page.locator(".profile-trigger").first().evaluate((button) => button === document.activeElement && button.matches(":focus-visible"))) {
+    throw new Error("A navegação de teclado não passou pelo perfil irmão da primeira carta");
+  }
+  await page.keyboard.press("Tab");
   if (!await votingCard.evaluate((card) => card === document.activeElement && card.matches(":focus-visible"))) {
     throw new Error("A carta de voto não recebeu foco visível pela navegação de teclado");
   }

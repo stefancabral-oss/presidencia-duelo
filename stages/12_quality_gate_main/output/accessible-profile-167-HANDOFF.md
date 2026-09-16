@@ -2,7 +2,7 @@
 
 ## Entrega
 
-A interação do duelo agora separa explicitamente intenção de voto e consulta do perfil. Os slots persistentes da #166 e o contrato de confirmação da #170/#193 foram preservados.
+A interação do duelo agora separa explicitamente intenção de voto e consulta do perfil. Os slots persistentes da #166, a entrada diária e a aposta da #178/#179, além do contrato de confirmação da #170/#193, foram preservados.
 
 Arquivos centrais:
 
@@ -18,9 +18,13 @@ Arquivos centrais:
 - A pressão longa continua disponível, mas não é necessária para descobrir o perfil.
 - O retorno de foco é explícito para também funcionar quando o perfil foi aberto pelo atalho de pressão longa no WebKit.
 - O coach é persistente no DOM e usa `showModal()`, sem simular `aria-modal` em uma `div`.
+- A rodada de aposta mantém a dica `Toque para apostar`, não expõe o botão de perfil e não confunde aposta com voto.
+- Durante envio e recuperação, os dois controles do slot permanecem bloqueados; o perfil não abre enquanto a escolha está pendente.
 
 ## Estado dos gates
 
-- Gate automatizado: aprovado em Chromium e WebKit.
-- Build e testes de regressão: aprovados; `npm test` fechou 112/112.
+- Gate automatizado: 9 fluxos × 2 motores, 18/18 aprovados em Chromium e WebKit.
+- Build e testes de regressão: aprovados; `npm test` fechou 152/152 (`shared` 4, `back` 58, `app` 90).
+- Auditorias de produção: app e backend com 0 vulnerabilidades.
+- Preview isolado: HTTP 200 em `127.0.0.1:4282`, `--strictPort`, processo vinculado a esta worktree.
 - Gate humano com NVDA/VoiceOver: pendente; não bloqueia a revisão técnica, mas impede declarar a validação assistiva humana concluída.

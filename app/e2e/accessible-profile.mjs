@@ -144,6 +144,8 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
 try {
   await page.goto(appUrl, { waitUntil: "networkidle" });
   await activateWithKeyboard(page, page.locator('.nav-button[data-screen="duel"]'));
+  await page.getByRole("heading", { name: "Não conseguimos atualizar a rodada.", exact: true }).waitFor();
+  await activateWithKeyboard(page, page.locator("#daily-loading-free"));
   await page.getByRole("heading", { name: "Quem você prefere?", exact: true }).waitFor();
 
   const coach = page.locator("#coach-dialog");
@@ -172,8 +174,7 @@ try {
     ));
     if (focusedBehindCoach) throw new Error("Tab alcançou um controle atrás do coach modal");
   }
-  await start.focus();
-  await page.keyboard.press("Enter");
+  await page.keyboard.press("Escape");
   await coach.waitFor({ state: "hidden" });
   await page.waitForTimeout(20);
   if (!await firstVote.evaluate((button) => button === document.activeElement)) {
@@ -379,7 +380,8 @@ try {
   const report = {
     browser: browserName,
     viewport: { width: 390, height: 844 },
-    coach: coachSemantics,
+    entry: { dailyFirstFallbackToFree: true },
+    coach: { ...coachSemantics, closedWith: "Escape" },
     slots: slotEvidence.map(({ tag, directButtons, nestedButtons, voteName, profileName, profileText, profileBox }) => ({
       tag, directButtons, nestedButtons, voteName, profileName, profileText, profileHeight: profileBox.height,
     })),

@@ -511,6 +511,9 @@ test("natural participant identification and common Brazilian address variants a
   result.assets[2].identityReview.notes = "A entrevistada Carla Mendes reside na Praça Azul, 20";
   result.assets[2].dignityReview.notes = "CEP 01001-000";
   result.assets[3].identityReview.notes = "A pessoa Ana mora na Rua Verde, sem número";
+  result.assets[3].dignityReview.notes = "Ａ ＶＯＬＵＮＴÁＲＩＡ Ana da Silva RESIDE na Rua Azul, s/n";
+  result.assets[4].identityReview.notes = "A entrevistada Maria de Lourdes dos Santos vive na Alameda Sul sem número";
+  result.assets[4].dignityReview.notes = "partici\u200bpante: Joana dos Reis";
   result.decision.rationale = "Endereço agregado omitido; código postal observado 01001000";
   const errors = validateCardArtPilotResults(result, manifest);
   assert.ok(errors.some((error) => error.includes("identificação natural de participante")));
@@ -521,6 +524,39 @@ test("natural participant identification and common Brazilian address variants a
   safe.assets[0].identityReview.notes = "Participantes externos foram recrutados sem coleta de texto livre.";
   safe.assets[0].dignityReview.notes = "Revisão agregada sem nome, telefone ou endereço de participante.";
   assert.deepEqual(validateCardArtPilotResults(safe, manifest), []);
+});
+
+test("accountable text rejects controls, default ignorables and punctuation-only signatures", () => {
+  const manifest = readyManifestFixture();
+  const mutations = [
+    (result) => { result.decision.rationale = "\u200B"; },
+    (result) => { result.decision.decidedBy = "Responsável\u200D"; },
+    (result) => { result.assets[0].identityReview.reviewedBy = "Revisor\u0000"; },
+    (result) => { result.assets[0].dignityReview.notes = "—"; }
+  ];
+  for (const mutate of mutations) {
+    const result = validResultFixture("iterar", manifest);
+    mutate(result);
+    assert.ok(validateCardArtPilotResults(result, manifest)
+      .some((error) => /vazi|responsável/.test(error)), "invisible/control-only bypass must fail");
+  }
+});
+
+test("PII matching uses PT-BR NFKC casefold and cannot be split by particles or default ignorables", () => {
+  const manifest = readyManifestFixture();
+  const reproductions = [
+    "A PESSOA Ana da Silva MORA na Rua Um, s/n",
+    "A VOLUNTÁRIA Bia de Souza e Lima RESIDE na Avenida Dois sem número",
+    "A ENTREVISTADA Cátia dos Reis VIVE na Praça Três, 30",
+    "Ａ ＶＯＬＵＮＴÁＲＩＡ Dora das Dores MORA na Rua Quatro, 40",
+    "partici\u200bpante: Eva do Carmo"
+  ];
+  for (const reproduction of reproductions) {
+    const result = validResultFixture("iterar", manifest);
+    result.decision.rationale = reproduction;
+    assert.ok(validateCardArtPilotResults(result, manifest)
+      .some((error) => error.includes("participante") || error.includes("endereço postal")), reproduction);
+  }
 });
 
 test("PII detection descends into arrays of primitive text", () => {

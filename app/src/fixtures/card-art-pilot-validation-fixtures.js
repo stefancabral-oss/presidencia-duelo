@@ -2,25 +2,15 @@ import { createHash } from "node:crypto";
 import { CARD_ART_PILOT_CODES, cardArtPilotBatchIdentity } from "../card-art-pilot-validation.js";
 import {
   CARD_ART_PILOT_BUNDLE_PROTOCOL,
+  CARD_ART_PILOT_RECOGNITION_NORMALIZATION,
+  CARD_ART_PILOT_RECOGNITION_RULES_PROTOCOL,
   CARD_ART_PILOT_RECEIPT_PROTOCOL,
   cardArtPilotCustodyFromBundle,
+  cardArtPilotRecognitionRulesSha256,
   cardArtPilotReceiptRegistrySha256,
-  cardArtPilotReceiptSha256
+  cardArtPilotReceiptSha256,
+  deriveCardArtPilotQuantitativeResult
 } from "../card-art-pilot-participant-validation.js";
-
-function scenarioMetrics() {
-  return {
-    validResponses: 20,
-    recognized: 16,
-    recognitionRate: 0.8,
-    favorece: 2,
-    neutra: 16,
-    prejudica: 2,
-    favoreceRate: 0.1,
-    neutraRate: 0.8,
-    prejudicaRate: 0.1
-  };
-}
 
 function approvedReview(role) {
   return {
@@ -31,29 +21,9 @@ function approvedReview(role) {
   };
 }
 
-function assetResult(blindCode) {
+function reviewedAsset(quantitativeAsset) {
   return {
-    blindCode,
-    validResponses: 40,
-    recognition: {
-      correct: 32,
-      incorrect: 4,
-      unknown: 4,
-      rate: 0.8
-    },
-    neutrality: {
-      favorece: 4,
-      neutra: 32,
-      prejudica: 4,
-      favoreceRate: 0.1,
-      neutraRate: 0.8,
-      prejudicaRate: 0.1,
-      balancePercentagePoints: 0
-    },
-    byDisplayScenario: {
-      "mobile-390x844": scenarioMetrics(),
-      "desktop-1000x800": scenarioMetrics()
-    },
+    ...quantitativeAsset,
     identityReview: approvedReview("Identity"),
     dignityReview: approvedReview("Dignity")
   };
@@ -61,7 +31,9 @@ function assetResult(blindCode) {
 
 export function validResultFixture(decision = "iterar", manifest = readyManifestFixture()) {
   const receiptRegistry = receiptRegistryFixture(manifest);
+  const recognitionRules = recognitionRulesFixture(manifest);
   const bundle = validParticipantBundleFixture(manifest, receiptRegistry);
+  const quantitative = deriveCardArtPilotQuantitativeResult(bundle, recognitionRules);
   return {
     protocol: "card-art-pilot-176-v2",
     issue: 176,
@@ -69,11 +41,8 @@ export function validResultFixture(decision = "iterar", manifest = readyManifest
     custody: cardArtPilotCustodyFromBundle(bundle, receiptRegistry),
     generatedAt: "2026-09-16T02:30:00Z",
     sample: {
-      participantCount: 40,
-      displayScenarios: {
-        "mobile-390x844": 20,
-        "desktop-1000x800": 20
-      },
+      participantCount: quantitative.sample.participantCount,
+      displayScenarios: quantitative.sample.displayScenarios,
       externalRecruitment: {
         externalParticipantsOnly: true,
         productionTeamExcluded: true,
@@ -86,24 +55,9 @@ export function validResultFixture(decision = "iterar", manifest = readyManifest
         crossTabsPublished: false,
         rawExportsDeletedAfterConsolidation: true
       },
-      strata: {
-        regional: {
-          published: [
-            { key: "sudeste", participantCount: 20 },
-            { key: "nordeste", participantCount: 15 }
-          ],
-          suppressedCount: 5
-        },
-        familiarity: {
-          published: [
-            { key: "media", participantCount: 20 },
-            { key: "alta", participantCount: 15 }
-          ],
-          suppressedCount: 5
-        }
-      }
+      strata: quantitative.sample.strata
     },
-    assets: CARD_ART_PILOT_CODES.map(assetResult),
+    assets: quantitative.assets.map(reviewedAsset),
     decision: {
       value: decision,
       decidedBy: "Decision Owner",
@@ -146,6 +100,7 @@ export function readyManifestFixture() {
     participantResponseSchema: "stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json",
     responseBundleSchema: "stages/12_quality_gate_main/references/card-art-pilot-response-bundle.schema.json",
     receiptRegistrySchema: "stages/12_quality_gate_main/references/card-art-pilot-receipt-registry.schema.json",
+    recognitionRulesSchema: "stages/12_quality_gate_main/references/card-art-pilot-recognition-rules.schema.json",
     commonPrompt: "locked fixture prompt",
     assets: CARD_ART_PILOT_CODES.map((blindCode, index) => ({
       blindCode,
@@ -178,6 +133,13 @@ export function readyManifestFixture() {
     sha256: cardArtPilotReceiptRegistrySha256(receiptRegistry),
     issuedCount: receiptRegistry.receiptHashes.length
   };
+  const recognitionRules = recognitionRulesFixture(manifest);
+  manifest.recognitionRules = {
+    protocol: recognitionRules.protocol,
+    path: "stages/12_quality_gate_main/evidence/card-art-pilot-176/recognition-rules.json",
+    commit: "9".repeat(40),
+    sha256: cardArtPilotRecognitionRulesSha256(recognitionRules)
+  };
   return manifest;
 }
 
@@ -199,6 +161,19 @@ export function receiptRegistryFixture(manifest = readyManifestFixture()) {
   };
   registry.receiptHashes = Array.from({ length: 40 }, (_, index) => cardArtPilotReceiptSha256(receiptTokenFixture(index), registry)).sort();
   return registry;
+}
+
+export function recognitionRulesFixture(manifest) {
+  return {
+    protocol: CARD_ART_PILOT_RECOGNITION_RULES_PROTOCOL,
+    batchVersion: manifest.version,
+    normalization: CARD_ART_PILOT_RECOGNITION_NORMALIZATION,
+    unknownAnswers: ["nao reconheco", "nao sei"],
+    assets: CARD_ART_PILOT_CODES.map((blindCode) => ({
+      blindCode,
+      aliases: [`pessoa reconhecida ${blindCode.toLocaleLowerCase("pt-BR")}`]
+    }))
+  };
 }
 
 export function validParticipantResponseFixture(
@@ -231,7 +206,7 @@ export function validParticipantResponseFixture(
     },
     responses: CARD_ART_PILOT_CODES.map((code) => ({
       code,
-      identity: "Pessoa reconhecida",
+      identity: `Pessoa reconhecida ${code}`,
       tone: "neutra"
     })),
     disclosureSeen: true
@@ -239,13 +214,26 @@ export function validParticipantResponseFixture(
 }
 
 export function validParticipantBundleFixture(manifest = readyManifestFixture(), receiptRegistry = receiptRegistryFixture(manifest)) {
-  const responses = Array.from({ length: 40 }, (_, index) => validParticipantResponseFixture(
-    manifest,
-    index.toString(16).padStart(32, "0"),
-    index < 20 ? "mobile-390x844" : "desktop-1000x800",
-    receiptTokenFixture(index),
-    new Date(Date.parse("2026-09-16T00:30:00Z") + (index * 60_000)).toISOString()
-  ));
+  const responses = Array.from({ length: 40 }, (_, index) => {
+    const response = validParticipantResponseFixture(
+      manifest,
+      index.toString(16).padStart(32, "0"),
+      index < 20 ? "mobile-390x844" : "desktop-1000x800",
+      receiptTokenFixture(index),
+      new Date(Date.parse("2026-09-16T00:30:00Z") + (index * 60_000)).toISOString()
+    );
+    const scenarioIndex = index % 20;
+    response.responses = response.responses.map((answer) => ({
+      ...answer,
+      identity: scenarioIndex < 16
+        ? `Pessoa reconhecida ${answer.code}`
+        : scenarioIndex < 18 ? "Pessoa diferente" : "Não sei",
+      tone: scenarioIndex < 2 ? "favorece" : scenarioIndex < 4 ? "prejudica" : "neutra"
+    }));
+    response.strata.region = index < 20 ? "sudeste" : index < 35 ? "nordeste" : index < 39 ? "norte" : "sul";
+    response.strata.familiarity = index < 20 ? "media" : index < 35 ? "alta" : index < 39 ? "baixa" : "prefiro-nao-informar";
+    return response;
+  });
   return {
     protocol: CARD_ART_PILOT_BUNDLE_PROTOCOL,
     batch: cardArtPilotBatchIdentity(manifest),

@@ -25,6 +25,7 @@ test("the invalidated evidence preserves guide and asset lineage but cannot inve
   const errors = await validateCardArtPilotManifestProvenance(await currentManifest());
   assert.ok(errors.some((error) => error.includes("generationContract") && error.includes("não possui")));
   assert.ok(errors.some((error) => error.includes("receiptRegistry") && error.includes("não possui")));
+  assert.ok(errors.some((error) => error.includes("recognitionRules") && error.includes("não possuem")));
   assert.equal(errors.some((error) => error.includes("assets.P01.sha256")), false);
 });
 
@@ -49,7 +50,7 @@ test("tampered guide hashes, commit order and historical art paths fail provenan
   const missingAsset = await currentManifest();
   missingAsset.assets[0].generationPath = "app/public/card-art/pilot/nao-existe.png";
   assert.ok((await validateCardArtPilotManifestProvenance(missingAsset))
-    .some((error) => error.includes("assets.P01.generationPath") && error.includes("Git não comprovou")));
+    .some((error) => error.includes("assets.P01.generationPath") && error.includes("inexistente")));
 });
 
 function contractDocuments(manifest) {
@@ -111,7 +112,7 @@ test("generation plan and receipt bind tool, prompt, outputs, references and lic
   assert.ok(errors.some((error) => error.includes("generationPlan.assets[1].identityReference")));
 });
 
-test("the verifier rejects a receipt registry committed only after collection began", async () => {
+test("Git timestamps remain informational and collection fails closed without an external protected-branch anchor", async () => {
   const manifest = await currentManifest();
   manifest.collectionAllowed = true;
   manifest.receiptRegistry = {
@@ -125,5 +126,41 @@ test("the verifier rejects a receipt registry committed only after collection be
   const errors = await validateCardArtPilotManifestProvenance(manifest, {
     firstCollectedAt: "2026-09-16T03:00:00Z"
   });
-  assert.ok(errors.some((error) => error.includes("receiptRegistry.commit") && error.includes("depois do início da coleta")));
+  assert.ok(errors.some((error) => error.includes("cronologia Git declarada")));
+  assert.ok(errors.some((error) => error.includes("historyAnchor") && error.includes("fail-closed")));
+});
+
+test("declared generation commits must exist in real history and be ancestors of HEAD", async () => {
+  const manifest = await currentManifest();
+  manifest.generationCommit = "f".repeat(40);
+  const errors = await validateCardArtPilotManifestProvenance(manifest);
+  assert.ok(errors.some((error) => error.includes("manifest.generationCommit") && error.includes("ancestral do HEAD real")));
+
+  const contractManifest = await currentManifest();
+  contractManifest.generationContract = {
+    plan: {
+      path: "stages/12_quality_gate_main/evidence/card-art-pilot-176/manifest.json",
+      commit: "e".repeat(40),
+      sha256: "a".repeat(64)
+    },
+    receipt: {
+      path: "stages/12_quality_gate_main/evidence/card-art-pilot-176/manifest.json",
+      commit: contractManifest.generationCommit,
+      sha256: "b".repeat(64)
+    }
+  };
+  const contractErrors = await validateCardArtPilotManifestProvenance(contractManifest);
+  assert.ok(contractErrors.some((error) => error.includes("generationContract.plan.commit") && error.includes("ancestral do HEAD real")));
+
+  const registryManifest = await currentManifest();
+  registryManifest.receiptRegistry = {
+    protocol: "card-art-pilot-176-receipts-v1",
+    path: "stages/12_quality_gate_main/evidence/card-art-pilot-176/manifest.json",
+    commit: "d".repeat(40),
+    committedAt: "2026-09-16T00:00:00Z",
+    sha256: "c".repeat(64),
+    issuedCount: 40
+  };
+  const registryErrors = await validateCardArtPilotManifestProvenance(registryManifest);
+  assert.ok(registryErrors.some((error) => error.includes("receiptRegistry.commit") && error.includes("ancestral do HEAD real")));
 });

@@ -5,8 +5,10 @@ import { cardArtPilotManifestSha256 } from "../src/card-art-pilot-validation.js"
 import { assertCardArtPilotManifestProvenance } from "../src/card-art-pilot-manifest-provenance.js";
 import {
   assertCardArtPilotAggregationInput,
+  assertCardArtPilotResultDerivation,
   assertCardArtPilotResultCustody
 } from "../src/card-art-pilot-participant-validation.js";
+import { resolveCardArtPilotRepoFile } from "../src/card-art-pilot-repo-path.js";
 
 const resultPath = process.argv[2];
 const bundlePath = process.argv[3];
@@ -16,15 +18,10 @@ const schemaUrl = new URL("../../stages/12_quality_gate_main/references/card-art
 const participantSchemaUrl = new URL("../../stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json", import.meta.url);
 const bundleSchemaUrl = new URL("../../stages/12_quality_gate_main/references/card-art-pilot-response-bundle.schema.json", import.meta.url);
 const registrySchemaUrl = new URL("../../stages/12_quality_gate_main/references/card-art-pilot-receipt-registry.schema.json", import.meta.url);
+const recognitionRulesSchemaUrl = new URL("../../stages/12_quality_gate_main/references/card-art-pilot-recognition-rules.schema.json", import.meta.url);
 let absoluteResultPath;
 let absoluteBundlePath;
 
-function repositoryFileUrl(path) {
-  if (typeof path !== "string" || !path || path.includes("\\") || path.startsWith("/") || /^[A-Za-z]:/.test(path) || path.split("/").includes("..")) {
-    throw new Error("manifest.receiptRegistry.path inseguro ou ausente");
-  }
-  return new URL(path, repoRootUrl);
-}
 if (resultPath === "--manifest-sha256") {
   try {
     const manifest = JSON.parse(await readFile(manifestUrl, "utf8"));
@@ -44,23 +41,30 @@ if (resultPath === "--manifest-sha256") {
     const result = JSON.parse(await readFile(absoluteResultPath, "utf8"));
     const bundle = JSON.parse(await readFile(absoluteBundlePath, "utf8"));
     const manifest = JSON.parse(await readFile(manifestUrl, "utf8"));
-    const [schema, participantSchema, bundleSchema, receiptRegistrySchema] = await Promise.all([
+    const [schema, participantSchema, bundleSchema, receiptRegistrySchema, recognitionRulesSchema] = await Promise.all([
       readFile(schemaUrl, "utf8").then(JSON.parse),
       readFile(participantSchemaUrl, "utf8").then(JSON.parse),
       readFile(bundleSchemaUrl, "utf8").then(JSON.parse),
-      readFile(registrySchemaUrl, "utf8").then(JSON.parse)
+      readFile(registrySchemaUrl, "utf8").then(JSON.parse),
+      readFile(recognitionRulesSchemaUrl, "utf8").then(JSON.parse)
     ]);
     assertCardArtPilotResultDocument(result, manifest, schema);
-    const receiptRegistry = JSON.parse(await readFile(repositoryFileUrl(manifest?.receiptRegistry?.path), "utf8"));
+    const registryFile = await resolveCardArtPilotRepoFile(repoRootUrl, manifest?.receiptRegistry?.path, "manifest.receiptRegistry.path");
+    const receiptRegistry = JSON.parse(await readFile(registryFile.url, "utf8"));
+    const rulesFile = await resolveCardArtPilotRepoFile(repoRootUrl, manifest?.recognitionRules?.path, "manifest.recognitionRules.path");
+    const recognitionRules = JSON.parse(await readFile(rulesFile.url, "utf8"));
     const custody = assertCardArtPilotAggregationInput(bundle, manifest, {
       participantSchema,
       bundleSchema,
       receiptRegistrySchema,
-      receiptRegistry
+      receiptRegistry,
+      recognitionRulesSchema,
+      recognitionRules
     });
     assertCardArtPilotResultCustody(result, bundle, receiptRegistry);
+    assertCardArtPilotResultDerivation(result, bundle, recognitionRules);
     await assertCardArtPilotManifestProvenance(manifest, { firstCollectedAt: custody.firstCollectedAt });
-    console.log(`Schema, semântica, bundle individual, custódia e proveniência aprovados: ${absoluteResultPath}`);
+    console.log(`Schema, semântica, derivação quantitativa, bundle individual, custódia e proveniência aprovados: ${absoluteResultPath}`);
   } catch (error) {
     const source = absoluteResultPath ? ` (${absoluteResultPath}${absoluteBundlePath ? ` + ${absoluteBundlePath}` : ""})` : "";
     console.error(`Falha ao validar o resultado do piloto #176${source}: ${error.message}`);

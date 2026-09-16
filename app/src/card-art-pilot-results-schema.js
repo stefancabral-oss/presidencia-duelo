@@ -50,6 +50,10 @@ export function validateCardArtPilotReceiptRegistrySchema(registry, schema) {
   return validateCardArtPilotSchemaDocument(registry, schema);
 }
 
+export function validateCardArtPilotRecognitionRulesSchema(rules, schema) {
+  return validateCardArtPilotSchemaDocument(rules, schema);
+}
+
 export function validateCardArtPilotResultDocument(result, manifest, schema, options) {
   const schemaErrors = validateCardArtPilotResultSchema(result, schema);
   if (schemaErrors.length) return schemaErrors;

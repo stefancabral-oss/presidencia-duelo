@@ -8,6 +8,7 @@ import {
 } from "./card-art-pilot-validation.js";
 import {
   validateCardArtPilotParticipantResponseSchema,
+  validateCardArtPilotRecognitionRulesSchema,
   validateCardArtPilotReceiptRegistrySchema,
   validateCardArtPilotResponseBundleSchema
 } from "./card-art-pilot-results-schema.js";
@@ -15,7 +16,20 @@ import {
 export const CARD_ART_PILOT_RECEIPT_PROTOCOL = "card-art-pilot-176-receipts-v1";
 export const CARD_ART_PILOT_BUNDLE_PROTOCOL = "card-art-pilot-176-v2-response-bundle";
 export const CARD_ART_PILOT_CUSTODY_PROTOCOL = "card-art-pilot-176-v2-custody";
+export const CARD_ART_PILOT_RECOGNITION_RULES_PROTOCOL = "card-art-pilot-176-recognition-rules-v1";
+export const CARD_ART_PILOT_RECOGNITION_NORMALIZATION = "pt-BR-nfkc-casefold-alnum-v1";
 export const CARD_ART_PILOT_GEOMETRY_TOLERANCE_CSS_PX = 0.2;
+
+const CARD_ART_PILOT_REGION_ORDER = Object.freeze([
+  "norte",
+  "nordeste",
+  "centro-oeste",
+  "sudeste",
+  "sul",
+  "exterior",
+  "prefiro-nao-informar"
+]);
+const CARD_ART_PILOT_FAMILIARITY_ORDER = Object.freeze(["baixa", "media", "alta", "prefiro-nao-informar"]);
 
 export const CARD_ART_PILOT_SCENARIO_GEOMETRY = Object.freeze({
   "mobile-390x844": Object.freeze({
@@ -102,6 +116,21 @@ export function cardArtPilotReceiptRegistrySha256(registry) {
   return cardArtPilotCanonicalSha256(registry);
 }
 
+export function cardArtPilotRecognitionRulesSha256(rules) {
+  return cardArtPilotCanonicalSha256(rules);
+}
+
+export function normalizeCardArtPilotRecognitionAnswer(value) {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .toLocaleLowerCase("pt-BR")
+    .normalize("NFD")
+    .replace(/\p{M}+/gu, "")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
 export function cardArtPilotCustodyFromBundle(bundle, registry) {
   const entries = (bundle?.responses || []).map((response) => ({
     responseId: response.responseId,
@@ -185,11 +214,197 @@ function validateRegistry(errors, registry, manifest, schema, now) {
   }
 }
 
+function validateRecognitionRules(errors, rules, manifest, schema) {
+  const schemaErrors = validateCardArtPilotRecognitionRulesSchema(rules, schema);
+  errors.push(...schemaErrors.map((error) => `recognitionRules.${error}`));
+  if (schemaErrors.length) return;
+
+  if (rules.protocol !== CARD_ART_PILOT_RECOGNITION_RULES_PROTOCOL) errors.push("recognitionRules.protocol: protocolo inesperado");
+  if (rules.batchVersion !== manifest?.version) errors.push("recognitionRules.batchVersion: versão não corresponde ao manifesto");
+  if (rules.normalization !== CARD_ART_PILOT_RECOGNITION_NORMALIZATION) errors.push("recognitionRules.normalization: algoritmo inesperado");
+  if (manifest?.recognitionRules?.sha256 !== cardArtPilotRecognitionRulesSha256(rules)) {
+    errors.push("manifest.recognitionRules.sha256: regras vigentes divergem do manifesto");
+  }
+  if (manifest?.recognitionRules?.protocol !== rules.protocol) errors.push("manifest.recognitionRules.protocol: diverge das regras fornecidas");
+
+  const unknownAnswers = rules.unknownAnswers || [];
+  const normalizedUnknown = unknownAnswers.map(normalizeCardArtPilotRecognitionAnswer);
+  if (cardArtPilotCanonicalJson(normalizedUnknown) !== cardArtPilotCanonicalJson(unknownAnswers)
+    || cardArtPilotCanonicalJson([...unknownAnswers].sort()) !== cardArtPilotCanonicalJson(unknownAnswers)) {
+    errors.push("recognitionRules.unknownAnswers: valores precisam estar normalizados e em ordem canônica");
+  }
+
+  const observedCodes = (rules.assets || []).map(({ blindCode }) => blindCode);
+  const globalAliases = new Set();
+  for (const code of CARD_ART_PILOT_CODES) {
+    const matches = (rules.assets || []).filter(({ blindCode }) => blindCode === code);
+    if (matches.length !== 1) {
+      errors.push(`recognitionRules.assets: ${code} precisa aparecer exatamente uma vez`);
+      continue;
+    }
+    const aliases = matches[0].aliases || [];
+    const normalized = aliases.map(normalizeCardArtPilotRecognitionAnswer);
+    if (cardArtPilotCanonicalJson(normalized) !== cardArtPilotCanonicalJson(aliases)
+      || cardArtPilotCanonicalJson([...aliases].sort()) !== cardArtPilotCanonicalJson(aliases)) {
+      errors.push(`recognitionRules.assets.${code}.aliases: aliases precisam estar normalizados e em ordem canônica`);
+    }
+    for (const alias of aliases) {
+      if (unknownAnswers.includes(alias)) errors.push(`recognitionRules.assets.${code}.aliases: alias não pode significar resposta desconhecida`);
+      if (globalAliases.has(alias)) errors.push(`recognitionRules.assets.${code}.aliases: alias ambíguo entre pessoas`);
+      globalAliases.add(alias);
+    }
+  }
+  for (const code of observedCodes.filter((candidate) => !CARD_ART_PILOT_CODES.includes(candidate))) {
+    errors.push(`recognitionRules.assets: código inesperado ${code}`);
+  }
+}
+
+function derivedStratum(responses, key, order) {
+  const counts = new Map(order.map((value) => [value, 0]));
+  for (const response of responses) counts.set(response.strata[key], (counts.get(response.strata[key]) || 0) + 1);
+  return {
+    published: order
+      .filter((value) => counts.get(value) >= 5)
+      .map((value) => ({ key: value, participantCount: counts.get(value) })),
+    suppressedCount: order
+      .filter((value) => counts.get(value) > 0 && counts.get(value) < 5)
+      .reduce((total, value) => total + counts.get(value), 0)
+  };
+}
+
+function emptyScenarioMetrics() {
+  return { validResponses: 0, recognized: 0, favorece: 0, neutra: 0, prejudica: 0 };
+}
+
+function finalizedScenarioMetrics(metrics) {
+  const denominator = metrics.validResponses;
+  return {
+    validResponses: denominator,
+    recognized: metrics.recognized,
+    recognitionRate: denominator === 0 ? 0 : metrics.recognized / denominator,
+    favorece: metrics.favorece,
+    neutra: metrics.neutra,
+    prejudica: metrics.prejudica,
+    favoreceRate: denominator === 0 ? 0 : metrics.favorece / denominator,
+    neutraRate: denominator === 0 ? 0 : metrics.neutra / denominator,
+    prejudicaRate: denominator === 0 ? 0 : metrics.prejudica / denominator
+  };
+}
+
+export function deriveCardArtPilotQuantitativeResult(bundle, recognitionRules) {
+  const responses = bundle?.responses || [];
+  const ruleByCode = new Map((recognitionRules?.assets || []).map((asset) => [asset.blindCode, new Set(asset.aliases)]));
+  const unknownAnswers = new Set(recognitionRules?.unknownAnswers || []);
+  const accumulators = new Map(CARD_ART_PILOT_CODES.map((code) => [code, {
+    correct: 0,
+    incorrect: 0,
+    unknown: 0,
+    scenarios: Object.fromEntries(Object.keys(CARD_ART_PILOT_SCENARIO_GEOMETRY).map((scenario) => [scenario, emptyScenarioMetrics()]))
+  }]));
+
+  for (const participant of responses) {
+    const scenario = participant.displayScenario.id;
+    for (const answer of participant.responses) {
+      const accumulator = accumulators.get(answer.code);
+      const metrics = accumulator.scenarios[scenario];
+      const normalizedIdentity = normalizeCardArtPilotRecognitionAnswer(answer.identity);
+      metrics.validResponses += 1;
+      metrics[answer.tone] += 1;
+      if (unknownAnswers.has(normalizedIdentity)) {
+        accumulator.unknown += 1;
+      } else if (ruleByCode.get(answer.code)?.has(normalizedIdentity)) {
+        accumulator.correct += 1;
+        metrics.recognized += 1;
+      } else {
+        accumulator.incorrect += 1;
+      }
+    }
+  }
+
+  const assets = CARD_ART_PILOT_CODES.map((blindCode) => {
+    const accumulator = accumulators.get(blindCode);
+    const byDisplayScenario = Object.fromEntries(Object.keys(CARD_ART_PILOT_SCENARIO_GEOMETRY)
+      .map((scenario) => [scenario, finalizedScenarioMetrics(accumulator.scenarios[scenario])]));
+    const validResponses = Object.values(byDisplayScenario).reduce((total, metrics) => total + metrics.validResponses, 0);
+    const favorece = Object.values(byDisplayScenario).reduce((total, metrics) => total + metrics.favorece, 0);
+    const neutra = Object.values(byDisplayScenario).reduce((total, metrics) => total + metrics.neutra, 0);
+    const prejudica = Object.values(byDisplayScenario).reduce((total, metrics) => total + metrics.prejudica, 0);
+    const favoreceRate = validResponses === 0 ? 0 : favorece / validResponses;
+    const prejudicaRate = validResponses === 0 ? 0 : prejudica / validResponses;
+    return {
+      blindCode,
+      validResponses,
+      recognition: {
+        correct: accumulator.correct,
+        incorrect: accumulator.incorrect,
+        unknown: accumulator.unknown,
+        rate: validResponses === 0 ? 0 : accumulator.correct / validResponses
+      },
+      neutrality: {
+        favorece,
+        neutra,
+        prejudica,
+        favoreceRate,
+        neutraRate: validResponses === 0 ? 0 : neutra / validResponses,
+        prejudicaRate,
+        balancePercentagePoints: (favoreceRate - prejudicaRate) * 100
+      },
+      byDisplayScenario
+    };
+  });
+
+  const displayScenarios = Object.fromEntries(Object.keys(CARD_ART_PILOT_SCENARIO_GEOMETRY)
+    .map((scenario) => [scenario, responses.filter((response) => response.displayScenario.id === scenario).length]));
+  return {
+    sample: {
+      participantCount: responses.length,
+      displayScenarios,
+      strata: {
+        regional: derivedStratum(responses, "region", CARD_ART_PILOT_REGION_ORDER),
+        familiarity: derivedStratum(responses, "familiarity", CARD_ART_PILOT_FAMILIARITY_ORDER)
+      }
+    },
+    assets
+  };
+}
+
+function quantitativeProjection(result) {
+  const assetByCode = new Map((result?.assets || []).map((asset) => [asset.blindCode, asset]));
+  return {
+    sample: {
+      participantCount: result?.sample?.participantCount,
+      displayScenarios: result?.sample?.displayScenarios,
+      strata: result?.sample?.strata
+    },
+    assets: CARD_ART_PILOT_CODES.map((blindCode) => {
+      const asset = assetByCode.get(blindCode) || {};
+      return {
+        blindCode,
+        validResponses: asset.validResponses,
+        recognition: asset.recognition,
+        neutrality: asset.neutrality,
+        byDisplayScenario: asset.byDisplayScenario
+      };
+    })
+  };
+}
+
+export function validateCardArtPilotResultDerivation(result, bundle, recognitionRules) {
+  const expected = deriveCardArtPilotQuantitativeResult(bundle, recognitionRules);
+  const observed = quantitativeProjection(result);
+  if (cardArtPilotCanonicalJson(observed) === cardArtPilotCanonicalJson(expected)) return [];
+  return [
+    `quantitative: contagens, taxas, saldos ou estratos divergem da derivação canônica do bundle (esperado ${cardArtPilotCanonicalSha256(expected)}, observado ${cardArtPilotCanonicalSha256(observed)})`
+  ];
+}
+
 export function validateCardArtPilotAggregationInput(bundle, manifest, {
   participantSchema,
   bundleSchema,
   receiptRegistrySchema,
   receiptRegistry,
+  recognitionRulesSchema,
+  recognitionRules,
   now,
   clock
 } = {}) {
@@ -207,6 +422,7 @@ export function validateCardArtPilotAggregationInput(bundle, manifest, {
   }
   validateBatchIdentity(errors, bundle.batch, manifest, "bundle.batch");
   validateRegistry(errors, receiptRegistry, manifest, receiptRegistrySchema, currentTime);
+  validateRecognitionRules(errors, recognitionRules, manifest, recognitionRulesSchema);
   if (bundle.receiptRegistrySha256 !== cardArtPilotReceiptRegistrySha256(receiptRegistry)) {
     errors.push("bundle.receiptRegistrySha256: não corresponde ao registro pré-emitido");
   }
@@ -252,7 +468,7 @@ export function validateCardArtPilotAggregationInput(bundle, manifest, {
     errors.push("bundle.responses.collectedAt: coleta não pode anteceder a emissão dos receipts");
   }
   if (Number.isFinite(committedAt) && Number.isFinite(earliestCollection) && earliestCollection <= committedAt) {
-    errors.push("bundle.responses.collectedAt: primeira coleta precisa ser posterior ao commit verificável do registro de receipts");
+    errors.push("bundle.responses.collectedAt: cronologia declarada precisa posicionar a coleta depois do registro de receipts; a prova externa continua obrigatória");
   }
   return errors;
 }
@@ -289,6 +505,15 @@ export function assertCardArtPilotResultCustody(result, bundle, receiptRegistry)
   const errors = validateCardArtPilotResultCustody(result, bundle, receiptRegistry);
   if (errors.length) {
     const error = new Error(`Cadeia de custódia do piloto #176 inválida:\n- ${errors.join("\n- ")}`);
+    error.validationErrors = errors;
+    throw error;
+  }
+}
+
+export function assertCardArtPilotResultDerivation(result, bundle, recognitionRules) {
+  const errors = validateCardArtPilotResultDerivation(result, bundle, recognitionRules);
+  if (errors.length) {
+    const error = new Error(`Derivação quantitativa do piloto #176 inválida:\n- ${errors.join("\n- ")}`);
     error.validationErrors = errors;
     throw error;
   }

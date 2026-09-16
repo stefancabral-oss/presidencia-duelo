@@ -20,7 +20,7 @@
     {
       "name": "pilot-asset-and-reference-integrity",
       "command": "npm test",
-      "result": "passed; 160 of 160 tests (4 shared, 39 backend, 117 app), including the invalidation state and bypass payloads for empty or renamed bundles, reused or post-hoc receipts, detached custody roots, geometry, PII, chronology, neutrality, recognition and denominators"
+      "result": "passed; 167 of 167 tests (4 shared, 39 backend, 124 app), including canonical quantitative derivation, ambiguous or post-hoc aliases, commits outside real HEAD, encoded and symlink path escapes, NFKC/default-ignorable PII, empty or renamed bundles, reused receipts, detached custody roots, geometry and chronology"
     },
     {
       "name": "reference-provenance",
@@ -34,17 +34,17 @@
     {
       "name": "result-governance-schema",
       "command": "npm run test:card-art-pilot-contract --prefix app",
-      "result": "passed 55 of 55; locked Ajv 8.20.0 plus ajv-formats 3.0.1 validates the generation plan/receipt, registry, non-empty response bundle, each individual response and the result against Draft 2020-12 before semantics; npm audit reports zero vulnerabilities"
+      "result": "contract tests passed; locked Ajv 8.20.0 plus ajv-formats 3.0.1 validates generation plan/receipt, receipt registry, deterministic recognition rules, non-empty response bundle, each individual response and the result against Draft 2020-12 before semantics; this does not by itself approve an operational result"
     },
     {
-      "name": "result-semantic-validator",
+      "name": "result-derived-validator",
       "command": "npm run card-art-pilot:validate-results --prefix app -- <result.json> <response-bundle.json>",
-      "result": "passed with positive, negative and CLI fixtures; recomputes custody from a non-empty bundle, rejects receipt replay and a Git registry committed after collection, binds generation plan/receipt and registry bytes to historical commits, validates every geometry field, rejects expanded nested PII and requires exact collection-to-result chronology; any decision is blocked while collectionAllowed is false, while scaleDecisionAllowed blocks only seguir"
+      "result": "contract fixtures recompute participant/scenario counts, published and suppressed strata, recognition from pre-versioned deterministic aliases, every tone/count/rate/balance per art and scenario, plus custody from the non-empty bundle; canonical comparison rejects edited aggregates. No operational result is reported as passed: the current batch is invalid, and any future collection remains fail-closed until an external temporal anchor on a protected branch is verifiable"
     },
     {
       "name": "continuous-integration-enforcement",
       "command": "design-validator.yml and ui-interaction-smoke.yml",
-      "result": "configured; path triggers cover app, shared, .dockerignore, credits, the style guide, protocol, result, all five schemas, manifest and evidence; CI runs the result contract, dist isolation, a real repository-root Docker image build and the canonical-geometry form smoke in Chromium and WebKit"
+      "result": "configured; path triggers cover app, shared, .dockerignore, credits, the style guide, protocol, result, all six schemas, manifest and evidence; CI runs the result contract, dist isolation, a real repository-root Docker image build and the canonical-geometry form smoke in Chromium and WebKit"
     },
     {
       "name": "blind-recognition-test",

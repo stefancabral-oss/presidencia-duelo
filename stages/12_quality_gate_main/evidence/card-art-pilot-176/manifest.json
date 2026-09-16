@@ -16,16 +16,18 @@
   "scaleDecisionAllowed": false,
   "generationContract": null,
   "receiptRegistry": null,
+  "recognitionRules": null,
   "nonconformance": {
     "code": "style-guide-changed-after-generation",
     "summary": "O lote foi gerado sob pilot-1, que exigia fundo uniforme. Pilot-2 passou a tolerar gradiente depois de o lote ser observado e nao pode validar retroativamente estas imagens.",
-    "requiredRemediation": "Gerar oito novas imagens somente depois de pilot-2 e do generation plan estarem versionados; registrar o generation receipt no commit da geracao; pre-emitir receipts de coleta; nao reutilizar P01-P08 em coleta humana nem em decisao seguir."
+    "requiredRemediation": "Gerar oito novas imagens somente depois de pilot-2 e do generation plan estarem versionados; registrar o generation receipt no commit da geracao; versionar aliases deterministas e receipts antes da coleta; verificar ancora temporal externa em branch protegida; nao reutilizar P01-P08 em coleta humana nem em decisao seguir."
   },
   "testProtocol": "stages/12_quality_gate_main/references/card-art-pilot-176.md",
   "generationContractSchema": "stages/12_quality_gate_main/references/card-art-pilot-generation-contract.schema.json",
   "participantResponseSchema": "stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json",
   "responseBundleSchema": "stages/12_quality_gate_main/references/card-art-pilot-response-bundle.schema.json",
   "receiptRegistrySchema": "stages/12_quality_gate_main/references/card-art-pilot-receipt-registry.schema.json",
+  "recognitionRulesSchema": "stages/12_quality_gate_main/references/card-art-pilot-recognition-rules.schema.json",
   "resultSchema": "stages/12_quality_gate_main/references/card-art-pilot-results.schema.json",
   "storage": {
     "purpose": "nonconforming-evidence-only",

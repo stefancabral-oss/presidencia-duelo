@@ -10,6 +10,7 @@ const resultSchemaUrl = new URL("stages/12_quality_gate_main/references/card-art
 const participantSchemaUrl = new URL("stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json", repoRoot);
 const bundleSchemaUrl = new URL("stages/12_quality_gate_main/references/card-art-pilot-response-bundle.schema.json", repoRoot);
 const receiptRegistrySchemaUrl = new URL("stages/12_quality_gate_main/references/card-art-pilot-receipt-registry.schema.json", repoRoot);
+const recognitionRulesSchemaUrl = new URL("stages/12_quality_gate_main/references/card-art-pilot-recognition-rules.schema.json", repoRoot);
 const generationContractSchemaUrl = new URL("stages/12_quality_gate_main/references/card-art-pilot-generation-contract.schema.json", repoRoot);
 const publicPilotUrl = new URL("app/public/card-art/pilot/", repoRoot);
 
@@ -32,6 +33,8 @@ test("the eight pilot assets stay immutable in evidence storage outside app/publ
   assert.equal(manifest.scaleDecisionAllowed, false);
   assert.equal(manifest.generationContract, null);
   assert.equal(manifest.receiptRegistry, null);
+  assert.equal(manifest.recognitionRules, null);
+  assert.equal(manifest.recognitionRulesSchema, "stages/12_quality_gate_main/references/card-art-pilot-recognition-rules.schema.json");
   assert.equal(manifest.styleGuideAtGeneration, "pilot-1");
   assert.equal(manifest.currentStyleGuideVersion, "pilot-2");
   assert.match(manifest.generationCommit, /^[a-f0-9]{40}$/);
@@ -114,15 +117,18 @@ test("the individual response schema requires the same version, manifest and eig
   assert.equal(schema.$defs.batchAsset.properties.sha256.pattern, "^[a-f0-9]{64}$");
 });
 
-test("bundle, receipt registry and generation contract schemas close empty and post-hoc inputs", async () => {
-  const [bundle, registry, generation] = await Promise.all([
+test("bundle, receipt registry, recognition rules and generation contract schemas close empty and post-hoc inputs", async () => {
+  const [bundle, registry, recognition, generation] = await Promise.all([
     readFile(bundleSchemaUrl, "utf8").then(JSON.parse),
     readFile(receiptRegistrySchemaUrl, "utf8").then(JSON.parse),
+    readFile(recognitionRulesSchemaUrl, "utf8").then(JSON.parse),
     readFile(generationContractSchemaUrl, "utf8").then(JSON.parse)
   ]);
   assert.equal(bundle.properties.responses.minItems, 1);
   assert.equal(registry.properties.receiptHashes.minItems, 40);
   assert.equal(registry.properties.receiptHashes.uniqueItems, true);
+  assert.equal(recognition.properties.normalization.const, "pt-BR-nfkc-casefold-alnum-v1");
+  assert.equal(recognition.properties.assets.minItems, 8);
   assert.equal(generation.oneOf.length, 2);
   assert.equal(generation.$defs.plan.properties.assets.minItems, 8);
   assert.equal(generation.$defs.receipt.properties.assets.minItems, 8);

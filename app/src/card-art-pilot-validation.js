@@ -49,9 +49,9 @@ const FORBIDDEN_PII_PATTERNS = [
   { label: "telefone", pattern: /(?<![A-Fa-f0-9])(?:\+?55[\s.-]*)?(?:\(?\d{2}\)?[\s.-]*)?(?:9\d{4}|\d{4})[\s.-]?\d{4}(?![A-Fa-f0-9])/ },
   { label: "RG", pattern: /\bRG\s*(?:n[.º°o]?\s*)?[:#=-]?\s*\d{1,2}[.\s-]?\d{3}[.\s-]?\d{3}[-.\s]?[0-9X]\b/i },
   { label: "endereço IPv4", pattern: /\b(?:\d{1,3}\.){3}\d{1,3}\b/ },
-  { label: "marcador de participante", pattern: /\b(?:participante|respondente|pessoa|voluntári[oa]|entrevistad[oa]|nome do participante|id do participante)\s*[:#=-]\s*\S+/i },
-  { label: "nome de participante", pattern: /\b(?:A\s+|O\s+)?(?:Participante|Respondente|Pessoa|Voluntári[oa]|Entrevistad[oa])\s+(?!(?:extern[oa]s?|anônim[oa]s?|sem|não)\b)(?:[A-ZÀ-ÖØ-Þ][\p{L}'-]+\s+){1,3}[A-ZÀ-ÖØ-Þ][\p{L}'-]+\b/u },
-  { label: "identificação natural de participante", pattern: /\b(?:a|o)\s+(?:participante|respondente|pessoa|voluntári[oa]|entrevistad[oa])\s+(?!(?:extern[oa]s?|anônim[oa]s?|não|sem|que)\b)(?:[\p{L}'-]+\s+){1,5}(?:mora|reside|vive)\b/iu },
+  { label: "marcador de participante", pattern: /\b(?:participante|respondente|pessoa|volunt[aá]ri[oa]|entrevistad[oa]|nome do participante|id do participante)\s*[:#=-]\s*\S+/iu },
+  { label: "nome de participante", pattern: /\b(?:a\s+|o\s+)?(?:participante|respondente|pessoa|volunt[aá]ri[oa]|entrevistad[oa])\s+(?!(?:extern[oa]s?|an[oô]nim[oa]s?|sem|n[aã]o|que)\b)(?:[\p{L}'-]+\s+){1,7}[\p{L}'-]+\b/iu },
+  { label: "identificação natural de participante", pattern: /\b(?:a|o)\s+(?:participante|respondente|pessoa|volunt[aá]ri[oa]|entrevistad[oa])\s+(?!(?:extern[oa]s?|an[oô]nim[oa]s?|n[aã]o|sem|que)\b)(?:[\p{L}'-]+\s+){1,8}(?:mora|reside|vive)\b/iu },
   { label: "marcador de endereço", pattern: /\b(?:endereço|endereco|logradouro|CEP)\s*[:#=-]\s*\S+/i },
   { label: "CEP", pattern: /\b(?:CEP\s*[:#=-]?\s*)?\d{5}-?\d{3}\b/iu },
   { label: "endereço postal", pattern: /\b(?:Rua|R\.|Avenida|Av\.|Travessa|Trav\.|Alameda|Al\.|Rodovia|Rod\.|Praça|Pç\.|Largo|Estrada|Beco|Viela|Quadra|Condomínio|Setor|Sítio|Fazenda)\s+[\p{L}\d][^\r\n,;]{1,80}(?:,\s*)?(?:(?:n(?:[.º°o])?\s*)?\d+|s\s*\/?\s*n(?:[.º°o])?|sem\s+n[uú]mero)\b/iu }
@@ -121,10 +121,16 @@ function containsIpv6(value) {
 }
 
 function validatePiiText(errors, value, path) {
+  const nfkcCasefold = value.normalize("NFKC").toLocaleLowerCase("pt-BR");
+  const withoutIgnorables = nfkcCasefold.replace(/\p{Default_Ignorable_Code_Point}+/gu, "");
+  const variants = [
+    withoutIgnorables.replace(/\p{Cc}+/gu, " "),
+    withoutIgnorables.replace(/\p{Cc}+/gu, "")
+  ];
   for (const { label, pattern } of FORBIDDEN_PII_PATTERNS) {
-    if (pattern.test(value)) addError(errors, path, `${label} não é permitido no consolidado`);
+    if (variants.some((candidate) => pattern.test(candidate))) addError(errors, path, `${label} não é permitido no consolidado`);
   }
-  if (containsIpv6(value)) addError(errors, path, "endereço IPv6 não é permitido no consolidado");
+  if (variants.some(containsIpv6)) addError(errors, path, "endereço IPv6 não é permitido no consolidado");
 }
 
 function validateNoParticipantPii(errors, value, path = "result") {
@@ -140,7 +146,8 @@ function validateNoParticipantPii(errors, value, path = "result") {
 
   for (const [key, child] of Object.entries(value)) {
     const childPath = `${path}.${key}`;
-    const normalizedKey = key.normalize("NFD").replace(/[\u0300-\u036f_-]/g, "").toLocaleLowerCase("pt-BR");
+    const normalizedKey = key.normalize("NFKC").toLocaleLowerCase("pt-BR").normalize("NFD")
+      .replace(/\p{M}|\p{Default_Ignorable_Code_Point}|[_-]/gu, "");
     if (FORBIDDEN_PARTICIPANT_KEYS.has(normalizedKey)) {
       addError(errors, childPath, "campo com registro individual ou PII de participante não é permitido");
     }
@@ -149,7 +156,10 @@ function validateNoParticipantPii(errors, value, path = "result") {
 }
 
 function hasText(value) {
-  return typeof value === "string" && value.trim().length > 0;
+  if (typeof value !== "string") return false;
+  const normalized = value.normalize("NFKC");
+  if (/[\p{Cc}\p{Default_Ignorable_Code_Point}]/u.test(normalized)) return false;
+  return /[\p{L}\p{N}]/u.test(normalized);
 }
 
 function isHttpsUrl(value) {
@@ -281,6 +291,18 @@ function validateManifestForCollection(errors, manifest, now) {
       addError(errors, "manifest.receiptRegistry.issuedCount", "ao menos 40 receipts pré-emitidos obrigatórios");
     }
   }
+  const recognitionRules = manifest.recognitionRules;
+  if (!isRecord(recognitionRules)) {
+    addError(errors, "manifest.recognitionRules", "regras determinísticas de reconhecimento pré-coleta obrigatórias");
+  } else {
+    if (recognitionRules.protocol !== "card-art-pilot-176-recognition-rules-v1") addError(errors, "manifest.recognitionRules.protocol", "protocolo inválido");
+    if (!hasText(recognitionRules.path)) addError(errors, "manifest.recognitionRules.path", "caminho obrigatório");
+    if (!/^[a-f0-9]{40}$/.test(recognitionRules.commit || "")) addError(errors, "manifest.recognitionRules.commit", "commit obrigatório");
+    if (!isSha256(recognitionRules.sha256)) addError(errors, "manifest.recognitionRules.sha256", "SHA-256 obrigatório");
+    if (isRecord(receiptRegistry) && recognitionRules.commit !== receiptRegistry.commit) {
+      addError(errors, "manifest.recognitionRules.commit", "regras e receipts precisam ser versionados juntos antes da coleta");
+    }
+  }
   if (manifest.generationContractSchema !== "stages/12_quality_gate_main/references/card-art-pilot-generation-contract.schema.json") {
     addError(errors, "manifest.generationContractSchema", "schema canônico do contrato de geração obrigatório");
   }
@@ -292,6 +314,9 @@ function validateManifestForCollection(errors, manifest, now) {
   }
   if (manifest.receiptRegistrySchema !== "stages/12_quality_gate_main/references/card-art-pilot-receipt-registry.schema.json") {
     addError(errors, "manifest.receiptRegistrySchema", "schema canônico do registro de receipts obrigatório");
+  }
+  if (manifest.recognitionRulesSchema !== "stages/12_quality_gate_main/references/card-art-pilot-recognition-rules.schema.json") {
+    addError(errors, "manifest.recognitionRulesSchema", "schema canônico das regras de reconhecimento obrigatório");
   }
   if (manifest.collectionAllowed !== true) {
     addError(errors, "manifest.collectionAllowed", "nenhum resultado pode ser consolidado enquanto a coleta não estiver explicitamente autorizada");

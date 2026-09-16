@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 import { cardArtPilotCanonicalSha256 } from "./card-art-pilot-validation.js";
 import { validateCardArtPilotSchemaDocument } from "./card-art-pilot-results-schema.js";
+import { resolveCardArtPilotRepoFile } from "./card-art-pilot-repo-path.js";
 
 const defaultRepoRoot = new URL("../../", import.meta.url);
 
@@ -17,19 +18,29 @@ export function normalizedTextSha256(bytes) {
   return sha256(Buffer.from(normalized, "utf8"));
 }
 
-function isSafeRepoPath(value) {
-  if (typeof value !== "string" || !value || value.includes("\\")) return false;
-  if (value.startsWith("/") || /^[A-Za-z]:/.test(value)) return false;
-  return !value.split("/").includes("..");
-}
-
 function runGit(args, repoRoot) {
-  return spawnSync("git", args, {
+  return spawnSync("git", ["--no-replace-objects", ...args], {
     cwd: fileURLToPath(repoRoot),
     encoding: null,
     maxBuffer: 64 * 1024 * 1024,
-    windowsHide: true
+    windowsHide: true,
+    env: { ...process.env, GIT_NO_REPLACE_OBJECTS: "1" }
   });
+}
+
+async function verifiedRepoFile(errors, value, path, repoRoot) {
+  try {
+    return await resolveCardArtPilotRepoFile(repoRoot, value, path);
+  } catch (error) {
+    errors.push(error.message);
+    return null;
+  }
+}
+
+function requireCommitAtHead(errors, commit, path, repoRoot) {
+  if (!/^[a-f0-9]{40}$/.test(commit || "")) return;
+  const ancestry = runGit(["merge-base", "--is-ancestor", commit, "HEAD"], repoRoot);
+  if (ancestry.status !== 0) errors.push(`${path}: commit precisa existir e ser ancestral do HEAD real`);
 }
 
 function gitBytes(errors, args, path, repoRoot) {
@@ -108,12 +119,16 @@ export function validateCardArtPilotGenerationContractDocuments(manifest, plan, 
 
 export async function validateCardArtPilotManifestProvenance(manifest, { repoRoot = defaultRepoRoot, firstCollectedAt } = {}) {
   const errors = [];
-  const guidePath = manifest?.styleGuide;
+  const guideFile = await verifiedRepoFile(errors, manifest?.styleGuide, "manifest.styleGuide", repoRoot);
+  const guidePath = guideFile?.repoPath;
   const guideCommit = manifest?.styleGuideCommitAtGeneration;
   const generationCommit = manifest?.generationCommit;
-  if (!isSafeRepoPath(guidePath) || !/^[a-f0-9]{40}$/.test(guideCommit || "") || !/^[a-f0-9]{40}$/.test(generationCommit || "")) {
-    return ["manifest: caminhos ou commits insuficientes para verificar a proveniência"];
+  if (!guidePath || !/^[a-f0-9]{40}$/.test(guideCommit || "") || !/^[a-f0-9]{40}$/.test(generationCommit || "")) {
+    errors.push("manifest: caminhos ou commits insuficientes para verificar a proveniência");
+    return errors;
   }
+  requireCommitAtHead(errors, guideCommit, "manifest.styleGuideCommitAtGeneration", repoRoot);
+  requireCommitAtHead(errors, generationCommit, "manifest.generationCommit", repoRoot);
 
   const contract = manifest?.generationContract;
   let plan = null;
@@ -123,10 +138,12 @@ export async function validateCardArtPilotManifestProvenance(manifest, { repoRoo
   } else {
     const planRecord = contract.plan;
     const receiptRecord = contract.receipt;
-    if (!isSafeRepoPath(planRecord?.path) || !/^[a-f0-9]{40}$/.test(planRecord?.commit || "") || !/^[a-f0-9]{64}$/.test(planRecord?.sha256 || "")) {
+    const planFile = await verifiedRepoFile(errors, planRecord?.path, "manifest.generationContract.plan.path", repoRoot);
+    if (!planFile || !/^[a-f0-9]{40}$/.test(planRecord?.commit || "") || !/^[a-f0-9]{64}$/.test(planRecord?.sha256 || "")) {
       errors.push("manifest.generationContract.plan: caminho, commit ou SHA-256 inválido");
     } else {
-      const planBytes = gitBytes(errors, ["show", `${planRecord.commit}:${planRecord.path}`], "manifest.generationContract.plan", repoRoot);
+      requireCommitAtHead(errors, planRecord.commit, "manifest.generationContract.plan.commit", repoRoot);
+      const planBytes = gitBytes(errors, ["show", `${planRecord.commit}:${planFile.repoPath}`], "manifest.generationContract.plan", repoRoot);
       if (planBytes && sha256(planBytes) !== planRecord.sha256) errors.push("manifest.generationContract.plan.sha256: bytes históricos divergem");
       plan = parseHistoricalJson(errors, planBytes, "manifest.generationContract.plan");
       const planAncestry = runGit(["merge-base", "--is-ancestor", planRecord.commit, generationCommit], repoRoot);
@@ -136,21 +153,22 @@ export async function validateCardArtPilotManifestProvenance(manifest, { repoRoo
       const guideToPlan = runGit(["merge-base", "--is-ancestor", guideCommit, planRecord.commit], repoRoot);
       if (guideToPlan.status !== 0) errors.push("manifest.generationContract.plan.commit: plano não descende do guia declarado");
     }
-    if (!isSafeRepoPath(receiptRecord?.path) || !/^[a-f0-9]{40}$/.test(receiptRecord?.commit || "") || !/^[a-f0-9]{64}$/.test(receiptRecord?.sha256 || "")) {
+    const receiptFile = await verifiedRepoFile(errors, receiptRecord?.path, "manifest.generationContract.receipt.path", repoRoot);
+    if (!receiptFile || !/^[a-f0-9]{40}$/.test(receiptRecord?.commit || "") || !/^[a-f0-9]{64}$/.test(receiptRecord?.sha256 || "")) {
       errors.push("manifest.generationContract.receipt: caminho, commit ou SHA-256 inválido");
     } else {
+      requireCommitAtHead(errors, receiptRecord.commit, "manifest.generationContract.receipt.commit", repoRoot);
       if (receiptRecord.commit !== generationCommit) errors.push("manifest.generationContract.receipt.commit: receipt precisa estar no commit de geração");
-      const receiptBytes = gitBytes(errors, ["show", `${receiptRecord.commit}:${receiptRecord.path}`], "manifest.generationContract.receipt", repoRoot);
+      const receiptBytes = gitBytes(errors, ["show", `${receiptRecord.commit}:${receiptFile.repoPath}`], "manifest.generationContract.receipt", repoRoot);
       if (receiptBytes && sha256(receiptBytes) !== receiptRecord.sha256) errors.push("manifest.generationContract.receipt.sha256: bytes históricos divergem");
       receipt = parseHistoricalJson(errors, receiptBytes, "manifest.generationContract.receipt");
     }
     if (plan && receipt) {
       const schemaPath = manifest?.generationContractSchema;
-      if (!isSafeRepoPath(schemaPath)) {
-        errors.push("manifest.generationContractSchema: caminho inseguro ou ausente");
-      } else {
+      const schemaFile = await verifiedRepoFile(errors, schemaPath, "manifest.generationContractSchema", repoRoot);
+      if (schemaFile) {
         try {
-          const schema = JSON.parse(await readFile(new URL(schemaPath, repoRoot), "utf8"));
+          const schema = JSON.parse(await readFile(schemaFile.url, "utf8"));
           for (const [path, document] of [["generationPlan", plan], ["generationReceipt", receipt]]) {
             errors.push(...validateCardArtPilotSchemaDocument(document, schema).map((error) => `${path}.${error}`));
           }
@@ -164,63 +182,105 @@ export async function validateCardArtPilotManifestProvenance(manifest, { repoRoo
 
   const registryRecord = manifest?.receiptRegistry;
   if (!registryRecord || typeof registryRecord !== "object" || Array.isArray(registryRecord)) {
-    errors.push("manifest.receiptRegistry: registro pré-emitido não possui prova histórica");
-  } else if (!isSafeRepoPath(registryRecord.path)
-    || !/^[a-f0-9]{40}$/.test(registryRecord.commit || "")
-    || !/^[a-f0-9]{64}$/.test(registryRecord.sha256 || "")) {
-    errors.push("manifest.receiptRegistry: caminho, commit ou SHA-256 inválido");
+    errors.push("manifest.receiptRegistry: registro pré-emitido não possui versão histórica obrigatória");
   } else {
-    const registryBytes = gitBytes(
-      errors,
-      ["show", `${registryRecord.commit}:${registryRecord.path}`],
-      "manifest.receiptRegistry",
-      repoRoot
-    );
-    const registry = parseHistoricalJson(errors, registryBytes, "manifest.receiptRegistry");
-    if (registry) {
-      if (cardArtPilotCanonicalSha256(registry) !== registryRecord.sha256) {
-        errors.push("manifest.receiptRegistry.sha256: conteúdo histórico canônico diverge");
-      }
-      const expectedAssets = (manifest.assets || []).map(({ blindCode, sha256: assetSha256 }) => ({ blindCode, sha256: assetSha256 }));
-      if (registry.protocol !== registryRecord.protocol
-        || registry.batchVersion !== manifest.version
-        || !isDeepStrictEqual(registry.assets, expectedAssets)
-        || registry.receiptHashes?.length !== registryRecord.issuedCount) {
-        errors.push("manifest.receiptRegistry: protocolo, lote, artes ou contagem divergem do conteúdo histórico");
-      }
-      if (!Array.isArray(registry.receiptHashes)
-        || new Set(registry.receiptHashes).size !== registry.receiptHashes.length
-        || registry.receiptHashes.length < 40) {
-        errors.push("manifest.receiptRegistry: receipts históricos precisam ser únicos e suficientes");
-      }
-    }
-    const generationToRegistry = runGit(["merge-base", "--is-ancestor", generationCommit, registryRecord.commit], repoRoot);
-    if (registryRecord.commit === generationCommit || generationToRegistry.status !== 0) {
-      errors.push("manifest.receiptRegistry.commit: registro precisa descender estritamente do commit de geração");
-    }
-    const registryCommittedAt = gitBytes(errors, ["show", "-s", "--format=%cI", registryRecord.commit], "manifest.receiptRegistry.committedAt", repoRoot);
-    const observedRegistryTimestamp = registryCommittedAt ? Date.parse(registryCommittedAt.toString("utf8").trim()) : null;
-    if (Number.isFinite(observedRegistryTimestamp) && observedRegistryTimestamp !== Date.parse(registryRecord.committedAt)) {
-      errors.push("manifest.receiptRegistry.committedAt: instante diverge do commit do registro");
-    }
-    if (registry && Number.isFinite(observedRegistryTimestamp) && Date.parse(registry.issuedAt) > observedRegistryTimestamp) {
-      errors.push("manifest.receiptRegistry.issuedAt: emissão declarada é posterior ao commit do registro");
-    }
-    const firstCollectionTimestamp = Date.parse(firstCollectedAt);
-    if (manifest.collectionAllowed === true && !Number.isFinite(firstCollectionTimestamp)) {
-      errors.push("manifest.receiptRegistry.commit: primeira coleta é obrigatória para provar pré-emissão");
-    } else if (Number.isFinite(observedRegistryTimestamp) && Number.isFinite(firstCollectionTimestamp)
-      && observedRegistryTimestamp >= firstCollectionTimestamp) {
-      errors.push("manifest.receiptRegistry.commit: registro foi commitado depois do início da coleta");
-    }
-    if (manifest.collectionAllowed === true) {
-      try {
-        const currentRegistry = JSON.parse(await readFile(new URL(registryRecord.path, repoRoot), "utf8"));
-        if (cardArtPilotCanonicalSha256(currentRegistry) !== registryRecord.sha256) {
-          errors.push("manifest.receiptRegistry.sha256: registro vigente diverge do conteúdo histórico");
+    const registryFile = await verifiedRepoFile(errors, registryRecord.path, "manifest.receiptRegistry.path", repoRoot);
+    if (!registryFile || !/^[a-f0-9]{40}$/.test(registryRecord.commit || "")
+    || !/^[a-f0-9]{64}$/.test(registryRecord.sha256 || "")) {
+      errors.push("manifest.receiptRegistry: caminho, commit ou SHA-256 inválido");
+    } else {
+      requireCommitAtHead(errors, registryRecord.commit, "manifest.receiptRegistry.commit", repoRoot);
+      const registryBytes = gitBytes(
+        errors,
+        ["show", `${registryRecord.commit}:${registryFile.repoPath}`],
+        "manifest.receiptRegistry",
+        repoRoot
+      );
+      const registry = parseHistoricalJson(errors, registryBytes, "manifest.receiptRegistry");
+      if (registry) {
+        if (cardArtPilotCanonicalSha256(registry) !== registryRecord.sha256) {
+          errors.push("manifest.receiptRegistry.sha256: conteúdo histórico canônico diverge");
         }
-      } catch (error) {
-        errors.push(`manifest.receiptRegistry.path: não foi possível ler o registro vigente (${error.message})`);
+        const expectedAssets = (manifest.assets || []).map(({ blindCode, sha256: assetSha256 }) => ({ blindCode, sha256: assetSha256 }));
+        if (registry.protocol !== registryRecord.protocol
+          || registry.batchVersion !== manifest.version
+          || !isDeepStrictEqual(registry.assets, expectedAssets)
+          || registry.receiptHashes?.length !== registryRecord.issuedCount) {
+          errors.push("manifest.receiptRegistry: protocolo, lote, artes ou contagem divergem do conteúdo histórico");
+        }
+        if (!Array.isArray(registry.receiptHashes)
+          || new Set(registry.receiptHashes).size !== registry.receiptHashes.length
+          || registry.receiptHashes.length < 40) {
+          errors.push("manifest.receiptRegistry: receipts históricos precisam ser únicos e suficientes");
+        }
+      }
+      const generationToRegistry = runGit(["merge-base", "--is-ancestor", generationCommit, registryRecord.commit], repoRoot);
+      if (registryRecord.commit === generationCommit || generationToRegistry.status !== 0) {
+        errors.push("manifest.receiptRegistry.commit: registro precisa descender estritamente do commit de geração");
+      }
+      const registryCommittedAt = gitBytes(errors, ["show", "-s", "--format=%cI", registryRecord.commit], "manifest.receiptRegistry.committedAt", repoRoot);
+      const observedRegistryTimestamp = registryCommittedAt ? Date.parse(registryCommittedAt.toString("utf8").trim()) : null;
+      if (Number.isFinite(observedRegistryTimestamp) && observedRegistryTimestamp !== Date.parse(registryRecord.committedAt)) {
+        errors.push("manifest.receiptRegistry.committedAt: metadado declarado diverge do commit");
+      }
+      if (registry && Number.isFinite(observedRegistryTimestamp) && Date.parse(registry.issuedAt) > observedRegistryTimestamp) {
+        errors.push("manifest.receiptRegistry.issuedAt: cronologia declarada diverge do metadado do commit");
+      }
+      const firstCollectionTimestamp = Date.parse(firstCollectedAt);
+      if (manifest.collectionAllowed === true && !Number.isFinite(firstCollectionTimestamp)) {
+        errors.push("manifest.receiptRegistry: primeira coleta é obrigatória para conferir a cronologia declarada");
+      } else if (Number.isFinite(observedRegistryTimestamp) && Number.isFinite(firstCollectionTimestamp)
+        && observedRegistryTimestamp >= firstCollectionTimestamp) {
+        errors.push("manifest.receiptRegistry: cronologia Git declarada não antecede a primeira coleta");
+      }
+      if (manifest.collectionAllowed === true) {
+        try {
+          const currentRegistry = JSON.parse(await readFile(registryFile.url, "utf8"));
+          if (cardArtPilotCanonicalSha256(currentRegistry) !== registryRecord.sha256) {
+            errors.push("manifest.receiptRegistry.sha256: registro vigente diverge do conteúdo histórico");
+          }
+        } catch (error) {
+          errors.push(`manifest.receiptRegistry.path: não foi possível ler o registro vigente (${error.message})`);
+        }
+      }
+    }
+  }
+
+  const recognitionRecord = manifest?.recognitionRules;
+  if (!recognitionRecord || typeof recognitionRecord !== "object" || Array.isArray(recognitionRecord)) {
+    errors.push("manifest.recognitionRules: regras determinísticas pré-coleta não possuem versão histórica obrigatória");
+  } else {
+    const rulesFile = await verifiedRepoFile(errors, recognitionRecord.path, "manifest.recognitionRules.path", repoRoot);
+    if (!rulesFile || !/^[a-f0-9]{40}$/.test(recognitionRecord.commit || "") || !/^[a-f0-9]{64}$/.test(recognitionRecord.sha256 || "")) {
+      errors.push("manifest.recognitionRules: caminho, commit ou SHA-256 inválido");
+    } else {
+      requireCommitAtHead(errors, recognitionRecord.commit, "manifest.recognitionRules.commit", repoRoot);
+      if (recognitionRecord.commit !== registryRecord?.commit) {
+        errors.push("manifest.recognitionRules.commit: regras precisam estar no mesmo commit do registro de receipts");
+      }
+      const rulesBytes = gitBytes(errors, ["show", `${recognitionRecord.commit}:${rulesFile.repoPath}`], "manifest.recognitionRules", repoRoot);
+      const rules = parseHistoricalJson(errors, rulesBytes, "manifest.recognitionRules");
+      if (rules && cardArtPilotCanonicalSha256(rules) !== recognitionRecord.sha256) {
+        errors.push("manifest.recognitionRules.sha256: conteúdo histórico canônico diverge");
+      }
+      const schemaFile = await verifiedRepoFile(errors, manifest?.recognitionRulesSchema, "manifest.recognitionRulesSchema", repoRoot);
+      if (rules && schemaFile) {
+        try {
+          const schema = JSON.parse(await readFile(schemaFile.url, "utf8"));
+          errors.push(...validateCardArtPilotSchemaDocument(rules, schema).map((error) => `recognitionRules.${error}`));
+        } catch (error) {
+          errors.push(`manifest.recognitionRulesSchema: schema inválido ou ilegível (${error.message})`);
+        }
+      }
+      if (manifest.collectionAllowed === true) {
+        try {
+          const currentRules = JSON.parse(await readFile(rulesFile.url, "utf8"));
+          if (cardArtPilotCanonicalSha256(currentRules) !== recognitionRecord.sha256) {
+            errors.push("manifest.recognitionRules.sha256: regras vigentes divergem do conteúdo histórico");
+          }
+        } catch (error) {
+          errors.push(`manifest.recognitionRules.path: não foi possível ler as regras vigentes (${error.message})`);
+        }
       }
     }
   }
@@ -275,19 +335,19 @@ export async function validateCardArtPilotManifestProvenance(manifest, { repoRoo
   }
   if (Number.isFinite(observedGuideTimestamp) && Number.isFinite(observedGenerationTimestamp)
     && observedGuideTimestamp >= observedGenerationTimestamp) {
-    errors.push("manifest.generationCommit: commit do guia precisa anteceder cronologicamente o commit de geração");
+    errors.push("manifest.generationCommit: metadados temporais declarados do guia e da geração são incoerentes");
   }
   if (/^[a-f0-9]{40}$/.test(contract?.plan?.commit || "") && Number.isFinite(observedGenerationTimestamp)) {
     const planAuthoredAt = gitBytes(errors, ["show", "-s", "--format=%aI", contract.plan.commit], "manifest.generationContract.plan.commit", repoRoot);
     const observedPlanTimestamp = planAuthoredAt ? Date.parse(planAuthoredAt.toString("utf8").trim()) : null;
     if (Number.isFinite(observedPlanTimestamp) && observedPlanTimestamp >= observedGenerationTimestamp) {
-      errors.push("manifest.generationContract.plan.commit: plano precisa anteceder cronologicamente a geração");
+      errors.push("manifest.generationContract.plan.commit: metadados temporais declarados do plano e da geração são incoerentes");
     }
   }
 
   if (manifest.collectionAllowed === true) {
     try {
-      const currentGuide = await readFile(new URL(guidePath, repoRoot));
+      const currentGuide = await readFile(guideFile.url);
       const observed = normalizedTextSha256(currentGuide);
       if (observed !== manifest.styleGuideSha256AtGeneration) {
         errors.push(`manifest.styleGuideSha256AtGeneration: guia vigente mudou após a geração (${observed})`);
@@ -303,12 +363,11 @@ export async function validateCardArtPilotManifestProvenance(manifest, { repoRoo
 
   for (const asset of manifest.assets || []) {
     const code = asset?.blindCode || "unknown";
-    if (!isSafeRepoPath(asset?.generationPath)) {
-      errors.push(`manifest.assets.${code}.generationPath: caminho inseguro ou ausente`);
-    } else {
+    const assetFile = await verifiedRepoFile(errors, asset?.generationPath, `manifest.assets.${code}.generationPath`, repoRoot);
+    if (assetFile) {
       const generatedAsset = gitBytes(
         errors,
-        ["show", `${generationCommit}:${asset.generationPath}`],
+        ["show", `${generationCommit}:${assetFile.repoPath}`],
         `manifest.assets.${code}.generationPath`,
         repoRoot
       );
@@ -318,12 +377,11 @@ export async function validateCardArtPilotManifestProvenance(manifest, { repoRoo
     }
 
     const referencePath = asset?.identityReference?.path;
-    if (!isSafeRepoPath(referencePath)) {
-      errors.push(`manifest.assets.${code}.identityReference.path: caminho inseguro ou ausente`);
-    } else {
+    const referenceFile = await verifiedRepoFile(errors, referencePath, `manifest.assets.${code}.identityReference.path`, repoRoot);
+    if (referenceFile) {
       const reference = gitBytes(
         errors,
-        ["show", `${generationCommit}:${referencePath}`],
+        ["show", `${generationCommit}:${referenceFile.repoPath}`],
         `manifest.assets.${code}.identityReference.path`,
         repoRoot
       );
@@ -331,6 +389,9 @@ export async function validateCardArtPilotManifestProvenance(manifest, { repoRoo
         errors.push(`manifest.assets.${code}.identityReference.sha256: referência diverge do commit de geração`);
       }
     }
+  }
+  if (manifest.collectionAllowed === true) {
+    errors.push("manifest.historyAnchor: datas de autor/committer Git são controláveis e não provam pré-coleta; falta âncora externa verificável em branch protegida (fail-closed)");
   }
   return errors;
 }

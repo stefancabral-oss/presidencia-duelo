@@ -394,7 +394,9 @@ const competingVotes = await Promise.allSettled(competingAnswerIds.map((answerId
   predictionContractVersion: 1,
 })));
 assert.equal(competingVotes.filter(({ status }) => status === "fulfilled").length, 1);
-assert.equal(competingVotes.filter(({ status, reason }) => status === "rejected" && reason.code === "DAILY_SLOT_OUT_OF_ORDER").length, 1);
+assert.equal(competingVotes.filter(({ status, reason }) => (
+  status === "rejected" && reason.code === "DAILY_SLOT_OUT_OF_ORDER" && reason.current === 2
+)).length, 1);
 const secondPendingPrediction = await dailyStore.dailySession(secondDailyPlayer.recoveryKey, "eleicoes-2026");
 const competingPredictions = await Promise.allSettled([randomUUID(), randomUUID()].map((predictionId) => dailyStore.dailyPrediction({
   topicId: "eleicoes-2026",

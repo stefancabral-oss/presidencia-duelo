@@ -154,8 +154,8 @@ async function snapshot(page, name, evidence, { screenshot = true } = {}) {
     await page.waitForTimeout(40);
     await page.screenshot({ path: path.join(evidenceDir, file), fullPage: true });
   }
-  evidence[name] = await page.evaluate((screenshot) => ({
-    screenshot,
+  evidence[name] = await page.evaluate((screenshotFile) => ({
+    screenshot: screenshotFile,
     phase: document.querySelector(".duel-screen")?.dataset.votePhase || "",
     instruction: document.querySelector(".round-instruction")?.textContent?.trim() || "",
     progress: document.querySelector(".progress-pill")?.textContent?.trim() || "",
@@ -164,7 +164,7 @@ async function snapshot(page, name, evidence, { screenshot = true } = {}) {
     skipDisabled: document.querySelector("#skip-round")?.disabled,
     recovery: document.querySelector(".retry-vote")?.textContent?.trim() || "",
     recoveryDisabled: document.querySelector(".retry-vote")?.disabled ?? null,
-  }), file);
+  }), screenshot ? file : "");
   return evidence[name];
 }
 
@@ -184,7 +184,7 @@ try {
     const { context, page, pageErrors } = await openDuel(browser, server);
     const before = await snapshot(page, "ready-before-401", evidence, { screenshot: false });
     server.nextFailure = { status: 401, delayMs: 650, body: { error: "sessão inválida", code: "PLAYER_SESSION_REQUIRED" } };
-    await page.locator(".candidate-card").first().click();
+    await page.locator(".candidate-card").first().evaluate((button) => button.click());
     await page.waitForFunction(() => document.querySelector(".duel-screen")?.dataset.votePhase === "sending");
     const sending = await snapshot(page, "sending", evidence);
     assertFrozen(before, sending, "sending");

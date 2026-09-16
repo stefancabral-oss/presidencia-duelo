@@ -7,11 +7,12 @@
 - Macro: https://github.com/stefancabral-oss/presidencia-duelo/issues/175
 - Branch: `icm/12-u02-dom-persistence-166`
 - PR: `não aberta por instrução desta execução`
-- Base da unidade: `7af752bbf1278e28a27b57f45a6fcc76092742de`
-- Commit da implementação: `6aa66d1a33981d1a43cf54d3bad79a094e912c3e`
-- Commit da integração revisada: `bd276f1796eabc33f86527957096c401ca4e8a5d`
-- Commit da correção final de foco: `56cf30342ba6b5154ea277ac17cc75e3c7e90df7`
-- Portes independentes auditados da PR #162: `2e6d20f` (viewport largo/baixo) e `5421c73` (proveniência do ICM 03)
+- Base da unidade: `02f0b8a211b77e27cb9707646c983c81c08ca95d`
+- Commit da implementação: `7faa34a583c74a1d6fc368d58d8da79d01e57988`
+- Commit da integração revisada: `4c6eb249185d347aaa894fecb3116dbd42a824cc`
+- Commit da correção final de foco: `704a66ecf2543ae40943bbce3d60db16d33394b3`
+- Commit da transição final e dos smokes integrados: `ba4ddb1f2a5a7831cc6f894eab95f59c1c2e6753`
+- Compatibilidade herdada: PR #162 integrada por `6eed68a`; viewport curto reforçado por `357a3de` e `8411b53`; ranking pessoal autoritativo reforçado por `36e00f6` e `02f0b8a`.
 
 ## Entregue
 
@@ -38,7 +39,7 @@
 
 ## Evidência local
 
-- `npm test`: 70/70 testes aprovados (4 shared, 17 backend e 49 app).
+- `npm test`: 87/87 testes aprovados (4 shared, 28 backend e 55 app).
 - `npm run build --prefix app`: aprovado; 99/125 retratos disponíveis e bundle Vite produzido.
 - `POLIMATCH_E2E_BROWSER=chromium node app/e2e/interaction-smoke.mjs`: aprovado.
 - `POLIMATCH_E2E_BROWSER=webkit node app/e2e/interaction-smoke.mjs`: aprovado.
@@ -47,14 +48,13 @@
 - Variante Chromium com `VITE_GOOGLE_CLIENT_ID` e `POLIMATCH_E2E_GOOGLE=1`: aprovada.
 - No smoke, o observador registrou zero substituições; topbar, nav, instrução, repetição, região viva, slots e botões mantiveram igualdade referencial; o foco visível permaneceu no botão votado.
 - A regressão de retrato quebrado é coberta por teste unitário: o mesmo `src` não reaparece depois do erro e um novo `src` só aparece após `load`.
-- A matriz Playwright de viewport largo/baixo mediu cartas `214×260` em `1200×600`, `1280×620` e `1440×640`; o controle `1280×900` permaneceu `296×414` (5:7).
+- O smoke Playwright revalidou `320×568` com rolagem vertical e sem recorte da segunda linha/resultado, `390×844` com quatro cartas completas, `1280×900` com proporção 5:7 e `1440×900` sem overflow horizontal.
 
-## Auditoria da PR #162
+## Auditoria da PR #162 e da base corrente
 
-- `5fc4cd6` e `2f3327b` já estavam absorvidos semanticamente pela integração revisada: erro HTTP estruturado, preservação da chave fora de `401`, ressincronização de `409`, `roundId` idempotente, retry persistente e E2E nos dois navegadores.
-- `650e3da` ainda faltava. O porte preservou a condição `min-height: 641px`, mas manteve o seletor canônico da #166, `.app-shell[data-screen="duel"]`, em vez de restaurar `:has(.duel-screen)`.
-- `bb924b7` ainda faltava e foi aplicado como correção pontual de `release`; nenhum artefato corrente de U01/U02 foi substituído pelo conteúdo antigo da PR.
-- `ffd1bdc` apenas atualiza a PR com o login seguro já presente na base `fa06277`; não exige um quarto porte.
+- `5fc4cd6`, `2f3327b`, `650e3da`, `bb924b7` e `ffd1bdc` são ancestrais reais de `HEAD` por meio do merge `6eed68a`; não há mais porte paralelo a reconciliar.
+- A base corrente também contém os hotfixes `357a3de` e `8411b53`, que preservam a anatomia da carta e a placa completa de resultado em celulares estreitos.
+- `36e00f6` e `02f0b8a` mantêm ranks pessoais server-authoritative e listam perfis já comparados antes dos ainda não jogados; a #166 apenas atualiza esses dados nos mesmos nós persistentes.
 
 ## Pendente
 

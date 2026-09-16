@@ -3,22 +3,21 @@
   "issue": 166,
   "macroIssue": 175,
   "unit": "U02",
-  "baseSha": "7af752bbf1278e28a27b57f45a6fcc76092742de",
-  "implementationCommit": "6aa66d1a33981d1a43cf54d3bad79a094e912c3e",
-  "reviewFixCommit": "bd276f1796eabc33f86527957096c401ca4e8a5d",
-  "focusRetryFixCommit": "56cf30342ba6b5154ea277ac17cc75e3c7e90df7",
+  "baseSha": "02f0b8a211b77e27cb9707646c983c81c08ca95d",
+  "implementationCommit": "7faa34a583c74a1d6fc368d58d8da79d01e57988",
+  "reviewFixCommit": "4c6eb249185d347aaa894fecb3116dbd42a824cc",
+  "focusRetryFixCommit": "704a66ecf2543ae40943bbce3d60db16d33394b3",
+  "finalTransitionFixCommit": "ba4ddb1f2a5a7831cc6f894eab95f59c1c2e6753",
   "pr162Audit": {
-    "alreadyIntegrated": ["5fc4cd6", "2f3327b", "ffd1bdc"],
-    "ported": {
-      "wideShortViewport": "2e6d20f",
-      "icm03Provenance": "5421c73"
-    }
+    "alreadyIntegrated": ["5fc4cd6", "2f3327b", "650e3da", "bb924b7", "ffd1bdc", "6eed68a"],
+    "viewportHardening": ["357a3de", "8411b53"],
+    "authoritativePersonalRanking": ["36e00f6", "02f0b8a"]
   },
   "checks": [
     {
       "name": "root-unit",
       "command": "npm test",
-      "result": "passed; 4 shared, 17 backend and 49 app tests (70 total)"
+      "result": "passed; 4 shared, 28 backend and 55 app tests (87 total)"
     },
     {
       "name": "app-build",
@@ -72,8 +71,8 @@
     },
     {
       "name": "wide-short-viewport-regression",
-      "command": "Playwright Chromium measurement at 1200x600, 1280x620, 1440x640 and 1280x900",
-      "result": "passed; the three short viewports rendered 214x260 portrait cards and the 1280x900 control remained 296x414 at 5:7"
+      "command": "Playwright interaction smoke at 320x568, 390x844, 1280x900 and 1440x900",
+      "result": "passed; short mobile scroll exposes the second row and complete outcomes above fixed navigation, regular mobile keeps all four cards visible, desktop keeps 5:7 cards and no horizontal overflow"
     }
   ],
   "pending": [

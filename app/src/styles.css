@@ -552,8 +552,8 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
 @media (min-width: 320px) and (max-width: 340px) {
   .candidate-card { height: 242px; grid-template-rows: minmax(0, 1fr) 88px; }
   .duel-screen:has(.round-feedback) .candidate-card { height: 258px; grid-template-rows: minmax(0, 1fr) 104px; }
-  .candidate-card[class*="is-round-"] .candidate-copy { padding-top: 6px; padding-bottom: 5px; }
-  .candidate-card[class*="is-round-"] .card-outcome { margin-top: 4px; padding-top: 4px; }
+  .candidate-card[class*="is-round-"] .candidate-copy { padding-top: 5px; padding-bottom: 4px; }
+  .candidate-card[class*="is-round-"] .card-outcome { margin-top: 2px; padding-top: 2px; }
 }
 
 /* 480–699: celular confortável. */

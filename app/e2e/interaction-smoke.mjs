@@ -722,7 +722,7 @@ try {
       || card.copyScrollHeight > card.copyClientHeight
       || card.outcomeScrollHeight > card.outcomeClientHeight
       || card.outcomeTop < card.nameBottom - 1
-      || card.outcomeBottom > card.copyBottom + 1
+      || card.outcomeBottom > card.copyBottom - 2
       || card.valueFontSize < 11
       || card.messageFontSize < 11
   ));

@@ -147,7 +147,7 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .candidate-card.is-round-loser:disabled { filter: saturate(.45) brightness(.67); animation: card-rank-drop 720ms cubic-bezier(.25,.8,.3,1) both; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 20%), inset 0 0 0 5px rgb(111 38 32 / 34%), 0 10px 24px rgb(0 8 6 / 46%); }
 .card-brand { display: flex; align-items: center; gap: 4px; }
 .card-brand-symbol { width: 17px; height: 17px; display: block; }
-.card-brand b { font: inherit; }
+.card-brand b { display: none; font: inherit; }
 .candidate-card::before { content: ""; position: absolute; z-index: 8; inset: 7px; pointer-events: none; border-radius: 15px; background: linear-gradient(112deg, transparent 4% 31%, rgb(255 255 255 / 3%) 36%, rgb(255 246 203 / 22%) 43%, rgb(255 255 255 / 5%) 49%, transparent 57% 100%), radial-gradient(ellipse at 18% 3%, rgb(255 255 255 / 20%), transparent 26%), repeating-linear-gradient(122deg, transparent 0 58px, rgb(232 206 126 / 3%) 59px 60px); background-position: 138% 0, 0 0, 0 0; background-size: 235% 100%, auto, auto; box-shadow: inset 0 1px rgb(255 255 255 / 28%), inset 0 -1px rgb(255 255 255 / 8%); opacity: .76; mix-blend-mode: screen; transition: background-position 500ms cubic-bezier(.22, 1, .36, 1), opacity 180ms ease; }
 .candidate-card:hover::before, .candidate-card.is-peeking::before { background-position: -20% 0, 0 0, 0 0; opacity: .9; }
 .candidate-card.is-selected::before { animation: varnish-confirm 640ms ease-out; }
@@ -156,9 +156,9 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .card-material::before { content: ""; position: absolute; inset: 0; opacity: .64; background: linear-gradient(132deg, transparent 0 12%, rgb(239 211 119 / 15%) 12.3% 13%, transparent 13.3% 68%, rgb(239 211 119 / 11%) 68.3% 69%, transparent 69.3%), linear-gradient(42deg, transparent 0 78%, rgb(255 239 176 / 9%) 78.3% 79%, transparent 79.3%), repeating-linear-gradient(118deg, transparent 0 68px, rgb(255 236 166 / 3%) 69px 70px); }
 .card-facets { position: absolute; z-index: 3; inset: 8px; pointer-events: none; border-radius: 14px; background: linear-gradient(135deg, rgb(247 219 124 / 52%) 0 3px, transparent 3px), linear-gradient(225deg, rgb(247 219 124 / 42%) 0 3px, transparent 3px), linear-gradient(45deg, rgb(247 219 124 / 26%) 0 3px, transparent 3px), linear-gradient(315deg, rgb(247 219 124 / 34%) 0 3px, transparent 3px); background-size: 34px 34px; background-position: top left, top right, bottom right, bottom left; background-repeat: no-repeat; }
 .card-corners { position: absolute; z-index: 7; inset: 4px; pointer-events: none; border-radius: 18px; background: linear-gradient(135deg, #fff2b7 0 2px, #8a6415 2px 5px, transparent 5px) top left / 32px 32px no-repeat, linear-gradient(225deg, #fff2b7 0 2px, #8a6415 2px 5px, transparent 5px) top right / 32px 32px no-repeat, linear-gradient(45deg, #fff2b7 0 2px, #8a6415 2px 5px, transparent 5px) bottom right / 32px 32px no-repeat, linear-gradient(315deg, #fff2b7 0 2px, #8a6415 2px 5px, transparent 5px) bottom left / 32px 32px no-repeat; filter: drop-shadow(0 1px 1px rgb(0 0 0 / 50%)); }
-.card-brand, .card-rarity { position: absolute; z-index: 6; top: 18px; color: white; font-size: .53rem; font-weight: 900; text-shadow: 0 1px 5px rgb(0 0 0 / 80%); }
-.card-brand { left: 21px; padding: 3px 7px 4px; border: 1px solid rgb(255 240 182 / 28%); border-radius: 999px; background: rgb(1 31 24 / 44%); backdrop-filter: blur(5px); }
-.card-rarity { right: 19px; width: 25px; height: 25px; display: grid; place-items: center; top: 16px; border: 1px solid #f1d675; border-radius: 50%; color: #f4d773; background: radial-gradient(circle at 35% 28%, #175e4b, #021f19 72%); box-shadow: inset 0 0 0 2px rgb(2 31 24 / 85%), 0 2px 8px rgb(0 0 0 / 42%), 0 0 8px rgb(238 207 107 / 18%); }
+.card-brand { position: absolute; z-index: 6; top: 18px; left: 21px; padding: 3px 7px 4px; border: 1px solid rgb(255 240 182 / 28%); border-radius: 999px; background: rgb(1 31 24 / 44%); color: white; font-size: .53rem; font-weight: 900; text-shadow: 0 1px 5px rgb(0 0 0 / 80%); backdrop-filter: blur(5px); }
+.candidate-title { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 7px; }
+.card-rarity { width: 25px; height: 25px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid #f1d675; border-radius: 50%; color: #f4d773; background: radial-gradient(circle at 35% 28%, #175e4b, #021f19 72%); box-shadow: inset 0 0 0 2px rgb(2 31 24 / 85%), 0 2px 8px rgb(0 0 0 / 42%), 0 0 8px rgb(238 207 107 / 18%); font-size: 11px; font-weight: 900; text-shadow: 0 1px 5px rgb(0 0 0 / 80%); }
 .portrait { position: relative; min-height: 0; aspect-ratio: 4 / 5; overflow: hidden; display: grid; place-items: center; border-radius: 10px 10px 2px 2px; background: radial-gradient(circle at 50% 30%, #2f8d70, #063d30 72%); }
 .candidate-card .portrait { aspect-ratio: auto; }
 .candidate-card .portrait { border: 1px solid rgb(255 228 134 / 58%); box-shadow: 0 0 0 3px rgb(1 29 23 / 72%), 0 0 0 4px rgb(239 209 111 / 35%), inset 0 0 24px rgb(0 22 17 / 42%), 0 8px 18px rgb(0 13 10 / 38%); }
@@ -169,16 +169,16 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .candidate-copy { position: relative; z-index: 4; min-height: 0; margin-top: -1px; padding: 9px 12px 8px; display: grid; align-content: start; border: 1px solid rgb(255 255 255 / 78%); border-top-color: #c9ad59; border-radius: 2px 2px 10px 10px; background: linear-gradient(118deg, #fffefa 0 38%, #eee9dd 65%, #fffdf8 100%); box-shadow: 0 0 0 3px rgb(1 29 23 / 72%), 0 0 0 4px rgb(239 209 111 / 35%), inset 0 1px white, inset 0 -10px 22px rgb(182 160 99 / 8%), 0 6px 15px rgb(0 13 10 / 30%); }
 .candidate-copy::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(112deg, transparent 0 62%, rgb(255 255 255 / 55%) 63% 70%, transparent 71%); opacity: .55; }
 .candidate-copy > * { position: relative; z-index: 1; }
-.candidate-copy > strong { display: block; overflow: hidden; font-size: clamp(1.05rem, 3.8vw, 1.35rem); line-height: 1.03; letter-spacing: -.03em; text-overflow: ellipsis; white-space: nowrap; }
-.candidate-copy .candidate-affiliation { display: block; margin-top: 4px; overflow: hidden; color: #9a761f; font-size: .66rem; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; text-overflow: ellipsis; white-space: nowrap; }
+.candidate-title > strong { display: block; min-width: 0; font-size: clamp(1.05rem, 3.8vw, 1.35rem); line-height: 1.16; letter-spacing: -.03em; }
+.candidate-copy .candidate-affiliation { display: block; margin-top: 4px; overflow: hidden; color: #9a761f; font-size: 11px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; text-overflow: ellipsis; white-space: nowrap; }
 .candidate-copy .candidate-office { display: -webkit-box; margin-top: 4px; overflow: hidden; color: #1e3f34; font-size: .72rem; font-weight: 850; line-height: 1.18; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
-.candidate-summary { display: -webkit-box; margin-top: 5px; overflow: hidden; color: #53615a; font-size: .64rem; font-weight: 650; line-height: 1.25; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.candidate-profile-hint { align-self: end; margin-top: 7px; padding-top: 6px; border-top: 1px solid rgb(151 126 62 / 25%); color: #87681c; font-size: .57rem; font-weight: 900; letter-spacing: .055em; text-align: center; text-transform: uppercase; }
+.candidate-summary { display: none; }
+.candidate-profile-hint { align-self: end; margin-top: 7px; padding-top: 6px; border-top: 1px solid rgb(151 126 62 / 25%); color: #87681c; font-size: 11px; font-weight: 900; letter-spacing: .055em; text-align: center; text-transform: uppercase; }
 .candidate-profile-hint span { margin-right: 3px; font-size: .72rem; }
-.candidate-card[class*="is-round-"] .candidate-copy > :not(strong):not(.card-outcome) { display: none; }
+.candidate-card[class*="is-round-"] .candidate-copy > :not(.candidate-title):not(.card-outcome) { display: none; }
 .card-outcome { display: grid; grid-template-columns: auto minmax(0,1fr); align-items: center; gap: 8px; margin-top: 9px; padding-top: 8px; border-top: 1px solid rgb(76 67 42 / 22%); animation: outcome-stamp-in 300ms 80ms cubic-bezier(.2,.85,.25,1) both; }
 .card-outcome b { font-family: Georgia, serif; font-size: 1.05rem; white-space: nowrap; }
-.card-outcome small { min-width: 0; font-size: .62rem; font-weight: 900; line-height: 1.15; text-transform: uppercase; letter-spacing: .045em; }
+.card-outcome small { min-width: 0; font-size: 11px; font-weight: 900; line-height: 1.15; text-transform: uppercase; letter-spacing: .045em; }
 .card-outcome.gain b, .card-outcome.gain small { color: #075f45; }
 .card-outcome.loss b, .card-outcome.loss small { color: #8d332d; }
 @keyframes varnish-confirm { 0% { background-position: 150% 0, 0 0, 0 0; opacity: .68; } 46% { opacity: 1; } 100% { background-position: -30% 0, 0 0, 0 0; opacity: .78; } }
@@ -415,26 +415,28 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   .arena { width: 100%; gap: 7px; }
   .arena-four { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); }
   .candidate-wrap { gap: 0; }
-  .candidate-card { height: clamp(150px, calc((100dvh - 250px) / 2), 246px); display: block; padding: 6px; border-radius: 15px; }
+  .candidate-card { height: clamp(150px, calc((100dvh - 250px) / 2), 280px); display: grid; grid-template-rows: minmax(0, 1fr) 99px; padding: 6px; border-radius: 15px; }
   .candidate-card::before, .candidate-card::after { inset: 5px; border-radius: 11px; }
   .card-material { inset: 5px; border-radius: 11px; }
   .card-facets { inset: 6px; border-radius: 10px; }
   .card-corners { inset: 3px; border-radius: 13px; background-size: 24px 24px; }
-  .card-brand { top: 10px; left: 11px; max-width: calc(100% - 43px); padding: 2px 4px; font-size: .39rem; }
-  .card-brand-symbol { width: 11px; height: 11px; }
-  .card-rarity { top: 9px; right: 10px; width: 19px; height: 19px; font-size: .48rem; }
-  .candidate-card .portrait { position: absolute; inset: 6px; border-radius: 8px; }
-  .candidate-copy { position: absolute; z-index: 5; left: 6px; right: 6px; bottom: 6px; min-height: 76px; margin: 0; padding: 25px 8px 7px; display: block; border: 0; border-radius: 0 0 8px 8px; background: linear-gradient(180deg, transparent, rgb(0 25 19 / 88%) 34%, rgb(0 22 17 / 97%)); color: white; box-shadow: none; }
-  .candidate-copy::after { display: none; }
-  .candidate-copy > strong { display: -webkit-box; min-height: auto; overflow: hidden; color: white; font-size: clamp(.76rem, 3.45vw, .92rem); line-height: 1.02; white-space: normal; text-shadow: 0 2px 7px rgb(0 0 0 / 80%); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-  .candidate-copy .candidate-affiliation { margin-top: 3px; color: #f2d87e; font-size: .49rem; }
-  .candidate-copy .candidate-office { display: -webkit-box; margin-top: 3px; overflow: hidden; color: #d4dfda; font-size: .46rem; line-height: 1.08; text-shadow: 0 1px 4px rgb(0 0 0 / 82%); -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+  .card-brand { top: 11px; left: 12px; padding: 2px; border: 0; background: rgb(1 31 24 / 54%); }
+  .card-brand b { display: none; }
+  .card-brand-symbol { width: 18px; height: 18px; }
+  .candidate-card .portrait { position: relative; inset: auto; border-radius: 8px 8px 2px 2px; }
+  .candidate-copy { position: relative; z-index: 5; min-height: 0; margin-top: -1px; padding: 8px 9px 7px; display: block; border: 1px solid rgb(255 255 255 / 78%); border-top-color: #c9ad59; border-radius: 2px 2px 8px 8px; background: linear-gradient(118deg, #fffefa 0 38%, #eee9dd 65%, #fffdf8 100%); color: var(--ink); box-shadow: 0 0 0 3px rgb(1 29 23 / 72%), 0 0 0 4px rgb(239 209 111 / 35%), inset 0 1px white, inset 0 -10px 22px rgb(182 160 99 / 8%); }
+  .candidate-copy::after { display: block; }
+  .candidate-title { gap: 5px; }
+  .candidate-title > strong { min-height: 38px; color: var(--ink); font-size: 15px; line-height: 18px; text-shadow: none; }
+  .card-rarity { width: 22px; height: 22px; font-size: 11px; }
+  .candidate-copy .candidate-affiliation { margin-top: 1px; color: #856514; font-size: 11px; line-height: 14px; letter-spacing: .055em; }
+  .candidate-copy .candidate-office { display: -webkit-box; margin-top: 1px; overflow: hidden; color: #1e3f34; font-size: 11px; line-height: 14px; text-shadow: none; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .candidate-summary, .candidate-profile-hint { display: none; }
-  .candidate-card[class*="is-round-"] .candidate-copy { min-height: 74px; padding-top: 22px; }
-  .candidate-card[class*="is-round-"] .candidate-copy > strong { -webkit-line-clamp: 1; }
-  .card-outcome { gap: 5px; margin-top: 4px; padding-top: 4px; border-top-color: rgb(255 255 255 / 18%); }
-  .card-outcome b { color: #f4dc88 !important; font-family: Inter, sans-serif; font-size: .66rem; }
-  .card-outcome small { color: #e4ece8 !important; font-size: .43rem; line-height: 1.05; }
+  .candidate-card[class*="is-round-"] .candidate-copy { min-height: 0; padding-top: 8px; }
+  .candidate-card[class*="is-round-"] .candidate-title > strong { min-height: 38px; }
+  .card-outcome { gap: 5px; margin-top: 5px; padding-top: 5px; border-top-color: rgb(76 67 42 / 22%); }
+  .card-outcome b { font-family: Inter, sans-serif; font-size: 12px; line-height: 14px; }
+  .card-outcome small { font-size: 11px; line-height: 14px; }
   .skip-button { min-height: 36px; padding: 6px 14px; font-size: .67rem; }
 }
 
@@ -453,7 +455,7 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   .arena { width: 100%; gap: 16px; }
   .candidate-card { height: auto; aspect-ratio: 5 / 7; grid-template-rows: minmax(0, 1fr) 108px; }
   .candidate-copy { padding: 8px 12px; }
-  .candidate-copy > strong { font-size: 1.02rem; }
+  .candidate-title > strong { font-size: 1.02rem; }
   .candidate-summary { -webkit-line-clamp: 1; }
   .candidate-profile-hint { margin-top: 4px; padding-top: 4px; }
   .skip-button { margin-top: 2px; }

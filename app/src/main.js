@@ -118,10 +118,9 @@ function card(candidate) {
       <span class="card-material" aria-hidden="true"></span>
       <span class="card-facets" aria-hidden="true"></span>
       <span class="card-brand" aria-hidden="true">${brandSymbol("card-brand-symbol")}<b>PoliMatch</b></span>
-      <span class="card-rarity" aria-hidden="true">●</span>
       ${portrait(candidate)}
       <span class="candidate-copy">
-        <strong>${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong>
+        <span class="candidate-title"><strong class="candidate-name">${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong><span class="card-rarity" aria-hidden="true">●</span></span>
         <span class="candidate-affiliation">${escapeHtml(candidateAffiliation(candidate))}</span>
         <span class="candidate-office">${escapeHtml(candidate.office || candidateRole(candidate))}</span>
         <small class="candidate-summary">${escapeHtml(candidateCardSummary(candidate))}</small>

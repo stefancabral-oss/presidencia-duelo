@@ -2,42 +2,44 @@
 
 ## Objetivo
 
-Fazer cada mudança chegar à `main` com evidência automática da camada que ela altera, sem misturar backend, dados compartilhados e navegador no mesmo check.
+Fazer cada mudança chegar à `main` com evidência automática da camada que ela altera, sem misturar unidades independentes.
 
 ## Macro e unidade ativa
 
 - Macro: [#175 — Portão de qualidade para main](https://github.com/stefancabral-oss/presidencia-duelo/issues/175).
-- Unidade ativa: `U01`, [#174 — cobertura de CI para `back/` e `shared/`](https://github.com/stefancabral-oss/presidencia-duelo/issues/174).
-- Ordem posterior: `#165/#168`, `#169`, `#173/#176`, `#166/#167`, `#171/#170` e `#172`.
+- Unidade concluída: `U01`, [#174 — cobertura de CI para `back/` e `shared/`](https://github.com/stefancabral-oss/presidencia-duelo/issues/174), integrada pela PR #185.
+- Unidade ativa: `U02`, [#165 — hierarquia de informação da carta](https://github.com/stefancabral-oss/presidencia-duelo/issues/165).
+- Próxima unidade: [#168 — sistema responsivo por comportamento](https://github.com/stefancabral-oss/presidencia-duelo/issues/168), somente depois do gate de U02.
 
-## Escopo de U01
+## Escopo de U02
 
-- criar checks independentes para unidade do backend, domínio compartilhado e integração PostgreSQL;
-- remover testes que inspecionam texto do fonte em vez de comportamento;
-- retirar o caminho inexistente `front/**` dos workflows;
-- entender e registrar por que a PR #162 não disparou CI automaticamente;
-- produzir evidência de execução automática no evento `pull_request`.
+- reconstruir a anatomia móvel da carta em 390 × 844 usando o espaço vertical ocioso;
+- manter retrato dominante e criar uma placa de porcelana própria para nome, raridade, partido/área e função;
+- eliminar texto funcional abaixo de 11 px;
+- impedir corte de glifos em todos os nomes jogáveis;
+- restaurar a semântica verde/vermelha de ganho e perda sem `!important`;
+- registrar screenshots e medidas de `getComputedStyle` antes/depois.
 
-## Exclusões de U01
+## Exclusões de U02
 
-- nenhuma mudança visual ou de produto;
-- nenhum teste de backend dentro da matriz de navegadores;
-- nenhuma alteração, rebase ou resolução de conflito na PR #162;
-- nenhuma mudança nas issues #165–#173 ou #176.
+- não redesenhar os breakpoints gerais, o shell ou o ranking da #168;
+- não criar o controle de acesso ao perfil da #167;
+- não alterar backend, autenticação, catálogo, áudio ou deploy;
+- não misturar qualquer outra issue do portão de qualidade.
 
-## Dependência resolvida sem sobreposição
+## Dependência resolvida
 
-A PR #162 foi integrada em `main` pelo commit `6eed68a`. U01 atualizou sua base somente depois desse gate e removeu `front/**` de `.github/workflows/ui-interaction-smoke.yml`, preservando `app/**`, `shared/**` e o smoke de recuperação de voto trazido pela #162.
+U01 foi integrada à `main` como `9cf11af`. U02 nasceu diretamente desse commit, em branch e worktree próprios.
 
 ## Critérios de aceite
 
-- os jobs `back-unit`, `shared-data` e `back-integration-postgres` passam em execução automática de PR;
-- a integração usa um PostgreSQL de serviço isolado;
-- nenhum teste remanescente lê `topic-store.js` ou `server.js` para procurar strings;
-- `front/**` não existe nos filtros após a dependência #162 ser resolvida;
-- a causa do não-disparo de #162 permanece auditável;
-- HANDOFF e `verification.json` refletem resultados reais, sem promover run manual a prova de gatilho.
+- carta móvel próxima de 185 × 280 px, com quatro cartas e navegação no primeiro viewport de 390 × 844;
+- nenhum texto funcional da carta abaixo de 11 px;
+- os 54 nomes jogáveis medidos sem `scrollHeight > clientHeight`;
+- ganho e perda com cores distintas em Chromium e WebKit;
+- evidência antes/depois e métricas versionadas;
+- smokes existentes de 320 × 568, desktop e iMac continuam aprovados.
 
 ## Human gate
 
-O estágio só avança quando Stefan Cabral revisar a PR, os checks automáticos e a ausência de mistura com #162.
+Stefan autorizou a integração automática das unidades que estiverem isoladas, revisadas, testadas e com CI verde. Essa autorização não substitui os gates técnicos nem permite empilhar #168 nesta PR.

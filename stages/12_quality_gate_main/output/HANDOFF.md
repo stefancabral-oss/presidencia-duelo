@@ -1,62 +1,55 @@
-# HANDOFF — ICM 12 · U01
+# HANDOFF — ICM 12 · U02
 
 ## Status
 
-- Estado: `validação local final aprovada; CI final e gate humano pendentes`
-- Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/174
+- Estado: `implementação e validação local aprovadas; PR e CI pendentes`
+- Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/165
 - Macro: https://github.com/stefancabral-oss/presidencia-duelo/issues/175
-- Branch: `icm/12-u01-ci-back-shared-174`
-- PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/185
-- Commit da implementação: `c0911e2`
-- Base integrada: `main@6eed68a` (merge aprovado da PR #162)
+- Branch: `icm/12-u02-card-hierarchy-165`
+- Base: `main@9cf11af`
+- PR: pendente
 
 ## Entregue
 
-- Workflow próprio para unidade do backend, domínio compartilhado e integração PostgreSQL.
-- Testes comportamentais diretos da matemática Elo compartilhada.
-- Remoção dos cinco testes que faziam `readFile` e regex sobre o próprio fonte.
-- Remoção de `front/**` do Design Validator.
-- Remoção de `front/**` do UI Interaction Smoke, preservando `app/**`, `shared/**` e o E2E de recuperação.
-- Diagnóstico auditável do não-disparo automático da PR #162.
+- Carta móvel ampliada de 246 para 280 px com o espaço ocioso existente.
+- Retrato e placa de porcelana separados, sem overlay escuro sobre a identidade.
+- Nome e raridade na primeira linha; partido/área e função abaixo.
+- Resumo redundante retirado da carta básica e preservado no perfil detalhado.
+- Nome em 15/18 px, metadados em 11/14 px e resultado em 12/14 + 11/14 px.
+- Marca textual microscópica retirada da carta móvel em favor do símbolo oficial.
+- Ganho verde e perda vermelha restaurados sem `!important`.
+- Smoke comportamental cobrindo geometria, tipografia, 54 nomes, pending, gain e loss.
+- Screenshots e JSON de métricas antes/depois em `references/issue-165/`.
 
-## Não entregue / pendente
+## Fora desta unidade
 
-- Reexecução automática dos checks no head final atualizado sobre `main@6eed68a`.
-- Revisão humana da PR #185.
+- Sistema geral de breakpoints e composição das demais telas: #168.
+- Controle separado para abrir perfil: #167.
+- Qualquer mudança de backend, catálogo, autenticação ou deploy.
 
-## Testes executados
+## Validação local
 
-- `npm run test:shared`: 4/4 aprovados.
-- `npm test --prefix back`: 17/17 aprovados.
-- `npm test --prefix app`: 46/46 aprovados.
-- `npm test`: 67/67 aprovados no encadeamento completo.
-- `npm run build --prefix app`: aprovado; 99/125 retratos disponíveis e bundle de produção gerado.
-- `actionlint` 1.7.12: `back-shared.yml`, `design-validator.yml` e `ui-interaction-smoke.yml` passaram sem findings.
-- GitHub Actions no evento `pull_request`, antes da atualização final da base: `back-unit`, `shared-data`, `back-integration-postgres` e `validate` aprovados.
-- PostgreSQL 16 de serviço: integração aprovada no run automático [35048640056](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35048640056).
-- PR #162 após resolver o conflito: Design Validator [35051211773](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35051211773) e UI Interaction Smoke [35051211779](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35051211779) dispararam automaticamente e passaram.
+- `npm test --prefix app`: 46/46.
+- `npm run build --prefix app`: aprovado; 99/125 slots de retrato presentes.
+- `interaction-smoke.mjs` em Chromium: aprovado.
+- `interaction-smoke.mjs` em WebKit: aprovado.
+- Viewports preservados pelo smoke: 320 × 568, 390 × 844, 1280 × 900 e 1440 × 900.
+- 54/54 nomes medidos; zero corte por `scrollHeight > clientHeight`.
 
 ## Riscos conhecidos
 
-- A integração PostgreSQL depende do serviço isolado do GitHub Actions; não havia PostgreSQL local nesta estação para repetir esse job.
-- `npm ci --prefix app` reporta uma vulnerabilidade alta já presente nas dependências; atualização de dependência não foi misturada nesta unidade de CI.
-
-## Decisões tomadas
-
-- Não empilhar U01 sobre a branch da PR #162.
-- Atualizar a base somente após o gate e o merge da PR #162.
-- Preservar integralmente `shared/**` e o E2E de recuperação ao retirar o caminho morto `front/**`.
-- Não rodar backend dentro da matriz de navegadores.
-- Não criar arquitetura nova apenas para preservar testes que inspecionavam strings do fonte.
-- Usar a causa comprovada do conflito de merge, em vez de alterar proteção da `main` antes de existirem checks reais.
+- A issue citava 17 nomes com descendentes; o conjunto aprovado atual contém 16 ocorrências literais de `[gjpqyç]`. A validação percorre os 54 nomes para ser mais forte que a contagem histórica.
+- A reorganização geral de faixas responsivas permanece deliberadamente fora desta unidade.
 
 ## Próximo passo exato
 
-1. Publicar o head atualizado da PR #185 e confirmar os checks automáticos finais.
-2. Stefan revisar a separação dos workflows e conceder ou negar o gate humano.
+1. Abrir a PR isolada da #165.
+2. Confirmar todos os checks automáticos no head final.
+3. Mesclar com a autorização permanente do human gate.
+4. Iniciar #168 somente a partir da nova `main`.
 
 ## Human gate
 
-- Decisão: `pendente`
+- Decisão: `autorização permanente concedida para merge quando isolada e verde`
 - Responsável: Stefan Cabral
-- Observação: revisar a separação de responsabilidades e a remoção final do caminho morto sem perda dos smokes da #162.
+- Observação: não usar essa autorização para misturar a #168.

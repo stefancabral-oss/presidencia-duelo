@@ -1,0 +1,619 @@
+{
+  "card": {
+    "geometry": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "card": {
+        "top": 143.125,
+        "right": 191.5,
+        "bottom": 389.125,
+        "left": 7,
+        "width": 184.5,
+        "height": 246
+      },
+      "portrait": {
+        "top": 150.125,
+        "right": 184.5,
+        "bottom": 382.125,
+        "left": 14,
+        "width": 170.5,
+        "height": 232
+      },
+      "copy": {
+        "top": 306.125,
+        "right": 184.5,
+        "bottom": 382.125,
+        "left": 14,
+        "width": 170.5,
+        "height": 76
+      },
+      "skipToNavGap": 89.875
+    },
+    "typography": {
+      "name": {
+        "text": "Lula",
+        "display": "flow-root",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "color": "rgb(255, 255, 255)",
+        "overflow": "hidden",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      "affiliation": {
+        "text": "PT",
+        "display": "block",
+        "fontSize": "7.84px",
+        "lineHeight": "normal",
+        "color": "rgb(242, 216, 126)",
+        "overflow": "hidden",
+        "clientHeight": 10,
+        "scrollHeight": 10
+      },
+      "office": {
+        "text": "Presidente da República",
+        "display": "flow-root",
+        "fontSize": "7.36px",
+        "lineHeight": "7.9488px",
+        "color": "rgb(212, 223, 218)",
+        "overflow": "hidden",
+        "clientHeight": 8,
+        "scrollHeight": 8
+      },
+      "brand": {
+        "text": "PoliMatch",
+        "display": "block",
+        "fontSize": "6.24px",
+        "lineHeight": "normal",
+        "color": "rgb(255, 255, 255)",
+        "overflow": "visible",
+        "clientHeight": 9,
+        "scrollHeight": 9
+      },
+      "rarity": {
+        "text": "●",
+        "display": "grid",
+        "fontSize": "7.68px",
+        "lineHeight": "normal",
+        "color": "rgb(244, 215, 115)",
+        "overflow": "visible",
+        "clientHeight": 17,
+        "scrollHeight": 17
+      }
+    },
+    "names": [
+      {
+        "name": "Lula",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Flávio Bolsonaro",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Renan Santos",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Ronaldo Caiado",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Augusto Cury",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Romeu Zema",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Pablo Marçal",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Tarcísio de Freitas",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Fernando Haddad",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Michelle Bolsonaro",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Gleisi Hoffmann",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Marina Silva",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Simone Tebet",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Rui Costa",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Hugo Motta",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Davi Alcolumbre",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Nikolas Ferreira",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Bia Kicis",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Lindbergh Farias",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Janja",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Guilherme Boulos",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Anielle Franco",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Alexandre de Moraes",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "André Mendonça",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Flávio Dino",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Jair Bolsonaro",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Eduardo Bolsonaro",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Carlos Bolsonaro",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Rodrigo Pacheco",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Rogério Marinho",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Rachel Sheherazade",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Kim Kataguiri",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "André Janones",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Carla Zambelli",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Tabata Amaral",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Glauber Braga",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Sérgio Moro",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Paulo Guedes",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Deltan Dallagnol",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Ricardo Nunes",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Anitta",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Neymar Jr.",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Gusttavo Lima",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Ludmilla",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "José Aldo",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Vitor Belfort",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Popó",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Luciano Huck",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Ratinho",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Casimiro",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Whindersson Nunes",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Bruno Gagliasso",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Antonia Fontenelle",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Gracyanne Barbosa",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      }
+    ],
+    "descenderNames": [
+      {
+        "name": "Augusto Cury",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Pablo Marçal",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Hugo Motta",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Lindbergh Farias",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Janja",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "André Mendonça",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Rodrigo Pacheco",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Rogério Marinho",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Kim Kataguiri",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Glauber Braga",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Sérgio Moro",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Deltan Dallagnol",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Neymar Jr.",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Popó",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Bruno Gagliasso",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      },
+      {
+        "name": "Gracyanne Barbosa",
+        "fontSize": "13.455px",
+        "lineHeight": "13.7241px",
+        "clientHeight": 14,
+        "scrollHeight": 15
+      }
+    ]
+  },
+  "outcomes": [
+    {
+      "state": "gain",
+      "delta": "+45 Elo",
+      "message": "Subiu · Em ascensão",
+      "deltaColor": "rgb(244, 220, 136)",
+      "messageColor": "rgb(228, 236, 232)",
+      "deltaFontSize": "10.56px",
+      "messageFontSize": "6.88px"
+    },
+    {
+      "state": "loss",
+      "delta": "-15 Elo",
+      "message": "Levou a pior",
+      "deltaColor": "rgb(244, 220, 136)",
+      "messageColor": "rgb(228, 236, 232)",
+      "deltaFontSize": "10.56px",
+      "messageFontSize": "6.88px"
+    },
+    {
+      "state": "loss",
+      "delta": "-15 Elo",
+      "message": "Levou a pior",
+      "deltaColor": "rgb(244, 220, 136)",
+      "messageColor": "rgb(228, 236, 232)",
+      "deltaFontSize": "10.56px",
+      "messageFontSize": "6.88px"
+    },
+    {
+      "state": "loss",
+      "delta": "-15 Elo",
+      "message": "Levou a pior",
+      "deltaColor": "rgb(244, 220, 136)",
+      "messageColor": "rgb(228, 236, 232)",
+      "deltaFontSize": "10.56px",
+      "messageFontSize": "6.88px"
+    }
+  ]
+}

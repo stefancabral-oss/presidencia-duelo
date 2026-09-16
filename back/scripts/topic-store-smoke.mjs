@@ -3,9 +3,11 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 import { createTopicStore, recoveryKeyHash } from "../src/topic-store.js";
 import { candidatesForTopic } from "../src/candidates.js";
+import { createApprovedTestRegistry } from "../test-support/editorial-fixtures.js";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL é obrigatória para o smoke de integração");
+const candidateRegistry = createApprovedTestRegistry();
 
 const seed = new pg.Pool({ connectionString });
 await seed.query(`
@@ -18,13 +20,13 @@ await seed.query(`
 `);
 await seed.end();
 
-const firstStore = createTopicStore(connectionString);
+const firstStore = createTopicStore(connectionString, { candidateRegistry });
 const firstMigration = await firstStore.init();
 assert.equal(firstMigration.resetApplied, true);
 
 const initial = await firstStore.ranking("eleicoes-2026");
 assert.equal(initial.duels, 0);
-assert.equal(initial.ranking.length, 54);
+assert.equal(initial.ranking.length, 5);
 
 const { recoveryKey } = await firstStore.createPlayer({ networkHash: "a".repeat(64) });
 const personalBefore = await firstStore.playerRanking(recoveryKey, "eleicoes-2026");
@@ -62,7 +64,7 @@ const legacyPlayer = new pg.Pool({ connectionString });
 await legacyPlayer.query("DELETE FROM player_stats WHERE candidate_id IN ('anitta', 'neymar-jr')");
 await legacyPlayer.end();
 
-const restartedStore = createTopicStore(connectionString);
+const restartedStore = createTopicStore(connectionString, { candidateRegistry });
 const secondMigration = await restartedStore.init();
 assert.equal(secondMigration.resetApplied, false);
 const afterRestart = await restartedStore.ranking("eleicoes-2026");
@@ -77,7 +79,7 @@ const influencerVote = await restartedStore.vote({
 });
 assert.equal(influencerVote.vote.status, "created");
 assert.equal(influencerVote.player.version, 2);
-assert.equal(influencerVote.player.ranking.length, 54);
+assert.equal(influencerVote.player.ranking.length, 5);
 
 const roundId = randomUUID();
 const round = await restartedStore.roundVote({
@@ -179,7 +181,7 @@ await precedingRelease.query(`ALTER TABLE choice_rounds
 await precedingRelease.query("DELETE FROM schema_migrations WHERE id = '2026-09-15-link-four-card-comparisons'");
 await precedingRelease.end();
 
-const upgradedStore = createTopicStore(connectionString);
+const upgradedStore = createTopicStore(connectionString, { candidateRegistry });
 await upgradedStore.init();
 const upgradedAuditPool = new pg.Pool({ connectionString });
 const upgradedAudit = await upgradedAuditPool.query("SELECT count(*) AS linked_comparisons FROM votes WHERE round_id = $1", [roundId]);

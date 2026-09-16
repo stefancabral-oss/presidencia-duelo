@@ -12,23 +12,37 @@ import {
   publicCandidate,
   serializeCandidate,
 } from "./candidates.js";
+import { createApprovedTestRegistry } from "../test-support/editorial-fixtures.js";
 
 test("the rebuild exposes one active topic and two announced expansions", () => {
   assert.deepEqual(TOPICS.filter(({ active }) => active).map(({ id }) => id), ["eleicoes-2026"]);
   assert.deepEqual(TOPICS.filter(({ active }) => !active).map(({ id }) => id), ["influenciadores", "escandalos"]);
 });
 
-test("the 125-person catalog keeps only approved-photo profiles playable", () => {
+test("the real 125-person catalog stays closed until human ledger decisions exist", () => {
   assert.equal(CANDIDATES.length, 125);
-  assert.equal(candidatesForTopic("eleicoes-2026").length, 54);
-  assert.equal(candidatesForTopic("influenciadores").length, 14);
-  assert.equal(candidateBelongsToTopic("lula", "eleicoes-2026"), true);
-  assert.equal(candidateBelongsToTopic("lula", "influenciadores"), false);
-  assert.equal(candidateBelongsToTopic("anitta", "influenciadores"), true);
-  assert.equal(candidateBelongsToTopic("anitta", "eleicoes-2026"), true);
+  assert.equal(candidatesForTopic("eleicoes-2026").length, 0);
+  assert.equal(candidatesForTopic("influenciadores").length, 0);
+  assert.equal(candidateBelongsToTopic("lula", "eleicoes-2026"), false);
   assert.equal(candidateBelongsToTopic("acm-neto", "eleicoes-2026"), false);
-  assert.ok(candidatesForTopic("eleicoes-2026").every(({ photoApproved, photo }) => photoApproved && photo));
-  assert.ok(candidatesForTopic("influenciadores").every(({ photoApproved, photo }) => photoApproved && photo));
+  assert.ok(CANDIDATES.every(({ eligible, reviewStatus, cardArt, photo }) => (
+    !eligible && reviewStatus === "pending" && cardArt === "" && photo === ""
+  )));
+});
+
+test("tests opt into an explicit approved registry instead of bypassing production", () => {
+  const registry = createApprovedTestRegistry();
+  assert.equal(candidatesForTopic("eleicoes-2026", registry).length, 5);
+  assert.equal(candidatesForTopic("influenciadores", registry).length, 0);
+  assert.equal(candidateBelongsToTopic("lula", "eleicoes-2026", registry), true);
+  assert.equal(candidateBelongsToTopic("lula", "influenciadores", registry), false);
+  assert.equal(candidateBelongsToTopic("anitta", "influenciadores", registry), false);
+  assert.ok(candidatesForTopic("eleicoes-2026", registry).every(({ publication, photo }) => (
+    publication.content.status === "approved"
+      && publication.cardArt.status === "approved"
+      && publication.documentaryPhoto.status === "missing"
+      && photo === ""
+  )));
 });
 
 test("every candidate exposes a reviewable editorial profile", () => {
@@ -36,7 +50,9 @@ test("every candidate exposes a reviewable editorial profile", () => {
     assert.equal(typeof candidate.bio, "string");
     assert.equal(Array.isArray(candidate.facts), true);
     assert.equal(Array.isArray(candidate.sources), true);
-    assert.match(candidate.reviewStatus, /^(pending|reviewed|published)$/);
+    assert.match(candidate.reviewStatus, /^(pending|approved|rejected)$/);
+    assert.match(candidate.publication.cardArt.status, /^(missing|approved|rejected)$/);
+    assert.match(candidate.publication.documentaryPhoto.status, /^(missing|approved|rejected)$/);
     assert.equal(candidate.sources.length > 0, true);
     assert.equal(typeof candidate.role, "string");
     assert.equal(typeof candidate.primaryArea, "string");

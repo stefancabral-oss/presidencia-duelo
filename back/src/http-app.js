@@ -2,7 +2,8 @@ import { createHmac, randomUUID } from "node:crypto";
 import { isIP } from "node:net";
 import cors from "cors";
 import express from "express";
-import { CANDIDATES, TOPICS, candidatesForTopic, publicCandidate } from "./candidates.js";
+import { PRODUCTION_CANDIDATE_REGISTRY } from "./candidates.js";
+import { candidatePublicPayload } from "./editorial-gate.js";
 
 const PRODUCTION_ORIGINS = ["https://polimatch.com.br"];
 const LOCAL_ORIGIN_PATTERN = /^http:\/\/(?:127\.0\.0\.1|localhost):\d+$/;
@@ -69,13 +70,16 @@ function safeStatus(error) {
 export function createHttpApp({
   store,
   googleIdentity,
+  candidateRegistry = PRODUCTION_CANDIDATE_REGISTRY,
   env = process.env,
   logger = console,
   clock = () => new Date(),
-  candidateCatalog = candidatesForTopic,
 } = {}) {
   if (!store) throw new Error("store é obrigatório");
   if (!googleIdentity) throw new Error("googleIdentity é obrigatório");
+  if (!candidateRegistry?.topics || !candidateRegistry?.candidates || typeof candidateRegistry.candidatesForTopic !== "function") {
+    throw new Error("candidateRegistry é obrigatório");
+  }
 
   const production = env.NODE_ENV === "production";
   const voterNetworkSecret = String(env.VOTER_NETWORK_SECRET || (production ? "" : "polimatch-local-development-secret"));
@@ -142,9 +146,12 @@ export function createHttpApp({
         ok: true,
         service: "polimatch-api",
         database: "postgresql",
-        candidates: CANDIDATES.length,
-        playableCandidates: TOPICS.filter(({ active }) => active).reduce((total, topic) => total + candidateCatalog(topic.id).length, 0),
-        activeTopics: TOPICS.filter(({ active }) => active).length,
+        candidates: candidateRegistry.candidates.length,
+        playableCandidates: candidateRegistry.topics.filter(({ active }) => active).reduce(
+          (total, topic) => total + candidateRegistry.candidatesForTopic(topic.id).length,
+          0,
+        ),
+        activeTopics: candidateRegistry.topics.filter(({ active }) => active).length,
         googleLogin: googleIdentity.configured,
       });
     } catch (error) {
@@ -153,14 +160,14 @@ export function createHttpApp({
     }
   });
 
-  app.get("/api/topics", (_req, res) => res.json({ topics: TOPICS }));
+  app.get("/api/topics", (_req, res) => res.json({ topics: candidateRegistry.topics }));
 
   app.get("/api/candidates", (req, res) => {
     const topicId = String(req.query.topic || "eleicoes-2026");
-    const candidates = candidateCatalog(topicId);
+    const candidates = candidateRegistry.candidatesForTopic(topicId);
     res.json({
       topicId,
-      candidates: candidates.map(publicCandidate),
+      candidates: candidates.map(candidatePublicPayload),
     });
   });
 

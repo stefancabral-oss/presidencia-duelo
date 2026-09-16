@@ -5,11 +5,12 @@
   "unit": "U02",
   "baseSha": "7af752bbf1278e28a27b57f45a6fcc76092742de",
   "implementationCommit": "6aa66d1a33981d1a43cf54d3bad79a094e912c3e",
+  "reviewFixCommit": "bd276f1796eabc33f86527957096c401ca4e8a5d",
   "checks": [
     {
       "name": "root-unit",
       "command": "npm test",
-      "result": "passed; 4 shared, 17 backend and 44 app tests (65 total)"
+      "result": "passed; 4 shared, 17 backend and 49 app tests (70 total)"
     },
     {
       "name": "app-build",
@@ -27,6 +28,16 @@
       "result": "passed; same interaction and persistence contract in WebKit"
     },
     {
+      "name": "vote-recovery-chromium",
+      "command": "POLIMATCH_E2E_BROWSER=chromium node app/e2e/vote-recovery.mjs",
+      "result": "passed; timeout uncertainty, transient 503, real 401 and idempotent retry with the same roundId"
+    },
+    {
+      "name": "vote-recovery-webkit",
+      "command": "POLIMATCH_E2E_BROWSER=webkit node app/e2e/vote-recovery.mjs",
+      "result": "passed; same four recovery scenarios and persistent retry-control identity in WebKit"
+    },
+    {
       "name": "optional-google-flow",
       "command": "VITE_GOOGLE_CLIENT_ID=e2e-client.apps.googleusercontent.com npm run build --prefix app; POLIMATCH_E2E_GOOGLE=1 POLIMATCH_E2E_BROWSER=chromium node app/e2e/interaction-smoke.mjs",
       "result": "passed; persistent shell did not regress the optional sign-in flow"
@@ -34,7 +45,7 @@
     {
       "name": "dom-mutation-probe",
       "command": "MutationObserver embedded in app/e2e/interaction-smoke.mjs",
-      "result": "passed; zero replacements of topbar, nav, round instruction, live region, four slots and four candidate buttons during a complete vote"
+      "result": "passed; zero replacements of topbar, nav, round instruction, retry control, live region, four slots and four candidate buttons during a complete vote"
     },
     {
       "name": "focus-contract",
@@ -45,12 +56,16 @@
       "name": "live-region-sequence",
       "command": "single role=status identity and MutationObserver announcement assertions in app/e2e/interaction-smoke.mjs",
       "result": "passed; Confirmando, confirmed result and Nova rodada disponivel were observed in order on the same node"
+    },
+    {
+      "name": "failed-portrait-regression",
+      "command": "npm test --prefix app",
+      "result": "passed; a failed source remains hidden across renders and a changed source stays hidden until its load event"
     }
   ],
   "pending": [
     "real NVDA or VoiceOver transcript and virtual-cursor observation",
     "automatic GitHub Actions run after PR publication",
-    "vote-recovery.mjs after PR 162 is integrated into the base",
     "human gate"
   ]
 }

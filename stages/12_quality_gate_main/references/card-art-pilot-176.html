@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Teste cego de arte — PoliMatch</title>
+    <style>
+      :root { color-scheme: dark; font: 16px/1.45 system-ui, sans-serif; background: #092d27; color: #f7f2e8; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      main { width: min(46rem, 100%); margin: auto; padding: 1rem; }
+      header, article { background: #103f36; border: 1px solid #b99b54; border-radius: 1rem; padding: 1rem; margin-bottom: 1rem; }
+      h1, h2 { margin-top: 0; }
+      img { display: block; width: min(100%, 28rem); aspect-ratio: 4 / 5; object-fit: cover; margin: 0 auto 1rem; border-radius: .75rem; }
+      label, fieldset { display: block; margin-top: 1rem; }
+      input[type="text"] { width: 100%; min-height: 2.75rem; padding: .65rem; font: inherit; }
+      fieldset { border: 0; padding: 0; }
+      fieldset label { display: inline-flex; gap: .4rem; margin: .5rem 1rem .25rem 0; }
+      button { min-height: 2.75rem; padding: .65rem 1rem; border: 0; border-radius: .5rem; font: 700 1rem system-ui; cursor: pointer; }
+      .status { min-height: 1.5rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Teste cego de reconhecimento</h1>
+        <p>Não procure pistas nem abra o código da página. Para cada imagem, escreva quem você acha que é — “não sei” é uma resposta válida — e registre sua leitura visual.</p>
+        <label>Familiaridade com política (1 a 5)
+          <input id="familiarity" type="range" min="1" max="5" value="3">
+        </label>
+      </header>
+      <form id="test-form"></form>
+      <button id="export" type="button">Concluir e salvar respostas</button>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </main>
+    <script>
+      const assets = [
+        ["P01", "../../../app/public/card-art/pilot/001-lula-pilot-v1.png"],
+        ["P02", "../../../app/public/card-art/pilot/063-jair-bolsonaro-pilot-v1.png"],
+        ["P03", "../../../app/public/card-art/pilot/033-marina-silva-pilot-v1.png"],
+        ["P04", "../../../app/public/card-art/pilot/028-michelle-bolsonaro-pilot-v1.png"],
+        ["P05", "../../../app/public/card-art/pilot/084-tabata-amaral-pilot-v1.png"],
+        ["P06", "../../../app/public/card-art/pilot/052-sonia-guajajara-pilot-v1.png"],
+        ["P07", "../../../app/public/card-art/pilot/017-joao-campos-pilot-v1.png"],
+        ["P08", "../../../app/public/card-art/pilot/019-douglas-ruas-pilot-v1.png"]
+      ];
+
+      for (let index = assets.length - 1; index > 0; index -= 1) {
+        const target = crypto.getRandomValues(new Uint32Array(1))[0] % (index + 1);
+        [assets[index], assets[target]] = [assets[target], assets[index]];
+      }
+
+      const form = document.querySelector("#test-form");
+      form.innerHTML = assets.map(([code, source], index) => `
+        <article data-code="${code}">
+          <h2>Imagem ${index + 1} de ${assets.length}</h2>
+          <img src="${source}" alt="Retrato sem identificação para o teste cego">
+          <label>Quem é esta pessoa?
+            <input name="identity-${code}" type="text" autocomplete="off" required>
+          </label>
+          <fieldset>
+            <legend>Como a imagem trata esta pessoa?</legend>
+            <label><input name="tone-${code}" type="radio" value="favorece" required> Favorece</label>
+            <label><input name="tone-${code}" type="radio" value="neutra"> Neutra</label>
+            <label><input name="tone-${code}" type="radio" value="prejudica"> Prejudica</label>
+          </fieldset>
+          <label>Observação opcional
+            <input name="note-${code}" type="text" autocomplete="off">
+          </label>
+        </article>`).join("");
+
+      document.querySelector("#export").addEventListener("click", () => {
+        if (!form.reportValidity()) return;
+        const data = new FormData(form);
+        const payload = {
+          protocol: "card-art-pilot-176-v1",
+          completedAt: new Date().toISOString(),
+          familiarity: Number(document.querySelector("#familiarity").value),
+          responses: assets.map(([code]) => ({
+            code,
+            identity: String(data.get(`identity-${code}`)).trim(),
+            tone: data.get(`tone-${code}`),
+            note: String(data.get(`note-${code}`) || "").trim()
+          }))
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        const link = Object.assign(document.createElement("a"), {
+          href: URL.createObjectURL(blob),
+          download: `polimatch-card-art-test-${Date.now()}.json`
+        });
+        link.click();
+        URL.revokeObjectURL(link.href);
+        document.querySelector("#status").textContent = "Respostas salvas. Envie o arquivo ao responsável pelo piloto.";
+      });
+    </script>
+  </body>
+</html>

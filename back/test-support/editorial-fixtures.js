@@ -1,7 +1,11 @@
 import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import { TOPICS } from "../src/candidates.js";
 import { assetApprovalFingerprint, candidateContentFingerprint, createCandidateRegistry, sha256Fingerprint } from "../src/editorial-gate.js";
-import { attachTestAttestations } from "./editorial-attestation-fixtures.js";
+import {
+  attachTestAttestations,
+  createTestApprovalAuthority,
+  TEST_AUTHORITY_NOW,
+} from "./editorial-attestation-fixtures.js";
 
 export const TEST_CANDIDATE_IDS = Object.freeze([
   "lula",
@@ -74,10 +78,11 @@ export function createEditorialTestRegistry({
     ledger: { schemaVersion: 1, decisions },
     assetRegistry: { schemaVersion: 1, assets },
   });
+  const authority = createTestApprovalAuthority(inputs);
   return createCandidateRegistry({
     ...inputs,
-    now: () => new Date("2026-09-16T12:00:00.000Z"),
-    verifyApprovalAuthority: () => true,
+    now: TEST_AUTHORITY_NOW,
+    verifyApprovalAuthority: authority.verifier,
   });
 }
 

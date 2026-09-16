@@ -13,6 +13,8 @@ export const EDITORIAL_AUTHORITY_RECEIPT_RULESET_V1 = "editorial-authority-recei
 const FINGERPRINT_PATTERN = /^sha256:[a-f0-9]{64}$/;
 const BASE64URL_PATTERN = /^[A-Za-z0-9_-]+$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const TRUSTED_AUTHORITY_VERIFIERS = new WeakSet();
+const VERIFIED_AUTHORITY_RECEIPTS = new WeakSet();
 const GOVERNANCE_DATE_FORMATTER = new Intl.DateTimeFormat("en", {
   timeZone: "America/Sao_Paulo",
   year: "numeric",
@@ -134,15 +136,34 @@ export function createEd25519ApprovalAuthority({ publicKeyJwk, issuer, keyId, re
     if (receiptsByRequest.has(receipt.requestFingerprint)) {
       editorialInvalid(`recibo editorial duplicado: ${receipt.requestFingerprint}`);
     }
+    VERIFIED_AUTHORITY_RECEIPTS.add(receipt);
     receiptsByRequest.set(receipt.requestFingerprint, receipt);
   }
 
-  return Object.freeze((attestation) => {
+  const verifier = Object.freeze((attestation) => {
     const receipt = receiptsByRequest.get(approvalAuthorityRequestFingerprint(attestation));
     if (!receipt || !validDate(attestation.decidedAt)) return false;
     if (governanceDate(new Date(receipt.authorizedAt)) < attestation.decidedAt) return false;
     return receipt;
   });
+  TRUSTED_AUTHORITY_VERIFIERS.add(verifier);
+  return verifier;
+}
+
+export function isEd25519ApprovalAuthority(value) {
+  return typeof value === "function" && TRUSTED_AUTHORITY_VERIFIERS.has(value);
+}
+
+export function verifyApprovalAuthorityReceipt(authority, attestation) {
+  if (!isEd25519ApprovalAuthority(authority)) return null;
+  try {
+    const receipt = authority(attestation);
+    return receipt && typeof receipt === "object" && VERIFIED_AUTHORITY_RECEIPTS.has(receipt)
+      ? receipt
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 export function approvalAuthorityFromEnvironment(environment = process.env, { now } = {}) {

@@ -25,12 +25,15 @@ import {
   approvalAuthorityRequestFingerprint,
   authorityReceiptSigningPayload,
   createEd25519ApprovalAuthority,
+  isEd25519ApprovalAuthority,
+  verifyApprovalAuthorityReceipt,
 } from "./editorial-authority.js";
 import { textBlobFingerprint } from "./editorial-integrity.js";
 import { createGitReviewedStateVerifier } from "./editorial-history.js";
 import { createRepositoryFileAccess } from "./repository-files.js";
 import {
   attachTestAttestations,
+  createTestApprovalAuthority,
   TEST_GIT_BLOB,
   testGovernancePolicy,
 } from "../test-support/editorial-attestation-fixtures.js";
@@ -66,10 +69,12 @@ function attestedInputs(input, options) {
 }
 
 function createTestRegistry(input, options) {
+  const inputs = attestedInputs(input, options);
+  const authority = createTestApprovalAuthority(inputs);
   return createCandidateRegistry({
-    ...attestedInputs(input, options),
+    ...inputs,
     now: TEST_NOW,
-    verifyApprovalAuthority: () => true,
+    verifyApprovalAuthority: authority.verifier,
   });
 }
 
@@ -378,7 +383,12 @@ test("the reusable public payload strips audit and fingerprints", () => {
 
 test("approved candidates and public payloads are independent deeply frozen snapshots", () => {
   const inputs = attestedInputs(approvedInputs());
-  const registry = createCandidateRegistry({ ...inputs, now: TEST_NOW, verifyApprovalAuthority: () => true });
+  const authority = createTestApprovalAuthority(inputs);
+  const registry = createCandidateRegistry({
+    ...inputs,
+    now: TEST_NOW,
+    verifyApprovalAuthority: authority.verifier,
+  });
   const candidate = registry.candidates[0];
   const payload = candidatePublicPayload(candidate);
   const originalFingerprint = candidate.publication.content.fingerprint;
@@ -442,25 +452,39 @@ test("decision dates use an injected clock and cannot be future-dated", () => {
     /não pode estar no futuro/,
   );
   assert.throws(
-    () => createCandidateRegistry({
-      ...attestedInputs(approvedInputs()),
-      now: () => new Date("invalid"),
-      verifyApprovalAuthority: () => true,
-    }),
+    () => {
+      const inputs = attestedInputs(approvedInputs());
+      const authority = createTestApprovalAuthority(inputs);
+      return createCandidateRegistry({
+        ...inputs,
+        now: () => new Date("invalid"),
+        verifyApprovalAuthority: authority.verifier,
+      });
+    },
     /clock deve retornar uma data válida/,
   );
   assert.throws(
-    () => createCandidateRegistry({
-      ...attestedInputs(approvedInputs({ decidedAt: "2026-09-17" })),
-      now: () => new Date("2026-09-17T02:30:00.000Z"),
-      verifyApprovalAuthority: () => true,
-    }),
+    () => {
+      const inputs = attestedInputs(approvedInputs({ decidedAt: "2026-09-17" }));
+      const authority = createTestApprovalAuthority(inputs);
+      return createCandidateRegistry({
+        ...inputs,
+        now: () => new Date("2026-09-17T02:30:00.000Z"),
+        verifyApprovalAuthority: authority.verifier,
+      });
+    },
     /não pode estar no futuro/,
   );
+  const boundaryInputs = attestedInputs(approvedInputs({ decidedAt: "2026-09-17" }));
+  const boundaryNow = () => new Date("2026-09-17T03:30:00.000Z");
+  const boundaryAuthority = createTestApprovalAuthority(boundaryInputs, {
+    authorizedAt: "2026-09-17T03:30:00.000Z",
+    now: boundaryNow,
+  });
   assert.equal(createCandidateRegistry({
-    ...attestedInputs(approvedInputs({ decidedAt: "2026-09-17" })),
-    now: () => new Date("2026-09-17T03:30:00.000Z"),
-    verifyApprovalAuthority: () => true,
+    ...boundaryInputs,
+    now: boundaryNow,
+    verifyApprovalAuthority: boundaryAuthority.verifier,
   }).candidates[0].eligible, true);
 });
 
@@ -487,13 +511,70 @@ test("repository declarations default-deny without externally injected authority
   assert.equal(denied.candidates[0].eligible, false);
   assert.equal(denied.candidatesForTopic("eleicoes-2026").length, 0);
 
+  let untrustedCallbackInvoked = false;
   const callbackFailure = createCandidateRegistry({
     ...inputs,
     now: TEST_NOW,
-    verifyApprovalAuthority: () => { throw new Error("serviço externo indisponível"); },
+    verifyApprovalAuthority: () => {
+      untrustedCallbackInvoked = true;
+      throw new Error("serviço externo indisponível");
+    },
   });
+  assert.equal(untrustedCallbackInvoked, false);
   assert.equal(callbackFailure.candidates[0].eligible, false);
   assert.equal(callbackFailure.authority.deniedDecisions, 2);
+});
+
+test("unbranded callbacks, fake receipts and cloned proofs cannot authorize", () => {
+  const inputs = attestedInputs(approvedInputs());
+  const contentDecision = inputs.ledger.decisions[0].content;
+  const contentAttestation = JSON.parse(inputs.repositoryFiles.get(contentDecision.attestation.path));
+  const genuineAuthority = createTestApprovalAuthority(inputs);
+  const genuineReceipt = verifyApprovalAuthorityReceipt(genuineAuthority.verifier, contentAttestation);
+  assert.equal(isEd25519ApprovalAuthority(genuineAuthority.verifier), true);
+  assert.ok(genuineReceipt);
+
+  const malloryReceipt = {
+    schemaVersion: 1,
+    ruleset: EDITORIAL_AUTHORITY_RECEIPT_RULESET_V1,
+    issuer: "mallory.example",
+    keyId: "mallory-key",
+    requestFingerprint: approvalAuthorityRequestFingerprint(contentAttestation),
+    authorizedAt: "2026-09-16T12:00:00.000Z",
+    signature: "A".repeat(86),
+  };
+  const invalidReceipt = {
+    ...malloryReceipt,
+    authorizedAt: "data-inválida",
+    signature: "assinatura-inválida",
+  };
+  const clonedGenuineReceipt = structuredClone(genuineReceipt);
+  const wrappedGenuineVerifier = (attestation) => genuineAuthority.verifier(attestation);
+  const forgeries = [
+    ["boolean true", () => true],
+    ["objeto Mallory", () => malloryReceipt],
+    ["data/assinatura inválidas", () => invalidReceipt],
+    ["clone de receipt genuíno", () => clonedGenuineReceipt],
+    ["wrapper de verifier genuíno", wrappedGenuineVerifier],
+    ["objeto direto", malloryReceipt],
+  ];
+
+  for (const [label, forgedAuthority] of forgeries) {
+    assert.equal(isEd25519ApprovalAuthority(forgedAuthority), false, label);
+    const denied = createCandidateRegistry({
+      ...inputs,
+      now: TEST_NOW,
+      verifyApprovalAuthority: forgedAuthority,
+    });
+    assert.equal(denied.authority.externalVerifierConfigured, false, label);
+    assert.equal(denied.authority.verifiedDecisions, 0, label);
+    assert.equal(denied.authority.deniedDecisions, 2, label);
+    assert.equal(denied.candidates[0].eligible, false, label);
+    assert.equal(denied.candidates[0].publication.content.audit, null, label);
+  }
+
+  assert.equal(verifyApprovalAuthorityReceipt(() => clonedGenuineReceipt, contentAttestation), null);
+  assert.equal(verifyApprovalAuthorityReceipt(wrappedGenuineVerifier, contentAttestation), null);
 });
 
 test("only valid Ed25519 receipts from injected external configuration authorize decisions", () => {
@@ -527,8 +608,15 @@ test("only valid Ed25519 receipts from injected external configuration authorize
     EDITORIAL_AUTHORITY_KEY_ID: authority.keyId,
     EDITORIAL_AUTHORITY_RECEIPTS: JSON.stringify(authority.receipts),
   }, { now: TEST_NOW });
-  assert.equal(fromEnvironment(attestations[0]).requestFingerprint, authority.receipts[0].requestFingerprint);
-  assert.equal(fromEnvironment({ ...attestations[0], decidedAt: "2026-09-15" }), false);
+  assert.equal(isEd25519ApprovalAuthority(fromEnvironment), true);
+  assert.equal(
+    verifyApprovalAuthorityReceipt(fromEnvironment, attestations[0]).requestFingerprint,
+    authority.receipts[0].requestFingerprint,
+  );
+  assert.equal(
+    verifyApprovalAuthorityReceipt(fromEnvironment, { ...attestations[0], decidedAt: "2026-09-15" }),
+    null,
+  );
   assert.equal(approvalAuthorityFromEnvironment({}), null);
   assert.throws(
     () => approvalAuthorityFromEnvironment({ EDITORIAL_AUTHORITY_ISSUER: authority.issuer }),

@@ -27,6 +27,8 @@ A chave privada e o ato de conferir identidade/competência pertencem ao emissor
 
 `authorizedAt` é um instante UTC canônico assinado. Ele não pode estar no futuro e sua data civil em `America/Sao_Paulo` não pode anteceder `decidedAt`. Os metadados e a assinatura do recibo efetivamente usado ficam preservados na auditoria interna da decisão.
 
+O gate reconhece somente verificadores e provas registrados em marcas privadas pelo módulo que validou a chave e a assinatura Ed25519. Callback comum, retorno booleano `true`, objeto com formato de recibo, clone de recibo válido ou wrapper de um verificador válido não são chamados/aceitos como autoridade. Portanto `authorityVerified === true` implica sempre um `authorityReceipt` criptograficamente validado e não nulo. Fixtures oficiais geram um par Ed25519 efêmero e recibos realmente assinados; não existe atalho booleano de teste.
+
 As responsabilidades continuam separadas:
 
 - conteúdo: revisão factual de cada afirmação pública;

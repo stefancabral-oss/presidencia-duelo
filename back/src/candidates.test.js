@@ -38,6 +38,11 @@ test("production stays closed without externally injected authority receipts", (
 
 test("tests opt into an explicit approved registry instead of bypassing production", () => {
   const registry = createApprovedTestRegistry();
+  assert.deepEqual(registry.authority, {
+    externalVerifierConfigured: true,
+    verifiedDecisions: 15,
+    deniedDecisions: 0,
+  });
   assert.equal(candidatesForTopic("eleicoes-2026", registry).length, 5);
   assert.equal(candidatesForTopic("influenciadores", registry).length, 0);
   assert.equal(candidateBelongsToTopic("lula", "eleicoes-2026", registry), true);
@@ -47,6 +52,9 @@ test("tests opt into an explicit approved registry instead of bypassing producti
     publication.content.status === "approved"
       && publication.cardArt.status === "approved"
       && publication.documentaryPhoto.status === "missing"
+      && publication.content.audit.authorityReceipt.signature.length > 0
+      && publication.cardArt.audit.authorityReceipt.signature.length > 0
+      && publication.documentaryPhoto.audit.authorityReceipt.signature.length > 0
       && photo === ""
   )));
 });

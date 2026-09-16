@@ -39,6 +39,8 @@ Os casos adversariais adicionais comprovam:
 - a policy Git apenas confere a declaração de `decidedBy`; policy, ledger, atestação, hashes e commits não autenticam a pessoa nem concedem autoridade;
 - sem verificador externo, com callback indisponível ou sem recibo correspondente, decisões versionadas voltam a `pending`/`missing` e produzem zero elegíveis;
 - somente recibos `editorial-authority-receipt-v1` Ed25519 válidos para a requisição exata autorizam; assinatura alterada, configuração parcial ou mudança da atestação falham fechados;
+- verifier e receipt precisam das marcas privadas atribuídas pelo módulo após validação criptográfica; callback retornando `true`, objeto Mallory, data/assinatura inválidas, clone do receipt genuíno e wrapper do verifier genuíno produzem zero aprovações;
+- fixtures de teste usam chaves Ed25519 efêmeras e receipts realmente assinados, sem bypass booleano;
 - `authorizedAt` futuro ou anterior a `decidedAt` na data civil de São Paulo é recusado, e o recibo efetivamente usado permanece na auditoria interna;
 - cada decisão depende de atestação existente e íntegra, `review.json` estrito ligado a candidato/dimensão/decisão, cobertura integral dos itens revisados, capturas internas verificadas, SHA-256, OID Git e commit revisado completo;
 - texto arbitrário `x`, nota/captura trivial, campo aninhado extra, referência adulterada, URL sem captura, logo/asset não relacionado, sujeito divergente e commit não comprovado falham fechados;
@@ -92,7 +94,7 @@ Capturas Chromium em 390 × 844:
 ## Validação local
 
 - `npm run editorial:verify --prefix back`: aprovado; policy e estado real foram validados com `0 decisões atestadas; 0 decisões autorizadas externamente; 0 candidatos publicáveis`.
-- `npm test`: aprovado, 165/165 testes (4 shared, 95 back, 66 app).
+- `npm test`: aprovado, 166/166 testes (4 shared, 96 back, 66 app).
 - `npm run build --prefix app`: aprovado; verificação editorial reportou `Assets editoriais íntegros: 0` e o Vite gerou o bundle.
 - Chromium: interação, gate editorial, 3 telas × 16 viewports, recuperação de voto e estados de confiança aprovados.
 - WebKit: a mesma matriz completa aprovada.

@@ -10,3 +10,6 @@ identidade nem autoridade. A policy versionada apenas confere se `decidedBy`
 corresponde ao revisor declarado. Uma decisão só produz aprovação quando o
 runtime recebe e verifica um recibo Ed25519 da autoridade externa configurada;
 sem recibo, o estado público permanece `pending`/`missing`.
+O gate aceita apenas o verificador/prova marcados privadamente pelo módulo que
+validou a assinatura. Callback, `true`, objeto parecido com recibo e clone não
+constituem autoridade.

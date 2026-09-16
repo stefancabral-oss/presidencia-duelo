@@ -17,8 +17,8 @@ import {
   validateGovernancePolicy,
 } from "./editorial-attestation.js";
 import {
-  EDITORIAL_AUTHORITY_RECEIPT_RULESET_V1,
-  approvalAuthorityRequestFingerprint,
+  isEd25519ApprovalAuthority,
+  verifyApprovalAuthorityReceipt,
 } from "./editorial-authority.js";
 import {
   assertExactKeys,
@@ -198,35 +198,9 @@ function validateLedger({
         statRepositoryFile,
         verifyReviewedState,
       });
-      let authorityVerified = false;
-      let authorityReceipt = null;
-      if (typeof verifyApprovalAuthority === "function") {
-        try {
-          const proof = verifyApprovalAuthority(verifiedAttestation);
-          if (proof === true) {
-            authorityVerified = true;
-          } else if (proof && typeof proof === "object") {
-            assertExactKeys(proof, [
-              "schemaVersion",
-              "ruleset",
-              "issuer",
-              "keyId",
-              "requestFingerprint",
-              "authorizedAt",
-              "signature",
-            ], "recibo retornado pela autoridade editorial");
-            if (proof.schemaVersion === 1
-              && proof.ruleset === EDITORIAL_AUTHORITY_RECEIPT_RULESET_V1
-              && proof.requestFingerprint === approvalAuthorityRequestFingerprint(verifiedAttestation)) {
-              authorityReceipt = immutableJsonSnapshot(proof);
-              authorityVerified = true;
-            }
-          }
-        } catch {
-          authorityVerified = false;
-          authorityReceipt = null;
-        }
-      }
+      const verifiedReceipt = verifyApprovalAuthorityReceipt(verifyApprovalAuthority, verifiedAttestation);
+      const authorityReceipt = verifiedReceipt ? immutableJsonSnapshot(verifiedReceipt) : null;
+      const authorityVerified = authorityReceipt !== null;
       validatedEntry[dimension] = Object.freeze({
         ...decision,
         verifiedAttestation,
@@ -388,7 +362,7 @@ export function createCandidateRegistry({
   const registry = {
     contentRuleset,
     authority: Object.freeze({
-      externalVerifierConfigured: typeof verifyApprovalAuthority === "function",
+      externalVerifierConfigured: isEd25519ApprovalAuthority(verifyApprovalAuthority),
       verifiedDecisions,
       deniedDecisions,
     }),

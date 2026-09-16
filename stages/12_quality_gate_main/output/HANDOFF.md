@@ -18,6 +18,7 @@
 - Fingerprint de conteúdo sobre o JSON público exato e fingerprint separado de roteamento, sem equivalência entre ausente, `undefined` e `null`.
 - Policy local versionada por dimensão apenas para coerência do revisor declarado; ela não autentica identidade nem concede autoridade.
 - Autorização de produção exclusivamente por recibo Ed25519 emitido fora do repositório e injetado no processo; ausência, erro ou assinatura divergente mantêm default-deny.
+- Gate aceita somente verifier/receipt com marcas privadas atribuídas após validação Ed25519; `true`, callback, objeto sintático, clone e wrapper falham fechados. Fixtures usam assinaturas efêmeras reais.
 - Atestação vinculada ao ledger e `review.json` estruturado por candidato/dimensão/decisão, com itens obrigatórios e capturas verificadas por SHA-256, OID Git e commit revisado.
 - Verificador local/CI reproduz conteúdo, roteamento, evidências e assets a partir do commit atestado; URLs sem captura e arquivos fora do escopo não liberam decisão.
 - Subprocessos Git usam ambiente saneado e `GIT_NO_REPLACE_OBJECTS=1`; teste em repositório real cobre `git replace` e injeções de diretório/configuração.
@@ -51,7 +52,7 @@ Esse estado é intencional. Assets existentes, nomes legados contendo `approved`
 ## Validação local
 
 - `npm run editorial:verify --prefix back`: aprovado com 0 decisões reais e 0 publicáveis.
-- Suite consolidada: 165/165 testes aprovados (4 shared, 95 back, 66 app).
+- Suite consolidada: 166/166 testes aprovados (4 shared, 96 back, 66 app).
 - `npm run build --prefix app`: aprovado; 0 assets no registro editorial real e bundle Vite gerado.
 - `interaction-smoke.mjs`: aprovado em Chromium e WebKit.
 - `editorial-gate.mjs`: aprovado em Chromium e WebKit.

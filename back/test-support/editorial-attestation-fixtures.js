@@ -1,3 +1,4 @@
+import { generateKeyPairSync, sign } from "node:crypto";
 import {
   PUBLIC_CANDIDATE_CONTENT_FIELDS_V1,
   PUBLIC_CANDIDATE_CONTENT_FIELDS_V2,
@@ -5,10 +6,17 @@ import {
   PUBLIC_CANDIDATE_SCHEMA_V2,
   candidateRoutingFingerprint,
 } from "../src/editorial-gate.js";
+import {
+  EDITORIAL_AUTHORITY_RECEIPT_RULESET_V1,
+  approvalAuthorityRequestFingerprint,
+  authorityReceiptSigningPayload,
+  createEd25519ApprovalAuthority,
+} from "../src/editorial-authority.js";
 import { textBlobFingerprint } from "../src/editorial-integrity.js";
 
 export const TEST_REVIEWED_COMMIT = "1".repeat(40);
 export const TEST_GIT_BLOB = "2".repeat(40);
+export const TEST_AUTHORITY_NOW = () => new Date("2026-09-16T12:00:00.000Z");
 
 export function testGovernancePolicy(reviewers = ["editor-humano", "fixture-automatizada"]) {
   return {
@@ -140,4 +148,59 @@ export function attachTestAttestations(input, {
       return { isFile: true, isSymbolicLink: false, mode: 0o644 };
     },
   };
+}
+
+export function createTestApprovalAuthority(inputs, {
+  authorizedAt = "2026-09-16T12:00:00.000Z",
+  now = TEST_AUTHORITY_NOW,
+} = {}) {
+  const attestations = [];
+  for (const entry of inputs.ledger?.decisions || []) {
+    for (const dimension of ["content", "cardArt", "documentaryPhoto"]) {
+      const path = entry[dimension]?.attestation?.path;
+      if (!path || !inputs.repositoryFiles?.has(path)) continue;
+      try {
+        attestations.push(JSON.parse(inputs.repositoryFiles.get(path)));
+      } catch {
+        // A fixture continua exercitando o erro de JSON no gate; ela apenas
+        // não recebe autorização para uma atestação que nem pode ser lida.
+      }
+    }
+  }
+
+  const { privateKey, publicKey } = generateKeyPairSync("ed25519");
+  const issuer = "fixture-authority.example";
+  const keyId = "fixture-ed25519-ephemeral";
+  const receipts = [];
+  for (const attestation of attestations) {
+    try {
+      const unsigned = {
+        schemaVersion: 1,
+        ruleset: EDITORIAL_AUTHORITY_RECEIPT_RULESET_V1,
+        issuer,
+        keyId,
+        requestFingerprint: approvalAuthorityRequestFingerprint(attestation),
+        authorizedAt,
+      };
+      receipts.push({
+        ...unsigned,
+        signature: sign(
+          null,
+          Buffer.from(JSON.stringify(authorityReceiptSigningPayload(unsigned))),
+          privateKey,
+        ).toString("base64url"),
+      });
+    } catch {
+      // O gate, não o emissor de fixture, deve produzir o erro estrutural
+      // específico para atestações propositalmente malformadas em testes.
+    }
+  }
+  const publicKeyJwk = publicKey.export({ format: "jwk" });
+  return Object.freeze({
+    publicKeyJwk: Object.freeze(publicKeyJwk),
+    issuer,
+    keyId,
+    receipts: Object.freeze(receipts.map((receipt) => Object.freeze(receipt))),
+    verifier: createEd25519ApprovalAuthority({ publicKeyJwk, issuer, keyId, receipts, now }),
+  });
 }

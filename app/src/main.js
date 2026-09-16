@@ -871,6 +871,11 @@ function handleAppClick(event) {
   if (["retry-vote", "restore-session"].includes(button.id)) {
     const recovery = voteRecoveryControl(state);
     if (!recovery.visible || recovery.disabled || recovery.id !== button.id) return;
+    const pendingCandidate = refs.slots.find(({ button: candidateButton }) => candidateButton.dataset.vote === state.pendingWinnerId);
+    if (!pendingCandidate) return;
+    // O controle de recuperação some quando a tentativa começa. Transfira o
+    // foco antes para a carta persistente que continua representando a escolha.
+    pendingCandidate.button.focus();
     if (state.voteAction === VOTE_ACTIONS.RESTORE_SESSION) restoreVoteSession();
     else vote(state.pendingWinnerId, { retry: true });
     return;

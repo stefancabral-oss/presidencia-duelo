@@ -384,11 +384,21 @@ try {
     await abrirDuelo(page);
 
     servidor.atrasarProximaRodada = true;
+    const candidataPendente = page.locator(".candidate-card").first();
+    await candidataPendente.evaluate((node) => { window.__polimatchPendingCandidateNode = node; });
     await votar(page);
     await page.waitForTimeout(ALEM_DO_TEMPO_LIMITE + 1500);
     const duelsDepoisDaPrimeira = servidor.duels;
 
-    await page.locator("#retry-vote").click();
+    const retry = page.locator("#retry-vote");
+    await retry.focus();
+    if (!await retry.evaluate((node) => document.activeElement === node)) {
+      throw new Error("Tentar de novo não recebeu foco antes da repetição por teclado");
+    }
+    await page.keyboard.press("Enter");
+    if (!await page.evaluate(() => document.activeElement === window.__polimatchPendingCandidateNode)) {
+      throw new Error("o retry ocultou o botão focado antes de transferir o foco para a carta pendente");
+    }
     await page.waitForTimeout(2200);
 
     if (servidor.duels !== duelsDepoisDaPrimeira) {
@@ -399,6 +409,17 @@ try {
     }
     if (servidor.rounds.size !== 1) {
       throw new Error(`a repetição criou ${servidor.rounds.size} rodadas no servidor; deveria reaproveitar a mesma`);
+    }
+    const focoDepoisDaNovaRodada = await page.evaluate(() => ({
+      preservouNo: document.activeElement === window.__polimatchPendingCandidateNode,
+      classe: document.activeElement?.className || "",
+      voto: document.activeElement?.dataset?.vote || "",
+    }));
+    if (!focoDepoisDaNovaRodada.preservouNo) {
+      throw new Error(
+        "Tentar de novo foi ocultado sem preservar o foco na carta persistente "
+        + `(foco final: ${focoDepoisDaNovaRodada.classe || "nenhum"}, voto: ${focoDepoisDaNovaRodada.voto || "nenhum"})`,
+      );
     }
     if (pageErrors.length) throw new Error(`erros na página: ${pageErrors.join(" | ")}`);
     await context.close();

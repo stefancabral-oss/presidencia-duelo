@@ -20,7 +20,7 @@
     {
       "name": "pilot-asset-and-reference-integrity",
       "command": "npm test",
-      "result": "passed; 167 of 167 tests (4 shared, 39 backend, 124 app), including canonical quantitative derivation, ambiguous or post-hoc aliases, commits outside real HEAD, encoded and symlink path escapes, NFKC/default-ignorable PII, empty or renamed bundles, reused receipts, detached custody roots, geometry and chronology"
+      "result": "passed; 169 of 169 tests (4 shared, 39 backend, 126 app), including canonical quantitative derivation, ambiguous or post-hoc aliases, commits outside real HEAD, encoded and symlink path escapes, opaque governance IDs, no unrestricted public string slots, removal of public narratives, all reported trivial PII examples, empty or renamed bundles, reused receipts, detached custody roots, geometry and chronology"
     },
     {
       "name": "reference-provenance",
@@ -34,7 +34,7 @@
     {
       "name": "result-governance-schema",
       "command": "npm run test:card-art-pilot-contract --prefix app",
-      "result": "contract tests passed; locked Ajv 8.20.0 plus ajv-formats 3.0.1 validates generation plan/receipt, receipt registry, deterministic recognition rules, non-empty response bundle, each individual response and the result against Draft 2020-12 before semantics; this does not by itself approve an operational result"
+      "result": "64 contract tests passed; locked Ajv 8.20.0 plus ajv-formats 3.0.1 validates generation plan/receipt, receipt registry, deterministic recognition rules, non-empty response bundle, each individual response and the result against Draft 2020-12 before semantics. The public result has no notes/rationale/free narrative or unrestricted string slots: governance actors are opaque IDs, outcomes and reasonCodes are closed, and optional private narrative is represented only by an opaque artifact reference plus SHA-256; this does not by itself approve an operational result"
     },
     {
       "name": "result-derived-validator",

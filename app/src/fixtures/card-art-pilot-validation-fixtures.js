@@ -12,20 +12,27 @@ import {
   deriveCardArtPilotQuantitativeResult
 } from "../card-art-pilot-participant-validation.js";
 
-function approvedReview(role) {
+const GOVERNANCE_ACTORS = Object.freeze({
+  recruitment: `gov_${"1".repeat(32)}`,
+  identity: `gov_${"2".repeat(32)}`,
+  dignity: `gov_${"3".repeat(32)}`,
+  decision: `gov_${"4".repeat(32)}`
+});
+
+function approvedReview(kind) {
   return {
     status: "approved",
-    reviewedBy: `${role} Reviewer`,
+    reviewedBy: GOVERNANCE_ACTORS[kind],
     reviewedAt: "2026-09-16T01:45:00Z",
-    notes: "fixture"
+    outcomeCode: kind === "identity" ? "identity-confirmed" : "dignity-preserved"
   };
 }
 
 function reviewedAsset(quantitativeAsset) {
   return {
     ...quantitativeAsset,
-    identityReview: approvedReview("Identity"),
-    dignityReview: approvedReview("Dignity")
+    identityReview: approvedReview("identity"),
+    dignityReview: approvedReview("dignity")
   };
 }
 
@@ -46,7 +53,7 @@ export function validResultFixture(decision = "iterar", manifest = readyManifest
       externalRecruitment: {
         externalParticipantsOnly: true,
         productionTeamExcluded: true,
-        attestedBy: "Research Lead",
+        attestedBy: GOVERNANCE_ACTORS.recruitment,
         attestedAt: "2026-09-16T01:30:00Z"
       },
       privacy: {
@@ -60,9 +67,16 @@ export function validResultFixture(decision = "iterar", manifest = readyManifest
     assets: quantitative.assets.map(reviewedAsset),
     decision: {
       value: decision,
-      decidedBy: "Decision Owner",
+      decidedBy: GOVERNANCE_ACTORS.decision,
       decidedAt: "2026-09-16T02:00:00Z",
-      rationale: "fixture coerente"
+      reasonCodes: decision === "seguir"
+        ? ["all-gates-passed"]
+        : decision === "abandonar" ? ["pilot-not-viable"] : ["additional-evidence-required"],
+      privateEvidence: {
+        artifactId: `private-governance-${"5".repeat(32)}`,
+        sha256: "6".repeat(64),
+        handling: "restricted-redacted-excluded-from-public-bundle"
+      }
     }
   };
 }

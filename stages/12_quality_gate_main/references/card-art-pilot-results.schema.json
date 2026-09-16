@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://polimatch.com.br/schemas/card-art-pilot-176-results.schema.json",
   "title": "Resultado consolidado do piloto de arte de carta #176",
-  "$comment": "Este schema valida a estrutura. Cobertura, aritmetica e gates de decisao sao obrigatoriamente verificados por app/scripts/validate-card-art-pilot-results.mjs.",
+  "$comment": "Este schema valida a estrutura sem narrativa publica livre: governanca usa IDs opacos, outcomes e reasonCodes fechados; eventual narrativa fica em artefato privado referenciado apenas por ID e SHA-256. Cobertura, aritmetica e gates de decisao sao obrigatoriamente verificados por app/scripts/validate-card-art-pilot-results.mjs.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -33,8 +33,8 @@
       "properties": {
         "version": {
           "type": "string",
-          "minLength": 1,
-          "pattern": "\\S"
+          "maxLength": 64,
+          "pattern": "^batch-[1-9][0-9]*-(?:ready|invalidated)$"
         },
         "manifestSha256": {
           "description": "SHA-256 do JSON canônico do manifesto completo usado na coleta.",
@@ -218,13 +218,14 @@
               "const": true
             },
             "attestedBy": {
-              "type": "string",
-              "minLength": 1,
-              "pattern": "\\S"
+              "$ref": "#/$defs/governanceActorId"
             },
             "attestedAt": {
               "type": "string",
               "format": "date-time"
+            },
+            "privateEvidence": {
+              "$ref": "#/$defs/privateEvidenceRef"
             }
           }
         },
@@ -469,10 +470,10 @@
           }
         },
         "identityReview": {
-          "$ref": "#/$defs/humanReview"
+          "$ref": "#/$defs/identityReview"
         },
         "dignityReview": {
-          "$ref": "#/$defs/humanReview"
+          "$ref": "#/$defs/dignityReview"
         }
       }
     },
@@ -520,14 +521,42 @@
         }
       }
     },
-    "humanReview": {
+    "governanceActorId": {
+      "description": "Identificador opaco de governança. Não é nome, e-mail nem identificador de participante; a vinculação ao responsável fica em registro privado de acesso controlado.",
+      "type": "string",
+      "pattern": "^gov_[a-f0-9]{32}$"
+    },
+    "privateEvidenceRef": {
+      "description": "Referência opaca e hash de eventual narrativa humana mantida fora do consolidado e do bundle públicos.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactId",
+        "sha256",
+        "handling"
+      ],
+      "properties": {
+        "artifactId": {
+          "type": "string",
+          "pattern": "^private-governance-[a-f0-9]{32}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "handling": {
+          "const": "restricted-redacted-excluded-from-public-bundle"
+        }
+      }
+    },
+    "identityReview": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "status",
         "reviewedBy",
         "reviewedAt",
-        "notes"
+        "outcomeCode"
       ],
       "properties": {
         "status": {
@@ -538,20 +567,87 @@
           ]
         },
         "reviewedBy": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "\\S"
+          "$ref": "#/$defs/governanceActorId"
         },
         "reviewedAt": {
           "type": "string",
           "format": "date-time"
         },
-        "notes": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "\\S"
+        "outcomeCode": {
+          "enum": [
+            "identity-review-pending",
+            "identity-confirmed",
+            "identity-not-confirmed"
+          ]
+        },
+        "privateEvidence": {
+          "$ref": "#/$defs/privateEvidenceRef"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "pending" } }, "required": ["status"] },
+          "then": { "properties": { "outcomeCode": { "const": "identity-review-pending" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "approved" } }, "required": ["status"] },
+          "then": { "properties": { "outcomeCode": { "const": "identity-confirmed" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "rejected" } }, "required": ["status"] },
+          "then": { "properties": { "outcomeCode": { "const": "identity-not-confirmed" } } }
+        }
+      ]
+    },
+    "dignityReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reviewedBy",
+        "reviewedAt",
+        "outcomeCode"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ]
+        },
+        "reviewedBy": {
+          "$ref": "#/$defs/governanceActorId"
+        },
+        "reviewedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "outcomeCode": {
+          "enum": [
+            "dignity-review-pending",
+            "dignity-preserved",
+            "dignity-concern-detected"
+          ]
+        },
+        "privateEvidence": {
+          "$ref": "#/$defs/privateEvidenceRef"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "pending" } }, "required": ["status"] },
+          "then": { "properties": { "outcomeCode": { "const": "dignity-review-pending" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "approved" } }, "required": ["status"] },
+          "then": { "properties": { "outcomeCode": { "const": "dignity-preserved" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "rejected" } }, "required": ["status"] },
+          "then": { "properties": { "outcomeCode": { "const": "dignity-concern-detected" } } }
+        }
+      ]
     },
     "decision": {
       "type": "object",
@@ -560,7 +656,7 @@
         "value",
         "decidedBy",
         "decidedAt",
-        "rationale"
+        "reasonCodes"
       ],
       "properties": {
         "value": {
@@ -571,20 +667,88 @@
           ]
         },
         "decidedBy": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "\\S"
+          "$ref": "#/$defs/governanceActorId"
         },
         "decidedAt": {
           "type": "string",
           "format": "date-time"
         },
-        "rationale": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "\\S"
+        "reasonCodes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "all-gates-passed",
+              "quantitative-threshold-missed",
+              "identity-rework-required",
+              "dignity-rework-required",
+              "provenance-remediation-required",
+              "additional-evidence-required",
+              "pilot-not-viable",
+              "unresolvable-provenance",
+              "unacceptable-identity-risk",
+              "unacceptable-dignity-risk"
+            ]
+          }
+        },
+        "privateEvidence": {
+          "$ref": "#/$defs/privateEvidenceRef"
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "value": { "const": "seguir" } }, "required": ["value"] },
+          "then": {
+            "properties": {
+              "reasonCodes": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1,
+                "items": { "const": "all-gates-passed" }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "value": { "const": "iterar" } }, "required": ["value"] },
+          "then": {
+            "properties": {
+              "reasonCodes": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "quantitative-threshold-missed",
+                    "identity-rework-required",
+                    "dignity-rework-required",
+                    "provenance-remediation-required",
+                    "additional-evidence-required"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "value": { "const": "abandonar" } }, "required": ["value"] },
+          "then": {
+            "properties": {
+              "reasonCodes": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "pilot-not-viable",
+                    "unresolvable-provenance",
+                    "unacceptable-identity-risk",
+                    "unacceptable-dignity-risk"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

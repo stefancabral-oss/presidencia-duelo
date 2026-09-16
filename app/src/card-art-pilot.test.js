@@ -89,6 +89,7 @@ test("the consolidation schema requires accountable reviews and a human decision
   assert.equal(schema.$schema, "https://json-schema.org/draft/2020-12/schema");
   assert.deepEqual(schema.required, ["protocol", "issue", "batch", "custody", "generatedAt", "sample", "assets", "decision"]);
   assert.deepEqual(schema.properties.batch.required, ["version", "manifestSha256", "assets"]);
+  assert.equal(schema.properties.batch.properties.version.pattern, "^batch-[1-9][0-9]*-(?:ready|invalidated)$");
   assert.equal(schema.properties.batch.properties.manifestSha256.pattern, "^[a-f0-9]{64}$");
   assert.equal(schema.properties.batch.properties.assets.minItems, 8);
   assert.equal(schema.$defs.custody.properties.responseCount.minimum, 40);
@@ -96,13 +97,47 @@ test("the consolidation schema requires accountable reviews and a human decision
   assert.deepEqual(schema.$defs.custodyEntry.required, ["responseId", "receiptSha256", "responseSha256"]);
   assert.ok(schema.$defs.sample.required.includes("externalRecruitment"));
   assert.deepEqual(schema.$defs.sample.properties.externalRecruitment.required, ["externalParticipantsOnly", "productionTeamExcluded", "attestedBy", "attestedAt"]);
+  assert.equal(schema.$defs.sample.properties.externalRecruitment.properties.attestedBy.$ref, "#/$defs/governanceActorId");
   assert.ok(schema.$defs.assetResult.required.includes("byDisplayScenario"));
   assert.equal(schema.$defs.assetValidResponseCount.minimum, 40);
   assert.equal(schema.$defs.scenarioValidResponseCount.minimum, 20);
   assert.deepEqual(schema.$defs.assetResult.properties.byDisplayScenario.required, ["mobile-390x844", "desktop-1000x800"]);
-  assert.deepEqual(schema.$defs.humanReview.required, ["status", "reviewedBy", "reviewedAt", "notes"]);
-  assert.ok(schema.$defs.humanReview.properties.status.enum.includes("pending"));
-  assert.deepEqual(schema.$defs.decision.required, ["value", "decidedBy", "decidedAt", "rationale"]);
+  assert.equal(schema.$defs.governanceActorId.pattern, "^gov_[a-f0-9]{32}$");
+  assert.deepEqual(schema.$defs.identityReview.required, ["status", "reviewedBy", "reviewedAt", "outcomeCode"]);
+  assert.deepEqual(schema.$defs.dignityReview.required, ["status", "reviewedBy", "reviewedAt", "outcomeCode"]);
+  assert.ok(schema.$defs.identityReview.properties.status.enum.includes("pending"));
+  assert.equal(schema.$defs.identityReview.properties.notes, undefined);
+  assert.equal(schema.$defs.dignityReview.properties.notes, undefined);
+  assert.deepEqual(schema.$defs.decision.required, ["value", "decidedBy", "decidedAt", "reasonCodes"]);
+  assert.equal(schema.$defs.decision.properties.rationale, undefined);
+  assert.equal(schema.$defs.privateEvidenceRef.properties.handling.const, "restricted-redacted-excluded-from-public-bundle");
+  assert.equal(JSON.stringify(schema).includes('"pattern":"\\\\S"'), false);
+});
+
+test("the public result schema exposes no unrestricted string slot", async () => {
+  const schema = JSON.parse(await readFile(resultSchemaUrl, "utf8"));
+  const unrestricted = [];
+  const allowedPatterns = new Set([
+    "^batch-[1-9][0-9]*-(?:ready|invalidated)$",
+    "^[a-f0-9]{64}$",
+    "^[a-f0-9]{32}$",
+    "^P0[1-8]$",
+    "^gov_[a-f0-9]{32}$",
+    "^private-governance-[a-f0-9]{32}$"
+  ]);
+  function inspect(value, path = "$") {
+    if (!value || typeof value !== "object") return;
+    if (value.type === "string") {
+      const constrained = value.const !== undefined
+        || Array.isArray(value.enum)
+        || value.format === "date-time"
+        || allowedPatterns.has(value.pattern);
+      if (!constrained) unrestricted.push(path);
+    }
+    for (const [key, child] of Object.entries(value)) inspect(child, `${path}.${key}`);
+  }
+  inspect(schema);
+  assert.deepEqual(unrestricted, []);
 });
 
 test("the individual response schema requires the same version, manifest and eight art hashes", async () => {

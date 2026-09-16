@@ -261,24 +261,81 @@ test("seguir is blocked by rejected or pending human reviews", () => {
   assert.ok(errors.some((error) => error.includes("dignityReview.status") && error.includes("pending")));
 });
 
-test("human signatures, review notes and rationale cannot be whitespace", async () => {
+test("governance actors and closed outcome codes reject blank or invisible text", async () => {
   const manifest = readyManifestFixture();
   const result = validResultFixture("seguir", manifest);
   result.assets[0].identityReview.reviewedBy = " ";
-  result.assets[0].identityReview.notes = "\t";
-  result.decision.decidedBy = " ";
-  result.decision.rationale = "\n";
+  result.assets[0].dignityReview.outcomeCode = "\t";
+  result.sample.externalRecruitment.attestedBy = "\u200B";
+  result.decision.decidedBy = `gov_${"4".repeat(31)}\u200D`;
+  result.decision.reasonCodes = ["\n"];
 
   const semanticErrors = validateCardArtPilotResults(result, manifest);
-  assert.ok(semanticErrors.some((error) => error.includes("identityReview.reviewedBy") && error.includes("vazio")));
-  assert.ok(semanticErrors.some((error) => error.includes("identityReview.notes") && error.includes("vazias")));
-  assert.ok(semanticErrors.some((error) => error.includes("decision.decidedBy") && error.includes("vazio")));
-  assert.ok(semanticErrors.some((error) => error.includes("decision.rationale") && error.includes("vazia")));
+  for (const path of [
+    "identityReview.reviewedBy",
+    "dignityReview.outcomeCode",
+    "sample.externalRecruitment.attestedBy",
+    "decision.decidedBy",
+    "decision.reasonCodes[0]"
+  ]) assert.ok(semanticErrors.some((error) => error.includes(path)), path);
 
   const schemaErrors = validateCardArtPilotResultSchema(result, await resultSchema());
-  for (const field of ["reviewedBy", "notes", "decidedBy", "rationale"]) {
-    assert.ok(schemaErrors.some((error) => error.includes(field) && error.includes("pattern")), field);
+  for (const field of ["reviewedBy", "outcomeCode", "attestedBy", "decidedBy", "reasonCodes"]) {
+    assert.ok(schemaErrors.some((error) => error.includes(field)), field);
   }
+});
+
+test("private human narratives are represented only by opaque hash references outside the public bundle", async () => {
+  const manifest = readyManifestFixture();
+  const schema = await resultSchema();
+  const valid = validResultFixture("iterar", manifest);
+  valid.assets[0].identityReview.privateEvidence = {
+    artifactId: `private-governance-${"7".repeat(32)}`,
+    sha256: "8".repeat(64),
+    handling: "restricted-redacted-excluded-from-public-bundle"
+  };
+  assert.deepEqual(validateCardArtPilotResults(valid, manifest), []);
+  assert.deepEqual(validateCardArtPilotResultSchema(valid, schema), []);
+
+  const mutations = [
+    (result) => { result.decision.privateEvidence.artifactId = "A participante Ana"; },
+    (result) => { result.decision.privateEvidence.sha256 = "not-a-hash"; },
+    (result) => { result.decision.privateEvidence.handling = "public"; },
+    (result) => { result.decision.privateEvidence.narrative = "Pessoa Daniela"; }
+  ];
+  for (const mutate of mutations) {
+    const result = validResultFixture("iterar", manifest);
+    mutate(result);
+    assert.ok(validateCardArtPilotResults(result, manifest).length > 0);
+    assert.ok(validateCardArtPilotResultSchema(result, schema).length > 0);
+  }
+});
+
+test("review outcomes and decision reason codes are status-compatible, unique and canonical", async () => {
+  const manifest = readyManifestFixture();
+  const schema = await resultSchema();
+  const mismatch = validResultFixture("iterar", manifest);
+  mismatch.assets[0].identityReview.status = "rejected";
+  assert.ok(validateCardArtPilotResults(mismatch, manifest)
+    .some((error) => error.includes("identityReview.outcomeCode") && error.includes("identity-not-confirmed")));
+  assert.ok(validateCardArtPilotResultSchema(mismatch, schema).length > 0);
+
+  const duplicate = validResultFixture("iterar", manifest);
+  duplicate.decision.reasonCodes = ["additional-evidence-required", "additional-evidence-required"];
+  assert.ok(validateCardArtPilotResults(duplicate, manifest)
+    .some((error) => error.includes("reasonCodes") && error.includes("repetir")));
+  assert.ok(validateCardArtPilotResultSchema(duplicate, schema).length > 0);
+
+  const unsorted = validResultFixture("iterar", manifest);
+  unsorted.decision.reasonCodes = ["provenance-remediation-required", "additional-evidence-required"];
+  assert.ok(validateCardArtPilotResults(unsorted, manifest)
+    .some((error) => error.includes("reasonCodes") && error.includes("ordem lexicográfica")));
+
+  const incompatible = validResultFixture("abandonar", manifest);
+  incompatible.decision.reasonCodes = ["all-gates-passed"];
+  assert.ok(validateCardArtPilotResults(incompatible, manifest)
+    .some((error) => error.includes("reasonCodes[0]") && error.includes("incompatível")));
+  assert.ok(validateCardArtPilotResultSchema(incompatible, schema).length > 0);
 });
 
 test("human chronology is attestation and reviews, then decision, then consolidated document", () => {
@@ -485,7 +542,7 @@ test("the aggregate rejects participant records and weakened privacy controls", 
   assert.ok(errors.some((error) => error.includes("rawExportsDeletedAfterConsolidation") && error.includes("true")));
 });
 
-test("free-text fields reject phone, RG, IPv6 and explicit participant or address markers", () => {
+test("legacy public narratives are forbidden instead of relying on PII regex coverage", async () => {
   const manifest = readyManifestFixture();
   const result = validResultFixture("seguir", manifest);
   result.assets[0].identityReview.notes = "telefone +55 (11) 99999-9999";
@@ -495,54 +552,54 @@ test("free-text fields reject phone, RG, IPv6 and explicit participant or addres
   result.assets[2].identityReview.notes = "Participante Ana Silva";
   result.decision.rationale = "rua das Flores, 123";
 
-  const errors = validateCardArtPilotResults(result, manifest);
+  const semanticErrors = validateCardArtPilotResults(result, manifest);
+  assert.ok(semanticErrors.some((error) => error.includes("identityReview.notes") && error.includes("campo não permitido")));
+  assert.ok(semanticErrors.some((error) => error.includes("decision.rationale") && error.includes("campo não permitido")));
   for (const expected of ["telefone", "RG", "IPv6", "marcador de participante", "nome de participante", "endereço postal"]) {
-    assert.ok(errors.some((error) => error.includes(expected)), expected);
+    assert.ok(semanticErrors.some((error) => error.includes(expected)), expected);
   }
+  const schemaErrors = validateCardArtPilotResultSchema(result, await resultSchema());
+  assert.ok(schemaErrors.some((error) => error.includes("notes") && error.includes("propriedade não permitida")));
+  assert.ok(schemaErrors.some((error) => error.includes("rationale") && error.includes("propriedade não permitida")));
 });
 
-test("natural participant identification and common Brazilian address variants are rejected without generic prose false positives", () => {
+test("all reported trivial participant-name examples fail in every public governance string slot", async () => {
   const manifest = readyManifestFixture();
-  const result = validResultFixture("iterar", manifest);
-  result.assets[0].identityReview.notes = "A respondente Ana Silva mora na Praça da Sé, 1";
-  result.assets[0].dignityReview.notes = "O participante João Souza reside na Av. Paulista, nº 1000";
-  result.assets[1].identityReview.notes = "A pessoa Maria Oliveira vive na Rua das Flores, s/n";
-  result.assets[1].dignityReview.notes = "A voluntária Joana Pereira mora na Avenida Central sem número";
-  result.assets[2].identityReview.notes = "A entrevistada Carla Mendes reside na Praça Azul, 20";
-  result.assets[2].dignityReview.notes = "CEP 01001-000";
-  result.assets[3].identityReview.notes = "A pessoa Ana mora na Rua Verde, sem número";
-  result.assets[3].dignityReview.notes = "Ａ ＶＯＬＵＮＴÁＲＩＡ Ana da Silva RESIDE na Rua Azul, s/n";
-  result.assets[4].identityReview.notes = "A entrevistada Maria de Lourdes dos Santos vive na Alameda Sul sem número";
-  result.assets[4].dignityReview.notes = "partici\u200bpante: Joana dos Reis";
-  result.decision.rationale = "Endereço agregado omitido; código postal observado 01001000";
-  const errors = validateCardArtPilotResults(result, manifest);
-  assert.ok(errors.some((error) => error.includes("identificação natural de participante")));
-  assert.ok(errors.some((error) => error.includes("endereço postal")));
-  assert.ok(errors.some((error) => error.includes("CEP")), "CEP must be detected independently of phone detection");
-
-  const safe = validResultFixture("iterar", manifest);
-  safe.assets[0].identityReview.notes = "Participantes externos foram recrutados sem coleta de texto livre.";
-  safe.assets[0].dignityReview.notes = "Revisão agregada sem nome, telefone ou endereço de participante.";
-  assert.deepEqual(validateCardArtPilotResults(safe, manifest), []);
-});
-
-test("accountable text rejects controls, default ignorables and punctuation-only signatures", () => {
-  const manifest = readyManifestFixture();
-  const mutations = [
-    (result) => { result.decision.rationale = "\u200B"; },
-    (result) => { result.decision.decidedBy = "Responsável\u200D"; },
-    (result) => { result.assets[0].identityReview.reviewedBy = "Revisor\u0000"; },
-    (result) => { result.assets[0].dignityReview.notes = "—"; }
+  const schema = await resultSchema();
+  const reproductions = [
+    "A participante Ana",
+    "A voluntária Beatriz",
+    "A entrevistada Carla",
+    "Pessoa Daniela",
+    "Participante — Ana Silva",
+    "A pessoa, Eva de Souza"
   ];
-  for (const mutate of mutations) {
-    const result = validResultFixture("iterar", manifest);
-    mutate(result);
-    assert.ok(validateCardArtPilotResults(result, manifest)
-      .some((error) => /vazi|responsável/.test(error)), "invisible/control-only bypass must fail");
+  const slots = [
+    ["batch.version", (result, value) => { result.batch.version = value; }],
+    ["attestedBy", (result, value) => { result.sample.externalRecruitment.attestedBy = value; }],
+    ["identityReview.reviewedBy", (result, value) => { result.assets[0].identityReview.reviewedBy = value; }],
+    ["dignityReview.reviewedBy", (result, value) => { result.assets[0].dignityReview.reviewedBy = value; }],
+    ["identityReview.status", (result, value) => { result.assets[0].identityReview.status = value; }],
+    ["identityReview.outcomeCode", (result, value) => { result.assets[0].identityReview.outcomeCode = value; }],
+    ["decision.value", (result, value) => { result.decision.value = value; }],
+    ["decision.decidedBy", (result, value) => { result.decision.decidedBy = value; }],
+    ["decision.reasonCodes", (result, value) => { result.decision.reasonCodes = [value]; }],
+    ["privateEvidence.artifactId", (result, value) => { result.decision.privateEvidence.artifactId = value; }],
+    ["privateEvidence.handling", (result, value) => { result.decision.privateEvidence.handling = value; }],
+    ["legacy identityReview.notes", (result, value) => { result.assets[0].identityReview.notes = value; }],
+    ["legacy decision.rationale", (result, value) => { result.decision.rationale = value; }]
+  ];
+  for (const reproduction of reproductions) {
+    for (const [slot, mutate] of slots) {
+      const result = validResultFixture("iterar", manifest);
+      mutate(result, reproduction);
+      assert.ok(validateCardArtPilotResults(result, manifest).length > 0, `${slot}: ${reproduction}`);
+      assert.ok(validateCardArtPilotResultSchema(result, schema).length > 0, `schema ${slot}: ${reproduction}`);
+    }
   }
 });
 
-test("PII matching uses PT-BR NFKC casefold and cannot be split by particles or default ignorables", () => {
+test("PII defense in depth keeps PT-BR NFKC, particles and invisible-split reproductions", () => {
   const manifest = readyManifestFixture();
   const reproductions = [
     "A PESSOA Ana da Silva MORA na Rua Um, s/n",
@@ -554,8 +611,9 @@ test("PII matching uses PT-BR NFKC casefold and cannot be split by particles or 
   for (const reproduction of reproductions) {
     const result = validResultFixture("iterar", manifest);
     result.decision.rationale = reproduction;
-    assert.ok(validateCardArtPilotResults(result, manifest)
-      .some((error) => error.includes("participante") || error.includes("endereço postal")), reproduction);
+    const errors = validateCardArtPilotResults(result, manifest);
+    assert.ok(errors.some((error) => error.includes("decision.rationale") && error.includes("campo não permitido")), reproduction);
+    assert.ok(errors.some((error) => error.includes("participante") || error.includes("endereço postal")), reproduction);
   }
 });
 
@@ -586,7 +644,7 @@ test("Draft 2020-12 schema rejects the exact PII and unsigned-result bypass", as
   const errors = validateCardArtPilotResultSchema(result, await resultSchema());
   assert.ok(errors.some((error) => error.includes("participantRecords") && error.includes("propriedade não permitida")));
   assert.ok(errors.some((error) => error.includes("rawAnswers") && error.includes("propriedade não permitida")));
-  for (const missing of ["reviewedBy", "reviewedAt", "notes", "decidedBy", "decidedAt", "rationale"]) {
+  for (const missing of ["reviewedBy", "reviewedAt", "outcomeCode", "decidedBy", "decidedAt", "reasonCodes"]) {
     assert.ok(errors.some((error) => error.includes(missing) && error.includes("campo obrigatório ausente")), missing);
   }
 });

@@ -9,6 +9,37 @@ const PERCENTAGE_POINT_TOLERANCE = 1e-4;
 const MINIMUM_VALID_RESPONSES_PER_ASSET_SCENARIO = 20;
 const PILOT_GUIDE_VERSIONED_AT = Date.UTC(2026, 8, 16);
 export const CARD_ART_PILOT_MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
+const GOVERNANCE_ACTOR_ID_PATTERN = /^gov_[a-f0-9]{32}$/;
+const PRIVATE_GOVERNANCE_ARTIFACT_ID_PATTERN = /^private-governance-[a-f0-9]{32}$/;
+const PRIVATE_EVIDENCE_HANDLING = "restricted-redacted-excluded-from-public-bundle";
+const REVIEW_OUTCOME_BY_KIND_AND_STATUS = Object.freeze({
+  identityReview: Object.freeze({
+    pending: "identity-review-pending",
+    approved: "identity-confirmed",
+    rejected: "identity-not-confirmed"
+  }),
+  dignityReview: Object.freeze({
+    pending: "dignity-review-pending",
+    approved: "dignity-preserved",
+    rejected: "dignity-concern-detected"
+  })
+});
+const DECISION_REASON_CODES = Object.freeze({
+  seguir: Object.freeze(["all-gates-passed"]),
+  iterar: Object.freeze([
+    "quantitative-threshold-missed",
+    "identity-rework-required",
+    "dignity-rework-required",
+    "provenance-remediation-required",
+    "additional-evidence-required"
+  ]),
+  abandonar: Object.freeze([
+    "pilot-not-viable",
+    "unresolvable-provenance",
+    "unacceptable-identity-risk",
+    "unacceptable-dignity-risk"
+  ])
+});
 const FORBIDDEN_PARTICIPANT_KEYS = new Set([
   "participant",
   "participants",
@@ -160,6 +191,58 @@ function hasText(value) {
   const normalized = value.normalize("NFKC");
   if (/[\p{Cc}\p{Default_Ignorable_Code_Point}]/u.test(normalized)) return false;
   return /[\p{L}\p{N}]/u.test(normalized);
+}
+
+function isGovernanceActorId(value) {
+  return hasText(value) && GOVERNANCE_ACTOR_ID_PATTERN.test(value);
+}
+
+function validateGovernanceActorId(errors, value, path) {
+  if (!isGovernanceActorId(value)) {
+    addError(errors, path, "identificador opaco de governança inválido; esperado gov_ seguido de 32 hexadecimais minúsculos");
+  }
+}
+
+function validatePrivateEvidence(errors, value, path) {
+  if (value === undefined) return;
+  if (!isRecord(value)) {
+    addError(errors, path, "referência privada estruturada obrigatória quando informada");
+    return;
+  }
+  rejectUnknownKeys(errors, path, value, ["artifactId", "sha256", "handling"]);
+  if (!PRIVATE_GOVERNANCE_ARTIFACT_ID_PATTERN.test(value.artifactId || "")) {
+    addError(errors, `${path}.artifactId`, "identificador opaco de artefato privado inválido");
+  }
+  if (!isSha256(value.sha256)) addError(errors, `${path}.sha256`, "SHA-256 do artefato privado obrigatório");
+  if (value.handling !== PRIVATE_EVIDENCE_HANDLING) {
+    addError(errors, `${path}.handling`, `deve ser ${PRIVATE_EVIDENCE_HANDLING}`);
+  }
+}
+
+function validateDecisionReasonCodes(errors, decision) {
+  const path = "decision.reasonCodes";
+  const allowed = Object.hasOwn(DECISION_REASON_CODES, decision?.value)
+    ? DECISION_REASON_CODES[decision.value]
+    : null;
+  if (!allowed) {
+    addError(errors, "decision.value", "deve ser seguir, iterar ou abandonar");
+    return;
+  }
+  if (!Array.isArray(decision.reasonCodes) || decision.reasonCodes.length === 0) {
+    addError(errors, path, "ao menos um código fechado de decisão é obrigatório");
+    return;
+  }
+  if (new Set(decision.reasonCodes).size !== decision.reasonCodes.length) {
+    addError(errors, path, "códigos de decisão não podem se repetir");
+  }
+  const allStrings = decision.reasonCodes.every((code) => typeof code === "string");
+  if (!allStrings) addError(errors, path, "códigos de decisão precisam ser strings do vocabulário fechado");
+  if (allStrings && cardArtPilotCanonicalJson([...decision.reasonCodes].sort()) !== cardArtPilotCanonicalJson(decision.reasonCodes)) {
+    addError(errors, path, "códigos de decisão precisam estar em ordem lexicográfica canônica");
+  }
+  for (const [index, code] of decision.reasonCodes.entries()) {
+    if (!allowed.includes(code)) addError(errors, `${path}[${index}]`, `código incompatível com decisão ${decision.value}`);
+  }
 }
 
 function isHttpsUrl(value) {
@@ -510,8 +593,10 @@ function validateHumanAccountability(errors, result, manifest, now) {
     addError(errors, "decision", "decisão humana ausente");
     return;
   }
-  if (!hasText(decision.decidedBy)) addError(errors, "decision.decidedBy", "responsável não pode ser vazio");
-  if (!hasText(decision.rationale)) addError(errors, "decision.rationale", "justificativa não pode ser vazia");
+  rejectUnknownKeys(errors, "decision", decision, ["value", "decidedBy", "decidedAt", "reasonCodes", "privateEvidence"]);
+  validateGovernanceActorId(errors, decision.decidedBy, "decision.decidedBy");
+  validateDecisionReasonCodes(errors, decision);
+  validatePrivateEvidence(errors, decision.privateEvidence, "decision.privateEvidence");
   const decisionAt = parsedDate(decision.decidedAt);
   if (decisionAt === null) addError(errors, "decision.decidedAt", "data válida obrigatória");
 
@@ -549,8 +634,16 @@ function validateHumanAccountability(errors, result, manifest, now) {
         addError(errors, path, "revisão humana ausente");
         continue;
       }
-      if (!hasText(review.reviewedBy)) addError(errors, `${path}.reviewedBy`, "responsável não pode ser vazio");
-      if (!hasText(review.notes)) addError(errors, `${path}.notes`, "notas não podem ser vazias");
+      rejectUnknownKeys(errors, path, review, ["status", "reviewedBy", "reviewedAt", "outcomeCode", "privateEvidence"]);
+      validateGovernanceActorId(errors, review.reviewedBy, `${path}.reviewedBy`);
+      const outcomes = REVIEW_OUTCOME_BY_KIND_AND_STATUS[reviewName];
+      const expectedOutcome = outcomes && Object.hasOwn(outcomes, review.status) ? outcomes[review.status] : null;
+      if (!expectedOutcome) {
+        addError(errors, `${path}.status`, "status de revisão inválido");
+      } else if (review.outcomeCode !== expectedOutcome) {
+        addError(errors, `${path}.outcomeCode`, `deve ser ${expectedOutcome} quando status=${review.status}`);
+      }
+      validatePrivateEvidence(errors, review.privateEvidence, `${path}.privateEvidence`);
       const reviewedAt = parsedDate(review.reviewedAt);
       if (reviewedAt === null) {
         addError(errors, `${path}.reviewedAt`, "data válida obrigatória");
@@ -687,7 +780,7 @@ function validateFollowDecision(errors, result, manifest) {
   const recruitment = result?.sample?.externalRecruitment;
   if (recruitment?.externalParticipantsOnly !== true
     || recruitment?.productionTeamExcluded !== true
-    || !String(recruitment?.attestedBy || "").trim()
+    || !isGovernanceActorId(recruitment?.attestedBy)
     || Number.isNaN(Date.parse(recruitment?.attestedAt))) {
     addError(errors, "sample.externalRecruitment", "seguir exige atestação responsável e datada de recrutamento exclusivamente externo");
   }
@@ -775,12 +868,14 @@ export function validateCardArtPilotResults(result, manifest, options) {
         "externalParticipantsOnly",
         "productionTeamExcluded",
         "attestedBy",
-        "attestedAt"
+        "attestedAt",
+        "privateEvidence"
       ]);
       if (recruitment.externalParticipantsOnly !== true) addError(errors, "sample.externalRecruitment.externalParticipantsOnly", "deve confirmar somente participantes externos");
       if (recruitment.productionTeamExcluded !== true) addError(errors, "sample.externalRecruitment.productionTeamExcluded", "deve confirmar exclusão da equipe de produção");
-      if (!String(recruitment.attestedBy || "").trim()) addError(errors, "sample.externalRecruitment.attestedBy", "responsável obrigatório");
+      validateGovernanceActorId(errors, recruitment.attestedBy, "sample.externalRecruitment.attestedBy");
       if (!recruitment.attestedAt || Number.isNaN(Date.parse(recruitment.attestedAt))) addError(errors, "sample.externalRecruitment.attestedAt", "data válida obrigatória");
+      validatePrivateEvidence(errors, recruitment.privateEvidence, "sample.externalRecruitment.privateEvidence");
     }
     validatePrivacy(errors, sample.privacy);
     validateStratum(errors, sample, "regional");

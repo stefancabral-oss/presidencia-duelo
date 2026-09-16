@@ -7,7 +7,7 @@
 - Branch: `feat/google-login-160`
 - PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/161
 - Commit da implementação: `d4469e6`
-- Correção de segurança: Issue https://github.com/stefancabral-oss/presidencia-duelo/issues/163, branch `fix/google-session-security-163`
+- Correção de segurança: Issue https://github.com/stefancabral-oss/presidencia-duelo/issues/163, branch `fix/google-session-security-163`, PR https://github.com/stefancabral-oss/presidencia-duelo/pull/164
 
 ## Entregue
 

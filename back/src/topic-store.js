@@ -613,6 +613,16 @@ async function createCleanSchema(client) {
       published_at timestamptz NOT NULL DEFAULT now()
     );
 
+    ALTER TABLE choice_rounds
+      DROP CONSTRAINT IF EXISTS choice_rounds_daily_round_fk;
+
+    ALTER TABLE choice_rounds
+      ADD CONSTRAINT choice_rounds_daily_round_fk
+      FOREIGN KEY (daily_edition_id, daily_slot)
+      REFERENCES daily_edition_rounds(edition_id, slot)
+      ON DELETE RESTRICT
+      DEFERRABLE INITIALLY IMMEDIATE;
+
     CREATE INDEX IF NOT EXISTS votes_player_topic_pair_idx
       ON votes (player_id, topic_id, (LEAST(winner_id, loser_id)), (GREATEST(winner_id, loser_id)))
       INCLUDE (winner_id, loser_id);
@@ -680,6 +690,9 @@ async function createCleanSchema(client) {
     CREATE INDEX IF NOT EXISTS votes_player_created_idx ON votes (player_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS choice_rounds_topic_created_idx ON choice_rounds (topic_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS choice_rounds_daily_idx ON choice_rounds (daily_edition_id, daily_slot) WHERE choice_mode = 'daily';
+    CREATE UNIQUE INDEX IF NOT EXISTS choice_rounds_daily_player_slot_unique
+      ON choice_rounds (daily_edition_id, player_id, daily_slot)
+      WHERE choice_mode = 'daily';
     CREATE INDEX IF NOT EXISTS daily_answers_completion_idx ON daily_answers (edition_id, player_id, slot);
     CREATE INDEX IF NOT EXISTS daily_completions_edition_idx ON daily_completions (edition_id, completed_at);
     CREATE INDEX IF NOT EXISTS chroma_catalog_release_idx ON chroma_catalog (topic_id, status, available_from, available_until);
@@ -911,13 +924,39 @@ export function validateMaterializedDailyEdition(row, roundRows) {
   return { edition: serializeDailyEdition(row), rounds: actualRounds };
 }
 
-async function materializeDailyEdition(client, topicId, dateKey) {
-  const definition = buildDailyEdition({
-    topicId,
-    candidateIds: candidatesForTopic(topicId).map(({ id }) => id),
-    dateKey,
-  });
-  const inserted = await client.query(
+async function loadMaterializedDailyEditionById(client, editionId) {
+  const editionResult = await client.query(
+    `SELECT id, edition_date::text, topic_id, ruleset_id, ruleset_version, catalog_hash, catalog_ids,
+            candidate_count, total_rounds, cards_per_round, opens_at, closes_at
+     FROM daily_editions WHERE id = $1`,
+    [editionId],
+  );
+  if (editionResult.rowCount !== 1) throw new Error("edição diária persistida não encontrada");
+  const rounds = await client.query(
+    "SELECT slot, candidate_ids, selection_hash FROM daily_edition_rounds WHERE edition_id = $1 ORDER BY slot",
+    [editionId],
+  );
+  return validateMaterializedDailyEdition(editionResult.rows[0], rounds.rows);
+}
+
+export async function materializeDailyEdition(client, topicId, dateKey, { candidateCatalog = candidatesForTopic } = {}) {
+  const editionLock = `daily-edition:${topicId}:${dateKey}:${DAILY_SESSION_RULESET.id}:v${DAILY_SESSION_RULESET.version}`;
+  await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [editionLock]);
+  const selectEdition = () => client.query(
+    `SELECT id, edition_date::text, topic_id, ruleset_id, ruleset_version, catalog_hash, catalog_ids,
+            candidate_count, total_rounds, cards_per_round, opens_at, closes_at
+     FROM daily_editions
+     WHERE topic_id = $1 AND edition_date = $2::date AND ruleset_id = $3 AND ruleset_version = $4`,
+    [topicId, dateKey, DAILY_SESSION_RULESET.id, DAILY_SESSION_RULESET.version],
+  );
+  let editionResult = await selectEdition();
+  if (!editionResult.rowCount) {
+    const definition = buildDailyEdition({
+      topicId,
+      candidateIds: candidateCatalog(topicId).map(({ id }) => id),
+      dateKey,
+    });
+    const inserted = await client.query(
     `INSERT INTO daily_editions (
        id, edition_date, topic_id, ruleset_id, ruleset_version, catalog_hash, catalog_ids,
        candidate_count, total_rounds, cards_per_round, opens_at, closes_at
@@ -938,30 +977,20 @@ async function materializeDailyEdition(client, topicId, dateKey) {
       definition.opensAt,
       definition.closesAt,
     ],
-  );
-  if (inserted.rowCount) {
-    for (const round of definition.rounds) {
-      await client.query(
-        `INSERT INTO daily_edition_rounds (edition_id, slot, candidate_ids, selection_hash)
-         VALUES ($1, $2, $3::text[], $4)`,
-        [definition.id, round.slot, round.candidateIds, round.selectionHash],
-      );
+    );
+    if (inserted.rowCount) {
+      for (const round of definition.rounds) {
+        await client.query(
+          `INSERT INTO daily_edition_rounds (edition_id, slot, candidate_ids, selection_hash)
+           VALUES ($1, $2, $3::text[], $4)`,
+          [definition.id, round.slot, round.candidateIds, round.selectionHash],
+        );
+      }
     }
+    editionResult = await selectEdition();
   }
-  const editionResult = await client.query(
-    `SELECT id, edition_date::text, topic_id, ruleset_id, ruleset_version, catalog_hash, catalog_ids,
-            candidate_count, total_rounds, cards_per_round, opens_at, closes_at
-     FROM daily_editions
-     WHERE topic_id = $1 AND edition_date = $2::date AND ruleset_id = $3 AND ruleset_version = $4`,
-    [topicId, dateKey, DAILY_SESSION_RULESET.id, DAILY_SESSION_RULESET.version],
-  );
   if (editionResult.rowCount !== 1) throw new Error("edição diária não foi materializada");
-  const row = editionResult.rows[0];
-  const rounds = await client.query(
-    "SELECT slot, candidate_ids, selection_hash FROM daily_edition_rounds WHERE edition_id = $1 ORDER BY slot",
-    [row.id],
-  );
-  return validateMaterializedDailyEdition(row, rounds.rows);
+  return loadMaterializedDailyEditionById(client, editionResult.rows[0].id);
 }
 
 async function ensureDailyPlayerSession(client, editionId, playerId) {
@@ -1183,7 +1212,10 @@ async function applyFourCardRound(client, {
   return { payload: { ...global, round, vote: round, player: personal }, created: true };
 }
 
-export function createTopicStore(connectionString = process.env.DATABASE_URL, { clock = () => new Date() } = {}) {
+export function createTopicStore(connectionString = process.env.DATABASE_URL, {
+  clock = () => new Date(),
+  candidateCatalog = candidatesForTopic,
+} = {}) {
   if (!connectionString) throw new Error("DATABASE_URL é obrigatória");
   const pool = new Pool({ connectionString, max: Number(process.env.PG_POOL_MAX) || 10 });
 
@@ -1316,7 +1348,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, { 
       try {
         await client.query("BEGIN");
         const player = await findPlayer(client, recoveryKey);
-        const materialized = await materializeDailyEdition(client, topic, dateKey);
+        const materialized = await materializeDailyEdition(client, topic, dateKey, { candidateCatalog });
         await ensureDailyPlayerSession(client, materialized.edition.id, player.id);
         const session = await selectDailyPlayerSession(client, materialized, player.id);
         await client.query("COMMIT");
@@ -1349,7 +1381,46 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, { 
         await client.query("BEGIN");
         const player = await findPlayer(client, recoveryKey);
         await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [answerId]);
-        const materialized = await materializeDailyEdition(client, topic, initialDate);
+        const replay = await client.query(
+          `SELECT answer.edition_id, answer.player_id, answer.slot, answer.answer_id, answer.winner_id,
+                  edition.topic_id
+           FROM daily_answers AS answer
+           INNER JOIN daily_editions AS edition ON edition.id = answer.edition_id
+           WHERE answer.answer_id = $1`,
+          [answerId],
+        );
+        if (replay.rowCount) {
+          const row = replay.rows[0];
+          if (row.edition_id !== String(editionId || "") || row.topic_id !== topic
+            || row.player_id !== player.id || Number(row.slot) !== slot || row.winner_id !== winnerId) {
+            throw contractError("answerId já utilizado com outra escolha", 409, "DAILY_REPLAY_DIVERGENT");
+          }
+          const replayEdition = await loadMaterializedDailyEditionById(client, row.edition_id);
+          const replayRound = replayEdition.rounds.find((round) => round.slot === slot);
+          if (!replayRound) throw new Error("slot da resposta persistida não encontrado");
+          await client.query(
+            "SELECT 1 FROM daily_player_sessions WHERE edition_id = $1 AND player_id = $2 FOR UPDATE",
+            [row.edition_id, player.id],
+          );
+          const result = await applyFourCardRound(client, {
+            topic,
+            winnerId,
+            roundCandidates: replayRound.candidateIds,
+            roundId: answerId,
+            player,
+            playerVersion,
+            choiceMode: "daily",
+            dailyEditionId: replayEdition.edition.id,
+            dailySlot: slot,
+            lockRound: false,
+          });
+          if (result.created) throw new Error("resposta diária existe sem rodada Elo correspondente");
+          const dailySession = await selectDailyPlayerSession(client, replayEdition, player.id);
+          await client.query("COMMIT");
+          return { ...result.payload, dailySession };
+        }
+
+        const materialized = await materializeDailyEdition(client, topic, initialDate, { candidateCatalog });
         if (String(editionId || "") !== materialized.edition.id) {
           throw contractError("a rodada informada já fechou; carregue a edição atual", 409, "DAILY_EDITION_CLOSED", materialized.edition.id);
         }
@@ -1361,38 +1432,6 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, { 
 
         const authoritativeRound = materialized.rounds.find((round) => round.slot === slot);
         if (!authoritativeRound) throw contractError("slot diário inválido", 400, "DAILY_SLOT_INVALID");
-        const replay = await client.query(
-          `SELECT edition_id, player_id, slot, answer_id, winner_id
-           FROM daily_answers WHERE answer_id = $1`,
-          [answerId],
-        );
-        if (replay.rowCount) {
-          const row = replay.rows[0];
-          if (row.edition_id !== materialized.edition.id || row.player_id !== player.id
-            || Number(row.slot) !== slot || row.winner_id !== winnerId) {
-            throw contractError("answerId já utilizado com outra escolha", 409, "DAILY_REPLAY_DIVERGENT");
-          }
-          const result = await applyFourCardRound(client, {
-            topic,
-            winnerId,
-            roundCandidates: authoritativeRound.candidateIds,
-            roundId: answerId,
-            player,
-            playerVersion,
-            choiceMode: "daily",
-            dailyEditionId: materialized.edition.id,
-            dailySlot: slot,
-            lockRound: false,
-          });
-          if (result.created) throw new Error("resposta diária existe sem rodada Elo correspondente");
-          const dailySession = await selectDailyPlayerSession(client, materialized, player.id);
-          const closingDate = editorialDateKey(clockInstant(clock));
-          if (closingDate !== initialDate) {
-            throw contractError("a rodada virou durante a confirmação; a escolha não foi aplicada", 409, "DAILY_EDITION_CLOSED");
-          }
-          await client.query("COMMIT");
-          return { ...result.payload, dailySession };
-        }
 
         const progress = await client.query(
           "SELECT COUNT(*)::integer AS answered FROM daily_answers WHERE edition_id = $1 AND player_id = $2",

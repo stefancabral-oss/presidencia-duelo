@@ -16,6 +16,7 @@ import {
   validateRoundVote,
   validateVote,
   validateMaterializedDailyEdition,
+  materializeDailyEdition,
 } from "./topic-store.js";
 import { buildDailyEdition } from "./daily-session.js";
 
@@ -71,6 +72,51 @@ test("materialized daily editions validate ruleset, catalog hash and every order
     () => validateMaterializedDailyEdition(row, rounds.map((round, index) => index ? round : { ...round, candidate_ids: [...round.candidate_ids].reverse() })),
     /integridade/,
   );
+});
+
+test("an existing edition remains available when the current editorial catalog shrinks", async () => {
+  const definition = buildDailyEdition({
+    topicId: "eleicoes-2026",
+    candidateIds: Array.from({ length: 40 }, (_, index) => `snapshot-${String(index + 1).padStart(2, "0")}`),
+    dateKey: "2026-09-16",
+  });
+  const row = {
+    id: definition.id,
+    edition_date: definition.date,
+    topic_id: definition.topicId,
+    ruleset_id: definition.rulesetId,
+    ruleset_version: definition.rulesetVersion,
+    catalog_hash: definition.catalogHash,
+    catalog_ids: definition.catalogIds,
+    candidate_count: definition.candidateCount,
+    total_rounds: definition.totalRounds,
+    cards_per_round: definition.cardsPerRound,
+    opens_at: definition.opensAt,
+    closes_at: definition.closesAt,
+  };
+  const rounds = definition.rounds.map((round) => ({
+    slot: round.slot,
+    candidate_ids: round.candidateIds,
+    selection_hash: round.selectionHash,
+  }));
+  const fakeClient = {
+    async query(sql) {
+      if (sql.includes("pg_advisory_xact_lock")) return { rowCount: 1, rows: [{}] };
+      if (sql.includes("FROM daily_editions")) return { rowCount: 1, rows: [row] };
+      if (sql.includes("FROM daily_edition_rounds")) return { rowCount: 10, rows: rounds };
+      throw new Error(`consulta inesperada: ${sql}`);
+    },
+  };
+  let catalogReads = 0;
+  const materialized = await materializeDailyEdition(fakeClient, "eleicoes-2026", "2026-09-16", {
+    candidateCatalog: () => {
+      catalogReads += 1;
+      return [];
+    },
+  });
+  assert.equal(catalogReads, 0);
+  assert.equal(materialized.edition.catalogHash, definition.catalogHash);
+  assert.equal(materialized.rounds.length, 10);
 });
 
 test("vote ids remain idempotent UUIDs", () => {

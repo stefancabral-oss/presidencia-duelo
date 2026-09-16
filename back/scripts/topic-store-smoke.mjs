@@ -217,8 +217,10 @@ const dailyStore = createTopicStore(connectionString, { clock: () => dailyNow })
 await dailyStore.init();
 const firstDailyPlayer = await dailyStore.createPlayer({ networkHash: "b".repeat(64) });
 const secondDailyPlayer = await dailyStore.createPlayer({ networkHash: "c".repeat(64) });
-const firstDailySession = await dailyStore.dailySession(firstDailyPlayer.recoveryKey, "eleicoes-2026");
-const secondDailySession = await dailyStore.dailySession(secondDailyPlayer.recoveryKey, "eleicoes-2026");
+const [firstDailySession, secondDailySession] = await Promise.all([
+  dailyStore.dailySession(firstDailyPlayer.recoveryKey, "eleicoes-2026"),
+  dailyStore.dailySession(secondDailyPlayer.recoveryKey, "eleicoes-2026"),
+]);
 assert.equal(firstDailySession.progress.answered, 0);
 assert.deepEqual(firstDailySession.edition, secondDailySession.edition);
 assert.deepEqual(firstDailySession.round, secondDailySession.round);
@@ -336,6 +338,21 @@ const nextDay = await dailyStore.dailySession(firstDailyPlayer.recoveryKey, "ele
 assert.notEqual(nextDay.edition.id, firstDailySession.edition.id);
 assert.notDeepEqual(nextDay.round.candidateIds, firstDailySession.round.candidateIds);
 assert.deepEqual(nextDay.progress, { answered: 0, total: 10 });
+const replayAfterMidnight = await dailyStore.dailyVote({
+  topicId: "eleicoes-2026",
+  editionId: firstDailySession.edition.id,
+  slot: 1,
+  winnerId: firstWinnerId,
+  answerId: firstAnswerId,
+  recoveryKey: firstDailyPlayer.recoveryKey,
+  playerVersion: 0,
+});
+assert.equal(replayAfterMidnight.round.status, "alreadyProcessed");
+assert.deepEqual(
+  { ...replayAfterMidnight.round, status: "created" },
+  identicalConcurrentVotes.find(({ round }) => round.status === "created").round,
+);
+assert.deepEqual(replayAfterMidnight.dailySession, firstProgress);
 await assert.rejects(
   dailyStore.dailyVote({
     topicId: "eleicoes-2026",
@@ -400,6 +417,31 @@ assert.equal(Number(dailyAudit.rows[0].completions), 1);
 assert.equal(Number(dailyAudit.rows[0].cuts), 1);
 assert.equal(Number(dailyAudit.rows[0].daily_quota_used), 10);
 assert.equal(Number(dailyAudit.rows[0].free_quota_used), 1);
+const persistedDailyRound = await quotaMaintenance.query(
+  "SELECT * FROM choice_rounds WHERE choice_mode = 'daily' AND daily_edition_id = $1 ORDER BY daily_slot LIMIT 1",
+  [firstDailySession.edition.id],
+);
+const sourceRound = persistedDailyRound.rows[0];
+await assert.rejects(
+  quotaMaintenance.query(
+    `INSERT INTO choice_rounds (
+       round_id, player_id, topic_id, winner_id, candidate_ids, winner_delta,
+       choice_mode, daily_edition_id, daily_slot
+     ) VALUES ($1, $2, $3, $4, $5, $6, 'daily', $7, $8)`,
+    [randomUUID(), sourceRound.player_id, sourceRound.topic_id, sourceRound.winner_id, sourceRound.candidate_ids, sourceRound.winner_delta, "missing-edition", sourceRound.daily_slot],
+  ),
+  (error) => error.code === "23503",
+);
+await assert.rejects(
+  quotaMaintenance.query(
+    `INSERT INTO choice_rounds (
+       round_id, player_id, topic_id, winner_id, candidate_ids, winner_delta,
+       choice_mode, daily_edition_id, daily_slot
+     ) VALUES ($1, $2, $3, $4, $5, $6, 'daily', $7, $8)`,
+    [randomUUID(), sourceRound.player_id, sourceRound.topic_id, sourceRound.winner_id, sourceRound.candidate_ids, sourceRound.winner_delta, sourceRound.daily_edition_id, sourceRound.daily_slot],
+  ),
+  (error) => error.code === "23505",
+);
 await crossingStore.close();
 await dailyStore.close();
 await quotaMaintenance.end();

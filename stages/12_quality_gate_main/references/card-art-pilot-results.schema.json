@@ -8,6 +8,7 @@
   "required": [
     "protocol",
     "issue",
+    "batch",
     "generatedAt",
     "sample",
     "assets",
@@ -19,6 +20,20 @@
     },
     "issue": {
       "const": 176
+    },
+    "batch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "manifestSha256"
+      ],
+      "properties": {
+        "manifestSha256": {
+          "description": "SHA-256 do JSON canônico do manifesto completo usado na coleta.",
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
     },
     "generatedAt": {
       "type": "string",
@@ -91,7 +106,8 @@
             },
             "attestedBy": {
               "type": "string",
-              "minLength": 1
+              "minLength": 1,
+              "pattern": "\\S"
             },
             "attestedAt": {
               "type": "string",
@@ -410,7 +426,8 @@
         },
         "reviewedBy": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "\\S"
         },
         "reviewedAt": {
           "type": "string",
@@ -418,7 +435,8 @@
         },
         "notes": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "\\S"
         }
       }
     },
@@ -441,7 +459,8 @@
         },
         "decidedBy": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "\\S"
         },
         "decidedAt": {
           "type": "string",
@@ -449,7 +468,8 @@
         },
         "rationale": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "\\S"
         }
       }
     }

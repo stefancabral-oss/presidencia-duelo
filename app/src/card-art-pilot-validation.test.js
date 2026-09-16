@@ -5,7 +5,7 @@ import { basename, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
-import { assertCardArtPilotResults, validateCardArtPilotResults } from "./card-art-pilot-validation.js";
+import { assertCardArtPilotResults, cardArtPilotManifestSha256, validateCardArtPilotResults } from "./card-art-pilot-validation.js";
 import { validateCardArtPilotResultDocument, validateCardArtPilotResultSchema } from "./card-art-pilot-results-schema.js";
 import { readyManifestFixture, validResultFixture } from "./fixtures/card-art-pilot-validation-fixtures.js";
 
@@ -52,6 +52,37 @@ function keepOnlyOneValidResponsePerScenario(asset) {
   }
 }
 
+function setScenarioNeutrality(metrics, favorece, neutra, prejudica) {
+  const total = favorece + neutra + prejudica;
+  Object.assign(metrics, {
+    validResponses: total,
+    favorece,
+    neutra,
+    prejudica,
+    favoreceRate: favorece / total,
+    neutraRate: neutra / total,
+    prejudicaRate: prejudica / total
+  });
+}
+
+function setAssetNeutrality(asset, mobile, desktop) {
+  setScenarioNeutrality(asset.byDisplayScenario["mobile-390x844"], ...mobile);
+  setScenarioNeutrality(asset.byDisplayScenario["desktop-1000x800"], ...desktop);
+  const favorece = mobile[0] + desktop[0];
+  const neutra = mobile[1] + desktop[1];
+  const prejudica = mobile[2] + desktop[2];
+  const total = favorece + neutra + prejudica;
+  asset.neutrality = {
+    favorece,
+    neutra,
+    prejudica,
+    favoreceRate: favorece / total,
+    neutraRate: neutra / total,
+    prejudicaRate: prejudica / total,
+    balancePercentagePoints: ((favorece - prejudica) / total) * 100
+  };
+}
+
 test("a coherent aggregate passes semantic validation", () => {
   assert.deepEqual(validateCardArtPilotResults(validResultFixture(), readyManifestFixture()), []);
 });
@@ -61,6 +92,51 @@ test("a coherent aggregate passes Draft 2020-12 schema before semantic validatio
     validateCardArtPilotResultDocument(validResultFixture(), readyManifestFixture(), await resultSchema()),
     []
   );
+});
+
+test("the result is cryptographically bound to every material field of the complete manifest", () => {
+  const originalManifest = readyManifestFixture();
+  const result = validResultFixture("seguir", originalManifest);
+  const mutations = [
+    ["version", (manifest) => { manifest.version = "batch-3"; }],
+    ["status", (manifest) => { manifest.status = "pilot-replaced"; }],
+    ["style", (manifest) => { manifest.currentStyleGuideVersion = "pilot-3"; }],
+    ["assets", (manifest) => { manifest.assets.reverse(); }],
+    ["person", (manifest) => { manifest.assets[0].personId = "999"; }],
+    ["file", (manifest) => { manifest.assets[0].file = "replacement.png"; }],
+    ["art hash", (manifest) => { manifest.assets[0].sha256 = "f".repeat(64); }],
+    ["reference", (manifest) => { manifest.assets[0].identityReference.photoSource = "https://example.test/replacement.jpg"; }],
+    ["reference hash", (manifest) => { manifest.assets[0].identityReference.sha256 = "e".repeat(64); }],
+    ["license", (manifest) => { manifest.assets[0].identityReference.license = "CC0"; }]
+  ];
+
+  for (const [label, mutate] of mutations) {
+    const changedManifest = structuredClone(originalManifest);
+    mutate(changedManifest);
+    const errors = validateCardArtPilotResults(result, changedManifest);
+    assert.ok(
+      errors.some((error) => error.includes("batch.manifestSha256") && error.includes("outro lote")),
+      `${label} mutation must invalidate replay`
+    );
+  }
+});
+
+test("the Draft schema requires a lowercase SHA-256 manifest fingerprint at the document root", async () => {
+  const schema = await resultSchema();
+  const missing = validResultFixture();
+  delete missing.batch;
+  const malformed = validResultFixture();
+  malformed.batch.manifestSha256 = "ABC123";
+
+  assert.ok(validateCardArtPilotResultSchema(missing, schema).some((error) => error.includes("batch") && error.includes("obrigatório")));
+  assert.ok(validateCardArtPilotResultSchema(malformed, schema).some((error) => error.includes("batch/manifestSha256")));
+});
+
+test("the CLI prints the canonical fingerprint of the committed manifest", async () => {
+  const currentManifest = JSON.parse(await readFile(currentManifestUrl, "utf8"));
+  const execution = spawnSync(process.execPath, [cliPath, "--manifest-sha256"], { encoding: "utf8" });
+  assert.equal(execution.status, 0, execution.stderr);
+  assert.equal(execution.stdout.trim(), cardArtPilotManifestSha256(currentManifest));
 });
 
 test("all blind codes must be present exactly once", () => {
@@ -97,6 +173,61 @@ test("seguir is blocked below 70 percent recognition in either scenario", () => 
   assert.ok(errors.some((error) => error.includes("seguir exige reconhecimento mínimo de 70%")));
 });
 
+test("seguir rejects the same 30 percent favorable bias in all eight assets", () => {
+  const manifest = readyManifestFixture();
+  const result = validResultFixture("seguir", manifest);
+  for (const asset of result.assets) setAssetNeutrality(asset, [6, 14, 0], [6, 14, 0]);
+
+  const errors = validateCardArtPilotResults(result, manifest);
+  assert.ok(errors.some((error) => error.includes("P01") && error.includes("neutrality.favoreceRate") && error.includes("20%")));
+  assert.ok(errors.some((error) => error.includes("P08") && error.includes("mobile-390x844.favoreceRate") && error.includes("20%")));
+  assert.equal(errors.some((error) => error.includes("discrepância superior a 20")), false, "uniform bias must not depend on cross-image spread");
+});
+
+test("seguir rejects scenario prejudice above 20 percent even when the asset total is exactly 20 percent", () => {
+  const manifest = readyManifestFixture();
+  const result = validResultFixture("seguir", manifest);
+  setAssetNeutrality(result.assets[0], [2, 13, 5], [2, 15, 3]);
+
+  const errors = validateCardArtPilotResults(result, manifest);
+  assert.ok(errors.some((error) => error.includes("P01") && error.includes("mobile-390x844.prejudicaRate") && error.includes("20%")));
+  assert.equal(errors.some((error) => error.includes("P01") && error.includes("neutrality.prejudicaRate") && error.includes("seguir exige")), false);
+});
+
+test("seguir accepts the exact 20 percent neutrality boundary", () => {
+  const manifest = readyManifestFixture();
+  const result = validResultFixture("seguir", manifest);
+  for (const asset of result.assets) setAssetNeutrality(asset, [4, 12, 4], [4, 12, 4]);
+
+  const errors = validateCardArtPilotResults(result, manifest);
+  assert.equal(errors.some((error) => error.includes("favoreceRate") && error.includes("seguir exige")), false);
+  assert.equal(errors.some((error) => error.includes("prejudicaRate") && error.includes("seguir exige")), false);
+});
+
+test("seguir rejects a recognition gap above 15 percentage points even when both scenarios exceed 70 percent", () => {
+  const manifest = readyManifestFixture();
+  const result = validResultFixture("seguir", manifest);
+  const asset = result.assets[0];
+  Object.assign(asset.byDisplayScenario["mobile-390x844"], { recognized: 19, recognitionRate: 0.95 });
+  Object.assign(asset.byDisplayScenario["desktop-1000x800"], { recognized: 15, recognitionRate: 0.75 });
+  Object.assign(asset.recognition, { correct: 34, incorrect: 3, unknown: 3, rate: 0.85 });
+
+  const errors = validateCardArtPilotResults(result, manifest);
+  assert.ok(errors.some((error) => error.includes("P01") && error.includes("no máximo 15 pontos percentuais")));
+});
+
+test("seguir accepts a recognition gap of exactly 15 percentage points", () => {
+  const manifest = readyManifestFixture();
+  const result = validResultFixture("seguir", manifest);
+  const asset = result.assets[0];
+  Object.assign(asset.byDisplayScenario["mobile-390x844"], { recognized: 18, recognitionRate: 0.9 });
+  Object.assign(asset.byDisplayScenario["desktop-1000x800"], { recognized: 15, recognitionRate: 0.75 });
+  Object.assign(asset.recognition, { correct: 33, incorrect: 3, unknown: 4, rate: 0.825 });
+
+  const errors = validateCardArtPilotResults(result, manifest);
+  assert.equal(errors.some((error) => error.includes("diferença de reconhecimento")), false);
+});
+
 test("seguir is blocked by rejected or pending human reviews", () => {
   const result = validResultFixture("seguir");
   result.assets[0].identityReview.status = "rejected";
@@ -104,6 +235,43 @@ test("seguir is blocked by rejected or pending human reviews", () => {
   const errors = validateCardArtPilotResults(result, readyManifestFixture());
   assert.ok(errors.some((error) => error.includes("identityReview.status") && error.includes("rejected")));
   assert.ok(errors.some((error) => error.includes("dignityReview.status") && error.includes("pending")));
+});
+
+test("human signatures, review notes and rationale cannot be whitespace", async () => {
+  const manifest = readyManifestFixture();
+  const result = validResultFixture("seguir", manifest);
+  result.assets[0].identityReview.reviewedBy = " ";
+  result.assets[0].identityReview.notes = "\t";
+  result.decision.decidedBy = " ";
+  result.decision.rationale = "\n";
+
+  const semanticErrors = validateCardArtPilotResults(result, manifest);
+  assert.ok(semanticErrors.some((error) => error.includes("identityReview.reviewedBy") && error.includes("vazio")));
+  assert.ok(semanticErrors.some((error) => error.includes("identityReview.notes") && error.includes("vazias")));
+  assert.ok(semanticErrors.some((error) => error.includes("decision.decidedBy") && error.includes("vazio")));
+  assert.ok(semanticErrors.some((error) => error.includes("decision.rationale") && error.includes("vazia")));
+
+  const schemaErrors = validateCardArtPilotResultSchema(result, await resultSchema());
+  for (const field of ["reviewedBy", "notes", "decidedBy", "rationale"]) {
+    assert.ok(schemaErrors.some((error) => error.includes(field) && error.includes("pattern")), field);
+  }
+});
+
+test("human chronology is attestation and reviews, then decision, then consolidated document", () => {
+  const manifest = readyManifestFixture();
+  const result = validResultFixture("seguir", manifest);
+  result.sample.externalRecruitment.attestedAt = "2026-09-16T14:30:00Z";
+  result.assets[0].identityReview.reviewedAt = "9999-12-31T23:59:59Z";
+  result.assets[0].dignityReview.reviewedAt = "0001-01-01T00:00:00Z";
+  result.decision.decidedAt = "2026-09-16T14:00:00Z";
+  result.generatedAt = "2026-09-16T13:00:00Z";
+
+  const errors = validateCardArtPilotResults(result, manifest);
+  assert.ok(errors.some((error) => error.includes("externalRecruitment.attestedAt") && error.includes("posterior à decisão")));
+  assert.ok(errors.some((error) => error.includes("identityReview.reviewedAt") && error.includes("posterior à decisão")));
+  assert.ok(errors.some((error) => error.includes("identityReview.reviewedAt") && error.includes("366 dias")));
+  assert.ok(errors.some((error) => error.includes("dignityReview.reviewedAt") && error.includes("anteceder a geração do lote")));
+  assert.ok(errors.some((error) => error.includes("decision.decidedAt") && error.includes("posterior à geração do consolidado")));
 });
 
 test("seguir is blocked by a pending reference license", () => {
@@ -119,6 +287,66 @@ test("collection is blocked when documented license metadata is incomplete", () 
   delete manifest.assets[0].identityReference.photographer;
   const errors = validateCardArtPilotResults(validResultFixture("iterar"), manifest);
   assert.ok(errors.some((error) => error.includes("manifest.assets.P01.identityReference.photographer")));
+});
+
+test("a result cannot legitimize an originally hashless or style-incoherent ready manifest", () => {
+  const manifest = readyManifestFixture();
+  manifest.styleGuide = "docs/design/OUTRO_GUIA.md";
+  manifest.styleGuideAtGeneration = "pilot-1";
+  delete manifest.assets[0].sha256;
+  delete manifest.assets[0].sourceOutput;
+  delete manifest.assets[0].identityReference.sha256;
+  delete manifest.assets[0].identityReference.path;
+  const result = validResultFixture("iterar", manifest);
+
+  const errors = validateCardArtPilotResults(result, manifest);
+  assert.ok(errors.some((error) => error.includes("manifest.styleGuide") && error.includes("guia canônico")));
+  assert.ok(errors.some((error) => error.includes("manifest.styleGuideAtGeneration") && error.includes("versão vigente")));
+  assert.ok(errors.some((error) => error.includes("manifest.assets.P01.sha256")));
+  assert.ok(errors.some((error) => error.includes("manifest.assets.P01.sourceOutput")));
+  assert.ok(errors.some((error) => error.includes("manifest.assets.P01.identityReference.sha256")));
+  assert.ok(errors.some((error) => error.includes("manifest.assets.P01.identityReference.path")));
+});
+
+test("collection requires the canonical ready status and a real civil manifest date", () => {
+  const badStatus = readyManifestFixture();
+  badStatus.status = "qualquer-status";
+  const statusErrors = validateCardArtPilotResults(validResultFixture("iterar", badStatus), badStatus);
+  assert.ok(statusErrors.some((error) => error.includes("manifest.status") && error.includes("pilot-ready-for-human-decision")));
+
+  const impossibleDate = readyManifestFixture();
+  impossibleDate.generatedOn = "2026-02-30";
+  const dateErrors = validateCardArtPilotResults(validResultFixture("iterar", impossibleDate), impossibleDate);
+  assert.ok(dateErrors.some((error) => error.includes("manifest.generatedOn") && error.includes("data ISO")));
+
+  const ancientDate = readyManifestFixture();
+  ancientDate.generatedOn = "0001-01-01";
+  assert.ok(validateCardArtPilotResults(validResultFixture("iterar", ancientDate), ancientDate)
+    .some((error) => error.includes("manifest.generatedOn") && error.includes("anteceder o guia")));
+
+  const absurdFuture = readyManifestFixture();
+  absurdFuture.generatedOn = "9999-12-31";
+  assert.ok(validateCardArtPilotResults(validResultFixture("iterar", absurdFuture), absurdFuture)
+    .some((error) => error.includes("manifest.generatedOn") && error.includes("data futura")));
+});
+
+test("scaleDecisionAllowed is boolean, cannot precede collection and only blocks a seguir decision", () => {
+  const malformed = readyManifestFixture();
+  malformed.scaleDecisionAllowed = "true";
+  assert.ok(validateCardArtPilotResults(validResultFixture("iterar", malformed), malformed)
+    .some((error) => error.includes("manifest.scaleDecisionAllowed") && error.includes("booleano")));
+
+  const premature = readyManifestFixture();
+  premature.collectionAllowed = false;
+  assert.ok(validateCardArtPilotResults(validResultFixture("iterar", premature), premature)
+    .some((error) => error.includes("manifest.scaleDecisionAllowed") && error.includes("collectionAllowed")));
+
+  const noScale = readyManifestFixture();
+  noScale.scaleDecisionAllowed = false;
+  assert.equal(validateCardArtPilotResults(validResultFixture("iterar", noScale), noScale)
+    .some((error) => error.includes("decision.value") && error.includes("scaleDecisionAllowed")), false);
+  assert.ok(validateCardArtPilotResults(validResultFixture("seguir", noScale), noScale)
+    .some((error) => error.includes("decision.value") && error.includes("scaleDecisionAllowed")));
 });
 
 test("seguir requires twenty external participants per scenario and an accountable attestation", () => {
@@ -152,6 +380,30 @@ test("the aggregate rejects participant records and weakened privacy controls", 
   assert.ok(errors.some((error) => error.includes("minimumPublishedCellSize") && error.includes("5")));
   assert.ok(errors.some((error) => error.includes("crossTabsPublished") && error.includes("false")));
   assert.ok(errors.some((error) => error.includes("rawExportsDeletedAfterConsolidation") && error.includes("true")));
+});
+
+test("free-text fields reject phone, RG, IPv6 and explicit participant or address markers", () => {
+  const manifest = readyManifestFixture();
+  const result = validResultFixture("seguir", manifest);
+  result.assets[0].identityReview.notes = "telefone +55 (11) 99999-9999";
+  result.assets[0].dignityReview.notes = "RG 12.345.678-9";
+  result.assets[1].identityReview.notes = "IPv6 2001:db8::1";
+  result.assets[1].dignityReview.notes = "participante: Ana";
+  result.assets[2].identityReview.notes = "Participante Ana Silva";
+  result.decision.rationale = "rua das Flores, 123";
+
+  const errors = validateCardArtPilotResults(result, manifest);
+  for (const expected of ["telefone", "RG", "IPv6", "marcador de participante", "nome de participante", "endereço postal"]) {
+    assert.ok(errors.some((error) => error.includes(expected)), expected);
+  }
+});
+
+test("PII detection descends into arrays of primitive text", () => {
+  const manifest = readyManifestFixture();
+  const result = validResultFixture("iterar", manifest);
+  result.auditTrail = ["seguro", "participante: pessoa-identificada"];
+  const errors = validateCardArtPilotResults(result, manifest);
+  assert.ok(errors.some((error) => error.includes("result.auditTrail[1]") && error.includes("marcador de participante")));
 });
 
 test("every asset needs twenty valid external responses in each scenario for any decision", () => {

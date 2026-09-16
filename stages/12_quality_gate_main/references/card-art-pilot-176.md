@@ -70,6 +70,7 @@ Execução suspensa para P01–P08. Após uma regeneração válida:
 - Só publicar uma célula regional ou de familiaridade com pelo menos cinco participantes; células menores entram apenas em `suppressedCount`, sem rótulo.
 - Não publicar cruzamento região × familiaridade.
 - Depois de conferir o consolidado, apagar os JSONs individuais usados na agregação.
+- A validação recusa campos de participante e padrões explícitos de e-mail, CPF, telefone, RG, IPv4/IPv6, endereço e identificação de participante em qualquer texto aninhado. Ela não consegue inferir todo nome próprio arbitrário: revisores humanos continuam proibidos de copiar nomes ou qualquer texto livre dos participantes para `notes`, assinaturas ou justificativa.
 
 ## Métricas e limiares
 
@@ -78,9 +79,9 @@ Execução suspensa para P01–P08. Após uma regeneração válida:
 - `Não sei` conta como não reconhecido; uma pessoa diferente conta como erro.
 - Cada uma das oito pessoas precisa atingir pelo menos 70% em **cada** cenário, não apenas no total combinado.
 - Neutralidade: registrar percentuais `favorece`, `neutra` e `prejudica` por imagem.
-- Revisão obrigatória se mais de 20% perceber favorecimento ou mais de 20% perceber prejuízo em qualquer imagem.
+- Mais de 20% de `favorece` ou de `prejudica`, no total da arte ou em qualquer cenário, impede `seguir` e exige revisão.
 - Comparar também o saldo `favorece - prejudica`; discrepância superior a 20 pontos percentuais entre imagens impede a escala.
-- Diferença de reconhecimento superior a 15 pontos percentuais entre os dois cenários exige revisão de recorte, mesmo quando ambos superem 70%.
+- Diferença de reconhecimento superior a 15 pontos percentuais entre os dois cenários impede `seguir` e exige revisão de recorte, mesmo quando ambos superem 70%.
 
 ## Revisões humanas e decisão
 
@@ -90,12 +91,12 @@ O consolidado deve obedecer a `card-art-pilot-results.schema.json` e conter, par
 - revisão de dignidade com os mesmos campos;
 - contagens brutas e taxas de reconhecimento e neutralidade.
 
-A decisão de um lote válido exige `seguir`, `iterar` ou `abandonar`, acompanhada por `decidedBy`, `decidedAt` e justificativa. O agente que preparou o piloto não pode preencher a amostra, assinar as revisões humanas nem decidir o próprio gate. A CLI `app/scripts/validate-card-art-pilot-results.mjs` valida primeiro a instância completa contra o schema Draft 2020-12 com dependências lockadas e só então executa a semântica. Ela recusa qualquer consolidado — inclusive `iterar` ou `abandonar` — enquanto `collectionAllowed` não for `true`, exige proveniência completa das licenças e pelo menos 20 respostas válidas externas por arte e cenário. Para `seguir`, também bloqueia reconhecimento inferior a 70% em qualquer cenário, revisão não aprovada ou `scaleDecisionAllowed` diferente de `true`.
+A decisão de um lote válido exige `seguir`, `iterar` ou `abandonar`, acompanhada por `decidedBy`, `decidedAt` e justificativa não vazios. A cronologia verificável é atestação/revisões ≤ decisão ≤ geração do consolidado; nenhuma dessas datas pode anteceder a data civil real de `manifest.generatedOn` nem exceder a janela de 366 dias do lote. A data do manifesto não pode anteceder o guia versionado nem estar no futuro além de 24 horas de tolerância de relógio. O agente que preparou o piloto não pode preencher a amostra, assinar as revisões humanas nem decidir o próprio gate. A CLI `app/scripts/validate-card-art-pilot-results.mjs` valida primeiro a instância completa contra o schema Draft 2020-12 com dependências lockadas e só então executa a semântica. Ela recusa qualquer consolidado — inclusive `iterar` ou `abandonar` — salvo com o status canônico `pilot-ready-for-human-decision` e `collectionAllowed: true`, exige proveniência completa das licenças e pelo menos 20 respostas válidas externas por arte e cenário. `scaleDecisionAllowed` é booleano e não pode ser `true` antes da coleta; para `seguir`, precisa ser `true` e também bloqueia reconhecimento inferior a 70%, diferença entre cenários superior a 15 pontos percentuais, `favoreceRate` ou `prejudicaRate` superior a 20% ou revisão não aprovada.
 
 Além dos limiares, `seguir` continua bloqueado enquanto qualquer referência tiver `licenseStatus: license-pending`. Isso hoje vale para cinco arquivos editados recebidos do usuário; o registro de uma fonte editorial anterior não substitui a licença da fotografia efetivamente usada.
 
 ## Registro esperado
 
-Depois da regeneração e da coleta autorizada, os resultados devem ser anexados à issue #176 e copiados para `stages/12_quality_gate_main/output/card-art-pilot-results.json`, validados contra o schema e pelo comando `npm run card-art-pilot:validate-results --prefix app -- <caminho-do-resultado>`. O arquivo consolidado não existe para o lote invalidado; não se cria resultado vazio ou hipotético.
+Depois da regeneração e da coleta autorizada, os resultados devem ser anexados à issue #176 e copiados para `stages/12_quality_gate_main/output/card-art-pilot-results.json`, validados contra o schema e pelo comando `npm run card-art-pilot:validate-results --prefix app -- <caminho-do-resultado>`. A raiz do resultado inclui `batch.manifestSha256`, calculado sobre o manifesto completo com chaves de objeto ordenadas recursivamente, arrays preservados e serialização JSON compacta. O valor canônico do manifesto commitado é obtido por `npm run card-art-pilot:validate-results --prefix app -- --manifest-sha256`. A CLI recalcula esse SHA-256; qualquer alteração de versão, status, guia, ordem/conteúdo das artes, pessoa, arquivo, hash, referência ou licença invalida o replay. O arquivo consolidado não existe para o lote invalidado; não se cria resultado vazio ou hipotético.
 
 O formulário bloqueado está em `references/card-art-pilot-176.html`. As oito imagens invalidadas e o manifesto ficam em `evidence/card-art-pilot-176/`, fora de `app/public` e fora do build Vite.

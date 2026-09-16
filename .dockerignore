@@ -4,3 +4,5 @@
 back/data/*.json
 work
 outputs
+stages/12_quality_gate_main/evidence/card-art-pilot-176/*
+!stages/12_quality_gate_main/evidence/card-art-pilot-176/manifest.json

@@ -1,4 +1,4 @@
-import { CARD_ART_PILOT_CODES } from "../card-art-pilot-validation.js";
+import { CARD_ART_PILOT_CODES, cardArtPilotManifestSha256 } from "../card-art-pilot-validation.js";
 
 function scenarioMetrics() {
   return {
@@ -51,11 +51,14 @@ function assetResult(blindCode) {
   };
 }
 
-export function validResultFixture(decision = "iterar") {
+export function validResultFixture(decision = "iterar", manifest = readyManifestFixture()) {
   return {
     protocol: "card-art-pilot-176-v2",
     issue: 176,
-    generatedAt: "2026-09-16T13:00:00Z",
+    batch: {
+      manifestSha256: cardArtPilotManifestSha256(manifest)
+    },
+    generatedAt: "2026-09-16T15:00:00Z",
     sample: {
       participantCount: 40,
       displayScenarios: {
@@ -103,12 +106,30 @@ export function validResultFixture(decision = "iterar") {
 
 export function readyManifestFixture() {
   return {
+    version: "batch-2-ready",
     status: "pilot-ready-for-human-decision",
+    issue: 176,
+    tool: "Fixture image generator",
+    generatedOn: "2026-09-16",
+    styleGuide: "docs/design/CARD_ART_NEUTRALITY_GUIDE.md",
+    styleGuideAtGeneration: "pilot-2",
+    currentStyleGuideVersion: "pilot-2",
     collectionAllowed: true,
     scaleDecisionAllowed: true,
-    assets: CARD_ART_PILOT_CODES.map((blindCode) => ({
+    commonPrompt: "locked fixture prompt",
+    assets: CARD_ART_PILOT_CODES.map((blindCode, index) => ({
       blindCode,
+      personId: String(index + 1).padStart(3, "0"),
+      slug: `fixture-person-${index + 1}`,
+      file: `${blindCode}.png`,
+      width: 1120,
+      height: 1400,
+      sha256: String(index + 1).padStart(64, "0"),
+      sourceOutput: `fixture-output-${blindCode}.png`,
       identityReference: {
+        path: `app/public/portraits/${String(index + 1).padStart(3, "0")}.jpg`,
+        sha256: String(index + 101).padStart(64, "0"),
+        derivation: "audited-catalog-import",
         licenseStatus: "documented",
         photoSource: `https://example.test/references/${blindCode}.jpg`,
         photographer: "Fixture Photographer",

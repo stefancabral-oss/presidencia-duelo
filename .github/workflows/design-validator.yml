@@ -5,8 +5,13 @@ on:
     branches: [main]
     paths:
       - 'app/**'
+      - 'shared/**'
+      - '.dockerignore'
+      - 'CREDITS.md'
       - 'docs/design/**'
       - 'stages/12_quality_gate_main/evidence/card-art-pilot-176/**'
+      - 'stages/12_quality_gate_main/output/card-art-pilot-176*'
+      - 'stages/12_quality_gate_main/output/card-art-pilot-results.json'
       - 'stages/12_quality_gate_main/references/card-art-pilot-176.*'
       - 'stages/12_quality_gate_main/references/card-art-pilot-results.schema.json'
       - '.github/workflows/design-validator.yml'

@@ -1,9 +1,14 @@
+import { createHash } from "node:crypto";
+import { isIP } from "node:net";
+
 export const CARD_ART_PILOT_CODES = Object.freeze(Array.from({ length: 8 }, (_, index) => `P0${index + 1}`));
 export const CARD_ART_PILOT_SCENARIOS = Object.freeze(["mobile-390x844", "desktop-1000x800"]);
 
 const RATE_TOLERANCE = 1e-6;
 const PERCENTAGE_POINT_TOLERANCE = 1e-4;
 const MINIMUM_VALID_RESPONSES_PER_ASSET_SCENARIO = 20;
+const PILOT_GUIDE_VERSIONED_AT = Date.UTC(2026, 8, 16);
+const MAXIMUM_CLOCK_SKEW_MS = 24 * 60 * 60 * 1000;
 const FORBIDDEN_PARTICIPANT_KEYS = new Set([
   "participant",
   "participants",
@@ -41,11 +46,37 @@ const FORBIDDEN_PARTICIPANT_KEYS = new Set([
 const FORBIDDEN_PII_PATTERNS = [
   { label: "e-mail", pattern: /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i },
   { label: "CPF", pattern: /\b\d{3}[.\s-]?\d{3}[.\s-]?\d{3}[.\s-]?\d{2}\b/ },
-  { label: "endereço IP", pattern: /\b(?:\d{1,3}\.){3}\d{1,3}\b/ }
+  { label: "telefone", pattern: /(?<![A-Fa-f0-9])(?:\+?55[\s.-]*)?(?:\(?\d{2}\)?[\s.-]*)?(?:9\d{4}|\d{4})[\s.-]?\d{4}(?![A-Fa-f0-9])/ },
+  { label: "RG", pattern: /\bRG\s*(?:n[.º°o]?\s*)?[:#=-]?\s*\d{1,2}[.\s-]?\d{3}[.\s-]?\d{3}[-.\s]?[0-9X]\b/i },
+  { label: "endereço IPv4", pattern: /\b(?:\d{1,3}\.){3}\d{1,3}\b/ },
+  { label: "marcador de participante", pattern: /\b(?:participante|respondente|nome do participante|id do participante)\s*[:#=-]\s*\S+/i },
+  { label: "nome de participante", pattern: /\bParticipante\s+(?!(?:extern[oa]s?|anônim[oa]s?|sem|não)\b)(?:[A-ZÀ-ÖØ-Þ][\p{L}'-]+\s+){1,3}[A-ZÀ-ÖØ-Þ][\p{L}'-]+\b/u },
+  { label: "marcador de endereço", pattern: /\b(?:endereço|endereco|logradouro|CEP)\s*[:#=-]\s*\S+/i },
+  { label: "endereço postal", pattern: /\b(?:Rua|Avenida|Av\.|Travessa|Alameda|Rodovia)\s+[\p{L}\d][^\r\n,;]{1,80}(?:,\s*)?\d+\b/iu }
 ];
 
 function isRecord(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function canonicalJson(value) {
+  if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) throw new TypeError("manifesto contém número não finito");
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (isRecord(value)) {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
+      .join(",")}}`;
+  }
+  throw new TypeError(`manifesto contém valor JSON inválido: ${typeof value}`);
+}
+
+export function cardArtPilotManifestSha256(manifest) {
+  return createHash("sha256").update(canonicalJson(manifest), "utf8").digest("hex");
 }
 
 function isCount(value) {
@@ -64,7 +95,26 @@ function rejectUnknownKeys(errors, path, value, allowedKeys) {
   }
 }
 
+function containsIpv6(value) {
+  const candidates = value.match(/\[?[0-9A-Fa-f:.%_-]*:[0-9A-Fa-f:.%_-]+\]?/g) || [];
+  return candidates.some((candidate) => {
+    const withoutBrackets = candidate.replace(/^\[/, "").replace(/\]$/, "");
+    return isIP(withoutBrackets.split("%")[0]) === 6;
+  });
+}
+
+function validatePiiText(errors, value, path) {
+  for (const { label, pattern } of FORBIDDEN_PII_PATTERNS) {
+    if (pattern.test(value)) addError(errors, path, `${label} não é permitido no consolidado`);
+  }
+  if (containsIpv6(value)) addError(errors, path, "endereço IPv6 não é permitido no consolidado");
+}
+
 function validateNoParticipantPii(errors, value, path = "result") {
+  if (typeof value === "string") {
+    validatePiiText(errors, value, path);
+    return;
+  }
   if (Array.isArray(value)) {
     value.forEach((item, index) => validateNoParticipantPii(errors, item, `${path}[${index}]`));
     return;
@@ -77,13 +127,7 @@ function validateNoParticipantPii(errors, value, path = "result") {
     if (FORBIDDEN_PARTICIPANT_KEYS.has(normalizedKey)) {
       addError(errors, childPath, "campo com registro individual ou PII de participante não é permitido");
     }
-    if (typeof child === "string") {
-      for (const { label, pattern } of FORBIDDEN_PII_PATTERNS) {
-        if (pattern.test(child)) addError(errors, childPath, `${label} não é permitido no consolidado`);
-      }
-    } else {
-      validateNoParticipantPii(errors, child, childPath);
-    }
+    validateNoParticipantPii(errors, child, childPath);
   }
 }
 
@@ -100,10 +144,70 @@ function isHttpsUrl(value) {
   }
 }
 
+function isSha256(value) {
+  return typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+}
+
+function parsedCivilDate(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || "");
+  if (!match) return null;
+  const [, yearText, monthText, dayText] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const date = new Date(0);
+  date.setUTCHours(0, 0, 0, 0);
+  date.setUTCFullYear(year, month - 1, day);
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+  return date.getTime();
+}
+
+function validateManifestBinding(errors, result, manifest) {
+  const supplied = result?.batch?.manifestSha256;
+  if (!/^[a-f0-9]{64}$/.test(supplied || "")) {
+    addError(errors, "batch.manifestSha256", "SHA-256 canônico do manifesto obrigatório");
+    return;
+  }
+  if (!isRecord(manifest)) return;
+  try {
+    const expected = cardArtPilotManifestSha256(manifest);
+    if (supplied !== expected) {
+      addError(errors, "batch.manifestSha256", `resultado pertence a outro lote; esperado ${expected}`);
+    }
+  } catch (error) {
+    addError(errors, "manifest", `não foi possível calcular o SHA-256 canônico: ${error.message}`);
+  }
+}
+
 function validateManifestForCollection(errors, manifest) {
   if (!isRecord(manifest)) return;
+  if (!hasText(manifest.version)) addError(errors, "manifest.version", "versão do lote obrigatória");
+  if (manifest.status !== "pilot-ready-for-human-decision") {
+    addError(errors, "manifest.status", `consolidação exige pilot-ready-for-human-decision; recebido ${manifest.status || "missing"}`);
+  }
+  if (manifest.issue !== 176) addError(errors, "manifest.issue", "deve identificar a issue 176");
+  const manifestDate = parsedCivilDate(manifest.generatedOn);
+  if (manifestDate === null) {
+    addError(errors, "manifest.generatedOn", "data ISO do lote obrigatória");
+  } else {
+    if (manifestDate < PILOT_GUIDE_VERSIONED_AT) addError(errors, "manifest.generatedOn", "lote não pode anteceder o guia versionado");
+    if (manifestDate > Date.now() + MAXIMUM_CLOCK_SKEW_MS) addError(errors, "manifest.generatedOn", "lote não pode ter data futura");
+  }
+  if (manifest.styleGuide !== "docs/design/CARD_ART_NEUTRALITY_GUIDE.md") {
+    addError(errors, "manifest.styleGuide", "deve apontar para o guia canônico versionado");
+  }
+  if (!hasText(manifest.styleGuideAtGeneration)) addError(errors, "manifest.styleGuideAtGeneration", "versão do guia usada na geração obrigatória");
+  if (!hasText(manifest.currentStyleGuideVersion)) addError(errors, "manifest.currentStyleGuideVersion", "versão vigente do guia obrigatória");
+  if (manifest.styleGuideAtGeneration !== manifest.currentStyleGuideVersion) {
+    addError(errors, "manifest.styleGuideAtGeneration", "coleta exige que a versão usada na geração seja a versão vigente");
+  }
   if (manifest.collectionAllowed !== true) {
     addError(errors, "manifest.collectionAllowed", "nenhum resultado pode ser consolidado enquanto a coleta não estiver explicitamente autorizada");
+  }
+  if (typeof manifest.scaleDecisionAllowed !== "boolean") {
+    addError(errors, "manifest.scaleDecisionAllowed", "gate de escala deve ser booleano");
+  } else if (manifest.scaleDecisionAllowed && manifest.collectionAllowed !== true) {
+    addError(errors, "manifest.scaleDecisionAllowed", "escala não pode ser autorizada enquanto collectionAllowed não for true");
   }
   if (!Array.isArray(manifest.assets)) {
     addError(errors, "manifest.assets", "lista de artes e licenças ausente");
@@ -111,18 +215,42 @@ function validateManifestForCollection(errors, manifest) {
   }
 
   const observedCodes = manifest.assets.map((asset) => asset?.blindCode);
+  const observedPeople = manifest.assets.map((asset) => asset?.personId).filter(hasText);
+  const observedFiles = manifest.assets.map((asset) => asset?.file).filter(hasText);
+  const observedArtHashes = manifest.assets.map((asset) => asset?.sha256).filter(isSha256);
+  const observedReferenceHashes = manifest.assets.map((asset) => asset?.identityReference?.sha256).filter(isSha256);
+  for (const [label, values] of [
+    ["personId", observedPeople],
+    ["file", observedFiles],
+    ["sha256", observedArtHashes],
+    ["identityReference.sha256", observedReferenceHashes]
+  ]) {
+    if (new Set(values).size !== values.length) addError(errors, `manifest.assets.${label}`, "valores precisam ser únicos no lote");
+  }
   for (const code of CARD_ART_PILOT_CODES) {
     const matches = manifest.assets.filter((asset) => asset?.blindCode === code);
     if (matches.length !== 1) {
       addError(errors, "manifest.assets", `${code} precisa aparecer exatamente uma vez; encontrado ${matches.length}`);
       continue;
     }
-    const reference = matches[0].identityReference;
+    const asset = matches[0];
+    const assetPath = `manifest.assets.${code}`;
+    if (!hasText(asset.personId)) addError(errors, `${assetPath}.personId`, "pessoa vinculada obrigatória");
+    if (asset.file !== `${code}.png`) addError(errors, `${assetPath}.file`, `arquivo cego deve ser ${code}.png`);
+    if (!isSha256(asset.sha256)) addError(errors, `${assetPath}.sha256`, "SHA-256 da arte obrigatório");
+    if (!Number.isInteger(asset.width) || asset.width <= 0) addError(errors, `${assetPath}.width`, "largura positiva obrigatória");
+    if (!Number.isInteger(asset.height) || asset.height <= 0) addError(errors, `${assetPath}.height`, "altura positiva obrigatória");
+    if (!hasText(asset.sourceOutput)) addError(errors, `${assetPath}.sourceOutput`, "origem da geração obrigatória");
+
+    const reference = asset.identityReference;
     const path = `manifest.assets.${code}.identityReference`;
     if (!isRecord(reference)) {
       addError(errors, path, "proveniência da referência ausente");
       continue;
     }
+    if (!hasText(reference.path)) addError(errors, `${path}.path`, "arquivo de referência obrigatório");
+    if (!isSha256(reference.sha256)) addError(errors, `${path}.sha256`, "SHA-256 da referência obrigatório");
+    if (!hasText(reference.derivation)) addError(errors, `${path}.derivation`, "derivação da referência obrigatória");
     if (reference.licenseStatus !== "documented") {
       addError(errors, `${path}.licenseStatus`, `coleta exige licença documented; recebido ${reference.licenseStatus || "missing"}`);
     }
@@ -208,6 +336,75 @@ function validatePrivacy(errors, privacy) {
   };
   for (const [key, expected] of Object.entries(expectations)) {
     if (privacy[key] !== expected) addError(errors, `${path}.${key}`, `deve ser ${JSON.stringify(expected)}`);
+  }
+}
+
+function parsedDate(value) {
+  if (!hasText(value)) return null;
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function validateHumanAccountability(errors, result, manifest) {
+  const decision = result?.decision;
+  if (!isRecord(decision)) {
+    addError(errors, "decision", "decisão humana ausente");
+    return;
+  }
+  if (!hasText(decision.decidedBy)) addError(errors, "decision.decidedBy", "responsável não pode ser vazio");
+  if (!hasText(decision.rationale)) addError(errors, "decision.rationale", "justificativa não pode ser vazia");
+  const decisionAt = parsedDate(decision.decidedAt);
+  if (decisionAt === null) addError(errors, "decision.decidedAt", "data válida obrigatória");
+
+  const generatedAt = parsedDate(result.generatedAt);
+  if (generatedAt === null) {
+    addError(errors, "generatedAt", "data válida obrigatória");
+  } else if (decisionAt !== null && decisionAt > generatedAt) {
+    addError(errors, "decision.decidedAt", "decisão não pode ser posterior à geração do consolidado");
+  }
+
+  const attestedAt = parsedDate(result?.sample?.externalRecruitment?.attestedAt);
+  if (decisionAt !== null && attestedAt !== null && attestedAt > decisionAt) {
+    addError(errors, "sample.externalRecruitment.attestedAt", "atestação não pode ser posterior à decisão");
+  }
+
+  const manifestDate = parsedCivilDate(manifest?.generatedOn);
+  const latestPilotDate = manifestDate === null ? null : manifestDate + (366 * 24 * 60 * 60 * 1000);
+  const boundedDates = [
+    ["sample.externalRecruitment.attestedAt", attestedAt],
+    ["decision.decidedAt", decisionAt],
+    ["generatedAt", generatedAt]
+  ];
+
+  for (const [index, asset] of (result.assets || []).entries()) {
+    const code = asset?.blindCode || `index-${index}`;
+    for (const reviewName of ["identityReview", "dignityReview"]) {
+      const review = asset?.[reviewName];
+      const path = `assets[${index}](${code}).${reviewName}`;
+      if (!isRecord(review)) {
+        addError(errors, path, "revisão humana ausente");
+        continue;
+      }
+      if (!hasText(review.reviewedBy)) addError(errors, `${path}.reviewedBy`, "responsável não pode ser vazio");
+      if (!hasText(review.notes)) addError(errors, `${path}.notes`, "notas não podem ser vazias");
+      const reviewedAt = parsedDate(review.reviewedAt);
+      if (reviewedAt === null) {
+        addError(errors, `${path}.reviewedAt`, "data válida obrigatória");
+      } else if (decisionAt !== null && reviewedAt > decisionAt) {
+        addError(errors, `${path}.reviewedAt`, "revisão não pode ser posterior à decisão");
+      }
+      boundedDates.push([`${path}.reviewedAt`, reviewedAt]);
+    }
+  }
+
+  if (manifestDate === null) {
+    addError(errors, "manifest.generatedOn", "data do lote válida obrigatória para conferir a cronologia");
+  } else {
+    for (const [path, timestamp] of boundedDates) {
+      if (timestamp === null) continue;
+      if (timestamp < manifestDate) addError(errors, path, "data não pode anteceder a geração do lote");
+      if (timestamp > latestPilotDate) addError(errors, path, "data excede a janela verificável de 366 dias do lote");
+    }
   }
 }
 
@@ -316,6 +513,29 @@ function validateFollowDecision(errors, result, manifest) {
       if (!Number.isFinite(rate) || rate < 0.7) {
         addError(errors, `assets[${index}](${code}).byDisplayScenario.${scenario}.recognitionRate`, "seguir exige reconhecimento mínimo de 70% em cada cenário");
       }
+      for (const tone of ["favorece", "prejudica"]) {
+        const toneRate = asset?.byDisplayScenario?.[scenario]?.[`${tone}Rate`];
+        if (!Number.isFinite(toneRate) || toneRate > 0.2) {
+          addError(errors, `assets[${index}](${code}).byDisplayScenario.${scenario}.${tone}Rate`, `seguir exige ${tone}Rate menor ou igual a 20% em cada cenário`);
+        }
+      }
+    }
+    const [mobile, desktop] = CARD_ART_PILOT_SCENARIOS.map((scenario) => asset?.byDisplayScenario?.[scenario]);
+    if (isCount(mobile?.recognized) && isCount(mobile?.validResponses) && mobile.validResponses > 0
+      && isCount(desktop?.recognized) && isCount(desktop?.validResponses) && desktop.validResponses > 0) {
+      const exactGapNumerator = Math.abs(
+        (mobile.recognized * desktop.validResponses) - (desktop.recognized * mobile.validResponses)
+      ) * 100;
+      const maximumGapNumerator = 15 * mobile.validResponses * desktop.validResponses;
+      if (exactGapNumerator > maximumGapNumerator) {
+        addError(errors, `assets[${index}](${code}).byDisplayScenario.recognitionRate`, "seguir exige diferença de reconhecimento de no máximo 15 pontos percentuais entre cenários");
+      }
+    }
+    for (const tone of ["favorece", "prejudica"]) {
+      const toneRate = asset?.neutrality?.[`${tone}Rate`];
+      if (!Number.isFinite(toneRate) || toneRate > 0.2) {
+        addError(errors, `assets[${index}](${code}).neutrality.${tone}Rate`, `seguir exige ${tone}Rate total menor ou igual a 20%`);
+      }
     }
     for (const review of ["identityReview", "dignityReview"]) {
       const reviewStatus = asset?.[review]?.status;
@@ -333,6 +553,7 @@ export function validateCardArtPilotResults(result, manifest) {
   if (!isRecord(result)) return ["result: deve ser um objeto"];
   if (!isRecord(manifest)) addError(errors, "manifest", "manifesto obrigatório para validar licenças e gates");
   validateNoParticipantPii(errors, result);
+  validateManifestBinding(errors, result, manifest);
   validateManifestForCollection(errors, manifest);
 
   const sample = result.sample;
@@ -384,6 +605,7 @@ export function validateCardArtPilotResults(result, manifest) {
     result.assets.forEach((asset, index) => validateAssetMetrics(errors, asset, index, sample));
   }
 
+  validateHumanAccountability(errors, result, manifest);
   validateFollowDecision(errors, result, manifest);
   return errors;
 }

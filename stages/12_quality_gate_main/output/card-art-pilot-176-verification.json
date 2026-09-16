@@ -1,6 +1,7 @@
 {
   "status": "pilot-invalidated-regeneration-required",
   "issue": 176,
+  "validatedBase": "8f7ba527e03851370b5f5476adc68cd21d655634",
   "checks": [
     {
       "name": "style-guide-before-assets",
@@ -9,12 +10,12 @@
     {
       "name": "pilot-evidence-isolation",
       "command": "npm run build --prefix app",
-      "result": "passed; all eight PNGs and the manifest are outside app/public; post-build verification scanned 156 dist files and found no pilot SHA-256 or evidence path"
+      "result": "passed; all eight PNGs and the manifest are outside app/public; post-build verification scanned 157 dist files and found no pilot SHA-256 or evidence path"
     },
     {
       "name": "pilot-asset-and-reference-integrity",
       "command": "npm test",
-      "result": "pending rerun after final restack; the suite includes anonymous filenames, 4:5 dimensions, hashes, invalidation state and negative semantic-validation fixtures"
+      "result": "passed; 117 of 117 tests (4 shared, 39 backend, 74 app), including anonymous filenames, 4:5 dimensions, hashes, invalidation state and negative semantic-validation fixtures"
     },
     {
       "name": "reference-provenance",
@@ -23,7 +24,7 @@
     {
       "name": "blind-form-breakpoints",
       "command": "npm run test:card-art-pilot-form --prefix app",
-      "result": "pending rerun in Chromium and WebKit; the smoke derives expected geometry by rendering app/src/styles.css, then requires mobile 183.5x280 with a 167.5x160 image and desktop 226x316.4 with a 204x187.4 image while collection remains blocked"
+      "result": "passed in Chromium and WebKit; the smoke derived expected geometry from app/src/styles.css and matched mobile 183.5x280 with a 167.5x160 image plus desktop 226x316.4 with a 204x187.4 image while collection and export remained blocked"
     },
     {
       "name": "result-governance-schema",
@@ -33,7 +34,7 @@
     {
       "name": "result-semantic-validator",
       "command": "npm run card-art-pilot:validate-results --prefix app -- <result.json>",
-      "result": "implemented with negative fixtures; requires complete unique P01-P08 coverage, coherent counts/rates/strata, at least 20 external participants per scenario with accountable dated attestation, and blocks seguir for low recognition, non-approved reviews, pending licenses or a blocked manifest"
+      "result": "passed with positive, negative and CLI fixtures; requires complete unique P01-P08 coverage, coherent counts/rates/strata, aggregate privacy controls, at least 20 external participants per scenario with accountable dated attestation, and blocks seguir for low recognition, non-approved reviews, pending licenses or a blocked manifest"
     },
     {
       "name": "blind-recognition-test",

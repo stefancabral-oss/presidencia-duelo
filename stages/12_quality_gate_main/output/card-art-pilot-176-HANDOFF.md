@@ -5,6 +5,7 @@
 - Estado: `primeiro lote invalidado; regeneração obrigatória antes de coleta humana`
 - Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/176
 - Branch: `icm/12-u05-card-art-pilot-176`
+- Base validada: `origin/main` em `8f7ba527`.
 - Gate humano: **não iniciado e não autorizado para P01–P08**.
 
 ## Entregue
@@ -21,10 +22,10 @@
 
 ## Verificação técnica
 
-- `npm test`: executar novamente depois do restack final; inclui fixtures negativas do validador semântico.
-- `npm run build --prefix app`: aprovado; 156 arquivos do `dist` inspecionados e nenhum hash do piloto empacotado.
-- `npm run test:card-art-pilot-form --prefix app`: executar em Chromium e WebKit; deve provar geometria canônica e bloqueio de coleta.
-- `npx --yes --package=ajv-cli@5.0.0 --package=ajv-formats@3.0.1 ajv compile -s stages/12_quality_gate_main/references/card-art-pilot-results.schema.json --spec=draft2020 -c ajv-formats`: schema Draft 2020-12 válido.
+- `npm test`: 117/117 aprovados (4 compartilhados, 39 backend, 74 app), incluindo as fixtures negativas do validador semântico.
+- `npm run build --prefix app`: aprovado; 157 arquivos do `dist` inspecionados e nenhum hash do piloto empacotado.
+- `npm run test:card-art-pilot-form --prefix app`: aprovado em Chromium e WebKit nos dois cenários; geometria canônica igual ao CSS do app e coleta/exportação bloqueadas.
+- `npx --yes --package=ajv-cli@5.0.0 --package=ajv-formats@3.0.1 ajv compile -s stages/12_quality_gate_main/references/card-art-pilot-results.schema.json --spec=draft2020 -c ajv-formats`: aprovado; schema Draft 2020-12 válido.
 - `git diff --check`: aprovado.
 
 ## Proveniência que ainda bloqueia produção

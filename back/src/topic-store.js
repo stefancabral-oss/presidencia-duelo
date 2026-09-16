@@ -1979,8 +1979,14 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           [materialized.edition.id, player.id],
         );
         const predictionsResponded = Number(predictionProgress.rows[0]?.responded) || 0;
-        // Clientes que declaram o contrato v1 precisam alternar preferência e
-        // aposta. Clientes antigos omitem a capacidade e podem concluir as dez
+        const expectedSlot = answered + 1;
+        if (slot !== expectedSlot) {
+          throw contractError("a rodada diária precisa ser respondida na ordem", 409, "DAILY_SLOT_OUT_OF_ORDER", expectedSlot);
+        }
+        // Preserve a precedência do contrato de sequência: uma repetição ou um
+        // salto continua sendo DAILY_SLOT_OUT_OF_ORDER. A aposta só bloqueia a
+        // preferência quando o cliente pediu exatamente o próximo slot válido.
+        // Clientes antigos omitem a capacidade e podem concluir as dez
         // preferências sem que o servidor invente apostas puladas em seu nome.
         if (predictionContractVersion === 1 && predictionsResponded !== answered) {
           throw contractError(
@@ -1989,10 +1995,6 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
             "DAILY_PREDICTION_REQUIRED",
             predictionsResponded + 1,
           );
-        }
-        const expectedSlot = answered + 1;
-        if (slot !== expectedSlot) {
-          throw contractError("a rodada diária precisa ser respondida na ordem", 409, "DAILY_SLOT_OUT_OF_ORDER", expectedSlot);
         }
         if (!authoritativeRound.candidateIds.includes(winnerId)) {
           throw contractError("vencedor não pertence ao slot diário", 400, "DAILY_WINNER_INVALID");

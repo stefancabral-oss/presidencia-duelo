@@ -2,11 +2,11 @@
 
 ## Status
 
-- Estado: `em andamento`
+- Estado: `CI aprovado; aguardando gate humano`
 - Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/174
 - Macro: https://github.com/stefancabral-oss/presidencia-duelo/issues/175
 - Branch: `icm/12-u01-ci-back-shared-174`
-- PR: `pendente`
+- PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/185
 - Commit da implementação: `c0911e2`
 
 ## Entregue
@@ -20,8 +20,7 @@
 ## Não entregue / pendente
 
 - Remover `front/**` de `.github/workflows/ui-interaction-smoke.yml` depois que a PR #162 for resolvida, sem perder `shared/**` nem o E2E de recuperação.
-- Registrar os IDs das execuções automáticas desta PR.
-- Atualizar este HANDOFF com PR, commit final e resultados.
+- Revisão humana da PR #185.
 
 ## Testes executados
 
@@ -31,7 +30,8 @@
 - `npm test`: 62/62 aprovados no encadeamento completo.
 - `npm run build --prefix app`: aprovado; 99/125 retratos disponíveis e bundle de produção gerado.
 - `actionlint` 1.7.12: os workflows novo e alterado passaram sem findings.
-- Integração PostgreSQL local: não executada porque a máquina não possui PostgreSQL nem Docker; deve passar no serviço real do GitHub Actions antes do gate.
+- GitHub Actions no evento `pull_request`: `back-unit`, `shared-data`, `back-integration-postgres` e `validate` aprovados.
+- PostgreSQL 16 de serviço: integração aprovada no run automático [35048640056](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35048640056).
 
 ## Riscos conhecidos
 
@@ -47,7 +47,7 @@
 
 ## Próximo passo exato
 
-1. Abrir a PR de U01 e observar os três checks, incluindo a integração PostgreSQL, no evento `pull_request`.
+1. Stefan revisar a PR #185 e o único item deliberadamente isolado: retirar `front/**` do workflow de UI depois que a PR #162 for resolvida.
 
 ## Human gate
 

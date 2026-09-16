@@ -1,5 +1,5 @@
 {
-  "status": "local-checks-passed-ci-pending",
+  "status": "ci-passed-human-gate-pending",
   "issue": 174,
   "macroIssue": 175,
   "baseSha": "fa06277722761c6a183492c2a401c27464f28225",
@@ -27,7 +27,7 @@
     {
       "name": "back-integration-postgres",
       "command": "DATABASE_URL=<isolated-postgres> npm run test:integration --prefix back",
-      "result": "pending GitHub Actions; local host has neither PostgreSQL nor Docker"
+      "result": "passed in PostgreSQL 16 service on pull_request run 35048640056, job 104643965336"
     },
     {
       "name": "root-unit",
@@ -47,12 +47,11 @@
     {
       "name": "automatic-pull-request-trigger",
       "command": "GitHub Actions event=pull_request",
-      "result": "pending PR publication"
+      "result": "passed; Backend and Shared run 35048640056 and Design Validator run 35048640009 were triggered automatically by PR #185"
     }
   ],
   "pending": [
     "resolve PR #162 before editing .github/workflows/ui-interaction-smoke.yml",
-    "capture automatic GitHub Actions run IDs and URLs",
     "human gate"
   ]
 }

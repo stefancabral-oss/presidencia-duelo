@@ -2,12 +2,12 @@
 
 ## Status
 
-- Estado: `implementação e validação local aprovadas; PR/CI pendentes`
+- Estado: `implementação, CI e human gate aprovados; pronta para merge`
 - Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/168
 - Macro: https://github.com/stefancabral-oss/presidencia-duelo/issues/175
 - Branch: `icm/12-u03-responsive-168`
 - Base: `main@3dfd4b4`
-- PR: pendente
+- PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/187
 
 ## Entregue
 
@@ -36,7 +36,8 @@
 - Viewports de limite: 320, 479, 480, 699, 700, 999, 1000, 1279, 1280 e 1920 px.
 - Viewports de evidência: 390 × 844, 700/768/900/1000/1200 × 900, 1280 × 620, 1440 × 640 e 1440 × 900.
 - 54/54 nomes medidos em cada viewport do duelo; zero truncamento.
-- CI: pendente.
+- Design Validator automático: aprovado no run [35056992263](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35056992263).
+- UI Interaction Smoke automático: Chromium e WebKit aprovados no run [35056992253](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35056992253).
 
 ## Riscos conhecidos
 
@@ -45,10 +46,9 @@
 
 ## Próximo passo exato
 
-1. Abrir a PR com `Closes #168`.
-2. Confirmar todos os checks automáticos do head final.
-3. Mesclar com a autorização permanente do human gate.
-4. Iniciar #169 somente a partir da nova `main`.
+1. Confirmar os checks automáticos do head documental final.
+2. Mesclar com a autorização permanente do human gate.
+3. Iniciar #169 somente a partir da nova `main`.
 
 ## Human gate
 

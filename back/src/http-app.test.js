@@ -8,6 +8,9 @@ function fakeStore(overrides = {}) {
     ranking: async () => ({ ranking: [] }),
     createPlayer: async () => ({ recoveryKey: "pm2_test" }),
     playerRanking: async () => ({ ranking: [] }),
+    dailySession: async () => ({ status: "active" }),
+    dailyCut: async () => ({ status: "published" }),
+    dailyVote: async () => ({ ok: true }),
     signInWithGoogle: async () => ({}),
     signOut: async () => {},
     roundVote: async () => ({ ok: true }),
@@ -132,6 +135,80 @@ test("round writes require a player bearer token before reaching the store", asy
     assert.equal(body.code, "PLAYER_SESSION_REQUIRED");
     assert.equal(writes, 0);
   });
+});
+
+test("daily reads are scoped to the bearer token and receive the injected clock", async () => {
+  const calls = [];
+  const now = new Date("2026-09-16T02:59:59.000Z");
+  const app = createHttpApp({
+    store: fakeStore({ dailySession: async (...args) => { calls.push(args); return { status: "active" }; } }),
+    googleIdentity,
+    env: {},
+    clock: () => now,
+  });
+  await withServer(app, async (baseUrl) => {
+    const missing = await fetch(`${baseUrl}/api/daily-session`);
+    assert.equal(missing.status, 401);
+    const response = await fetch(`${baseUrl}/api/daily-session?topic=eleicoes-2026`, {
+      headers: { Authorization: "Bearer pm2_private-player" },
+    });
+    assert.equal(response.status, 200);
+  });
+  assert.deepEqual(calls, [["pm2_private-player", "eleicoes-2026", { now }]]);
+});
+
+test("daily votes forward only edition, slot and winner, never a client card order", async () => {
+  let received;
+  const now = new Date("2026-09-16T12:00:00.000Z");
+  const app = createHttpApp({
+    store: fakeStore({ dailyVote: async (input) => { received = input; return { ok: true }; } }),
+    googleIdentity,
+    env: {},
+    clock: () => now,
+  });
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/daily-vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer pm2_player" },
+      body: JSON.stringify({
+        answerId: "550e8400-e29b-41d4-a716-446655440000",
+        editionId: "edition-1",
+        slot: 3,
+        winnerId: "lula",
+        candidateIds: ["ordem", "forjada", "pelo", "cliente"],
+        playerVersion: 2,
+      }),
+    });
+    assert.equal(response.status, 200);
+  });
+  assert.deepEqual(received, {
+    answerId: "550e8400-e29b-41d4-a716-446655440000",
+    editionId: "edition-1",
+    slot: 3,
+    winnerId: "lula",
+    topicId: "eleicoes-2026",
+    recoveryKey: "pm2_player",
+    playerVersion: 2,
+    now,
+  });
+  assert.equal(Object.hasOwn(received, "candidateIds"), false);
+});
+
+test("the closed daily cut is public but never opened before its editorial date closes", async () => {
+  const calls = [];
+  const now = new Date("2026-09-17T03:00:00.000Z");
+  const app = createHttpApp({
+    store: fakeStore({ dailyCut: async (...args) => { calls.push(args); return { status: "published", completedPlayers: 0 }; } }),
+    googleIdentity,
+    env: {},
+    clock: () => now,
+  });
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/daily-cut?date=2026-09-16`);
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).completedPlayers, 0);
+  });
+  assert.deepEqual(calls, [["eleicoes-2026", "2026-09-16", { now }]]);
 });
 
 test("internal failures are logged by request id without leaking their message", async () => {

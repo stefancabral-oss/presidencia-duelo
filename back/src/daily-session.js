@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 export const DAILY_SESSION_RULESET = Object.freeze({
   id: "daily-four-card-v1",
+  version: 1,
   timeZone: "America/Sao_Paulo",
   rounds: 10,
   cardsPerRound: 4,
@@ -128,11 +129,13 @@ export function buildDailyEdition({ topicId, candidateIds, dateKey, ruleset = DA
   const { opensAt, closesAt } = editionWindow(normalizedDate, ruleset.timeZone);
 
   return Object.freeze({
-    id: `${ruleset.id}:${topic}:${normalizedDate}:${catalogHash.slice(0, 16)}`,
+    id: `${ruleset.id}:v${ruleset.version}:${topic}:${normalizedDate}:${catalogHash.slice(0, 16)}`,
     date: normalizedDate,
     topicId: topic,
     rulesetId: ruleset.id,
+    rulesetVersion: ruleset.version,
     catalogHash,
+    catalogIds: Object.freeze(sortedCatalog),
     candidateCount: sortedCatalog.length,
     totalRounds: ruleset.rounds,
     cardsPerRound: ruleset.cardsPerRound,
@@ -145,6 +148,7 @@ export function buildDailyEdition({ topicId, candidateIds, dateKey, ruleset = DA
 export function publicDailyRuleset(ruleset = DAILY_SESSION_RULESET) {
   return {
     id: ruleset.id,
+    version: ruleset.version,
     timeZone: ruleset.timeZone,
     rounds: ruleset.rounds,
     cardsPerRound: ruleset.cardsPerRound,

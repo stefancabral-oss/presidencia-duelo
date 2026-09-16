@@ -15,7 +15,9 @@ import {
   validateTopic,
   validateRoundVote,
   validateVote,
+  validateMaterializedDailyEdition,
 } from "./topic-store.js";
+import { buildDailyEdition } from "./daily-session.js";
 
 test("only active curated topics accept votes", () => {
   assert.equal(validateTopic("eleicoes-2026"), "eleicoes-2026");
@@ -33,6 +35,42 @@ test("four-card rounds require four unique playable candidates and the winner", 
   assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["lula", "lula", "anitta", "neymar-jr"]), /rodada inválida/);
   assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["jair-bolsonaro", "anitta", "neymar-jr", "ludmilla"]), /rodada inválida/);
   assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["lula", "jair-bolsonaro", "anitta", "acm-neto"]), /rodada inválida/);
+});
+
+test("materialized daily editions validate ruleset, catalog hash and every ordered slot", () => {
+  const definition = buildDailyEdition({
+    topicId: "eleicoes-2026",
+    candidateIds: Array.from({ length: 40 }, (_, index) => `candidate-${String(index + 1).padStart(2, "0")}`),
+    dateKey: "2026-09-16",
+  });
+  const row = {
+    id: definition.id,
+    edition_date: definition.date,
+    topic_id: definition.topicId,
+    ruleset_id: definition.rulesetId,
+    ruleset_version: definition.rulesetVersion,
+    catalog_hash: definition.catalogHash,
+    catalog_ids: definition.catalogIds,
+    candidate_count: definition.candidateCount,
+    total_rounds: definition.totalRounds,
+    cards_per_round: definition.cardsPerRound,
+    opens_at: definition.opensAt,
+    closes_at: definition.closesAt,
+  };
+  const rounds = definition.rounds.map((round) => ({
+    slot: round.slot,
+    candidate_ids: round.candidateIds,
+    selection_hash: round.selectionHash,
+  }));
+  assert.deepEqual(validateMaterializedDailyEdition(row, rounds).rounds[0].candidateIds, definition.rounds[0].candidateIds);
+  assert.throws(
+    () => validateMaterializedDailyEdition({ ...row, catalog_hash: "0".repeat(64) }, rounds),
+    /integridade/,
+  );
+  assert.throws(
+    () => validateMaterializedDailyEdition(row, rounds.map((round, index) => index ? round : { ...round, candidate_ids: [...round.candidate_ids].reverse() })),
+    /integridade/,
+  );
 });
 
 test("vote ids remain idempotent UUIDs", () => {

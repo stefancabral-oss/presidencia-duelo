@@ -66,7 +66,7 @@ function safeStatus(error) {
   return Number.isInteger(status) && status >= 400 && status < 600 ? status : 500;
 }
 
-export function createHttpApp({ store, googleIdentity, env = process.env, logger = console } = {}) {
+export function createHttpApp({ store, googleIdentity, env = process.env, logger = console, clock = () => new Date() } = {}) {
   if (!store) throw new Error("store é obrigatório");
   if (!googleIdentity) throw new Error("googleIdentity é obrigatório");
 
@@ -184,6 +184,30 @@ export function createHttpApp({ store, googleIdentity, env = process.env, logger
     }
   });
 
+  app.get("/api/daily-session", async (req, res) => {
+    try {
+      res.json(await store.dailySession(
+        requiredRecoveryKey(req),
+        String(req.query.topic || "eleicoes-2026"),
+        { now: clock() },
+      ));
+    } catch (error) {
+      sendError(req, res, error);
+    }
+  });
+
+  app.get("/api/daily-cut", async (req, res) => {
+    try {
+      res.json(await store.dailyCut(
+        String(req.query.topic || "eleicoes-2026"),
+        String(req.query.date || ""),
+        { now: clock() },
+      ));
+    } catch (error) {
+      sendError(req, res, error);
+    }
+  });
+
   app.post("/api/auth/google", async (req, res) => {
     try {
       const identity = await googleIdentity.verify(req.body?.credential);
@@ -223,6 +247,27 @@ export function createHttpApp({ store, googleIdentity, env = process.env, logger
         topicId: String(topicId || "eleicoes-2026"),
         recoveryKey: requiredRecoveryKey(req),
         playerVersion,
+      }));
+    } catch (error) {
+      sendError(req, res, error);
+    }
+  });
+
+  app.post("/api/daily-vote", async (req, res) => {
+    // A ordem e as quatro cartas nunca vêm do cliente. `editionId + slot`
+    // apontam para o baralho materializado; o store relê esse registro sob
+    // trava antes de aplicar Elo e progresso na mesma transação.
+    const { answerId, editionId, slot, winnerId, topicId, playerVersion } = req.body || {};
+    try {
+      res.json(await store.dailyVote({
+        answerId,
+        editionId: String(editionId || ""),
+        slot,
+        winnerId: String(winnerId || ""),
+        topicId: String(topicId || "eleicoes-2026"),
+        recoveryKey: requiredRecoveryKey(req),
+        playerVersion,
+        now: clock(),
       }));
     } catch (error) {
       sendError(req, res, error);

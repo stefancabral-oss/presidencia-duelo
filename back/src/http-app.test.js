@@ -11,6 +11,8 @@ function fakeStore(overrides = {}) {
     dailySession: async () => ({ status: "active" }),
     dailyCut: async () => ({ status: "published" }),
     dailyVote: async () => ({ ok: true }),
+    dailyPrediction: async () => ({ ok: true }),
+    dailyPredictionResults: async () => ({ score: {}, sessions: [] }),
     signInWithGoogle: async () => ({}),
     signOut: async () => {},
     roundVote: async () => ({ ok: true }),
@@ -225,6 +227,69 @@ test("daily votes forward only edition, slot and winner, never a client card ord
     now,
   });
   assert.equal(Object.hasOwn(received, "candidateIds"), false);
+});
+
+test("daily predictions forward only the separate prediction contract", async () => {
+  const calls = [];
+  const now = new Date("2026-09-16T12:00:00.000Z");
+  const app = createHttpApp({
+    store: fakeStore({ dailyPrediction: async (input) => { calls.push(input); return { ok: true }; } }),
+    googleIdentity,
+    env: {},
+    clock: () => now,
+  });
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/daily-prediction`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer pm2_player" },
+      body: JSON.stringify({
+        predictionId: "550e8400-e29b-41d4-a716-446655440001",
+        editionId: "edition-1",
+        slot: 3,
+        decision: "predict",
+        candidateId: "lula",
+        answerId: "forged-answer",
+        candidateIds: ["forged", "client", "card", "order"],
+        playerVersion: 99,
+      }),
+    });
+    assert.equal(response.status, 200);
+  });
+  assert.deepEqual(calls, [{
+    predictionId: "550e8400-e29b-41d4-a716-446655440001",
+    editionId: "edition-1",
+    slot: 3,
+    decision: "predict",
+    candidateId: "lula",
+    topicId: "eleicoes-2026",
+    recoveryKey: "pm2_player",
+    now,
+  }]);
+});
+
+test("cumulative prediction results are private and clocked", async () => {
+  const calls = [];
+  const now = new Date("2026-09-17T03:00:00.000Z");
+  const app = createHttpApp({
+    store: fakeStore({
+      dailyPredictionResults: async (...args) => {
+        calls.push(args);
+        return { baselinePercent: 25, score: { correct: 1, scored: 1 }, sessions: [] };
+      },
+    }),
+    googleIdentity,
+    env: {},
+    clock: () => now,
+  });
+  await withServer(app, async (baseUrl) => {
+    assert.equal((await fetch(`${baseUrl}/api/daily-prediction-results`)).status, 401);
+    const response = await fetch(`${baseUrl}/api/daily-prediction-results`, {
+      headers: { Authorization: "Bearer pm2_player" },
+    });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).baselinePercent, 25);
+  });
+  assert.deepEqual(calls, [["pm2_player", "eleicoes-2026", { now }]]);
 });
 
 test("the closed daily cut is public but never opened before its editorial date closes", async () => {

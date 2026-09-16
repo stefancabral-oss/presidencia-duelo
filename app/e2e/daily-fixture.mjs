@@ -17,6 +17,10 @@ function answerId(slot) {
   return `550e8400-e29b-41d4-a716-${String(slot).padStart(12, "0")}`;
 }
 
+function predictionId(slot) {
+  return `650e8400-e29b-41d4-a716-${String(slot).padStart(12, "0")}`;
+}
+
 export function completedDailySession(candidates) {
   const ids = candidates.map(({ id }) => id);
   if (ids.length < 4) throw new Error("o fixture diário requer ao menos quatro candidatos");
@@ -50,6 +54,15 @@ export function completedDailySession(candidates) {
       winnerId: `daily-snapshot-${index + 1}`,
       answeredAt: `2026-09-16T${String(index + 10).padStart(2, "0")}:00:00.000Z`,
     })),
+    predictions: Array.from({ length: 10 }, (_, index) => ({
+      slot: index + 1,
+      predictionId: predictionId(index + 1),
+      candidateId: `daily-snapshot-${index + 2}`,
+      skipped: false,
+      respondedAt: `2026-09-16T${String(index + 10).padStart(2, "0")}:01:00.000Z`,
+    })),
+    predictionProgress: { responded: 10, predicted: 10, skipped: 0, total: 10 },
+    pendingPrediction: null,
     round: null,
     completion: { completedAt: "2026-09-16T22:00:00.000Z" },
     cut: {

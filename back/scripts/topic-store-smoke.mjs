@@ -270,6 +270,64 @@ const identicalConcurrentVotes = await Promise.all([
 assert.deepEqual(identicalConcurrentVotes.map(({ round }) => round.status).sort(), ["alreadyProcessed", "created"]);
 assert.deepEqual(identicalConcurrentVotes[0].dailySession, identicalConcurrentVotes[1].dailySession);
 assert.equal(identicalConcurrentVotes[0].dailySession.progress.answered, 1);
+assert.equal(identicalConcurrentVotes[0].dailySession.pendingPrediction.slot, 1);
+
+await assert.rejects(
+  dailyStore.dailyVote({
+    topicId: "eleicoes-2026",
+    editionId: firstDailySession.edition.id,
+    slot: 2,
+    winnerId: identicalConcurrentVotes[0].dailySession.round.candidateIds[0],
+    answerId: randomUUID(),
+    recoveryKey: firstDailyPlayer.recoveryKey,
+    playerVersion: 1,
+  }),
+  (error) => error.code === "DAILY_PREDICTION_REQUIRED" && error.current === 1,
+);
+
+const rankingBeforePrediction = await dailyStore.ranking("eleicoes-2026");
+const personalBeforePrediction = await dailyStore.playerRanking(firstDailyPlayer.recoveryKey, "eleicoes-2026");
+const firstPredictionId = randomUUID();
+const firstPredictionCandidate = identicalConcurrentVotes[0].dailySession.pendingPrediction.candidateIds[1];
+const identicalPredictions = await Promise.all([
+  dailyStore.dailyPrediction({
+    topicId: "eleicoes-2026",
+    editionId: firstDailySession.edition.id,
+    slot: 1,
+    predictionId: firstPredictionId,
+    decision: "predict",
+    candidateId: firstPredictionCandidate,
+    recoveryKey: firstDailyPlayer.recoveryKey,
+  }),
+  dailyStore.dailyPrediction({
+    topicId: "eleicoes-2026",
+    editionId: firstDailySession.edition.id,
+    slot: 1,
+    predictionId: firstPredictionId,
+    decision: "predict",
+    candidateId: firstPredictionCandidate,
+    recoveryKey: firstDailyPlayer.recoveryKey,
+  }),
+]);
+assert.deepEqual(identicalPredictions.map(({ prediction }) => prediction.status).sort(), ["alreadyProcessed", "created"]);
+assert.deepEqual(identicalPredictions[0].dailySession, identicalPredictions[1].dailySession);
+assert.equal(identicalPredictions[0].dailySession.pendingPrediction, null);
+assert.equal(identicalPredictions[0].dailySession.predictionProgress.responded, 1);
+assert.deepEqual(await dailyStore.ranking("eleicoes-2026"), rankingBeforePrediction);
+assert.deepEqual(await dailyStore.playerRanking(firstDailyPlayer.recoveryKey, "eleicoes-2026"), personalBeforePrediction);
+
+await assert.rejects(
+  dailyStore.dailyPrediction({
+    topicId: "eleicoes-2026",
+    editionId: firstDailySession.edition.id,
+    slot: 1,
+    predictionId: firstPredictionId,
+    decision: "skip",
+    candidateId: null,
+    recoveryKey: firstDailyPlayer.recoveryKey,
+  }),
+  (error) => error.code === "DAILY_PREDICTION_REPLAY_DIVERGENT",
+);
 
 await assert.rejects(
   dailyStore.dailyVote({
@@ -296,6 +354,20 @@ const competingVotes = await Promise.allSettled(competingAnswerIds.map((answerId
 })));
 assert.equal(competingVotes.filter(({ status }) => status === "fulfilled").length, 1);
 assert.equal(competingVotes.filter(({ status, reason }) => status === "rejected" && reason.code === "DAILY_SLOT_OUT_OF_ORDER").length, 1);
+const secondPendingPrediction = await dailyStore.dailySession(secondDailyPlayer.recoveryKey, "eleicoes-2026");
+const competingPredictions = await Promise.allSettled([randomUUID(), randomUUID()].map((predictionId) => dailyStore.dailyPrediction({
+  topicId: "eleicoes-2026",
+  editionId: secondPendingPrediction.edition.id,
+  slot: 1,
+  predictionId,
+  decision: "predict",
+  candidateId: secondPendingPrediction.pendingPrediction.candidateIds[0],
+  recoveryKey: secondDailyPlayer.recoveryKey,
+})));
+assert.equal(competingPredictions.filter(({ status }) => status === "fulfilled").length, 1);
+assert.equal(competingPredictions.filter(({ status, reason }) => (
+  status === "rejected" && reason.code === "DAILY_PREDICTION_ALREADY_RECORDED"
+)).length, 1);
 
 const quotaMaintenance = new pg.Pool({ connectionString });
 async function clearMinuteQuota() {
@@ -387,7 +459,7 @@ assert.deepEqual(
   ["2026-09-16T03:00:00.000Z", "2026-09-17T03:00:00.000Z"],
 );
 await clearMinuteQuota();
-let firstProgress = identicalConcurrentVotes[0].dailySession;
+let firstProgress = identicalPredictions[0].dailySession;
 for (let slot = 2; slot <= 10; slot += 1) {
   const next = firstProgress.round;
   assert.equal(next.slot, slot);
@@ -400,7 +472,17 @@ for (let slot = 2; slot <= 10; slot += 1) {
     recoveryKey: firstDailyPlayer.recoveryKey,
     playerVersion: slot - 1,
   });
-  firstProgress = response.dailySession;
+  assert.equal(response.dailySession.pendingPrediction.slot, slot);
+  const prediction = await dailyStore.dailyPrediction({
+    topicId: "eleicoes-2026",
+    editionId: firstDailySession.edition.id,
+    slot,
+    predictionId: randomUUID(),
+    decision: slot % 2 ? "predict" : "skip",
+    candidateId: slot % 2 ? response.dailySession.pendingPrediction.candidateIds[0] : null,
+    recoveryKey: firstDailyPlayer.recoveryKey,
+  });
+  firstProgress = prediction.dailySession;
   if (slot === 4) {
     const reloaded = await dailyStore.dailySession(firstDailyPlayer.recoveryKey, "eleicoes-2026");
     assert.deepEqual(reloaded, firstProgress);
@@ -410,6 +492,8 @@ for (let slot = 2; slot <= 10; slot += 1) {
 assert.equal(firstProgress.status, "completed");
 assert.deepEqual(firstProgress.progress, { answered: 10, total: 10 });
 assert.equal(firstProgress.round, null);
+assert.equal(firstProgress.pendingPrediction, null);
+assert.deepEqual(firstProgress.predictionProgress, { responded: 10, predicted: 5, skipped: 5, total: 10 });
 assert.match(firstProgress.cut.methodology, /entre quem concluiu a rodada de 16\/09/);
 
 const freeRound = await dailyStore.roundVote({
@@ -451,7 +535,16 @@ for (let slot = 1; slot <= 10; slot += 1) {
     recoveryKey: snapshotPlayer.recoveryKey,
     playerVersion: slot - 1,
   });
-  snapshotProgress = response.dailySession;
+  const prediction = await dailyStore.dailyPrediction({
+    topicId: "eleicoes-2026",
+    editionId: snapshotProgress.edition.id,
+    slot,
+    predictionId: randomUUID(),
+    decision: "predict",
+    candidateId: response.dailySession.pendingPrediction.candidateIds[0],
+    recoveryKey: snapshotPlayer.recoveryKey,
+  });
+  snapshotProgress = prediction.dailySession;
   await clearMinuteQuota();
 }
 assert.equal(removedCandidateWasVoted, true);
@@ -481,6 +574,29 @@ assert.deepEqual(
   identicalConcurrentVotes.find(({ round }) => round.status === "created").round,
 );
 assert.deepEqual(replayAfterMidnight.dailySession, firstProgress);
+const replayPredictionAfterMidnight = await dailyStore.dailyPrediction({
+  topicId: "eleicoes-2026",
+  editionId: firstDailySession.edition.id,
+  slot: 1,
+  predictionId: firstPredictionId,
+  decision: "predict",
+  candidateId: firstPredictionCandidate,
+  recoveryKey: firstDailyPlayer.recoveryKey,
+});
+assert.equal(replayPredictionAfterMidnight.prediction.status, "alreadyProcessed");
+assert.deepEqual(replayPredictionAfterMidnight.dailySession, firstProgress);
+await assert.rejects(
+  dailyStore.dailyPrediction({
+    topicId: "eleicoes-2026",
+    editionId: firstDailySession.edition.id,
+    slot: 1,
+    predictionId: randomUUID(),
+    decision: "predict",
+    candidateId: firstPredictionCandidate,
+    recoveryKey: firstDailyPlayer.recoveryKey,
+  }),
+  (error) => error.code === "DAILY_PREDICTION_CLOSED",
+);
 await assert.rejects(
   dailyStore.dailyVote({
     topicId: "eleicoes-2026",
@@ -503,6 +619,29 @@ assert.equal(publishedCut.catalog.length, 40);
 assert.equal(publishedCut.catalog.some(({ id }) => id === removedCandidate.id), true);
 assert.equal(publishedCut.catalog.find(({ id }) => id === removedCandidate.id).name, removedCandidate.name);
 assert.match(publishedCut.catalogSnapshotHash, /^[a-f0-9]{64}$/);
+const predictionResults = await dailyStore.dailyPredictionResults(
+  firstDailyPlayer.recoveryKey,
+  "eleicoes-2026",
+);
+assert.equal(predictionResults.baselinePercent, 25);
+assert.equal(predictionResults.sessions.length, 1);
+assert.equal(predictionResults.sessions[0].edition.id, firstDailySession.edition.id);
+assert.equal(predictionResults.sessions[0].rounds.length, 10);
+assert.equal(predictionResults.score.attempted, 5);
+assert.equal(predictionResults.score.skipped, 5);
+assert.equal(
+  predictionResults.score.scored + predictionResults.score.ties + predictionResults.score.noSample,
+  predictionResults.score.attempted,
+);
+assert.equal(
+  predictionResults.score.accuracyPercent,
+  predictionResults.score.scored
+    ? Number(((predictionResults.score.correct / predictionResults.score.scored) * 100).toFixed(1))
+    : null,
+);
+assert.ok(predictionResults.sessions[0].rounds.every((round) => (
+  round.choices.reduce((total, choice) => total + choice.count, 0) === publishedCut.completedPlayers
+)));
 const cutReaderStore = createTopicStore(connectionString, {
   clock: () => dailyNow,
   candidateCatalog: () => mutableCatalog.map((candidate) => structuredClone(candidate)),
@@ -570,7 +709,17 @@ for (let playerIndex = 0; playerIndex < crossingPlayers.length; playerIndex += 1
       playerVersion: slot - 1,
       now: beforeMidnight,
     });
-    crossingProgresses[playerIndex] = response.dailySession;
+    const prediction = await crossingStore.dailyPrediction({
+      topicId: "eleicoes-2026",
+      editionId: progress.edition.id,
+      slot,
+      predictionId: randomUUID(),
+      decision: "skip",
+      candidateId: null,
+      recoveryKey: crossingPlayers[playerIndex].recoveryKey,
+      now: beforeMidnight,
+    });
+    crossingProgresses[playerIndex] = prediction.dailySession;
     await clearMinuteQuota();
   }
 }
@@ -662,6 +811,7 @@ const dailyAudit = await quotaMaintenance.query(`
       SELECT id FROM anonymous_players WHERE recovery_hash = $2
     )) AS player_free_rounds,
     (SELECT count(*) FROM daily_completions WHERE edition_id = $1) AS completions,
+    (SELECT count(*) FROM daily_predictions WHERE edition_id = $1) AS predictions,
     (SELECT count(*) FROM daily_publication_cuts WHERE edition_id = $1) AS cuts,
     (SELECT used FROM abuse_quota_counters
       WHERE scope = 'player-daily-editorial-day-v2'
@@ -683,6 +833,7 @@ const dailyAudit = await quotaMaintenance.query(`
 assert.equal(Number(dailyAudit.rows[0].daily_rounds), 21);
 assert.equal(Number(dailyAudit.rows[0].player_free_rounds), 1);
 assert.equal(Number(dailyAudit.rows[0].completions), 2);
+assert.equal(Number(dailyAudit.rows[0].predictions), 21);
 assert.equal(Number(dailyAudit.rows[0].cuts), 1);
 assert.equal(Number(dailyAudit.rows[0].daily_quota_used), 10);
 assert.equal(Number(dailyAudit.rows[0].free_quota_used), 1);
@@ -755,6 +906,77 @@ await assert.rejects(
     [firstDailySession.edition.id, secondDailyPlayerId, freeRound.round.id, freeRound.round.winnerId],
   ),
   (error) => error.code === "23503",
+);
+
+// A tabela de apostas carrega o contexto completo do slot. Nem um candidato
+// fora das quatro cartas, nem uma ordem forjada, nem mutação posterior passam
+// pelas garantias do PostgreSQL.
+const predictionConstraintPlayer = await dailyStore.createPlayer({ networkHash: "1".repeat(64) });
+const predictionConstraintSession = await dailyStore.dailySession(
+  predictionConstraintPlayer.recoveryKey,
+  "eleicoes-2026",
+);
+await clearMinuteQuota();
+const predictionConstraintAnswerId = randomUUID();
+const predictionConstraintVote = await dailyStore.dailyVote({
+  topicId: "eleicoes-2026",
+  editionId: predictionConstraintSession.edition.id,
+  slot: 1,
+  winnerId: predictionConstraintSession.round.candidateIds[0],
+  answerId: predictionConstraintAnswerId,
+  recoveryKey: predictionConstraintPlayer.recoveryKey,
+  playerVersion: 0,
+});
+const predictionConstraintPlayerId = await playerIdFor(predictionConstraintPlayer.recoveryKey);
+await assert.rejects(
+  quotaMaintenance.query(
+    `INSERT INTO daily_predictions (
+       edition_id, player_id, slot, prediction_id, answer_id, candidate_ids,
+       predicted_candidate_id, skipped
+     ) VALUES ($1, $2, 1, $3, $4, $5::text[], 'outside-slot', false)`,
+    [
+      predictionConstraintSession.edition.id,
+      predictionConstraintPlayerId,
+      randomUUID(),
+      predictionConstraintAnswerId,
+      predictionConstraintSession.round.candidateIds,
+    ],
+  ),
+  (error) => error.code === "23514",
+);
+const forgedPredictionOrder = [...predictionConstraintSession.round.candidateIds].reverse();
+await assert.rejects(
+  quotaMaintenance.query(
+    `INSERT INTO daily_predictions (
+       edition_id, player_id, slot, prediction_id, answer_id, candidate_ids,
+       predicted_candidate_id, skipped
+     ) VALUES ($1, $2, 1, $3, $4, $5::text[], $6, false)`,
+    [
+      predictionConstraintSession.edition.id,
+      predictionConstraintPlayerId,
+      randomUUID(),
+      predictionConstraintAnswerId,
+      forgedPredictionOrder,
+      forgedPredictionOrder[0],
+    ],
+  ),
+  (error) => error.code === "23503",
+);
+const persistedPrediction = await dailyStore.dailyPrediction({
+  topicId: "eleicoes-2026",
+  editionId: predictionConstraintSession.edition.id,
+  slot: 1,
+  predictionId: randomUUID(),
+  decision: "predict",
+  candidateId: predictionConstraintVote.dailySession.pendingPrediction.candidateIds[0],
+  recoveryKey: predictionConstraintPlayer.recoveryKey,
+});
+await assert.rejects(
+  quotaMaintenance.query(
+    "UPDATE daily_predictions SET skipped = true, predicted_candidate_id = NULL WHERE prediction_id = $1",
+    [persistedPrediction.prediction.id],
+  ),
+  /imutáveis/,
 );
 await crossingStore.close();
 await dailyStore.close();

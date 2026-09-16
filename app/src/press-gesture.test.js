@@ -28,8 +28,20 @@ test("holding opens information and suppresses the following vote", () => {
   gesture.pointerDown({ clientX: 0, clientY: 0, button: 0 });
   clock.fire();
   gesture.pointerEnd();
-  assert.equal(gesture.click({}), "hold");
+  assert.equal(gesture.click({ detail: 1 }), "hold");
   assert.deepEqual(calls, ["hold"]);
+});
+
+test("keyboard activation after a held modal closes is a vote", () => {
+  const calls = [];
+  const clock = fakeClock();
+  const gesture = createPressGesture({ onTap: () => calls.push("tap"), onHold: () => calls.push("hold"), setTimer: clock.setTimer, clearTimer: clock.clearTimer });
+  gesture.pointerDown({ clientX: 0, clientY: 0, button: 0 });
+  clock.fire();
+  gesture.pointerEnd();
+
+  assert.equal(gesture.click({ detail: 0 }), "tap");
+  assert.deepEqual(calls, ["hold", "tap"]);
 });
 
 test("scrolling cancels a pending hold", () => {

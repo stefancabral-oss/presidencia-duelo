@@ -31,7 +31,7 @@ function ranking(decisions = 0, winnerId = "", comparedIds = []) {
   });
 }
 
-function voteResponse(payload) {
+function voteResponse(payload, progress = 1) {
   const outcomes = payload.candidateIds.map((id) => ({
     id,
     result: id === payload.winnerId ? "winner" : "loser",
@@ -46,9 +46,9 @@ function voteResponse(payload) {
   const feedback = { primaryEvent: "tierUp", rankingEvent: "overtake", zebra: false, outcomes };
   const updatedRanking = ranking(1, payload.winnerId, payload.candidateIds);
   return {
-    duels: 1,
+    duels: progress,
     ranking: updatedRanking,
-    player: { version: 1, duels: 1, rankingPolicy: personalRankingPolicy, ranking: updatedRanking },
+    player: { version: progress, duels: progress, rankingPolicy: personalRankingPolicy, ranking: updatedRanking },
     round: {
       id: payload.roundId,
       status: "created",
@@ -95,6 +95,8 @@ const page = await context.newPage();
 const pageErrors = [];
 const voteRequests = [];
 let rankingReads = 0;
+let holdNextVoteResponse = false;
+let releaseHeldVoteResponse = null;
 page.on("pageerror", (error) => pageErrors.push(error.message));
 
 await page.addInitScript(() => {
@@ -129,7 +131,12 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
   if (path === "/api/round-vote") {
     const payload = request.postDataJSON();
     voteRequests.push(payload);
-    return route.fulfill({ status: 200, json: voteResponse(payload) });
+    if (holdNextVoteResponse) {
+      holdNextVoteResponse = false;
+      await new Promise((resolve) => { releaseHeldVoteResponse = resolve; });
+      releaseHeldVoteResponse = null;
+    }
+    return route.fulfill({ status: 200, json: voteResponse(payload, voteRequests.length) });
   }
   return route.fulfill({ status: 404, json: { error: "mock não encontrado" } });
 });
@@ -299,15 +306,74 @@ try {
   }
 
   await activateWithKeyboard(page, page.locator('.nav-button[data-screen="duel"]'));
-  const roundBeforeVote = await page.locator(".vote-target").evaluateAll((buttons) => buttons.map((button) => button.dataset.vote));
+  const roundBeforeLongPress = await page.locator(".vote-target").evaluateAll((buttons) => buttons.map((button) => button.dataset.vote));
   const chosen = page.locator(".vote-target").first();
-  await activateWithKeyboard(page, chosen, "Shift+Enter");
+  const chosenId = await chosen.getAttribute("data-vote");
+  const chosenBox = await chosen.boundingBox();
+  if (!chosenBox) throw new Error("O alvo da pressão longa não tem geometria visível");
+  await page.mouse.move(chosenBox.x + chosenBox.width / 2, chosenBox.y + chosenBox.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(520);
+  await page.mouse.up();
+  const modal = page.locator("#modal");
+  await modal.waitFor();
+  await page.waitForTimeout(30);
+  if (voteRequests.length !== 0) {
+    throw new Error("A pressão longa deixou o click de ponteiro votar junto com a abertura do perfil");
+  }
+  await page.keyboard.press("Escape");
+  await modal.waitFor({ state: "hidden" });
+  await page.waitForTimeout(20);
+  if (!await chosen.evaluate((button) => button === document.activeElement)) {
+    throw new Error("A pressão longa não devolveu foco ao mesmo alvo de voto após Escape");
+  }
+
+  holdNextVoteResponse = true;
+  await page.keyboard.press("Enter");
+  await page.locator(".round-instruction", { hasText: "Confirmando sua escolha…" }).waitFor();
+  for (let attempt = 0; attempt < 50 && !releaseHeldVoteResponse; attempt += 1) {
+    await page.waitForTimeout(20);
+  }
+  if (!releaseHeldVoteResponse || voteRequests.length !== 1 || voteRequests[0].winnerId !== chosenId) {
+    throw new Error(`Enter no mesmo alvo após a pressão longa não enviou exatamente um voto: ${JSON.stringify(voteRequests)}`);
+  }
+
+  const profileLockWhileBusy = await page.locator(".profile-trigger").evaluateAll((buttons) => (
+    buttons.map((button) => button.getAttribute("aria-disabled"))
+  ));
+  if (profileLockWhileBusy.some((value) => value !== "true")) {
+    throw new Error(`Os perfis não herdaram o bloqueio do voto pendente: ${JSON.stringify(profileLockWhileBusy)}`);
+  }
+  const busyProfile = page.locator(".profile-trigger").first();
+  await busyProfile.focus();
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(40);
+  const pendingRace = await page.evaluate(() => ({
+    modalOpen: document.querySelector("#modal").open,
+    candidateIds: [...document.querySelectorAll(".vote-target")].map((button) => button.dataset.vote),
+  }));
+  if (pendingRace.modalOpen || JSON.stringify(pendingRace.candidateIds) !== JSON.stringify(roundBeforeLongPress)) {
+    throw new Error(`Um perfil abriu ou a rodada mudou enquanto a resposta estava pendente: ${JSON.stringify(pendingRace)}`);
+  }
+
+  releaseHeldVoteResponse();
   await page.locator(".round-instruction", { hasText: "Nova rodada disponível" }).waitFor({ timeout: 4000 });
-  const roundAfterVote = await page.locator(".vote-target").evaluateAll((buttons) => buttons.map((button) => button.dataset.vote));
-  if (voteRequests.length !== 1
+  const roundAfterLongPressVote = await page.locator(".vote-target").evaluateAll((buttons) => buttons.map((button) => button.dataset.vote));
+  if (await modal.evaluate((dialog) => dialog.open)
     || voteRequests[0].roundId !== beforeProfiles.generatedRoundIds.at(-1)
-    || roundBeforeVote.some((id) => roundAfterVote.includes(id))) {
-    throw new Error(`O roteiro de teclado não concluiu uma rodada íntegra: ${JSON.stringify({ voteRequests, roundBeforeVote, roundAfterVote })}`);
+    || roundBeforeLongPress.some((id) => roundAfterLongPressVote.includes(id))) {
+    throw new Error(`A rodada não concluiu íntegra após a regressão de pressão longa: ${JSON.stringify({ voteRequests, roundBeforeLongPress, roundAfterLongPressVote })}`);
+  }
+
+  const modifiedChosen = page.locator(".vote-target").first();
+  const modifiedRoundId = await page.evaluate(() => window.__generatedRoundIds.at(-1));
+  await activateWithKeyboard(page, modifiedChosen, "Shift+Enter");
+  await page.locator(".round-instruction", { hasText: "Nova rodada disponível" }).waitFor({ timeout: 4000 });
+  const roundAfterModifiedVote = await page.locator(".vote-target").evaluateAll((buttons) => buttons.map((button) => button.dataset.vote));
+  if (voteRequests.length !== 2
+    || voteRequests[1].roundId !== modifiedRoundId
+    || roundAfterLongPressVote.some((id) => roundAfterModifiedVote.includes(id))) {
+    throw new Error(`O roteiro com Shift+Enter não concluiu uma rodada íntegra: ${JSON.stringify({ voteRequests, roundAfterLongPressVote, roundAfterModifiedVote })}`);
   }
 
   const report = {
@@ -319,7 +385,13 @@ try {
     })),
     focusReturns,
     accessibilityTree,
-    keyboard: { profileActivationKeys, voteActivationKey: "Shift+Enter" },
+    keyboard: { profileActivationKeys, longPressFollowUpKey: "Enter", voteActivationKey: "Shift+Enter" },
+    longPressRegression: {
+      winnerId: chosenId,
+      pointerVotesBeforeEscape: 0,
+      keyboardVotesAfterEscape: 1,
+    },
+    pendingProfileLock: { ariaDisabled: profileLockWhileBusy, pendingRace },
     negativeState: {
       before: beforeProfiles,
       after: afterProfiles,
@@ -327,7 +399,10 @@ try {
       rankingReads,
       personalRankingEmpty: true,
     },
-    completedRound: { roundId: voteRequests[0].roundId, before: roundBeforeVote, after: roundAfterVote },
+    completedRounds: [
+      { roundId: voteRequests[0].roundId, before: roundBeforeLongPress, after: roundAfterLongPressVote },
+      { roundId: voteRequests[1].roundId, before: roundAfterLongPressVote, after: roundAfterModifiedVote },
+    ],
     pageErrors,
   };
   if (process.env.POLIMATCH_E2E_ACCESSIBLE_REPORT) {

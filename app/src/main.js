@@ -85,6 +85,7 @@ let roundAdvanceTimer;
 let retryEnableTimer;
 let refs;
 let profileReturnTarget = null;
+let profileReturnCandidateId = "";
 
 function clearVoteTimers() {
   clearTimeout(resultTimer);
@@ -847,6 +848,7 @@ function showProfile(id, trigger = document.activeElement) {
     return href ? `<li><a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a></li>` : "";
   }).join("");
   profileReturnTarget = trigger instanceof HTMLElement && trigger.matches("button") ? trigger : null;
+  profileReturnCandidateId = id;
   modal.setAttribute("aria-labelledby", "profile-title");
   modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar perfil de ${escapeHtml(person.name)}">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2 id="profile-title">${escapeHtml(person.name)}</h2><p class="profile-role"><strong>${escapeHtml(candidateRole(person))}</strong></p>${metadata.length ? `<p class="profile-meta">${metadata.map(escapeHtml).join(" · ")}</p>` : ""}${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions"><button class="secondary" id="close-modal" type="button">Voltar à rodada</button></div>`;
   modal.showModal();
@@ -1543,7 +1545,7 @@ function handleAppClick(event) {
     return;
   }
   if (button.dataset.profile) {
-    if (button.getAttribute("aria-disabled") === "true") return;
+    if (state.busy || state.pendingWinnerId || button.getAttribute("aria-disabled") === "true") return;
     showProfile(button.dataset.profile, button);
     return;
   }
@@ -1587,9 +1589,12 @@ function installEvents() {
     sound.play("dismiss");
     refs.slots.forEach(({ button }) => button.classList.remove("is-peeking"));
     const returnTarget = profileReturnTarget;
+    const returnCandidateId = profileReturnCandidateId;
     profileReturnTarget = null;
+    profileReturnCandidateId = "";
     setTimeout(() => {
-      if (returnTarget?.isConnected) returnTarget.focus();
+      const currentCandidateId = returnTarget?.dataset.profile || returnTarget?.dataset.vote || "";
+      if (returnTarget?.isConnected && currentCandidateId === returnCandidateId) returnTarget.focus();
     }, 0);
   });
   refs.coachDialog.addEventListener("close", () => {
@@ -1604,7 +1609,7 @@ function installEvents() {
       else if (button.dataset.vote) vote(button.dataset.vote);
     },
     onHold: () => {
-      if (button.getAttribute("aria-disabled") === "true" || !button.dataset.vote) return;
+      if (state.busy || state.pendingWinnerId || button.getAttribute("aria-disabled") === "true" || !button.dataset.vote) return;
       button.classList.add("is-peeking");
       try { navigator.vibrate?.(18); } catch {}
       showProfile(button.dataset.vote, button);

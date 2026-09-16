@@ -598,6 +598,7 @@ try {
   await page.locator("dialog[open]").waitFor();
   await page.keyboard.press("Escape");
   await page.locator("dialog[open]").waitFor({ state: "hidden" });
+  await page.waitForFunction(() => document.activeElement === document.querySelector(".candidate-card"));
 
   if (await page.locator('[role="status"]').count() !== 1) throw new Error("O app deve manter uma única região viva persistente");
   if (!googleEnabled && await page.locator(".app-live-region").innerText()) throw new Error("A região viva deveria nascer vazia antes do primeiro anúncio");

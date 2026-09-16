@@ -16,15 +16,6 @@
       "tag": "ARTICLE",
       "directButtons": 2,
       "nestedButtons": 0,
-      "voteName": "Escolher Augusto Cury",
-      "profileName": "Conhecer Augusto Cury",
-      "profileText": "ⓘConhecer perfil",
-      "profileHeight": 44
-    },
-    {
-      "tag": "ARTICLE",
-      "directButtons": 2,
-      "nestedButtons": 0,
       "voteName": "Escolher Romeu Zema",
       "profileName": "Conhecer Romeu Zema",
       "profileText": "ⓘConhecer perfil",
@@ -43,6 +34,15 @@
       "tag": "ARTICLE",
       "directButtons": 2,
       "nestedButtons": 0,
+      "voteName": "Escolher Luiz Inácio Lula da Silva (Lula)",
+      "profileName": "Conhecer Luiz Inácio Lula da Silva (Lula)",
+      "profileText": "ⓘConhecer perfil",
+      "profileHeight": 44
+    },
+    {
+      "tag": "ARTICLE",
+      "directButtons": 2,
+      "nestedButtons": 0,
       "voteName": "Escolher Flávio Bolsonaro",
       "profileName": "Conhecer Flávio Bolsonaro",
       "profileText": "ⓘConhecer perfil",
@@ -52,17 +52,17 @@
   "focusReturns": [
     {
       "index": 0,
-      "expectedName": "Conhecer Augusto Cury",
-      "returned": true
-    },
-    {
-      "index": 1,
       "expectedName": "Conhecer Romeu Zema",
       "returned": true
     },
     {
-      "index": 2,
+      "index": 1,
       "expectedName": "Conhecer Pablo Marçal",
+      "returned": true
+    },
+    {
+      "index": 2,
+      "expectedName": "Conhecer Luiz Inácio Lula da Silva (Lula)",
       "returned": true
     },
     {
@@ -71,7 +71,7 @@
       "returned": true
     }
   ],
-  "accessibilityTree": "- article:\n  - button \"Escolher Augusto Cury\":\n    - text: AC\n    - img \"Foto de Augusto Cury\"\n    - strong: Augusto Cury\n    - text: Avante Escritor e psiquiatra; candidato à Presidência\n  - button \"Conhecer Augusto Cury\": Conhecer perfil\n- article:\n  - button \"Escolher Romeu Zema\":\n    - text: RZ\n    - img \"Foto de Romeu Zema\"\n    - strong: Romeu Zema\n    - text: Novo Ex-governador de Minas Gerais; candidato à Presidência\n  - button \"Conhecer Romeu Zema\": Conhecer perfil\n- article:\n  - button \"Escolher Pablo Marçal\":\n    - text: PM\n    - img \"Foto de Pablo Marçal\"\n    - strong: Pablo Marçal\n    - text: PRTB Empresário e coach; registro à Presidência indeferido\n  - button \"Conhecer Pablo Marçal\": Conhecer perfil\n- article:\n  - button \"Escolher Flávio Bolsonaro\":\n    - text: FB\n    - img \"Foto de Flávio Bolsonaro\"\n    - strong: Flávio Bolsonaro\n    - text: PL Senador (RJ); candidato à Presidência\n  - button \"Conhecer Flávio Bolsonaro\": Conhecer perfil",
+  "accessibilityTree": "- article:\n  - button \"Escolher Romeu Zema\":\n    - text: RZ\n    - img \"Foto de Romeu Zema\"\n    - strong: Romeu Zema\n    - text: Novo Ex-governador de Minas Gerais; candidato à Presidência\n  - button \"Conhecer Romeu Zema\": Conhecer perfil\n- article:\n  - button \"Escolher Pablo Marçal\":\n    - text: PM\n    - img \"Foto de Pablo Marçal\"\n    - strong: Pablo Marçal\n    - text: PRTB Empresário e coach; registro à Presidência indeferido\n  - button \"Conhecer Pablo Marçal\": Conhecer perfil\n- article:\n  - button \"Escolher Luiz Inácio Lula da Silva (Lula)\":\n    - text: LI\n    - img \"Foto de Luiz Inácio Lula da Silva (Lula)\"\n    - strong: Lula\n    - text: PT Presidente da República (candidato à reeleição)\n  - button \"Conhecer Luiz Inácio Lula da Silva (Lula)\": Conhecer perfil\n- article:\n  - button \"Escolher Flávio Bolsonaro\":\n    - text: FB\n    - img \"Foto de Flávio Bolsonaro\"\n    - strong: Flávio Bolsonaro\n    - text: PL Senador (RJ); candidato à Presidência\n  - button \"Conhecer Flávio Bolsonaro\": Conhecer perfil",
   "keyboard": {
     "profileActivationKeys": [
       "Enter",
@@ -79,15 +79,38 @@
       "Shift+Enter",
       "Enter"
     ],
+    "longPressFollowUpKey": "Enter",
     "voteActivationKey": "Shift+Enter"
+  },
+  "longPressRegression": {
+    "winnerId": "romeu-zema",
+    "pointerVotesBeforeEscape": 0,
+    "keyboardVotesAfterEscape": 1
+  },
+  "pendingProfileLock": {
+    "ariaDisabled": [
+      "true",
+      "true",
+      "true",
+      "true"
+    ],
+    "pendingRace": {
+      "modalOpen": false,
+      "candidateIds": [
+        "romeu-zema",
+        "pablo-marcal",
+        "lula",
+        "flavio-bolsonaro"
+      ]
+    }
   },
   "negativeState": {
     "before": {
       "progress": "0 escolhas",
       "candidateIds": [
-        "augusto-cury",
         "romeu-zema",
         "pablo-marcal",
+        "lula",
         "flavio-bolsonaro"
       ],
       "generatedRoundIds": [
@@ -97,9 +120,9 @@
     "after": {
       "progress": "0 escolhas",
       "candidateIds": [
-        "augusto-cury",
         "romeu-zema",
         "pablo-marcal",
+        "lula",
         "flavio-bolsonaro"
       ],
       "generatedRoundIds": [
@@ -110,20 +133,37 @@
     "rankingReads": 1,
     "personalRankingEmpty": true
   },
-  "completedRound": {
-    "roundId": "00000000-0000-4000-8000-000000000001",
-    "before": [
-      "augusto-cury",
-      "romeu-zema",
-      "pablo-marcal",
-      "flavio-bolsonaro"
-    ],
-    "after": [
-      "lula",
-      "ronaldo-caiado",
-      "tarcisio-de-freitas",
-      "renan-santos"
-    ]
-  },
+  "completedRounds": [
+    {
+      "roundId": "00000000-0000-4000-8000-000000000001",
+      "before": [
+        "romeu-zema",
+        "pablo-marcal",
+        "lula",
+        "flavio-bolsonaro"
+      ],
+      "after": [
+        "tarcisio-de-freitas",
+        "ronaldo-caiado",
+        "augusto-cury",
+        "renan-santos"
+      ]
+    },
+    {
+      "roundId": "00000000-0000-4000-8000-000000000002",
+      "before": [
+        "tarcisio-de-freitas",
+        "ronaldo-caiado",
+        "augusto-cury",
+        "renan-santos"
+      ],
+      "after": [
+        "romeu-zema",
+        "lula",
+        "flavio-bolsonaro",
+        "pablo-marcal"
+      ]
+    }
+  ],
   "pageErrors": []
 }

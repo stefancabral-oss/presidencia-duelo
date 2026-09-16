@@ -139,7 +139,7 @@ test("persistent cards switch between preference, prediction, and sealed states"
   assert.equal(slot.root.hidden, true);
 });
 
-test("pending cards stay unavailable without being announced as busy", () => {
+test("pending candidate actions stay unavailable without being announced as busy", () => {
   const slot = fakeSlot();
   patchCandidateSlot(slot, { ...firstCandidate, locked: true, busy: false });
 

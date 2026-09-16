@@ -16,8 +16,17 @@
       "tag": "ARTICLE",
       "directButtons": 2,
       "nestedButtons": 0,
-      "voteName": "Escolher Renan Santos",
-      "profileName": "Conhecer Renan Santos",
+      "voteName": "Escolher Ronaldo Caiado",
+      "profileName": "Conhecer Ronaldo Caiado",
+      "profileText": "ⓘConhecer perfil",
+      "profileHeight": 44
+    },
+    {
+      "tag": "ARTICLE",
+      "directButtons": 2,
+      "nestedButtons": 0,
+      "voteName": "Escolher Luiz Inácio Lula da Silva (Lula)",
+      "profileName": "Conhecer Luiz Inácio Lula da Silva (Lula)",
       "profileText": "ⓘConhecer perfil",
       "profileHeight": 44
     },
@@ -34,15 +43,6 @@
       "tag": "ARTICLE",
       "directButtons": 2,
       "nestedButtons": 0,
-      "voteName": "Escolher Augusto Cury",
-      "profileName": "Conhecer Augusto Cury",
-      "profileText": "ⓘConhecer perfil",
-      "profileHeight": 44
-    },
-    {
-      "tag": "ARTICLE",
-      "directButtons": 2,
-      "nestedButtons": 0,
       "voteName": "Escolher Flávio Bolsonaro",
       "profileName": "Conhecer Flávio Bolsonaro",
       "profileText": "ⓘConhecer perfil",
@@ -52,17 +52,17 @@
   "focusReturns": [
     {
       "index": 0,
-      "expectedName": "Conhecer Renan Santos",
+      "expectedName": "Conhecer Ronaldo Caiado",
       "returned": true
     },
     {
       "index": 1,
-      "expectedName": "Conhecer Pablo Marçal",
+      "expectedName": "Conhecer Luiz Inácio Lula da Silva (Lula)",
       "returned": true
     },
     {
       "index": 2,
-      "expectedName": "Conhecer Augusto Cury",
+      "expectedName": "Conhecer Pablo Marçal",
       "returned": true
     },
     {
@@ -71,7 +71,7 @@
       "returned": true
     }
   ],
-  "accessibilityTree": "- article:\n  - button \"Escolher Renan Santos\":\n    - text: RS\n    - img \"Foto de Renan Santos\"\n    - strong: Renan Santos\n    - text: Missão Ativista e fundador do MBL; candidato à Presidência\n  - button \"Conhecer Renan Santos\": Conhecer perfil\n- article:\n  - button \"Escolher Pablo Marçal\":\n    - text: PM\n    - img \"Foto de Pablo Marçal\"\n    - strong: Pablo Marçal\n    - text: PRTB Empresário e coach; registro à Presidência indeferido\n  - button \"Conhecer Pablo Marçal\": Conhecer perfil\n- article:\n  - button \"Escolher Augusto Cury\":\n    - text: AC\n    - img \"Foto de Augusto Cury\"\n    - strong: Augusto Cury\n    - text: Avante Escritor e psiquiatra; candidato à Presidência\n  - button \"Conhecer Augusto Cury\": Conhecer perfil\n- article:\n  - button \"Escolher Flávio Bolsonaro\":\n    - text: FB\n    - img \"Foto de Flávio Bolsonaro\"\n    - strong: Flávio Bolsonaro\n    - text: PL Senador (RJ); candidato à Presidência\n  - button \"Conhecer Flávio Bolsonaro\": Conhecer perfil",
+  "accessibilityTree": "- article:\n  - button \"Escolher Ronaldo Caiado\":\n    - text: RC\n    - img \"Foto de Ronaldo Caiado\"\n    - strong: Ronaldo Caiado\n    - text: PSD Ex-governador de Goiás; candidato à Presidência\n  - button \"Conhecer Ronaldo Caiado\": Conhecer perfil\n- article:\n  - button \"Escolher Luiz Inácio Lula da Silva (Lula)\":\n    - text: LI\n    - img \"Foto de Luiz Inácio Lula da Silva (Lula)\"\n    - strong: Lula\n    - text: PT Presidente da República (candidato à reeleição)\n  - button \"Conhecer Luiz Inácio Lula da Silva (Lula)\": Conhecer perfil\n- article:\n  - button \"Escolher Pablo Marçal\":\n    - text: PM\n    - img \"Foto de Pablo Marçal\"\n    - strong: Pablo Marçal\n    - text: PRTB Empresário e coach; registro à Presidência indeferido\n  - button \"Conhecer Pablo Marçal\": Conhecer perfil\n- article:\n  - button \"Escolher Flávio Bolsonaro\":\n    - text: FB\n    - img \"Foto de Flávio Bolsonaro\"\n    - strong: Flávio Bolsonaro\n    - text: PL Senador (RJ); candidato à Presidência\n  - button \"Conhecer Flávio Bolsonaro\": Conhecer perfil",
   "keyboard": {
     "profileActivationKeys": [
       "Enter",
@@ -79,15 +79,38 @@
       "Shift+Enter",
       "Enter"
     ],
+    "longPressFollowUpKey": "Enter",
     "voteActivationKey": "Shift+Enter"
+  },
+  "longPressRegression": {
+    "winnerId": "ronaldo-caiado",
+    "pointerVotesBeforeEscape": 0,
+    "keyboardVotesAfterEscape": 1
+  },
+  "pendingProfileLock": {
+    "ariaDisabled": [
+      "true",
+      "true",
+      "true",
+      "true"
+    ],
+    "pendingRace": {
+      "modalOpen": false,
+      "candidateIds": [
+        "ronaldo-caiado",
+        "lula",
+        "pablo-marcal",
+        "flavio-bolsonaro"
+      ]
+    }
   },
   "negativeState": {
     "before": {
       "progress": "0 escolhas",
       "candidateIds": [
-        "renan-santos",
+        "ronaldo-caiado",
+        "lula",
         "pablo-marcal",
-        "augusto-cury",
         "flavio-bolsonaro"
       ],
       "generatedRoundIds": [
@@ -97,9 +120,9 @@
     "after": {
       "progress": "0 escolhas",
       "candidateIds": [
-        "renan-santos",
+        "ronaldo-caiado",
+        "lula",
         "pablo-marcal",
-        "augusto-cury",
         "flavio-bolsonaro"
       ],
       "generatedRoundIds": [
@@ -110,20 +133,37 @@
     "rankingReads": 1,
     "personalRankingEmpty": true
   },
-  "completedRound": {
-    "roundId": "00000000-0000-4000-8000-000000000001",
-    "before": [
-      "renan-santos",
-      "pablo-marcal",
-      "augusto-cury",
-      "flavio-bolsonaro"
-    ],
-    "after": [
-      "lula",
-      "tarcisio-de-freitas",
-      "romeu-zema",
-      "ronaldo-caiado"
-    ]
-  },
+  "completedRounds": [
+    {
+      "roundId": "00000000-0000-4000-8000-000000000001",
+      "before": [
+        "ronaldo-caiado",
+        "lula",
+        "pablo-marcal",
+        "flavio-bolsonaro"
+      ],
+      "after": [
+        "augusto-cury",
+        "tarcisio-de-freitas",
+        "romeu-zema",
+        "renan-santos"
+      ]
+    },
+    {
+      "roundId": "00000000-0000-4000-8000-000000000002",
+      "before": [
+        "augusto-cury",
+        "tarcisio-de-freitas",
+        "romeu-zema",
+        "renan-santos"
+      ],
+      "after": [
+        "flavio-bolsonaro",
+        "lula",
+        "pablo-marcal",
+        "ronaldo-caiado"
+      ]
+    }
+  ],
   "pageErrors": []
 }

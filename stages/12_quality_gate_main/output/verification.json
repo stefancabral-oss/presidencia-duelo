@@ -2,6 +2,7 @@
   "status": "local-passed-pr-and-ci-pending",
   "issue": 165,
   "macroIssue": 175,
+  "pullRequest": 186,
   "baseSha": "9cf11af154d1b5f525e6ae12d82474fe296ba41f",
   "checks": [
     {
@@ -36,7 +37,6 @@
     }
   ],
   "pending": [
-    "pull request",
     "automatic CI on final head"
   ]
 }

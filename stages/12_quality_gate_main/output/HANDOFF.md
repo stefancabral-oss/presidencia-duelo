@@ -2,12 +2,12 @@
 
 ## Status
 
-- Estado: `implementação e validação local aprovadas; PR e CI pendentes`
+- Estado: `implementação e validação local aprovadas; CI final pendente`
 - Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/165
 - Macro: https://github.com/stefancabral-oss/presidencia-duelo/issues/175
 - Branch: `icm/12-u02-card-hierarchy-165`
 - Base: `main@9cf11af`
-- PR: pendente
+- PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/186
 
 ## Entregue
 

@@ -407,7 +407,12 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   .skip-button { min-height: 36px; padding: 6px 14px; font-size: .67rem; }
 }
 
-@media (min-width: 1000px) {
+/* Altura mínima obrigatória: abaixo de 641px o bloco `max-height: 640px` assume o
+   duelo. Sem esse recorte as duas consultas coincidiriam em telas largas e baixas
+   e, por vir depois com a mesma especificidade, a de altura sobrescreveria
+   `height` e `grid-template-rows` — deixando `aspect-ratio` inerte e a carta
+   achatada, justamente o sintoma da issue #158. */
+@media (min-width: 1000px) and (min-height: 641px) {
   .app-shell:has(.duel-screen) { width: min(100%, 1320px); padding-inline: 24px; }
   .app-shell:has(.duel-screen) .topbar { margin-bottom: 13px; }
   .duel-screen { gap: 11px; }

@@ -80,6 +80,8 @@ Saídas:
 
 Não edite essas saídas manualmente. Corrija a entrada e execute o importador novamente.
 
+O contrato de `role`, `party`, `primaryArea`, `contextAffiliation` e da proveniência por atributo está em `docs/data/CATALOG_TAXONOMY.md`. `npm run test:shared` valida a fonte e confirma que o artefato gerado continua sincronizado.
+
 ## API
 
 | Método | Rota | Função |

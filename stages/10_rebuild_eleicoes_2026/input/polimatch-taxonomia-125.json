@@ -1,0 +1,2505 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "name": "Luiz Inácio Lula da Silva (Lula)",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Flávio Bolsonaro",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Renan Santos",
+      "party": "MISSÃO",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": "MBL",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.currentOccupation"
+        }
+      }
+    },
+    {
+      "name": "Ronaldo Caiado",
+      "party": "PSD",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Augusto Cury",
+      "party": "AVANTE",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Romeu Zema",
+      "party": "NOVO",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Pablo Marçal",
+      "party": "PRTB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Geraldo Alckmin",
+      "party": "PSB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Gilberto Kassab",
+      "party": "PSD",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Eduardo Girão",
+      "party": "NOVO",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Tarcísio de Freitas",
+      "party": "REPUBLICANOS",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Fernando Haddad",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Jerônimo Rodrigues",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "ACM Neto",
+      "party": "UNIÃO",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Elmano de Freitas",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Ciro Gomes",
+      "party": "PSDB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "João Campos",
+      "party": "PSB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Raquel Lyra",
+      "party": "PSD",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Douglas Ruas",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Eduardo Paes",
+      "party": "PSD",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Mateus Simões",
+      "party": "PSD",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Ratinho Júnior",
+      "party": "PSD",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Eduardo Leite",
+      "party": "PSD",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Cláudio Castro",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Márcio França",
+      "party": "PSB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Alexandre Kalil",
+      "party": "PDT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Hana Ghassan",
+      "party": "MDB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Michelle Bolsonaro",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Helder Barbalho",
+      "party": "MDB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Mauro Mendes",
+      "party": "UNIÃO",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Gleisi Hoffmann",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Arthur Lira",
+      "party": "PP",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Marina Silva",
+      "party": "REDE",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Simone Tebet",
+      "party": "PSB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Rui Costa",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Hugo Motta",
+      "party": "REPUBLICANOS",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Davi Alcolumbre",
+      "party": "UNIÃO",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Renan Calheiros",
+      "party": "MDB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Nikolas Ferreira",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Carlos Portinho",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Carlos Fávaro",
+      "party": "PSD",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Bia Kicis",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Erika Kokay",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Leila do Vôlei",
+      "party": "PDT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Cid Gomes",
+      "party": "PSB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Lindbergh Farias",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Janja",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": "Executivo",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Guilherme Boulos",
+      "party": "PSOL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": "governo Lula",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Wellington Dias",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Alexandre Padilha",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Anielle Franco",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Sônia Guajajara",
+      "party": "PSOL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Alexandre de Moraes",
+      "party": null,
+      "primaryArea": "Justiça",
+      "contextAffiliation": "STF",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Gilmar Mendes",
+      "party": null,
+      "primaryArea": "Justiça",
+      "contextAffiliation": "STF",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Cármen Lúcia",
+      "party": null,
+      "primaryArea": "Justiça",
+      "contextAffiliation": "STF",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Dias Toffoli",
+      "party": null,
+      "primaryArea": "Justiça",
+      "contextAffiliation": "STF",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Luiz Fux",
+      "party": null,
+      "primaryArea": "Justiça",
+      "contextAffiliation": "STF",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Edson Fachin",
+      "party": null,
+      "primaryArea": "Justiça",
+      "contextAffiliation": "STF",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "André Mendonça",
+      "party": null,
+      "primaryArea": "Justiça",
+      "contextAffiliation": "STF",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Nunes Marques",
+      "party": null,
+      "primaryArea": "Justiça",
+      "contextAffiliation": "STF",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Cristiano Zanin",
+      "party": null,
+      "primaryArea": "Justiça",
+      "contextAffiliation": "STF",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Flávio Dino",
+      "party": null,
+      "primaryArea": "Justiça",
+      "contextAffiliation": "STF",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Jair Bolsonaro",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Eduardo Bolsonaro",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Carlos Bolsonaro",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Valdemar Costa Neto",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Edinho Silva",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Antonio Rueda",
+      "party": "UNIÃO",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Ciro Nogueira",
+      "party": "PP",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Marcos Pereira",
+      "party": "REPUBLICANOS",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Baleia Rossi",
+      "party": "MDB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Rodrigo Pacheco",
+      "party": "PSB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Rogério Marinho",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Datena",
+      "party": "PSB",
+      "primaryArea": "Mídia e jornalismo",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Reinaldo Azevedo",
+      "party": null,
+      "primaryArea": "Mídia e jornalismo",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "William Bonner",
+      "party": null,
+      "primaryArea": "Mídia e jornalismo",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Vera Magalhães",
+      "party": null,
+      "primaryArea": "Mídia e jornalismo",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Rachel Sheherazade",
+      "party": "PSD",
+      "primaryArea": "Mídia e jornalismo",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Kim Kataguiri",
+      "party": "MISSÃO",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": "MBL",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "André Janones",
+      "party": "REDE",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": "articulação digital governista",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.currentOccupation"
+        }
+      }
+    },
+    {
+      "name": "Felipe Neto",
+      "party": null,
+      "primaryArea": "Comunicação digital",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Jones Manoel",
+      "party": "PSOL",
+      "primaryArea": "Comunicação digital",
+      "contextAffiliation": "esquerda radical",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Carla Zambelli",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": "digital",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Tabata Amaral",
+      "party": "PSB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Glauber Braga",
+      "party": "PSOL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Sérgio Moro",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Gabriel Galípolo",
+      "party": null,
+      "primaryArea": "Economia",
+      "contextAffiliation": "BC",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Roberto Campos Neto",
+      "party": null,
+      "primaryArea": "Economia",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Armínio Fraga",
+      "party": null,
+      "primaryArea": "Economia",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Paulo Guedes",
+      "party": null,
+      "primaryArea": "Economia",
+      "contextAffiliation": "órbita PL",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Silas Malafaia",
+      "party": null,
+      "primaryArea": "Religião",
+      "contextAffiliation": "Assembleia de Deus Vitória em Cristo (ADVEC)",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.currentOccupation"
+        }
+      }
+    },
+    {
+      "name": "Edir Macedo",
+      "party": null,
+      "primaryArea": "Religião",
+      "contextAffiliation": "Universal",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Damares Alves",
+      "party": "REPUBLICANOS",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Delegado Éder Mauro",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Deltan Dallagnol",
+      "party": "NOVO",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": "direita",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Randolfe Rodrigues",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Camilo Santana",
+      "party": "PT",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Ricardo Nunes",
+      "party": "MDB",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Clécio Luís",
+      "party": "UNIÃO",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Jorginho Mello",
+      "party": "PL",
+      "primaryArea": "Política institucional",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "inferred",
+          "source": "master.group + profile.currentOccupation"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Anitta",
+      "party": null,
+      "primaryArea": "Música",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Neymar Jr.",
+      "party": null,
+      "primaryArea": "Esporte",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Gusttavo Lima",
+      "party": null,
+      "primaryArea": "Música",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Ludmilla",
+      "party": null,
+      "primaryArea": "Música",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "José Aldo",
+      "party": null,
+      "primaryArea": "Esporte",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Vitor Belfort",
+      "party": null,
+      "primaryArea": "Esporte",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Popó (Acelino Freitas)",
+      "party": null,
+      "primaryArea": "Esporte",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Luciano Huck",
+      "party": null,
+      "primaryArea": "Audiovisual e artes cênicas",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Ratinho (apresentador)",
+      "party": null,
+      "primaryArea": "Audiovisual e artes cênicas",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Casimiro",
+      "party": null,
+      "primaryArea": "Comunicação digital",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Whindersson Nunes",
+      "party": null,
+      "primaryArea": "Humor",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Bruno Gagliasso",
+      "party": null,
+      "primaryArea": "Audiovisual e artes cênicas",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Wagner Moura",
+      "party": null,
+      "primaryArea": "Audiovisual e artes cênicas",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Gregório Duvivier",
+      "party": null,
+      "primaryArea": "Humor",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Pabllo Vittar",
+      "party": null,
+      "primaryArea": "Música",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Emicida",
+      "party": null,
+      "primaryArea": "Música",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Lázaro Ramos",
+      "party": null,
+      "primaryArea": "Audiovisual e artes cênicas",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Fernanda Torres",
+      "party": null,
+      "primaryArea": "Audiovisual e artes cênicas",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Silvia Abravanel",
+      "party": "PSD",
+      "primaryArea": "Audiovisual e artes cênicas",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Geraldo Luís",
+      "party": "AVANTE",
+      "primaryArea": "Mídia e jornalismo",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Antonia Fontenelle",
+      "party": "PSDB",
+      "primaryArea": "Comunicação digital",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Monark (Bruno Aiub)",
+      "party": null,
+      "primaryArea": "Comunicação digital",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Marta",
+      "party": null,
+      "primaryArea": "Esporte",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Edmundo",
+      "party": "PSDB",
+      "primaryArea": "Esporte",
+      "contextAffiliation": null,
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "ambiguous",
+          "source": "profile.partyOrArea"
+        }
+      }
+    },
+    {
+      "name": "Gracyanne Barbosa",
+      "party": "REPUBLICANOS",
+      "primaryArea": "Saúde e bem-estar",
+      "contextAffiliation": "filiada ao Republicanos; sem candidatura ativa",
+      "taxonomyProvenance": {
+        "party": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        },
+        "primaryArea": {
+          "status": "extracted",
+          "source": "master.area"
+        },
+        "contextAffiliation": {
+          "status": "extracted",
+          "source": "profile.partyOrArea"
+        }
+      }
+    }
+  ]
+}

@@ -65,6 +65,9 @@ test("topic ranking exposes only candidates from that curation", () => {
   assert.equal(result.topicId, "eleicoes-2026");
   assert.equal(result.ranking.length, 54);
   assert.equal(result.ranking[0].id, "lula");
+  assert.equal(result.ranking[0].party, "PT");
+  assert.equal(result.ranking[0].primaryArea, "Política institucional");
+  assert.equal("affiliation" in result.ranking[0], false);
   assert.equal(result.ranking[0].decisions, 1);
   assert.equal(result.ranking.find(({ id }) => id === "tarcisio-de-freitas").decisions, 0);
 });

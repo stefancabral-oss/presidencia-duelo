@@ -2,7 +2,7 @@ import { createHmac, randomUUID } from "node:crypto";
 import { isIP } from "node:net";
 import cors from "cors";
 import express from "express";
-import { CANDIDATES, TOPICS, candidatesForTopic } from "./candidates.js";
+import { CANDIDATES, TOPICS, candidatesForTopic, serializeCandidate } from "./candidates.js";
 
 const PRODUCTION_ORIGINS = ["https://polimatch.com.br"];
 const LOCAL_ORIGIN_PATTERN = /^http:\/\/(?:127\.0\.0\.1|localhost):\d+$/;
@@ -153,9 +153,7 @@ export function createHttpApp({ store, googleIdentity, env = process.env, logger
     const candidates = candidatesForTopic(topicId);
     res.json({
       topicId,
-      candidates: candidates.map(({ personId, id, name, displayName, affiliation, photo, role, summary, office, party, location, bio, relevance2026, facts, highlight, controversy, sources, reviewedAt, reviewStatus, topicIds }) => ({
-        personId, id, name, displayName, affiliation, photo, role, summary, office, party, location, bio, relevance2026, facts, highlight, controversy, sources, reviewedAt, reviewStatus, topicIds,
-      })),
+      candidates: candidates.map(serializeCandidate),
     });
   });
 

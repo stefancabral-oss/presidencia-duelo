@@ -6,6 +6,9 @@ on:
     paths:
       - 'back/**'
       - 'shared/**'
+      - 'stages/10_rebuild_eleicoes_2026/input/polimatch-catalogo-125.json'
+      - 'stages/10_rebuild_eleicoes_2026/input/polimatch-perfis-editoriais-125.json'
+      - 'stages/10_rebuild_eleicoes_2026/input/polimatch-taxonomia-125.json'
       - 'package.json'
       - '.github/workflows/back-shared.yml'
   workflow_dispatch:
@@ -43,7 +46,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Test shared domain
+      - name: Test shared domain and catalog taxonomy
         run: npm run test:shared
 
   back-integration-postgres:

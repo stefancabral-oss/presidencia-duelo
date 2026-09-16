@@ -10,6 +10,7 @@ import { googleClientId, mountGoogleButton } from "./google-login.js";
 import { isCurrentVoteIdentity, resetPendingVoteForIdentityChange, revokeSessionBeforeClearing } from "./logout.js";
 import { VOTE_ACTIONS, VOTE_PHASES, voteFailureState, voteRecoveryControl } from "./vote-flow.js";
 import { confirmedVoteData } from "./vote-response.js";
+import { compactTaxonomyLabel } from "../../shared/catalog-taxonomy.js";
 
 const app = document.querySelector("#app");
 const sound = createSoundController();
@@ -26,6 +27,8 @@ const state = {
   personalDuels: 0,
   rankingView: "general",
   rankingQuery: "",
+  rankingParty: "",
+  rankingArea: "",
   rankingExpanded: false,
   chromaBatchExpanded: false,
   recoveryKey: "",
@@ -89,7 +92,7 @@ function brandSymbol(className = "brand-symbol") {
 }
 
 function candidateRole(candidate) {
-  return candidate.role || candidate.area || candidate.affiliation || candidate.party || "Pessoa pública";
+  return candidate.role || "Pessoa pública";
 }
 
 function candidateSummary(candidate) {
@@ -100,8 +103,8 @@ function candidateCardSummary(candidate) {
   return candidate.summary || candidate.relevance2026 || "Perfil em revisão editorial.";
 }
 
-function candidateAffiliation(candidate) {
-  return candidate.party || candidate.affiliation || candidate.area || "Pessoa pública";
+function candidateTaxonomy(candidate) {
+  return compactTaxonomyLabel(candidate) || "Pessoa pública";
 }
 
 function safeUrl(value = "") {
@@ -140,8 +143,8 @@ function card(candidate) {
       ${portrait(candidate)}
       <span class="candidate-copy">
         <span class="candidate-title"><strong class="candidate-name">${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong><span class="card-rarity" aria-hidden="true">●</span></span>
-        <span class="candidate-affiliation">${escapeHtml(candidateAffiliation(candidate))}</span>
-        <span class="candidate-office">${escapeHtml(candidate.office || candidateRole(candidate))}</span>
+        <span class="candidate-affiliation">${escapeHtml(candidateTaxonomy(candidate))}</span>
+        <span class="candidate-office">${escapeHtml(candidateRole(candidate))}</span>
         <small class="candidate-summary">${escapeHtml(candidateCardSummary(candidate))}</small>
         <small class="candidate-profile-hint"><span aria-hidden="true">ⓘ</span> Segure para conhecer</small>
         ${outcomeStamp}
@@ -189,7 +192,7 @@ function topicsScreen() {
     const photo = candidatePhoto(candidate);
     return `<article class="home-preview-card home-preview-card-${index + 1}" aria-hidden="true">
       ${photo ? `<img src="${escapeHtml(photo)}" alt="" width="240" height="300">` : ""}
-      <span><strong>${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong><small>${escapeHtml(candidateAffiliation(candidate))}</small></span>
+      <span><strong>${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong><small>${escapeHtml(candidateTaxonomy(candidate))}</small></span>
     </article>`;
   }).join("");
   const approvedCount = approvedCandidates.length;
@@ -258,22 +261,26 @@ function duelScreen() {
 function rankingScreen() {
   const personal = state.rankingView === "personal";
   const ranking = displayRanking(personal ? state.personalRanking : state.ranking, { personal });
-  const filtered = filterRanking(ranking, state.rankingQuery);
-  const visible = state.rankingExpanded || state.rankingQuery ? filtered : filtered.slice(0, 25);
+  const filtered = filterRanking(ranking, state.rankingQuery, { party: state.rankingParty, primaryArea: state.rankingArea });
+  const filtersActive = Boolean(state.rankingQuery || state.rankingParty || state.rankingArea);
+  const visible = state.rankingExpanded || filtersActive ? filtered : filtered.slice(0, 25);
   const podium = rankingPodium(ranking);
   const highlights = rankingHighlights(ranking);
   const totalDuels = personal ? state.personalDuels : state.globalDuels;
-  const rows = visible.map((person) => `<button class="ranking-row" type="button" data-profile="${escapeHtml(person.id)}"><strong class="rank-position">${person.displayRank ?? "—"}</strong><span class="rank-person">${escapeHtml(person.displayName || shortName(person.name))}<small>${escapeHtml(person.affiliation || person.party || candidateRole(person))}</small>${person.decisions ? `<span class="vote-counts"><b class="vote-positive">+ ${person.wins} vitória${person.wins === 1 ? "" : "s"}</b><b class="vote-negative">− ${person.losses} derrota${person.losses === 1 ? "" : "s"}</b></span>` : '<span class="not-played">Ainda sem comparações</span>'}</span><strong class="rank-score">${person.decisions ? `${person.winRate}%<small>${person.elo} Elo</small>` : "—"}</strong></button>`).join("");
+  const rows = visible.map((person) => `<button class="ranking-row" type="button" data-profile="${escapeHtml(person.id)}"><strong class="rank-position">${person.displayRank ?? "—"}</strong><span class="rank-person">${escapeHtml(person.displayName || shortName(person.name))}<small>${escapeHtml(candidateTaxonomy(person))}</small>${person.decisions ? `<span class="vote-counts"><b class="vote-positive">+ ${person.wins} vitória${person.wins === 1 ? "" : "s"}</b><b class="vote-negative">− ${person.losses} derrota${person.losses === 1 ? "" : "s"}</b></span>` : '<span class="not-played">Ainda sem comparações</span>'}</span><strong class="rank-score">${person.decisions ? `${person.winRate}%<small>${person.elo} Elo</small>` : "—"}</strong></button>`).join("");
+  const parties = [...new Set(ranking.map(({ party }) => party).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const areas = [...new Set(ranking.map(({ primaryArea }) => primaryArea).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const options = (values, selected) => values.map((value) => `<option value="${escapeHtml(value)}"${value === selected ? " selected" : ""}>${escapeHtml(value)}</option>`).join("");
   const podiumCards = podium.map((person) => `<button class="podium-card podium-${Math.min(person.displayRank, 3)}" type="button" data-profile="${escapeHtml(person.id)}"><span>${person.displayRank}º</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><small>${person.winRate}%</small></button>`).join("");
   const highlightColumn = (title, type, people) => `<section class="ranking-highlight ranking-highlight-${type}"><p>${title}</p>${people.length ? people.map((person, index) => `<button type="button" data-profile="${escapeHtml(person.id)}"><span>${index + 1}</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><b>${type === "chosen" ? `+${person.wins}` : `−${person.losses}`}</b></button>`).join("") : '<small>Aguardando duelos</small>'}</section>`;
   const publicPulse = !personal && (highlights.chosen.length || highlights.rejected.length) ? `<section class="public-pulse" aria-label="Resumo das comparações"><div class="section-title"><span>Placar do público</span><small>cada rodada compara a escolhida com as outras três</small></div><div class="pulse-grid">${highlightColumn("Mais vitórias", "chosen", highlights.chosen)}${highlightColumn("Mais derrotas", "rejected", highlights.rejected)}</div></section>` : "";
-  const empty = state.rankingQuery ? "Nenhum nome encontrado." : personal ? "Faça uma escolha para começar seu ranking pessoal." : "Ainda não há resultados confirmados.";
-  const reveal = !state.rankingQuery && !state.rankingExpanded && filtered.length > visible.length ? `<button class="secondary reveal-ranking" id="reveal-ranking" type="button">Ver ranking completo (${filtered.length})</button>` : "";
+  const empty = filtersActive ? "Nenhum nome encontrado." : personal ? "Faça uma escolha para começar seu ranking pessoal." : "Ainda não há resultados confirmados.";
+  const reveal = !filtersActive && !state.rankingExpanded && filtered.length > visible.length ? `<button class="secondary reveal-ranking" id="reveal-ranking" type="button">Ver ranking completo (${filtered.length})</button>` : "";
   const policy = personal && state.personalRankingPolicy
     ? `<p class="ranking-policy"><strong>Ordenado por ${escapeHtml(state.personalRankingPolicy.label)}</strong><span>${escapeHtml(state.personalRankingPolicy.explanation)}</span></p>`
     : "";
   const trust = personal ? "" : '<p class="ranking-trust">Escolhas confirmadas pelo servidor. <a href="/integridade.html">Como o placar é protegido</a></p>';
-  return `<main class="screen ranking-screen">${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}<section class="ranking-overview"><header class="ranking-heading"><p class="eyebrow">Eleições 2026</p><h1>Ranking</h1><p>${personal ? "O retrato das comparações que você fez." : "O placar vivo das escolhas do público."}</p><strong>${totalDuels} ${totalDuels === 1 ? "escolha confirmada" : "escolhas confirmadas"}</strong>${trust}</header><div class="segmented" aria-label="Tipo de ranking"><button class="${personal ? "" : "active"}" data-ranking-view="general">Geral</button><button class="${personal ? "active" : ""}" data-ranking-view="personal">Seu ranking</button></div>${policy}${publicPulse}${podiumCards ? `<section class="podium" aria-label="Pódio">${podiumCards}</section>` : ""}</section><section class="ranking-results"><label class="ranking-search"><span>Todos os nomes</span><input id="ranking-search" type="search" value="${escapeHtml(state.rankingQuery)}" placeholder="Buscar nome ou partido" autocomplete="off"></label><section class="panel ranking-list">${rows || `<p class="empty">${empty}</p>`}</section>${reveal}<button class="primary continue-duels" id="continue-duels" type="button">Voltar às escolhas</button></section></main>`;
+  return `<main class="screen ranking-screen">${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}<section class="ranking-overview"><header class="ranking-heading"><p class="eyebrow">Eleições 2026</p><h1>Ranking</h1><p>${personal ? "O retrato das comparações que você fez." : "O placar vivo das escolhas do público."}</p><strong>${totalDuels} ${totalDuels === 1 ? "escolha confirmada" : "escolhas confirmadas"}</strong>${trust}</header><div class="segmented" aria-label="Tipo de ranking"><button class="${personal ? "" : "active"}" data-ranking-view="general">Geral</button><button class="${personal ? "active" : ""}" data-ranking-view="personal">Seu ranking</button></div>${policy}${publicPulse}${podiumCards ? `<section class="podium" aria-label="Pódio">${podiumCards}</section>` : ""}</section><section class="ranking-results"><div class="ranking-filters"><label class="ranking-search"><span>Todos os nomes</span><input id="ranking-search" type="search" value="${escapeHtml(state.rankingQuery)}" placeholder="Buscar por nome, partido ou área" autocomplete="off"></label><label><span>Partido</span><select id="ranking-party"><option value="">Todos</option>${options(parties, state.rankingParty)}</select></label><label><span>Área</span><select id="ranking-area"><option value="">Todas</option>${options(areas, state.rankingArea)}</select></label></div><section class="panel ranking-list">${rows || `<p class="empty">${empty}</p>`}</section>${reveal}<button class="primary continue-duels" id="continue-duels" type="button">Voltar às escolhas</button></section></main>`;
 }
 
 function collectionScreen() {
@@ -337,7 +344,6 @@ function showProfile(id) {
   if (!person) return;
   sound.play("profile");
   const modal = document.querySelector("#modal");
-  const metadata = [person.office, person.party, person.location].filter(Boolean);
   const facts = (person.facts || []).map((fact) => `<li>${escapeHtml(fact)}</li>`).join("");
   const sources = (person.sources || []).map((source) => {
     const href = safeUrl(typeof source === "string" ? source : source.url);
@@ -345,7 +351,7 @@ function showProfile(id) {
     return href ? `<li><a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a></li>` : "";
   }).join("");
   const canVote = state.screen === "duel" && state.round.some((candidate) => candidate.id === person.id) && !state.busy && !state.pendingWinnerId;
-  modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar resumo">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2>${escapeHtml(person.name)}</h2><p class="profile-role"><strong>${escapeHtml(candidateRole(person))}</strong></p>${metadata.length ? `<p class="profile-meta">${metadata.map(escapeHtml).join(" · ")}</p>` : ""}${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions">${canVote ? `<button class="primary" id="vote-from-profile" data-candidate="${escapeHtml(person.id)}" type="button">Escolher esta pessoa</button>` : ""}<button class="secondary" id="close-modal" type="button">Voltar ao duelo</button></div>`;
+  modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar resumo">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2>${escapeHtml(person.name)}</h2><div class="profile-taxonomy">${profileSection("Cargo/função", candidateRole(person))}${profileSection("Partido", person.party || "Não informado")}${profileSection("Área de atuação", person.primaryArea || "Não informado")}${person.contextAffiliation ? profileSection("Contexto/afiliação", person.contextAffiliation) : ""}</div>${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions">${canVote ? `<button class="primary" id="vote-from-profile" data-candidate="${escapeHtml(person.id)}" type="button">Escolher esta pessoa</button>` : ""}<button class="secondary" id="close-modal" type="button">Voltar ao duelo</button></div>`;
   let silentClose = false;
   modal.showModal();
   modal.addEventListener("close", () => {
@@ -635,6 +641,16 @@ function bindEvents() {
     const input = document.querySelector("#ranking-search");
     input?.focus();
     input?.setSelectionRange(cursor, cursor);
+  });
+  document.querySelector("#ranking-party")?.addEventListener("change", (event) => {
+    state.rankingParty = event.target.value;
+    state.rankingExpanded = false;
+    render();
+  });
+  document.querySelector("#ranking-area")?.addEventListener("change", (event) => {
+    state.rankingArea = event.target.value;
+    state.rankingExpanded = false;
+    render();
   });
   document.querySelectorAll("[data-vote]").forEach((button) => installPressGesture(button, {
     onTap: () => vote(button.dataset.vote),

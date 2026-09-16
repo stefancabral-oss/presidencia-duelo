@@ -4,7 +4,7 @@
 
 - `GET /api/health`: disponibilidade do serviço e PostgreSQL.
 - `GET /api/topics`: assuntos ativos e expansões anunciadas.
-- `GET /api/candidates?topic=eleicoes-2026`: catálogo temporário; será substituído pela curadoria de 100 pessoas. Cada perfil admite `bio`, `office`, `party`, `location`, `facts`, `sources` e `reviewStatus`.
+- `GET /api/candidates?topic=eleicoes-2026`: catálogo curado. Cada perfil separa `role`, `party`, `primaryArea` e `contextAffiliation`, preserva `taxonomyProvenance` por atributo e também expõe `bio`, `location`, `facts`, `sources` e `reviewStatus`.
 - `GET /api/ranking?topic=eleicoes-2026`: ranking agregado por assunto, com escolhas, não escolhas, total de comparações e percentual.
 - `POST /api/vote`: voto online, idempotente por `voteId`.
 - `POST /api/player` e `GET /api/player/state?topic=eleicoes-2026`: criação, recuperação e ranking pessoal anônimo.
@@ -12,8 +12,7 @@
 
 ## Substituir antes da edição definitiva
 
-- Catálogo de 360 pessoas pelo elenco aprovado de 100.
-- Metadados editoriais antigos pelo novo perfil versionado e datado.
+- Metadados editoriais ainda marcados como `pending` por perfis revisados e publicados.
 
 ## Remover do produto novo
 

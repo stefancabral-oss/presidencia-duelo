@@ -27,5 +27,8 @@ test("every candidate exposes a reviewable editorial profile", () => {
     assert.equal(Array.isArray(candidate.sources), true);
     assert.match(candidate.reviewStatus, /^(pending|reviewed|published)$/);
     assert.equal(candidate.sources.length > 0, true);
+    assert.equal(typeof candidate.role, "string");
+    assert.equal(typeof candidate.primaryArea, "string");
+    assert.equal(typeof candidate.taxonomyProvenance, "object");
   }
 });

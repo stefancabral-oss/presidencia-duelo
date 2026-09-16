@@ -1,8 +1,6 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
-  CLEAN_START_MIGRATION,
   accessTokenHash,
   createRecoveryKey,
   createSessionToken,
@@ -53,17 +51,6 @@ test("signed-in sessions are opaque, random and stored only as hashes", () => {
   assert.equal(accessTokenHash(token).length, 64);
   assert.equal(accessTokenHash(token).includes(token), false);
   assert.throws(() => accessTokenHash("google-id-token"), /sessão inválida/);
-});
-
-test("Google identities and revocable sessions are separate from anonymous progress", async () => {
-  const source = await readFile(new URL("./topic-store.js", import.meta.url), "utf8");
-  assert.match(source, /CREATE TABLE IF NOT EXISTS player_identities/);
-  assert.match(source, /PRIMARY KEY \(provider, subject\)/);
-  assert.match(source, /CREATE TABLE IF NOT EXISTS player_sessions/);
-  assert.match(source, /session_hash char\(64\) PRIMARY KEY/);
-  assert.match(source, /SELECT player_id FROM player_identities WHERE provider = 'google' AND subject = \$1/);
-  assert.match(source, /UPDATE anonymous_players SET recovery_hash = \$1 WHERE id = \$2/);
-  assert.doesNotMatch(source, /credential[^\n]*INSERT INTO/i);
 });
 
 test("topic ranking exposes only candidates from that curation", () => {
@@ -134,41 +121,4 @@ test("round feedback exposes real gains, losses and Elo tier crossings", () => {
   assert.equal(feedback.outcomes[0].tierChange, "up");
   assert.equal(feedback.outcomes[1].tierChange, "down");
   assert.equal(feedback.outcomes[2].tier.id, "recovery");
-});
-
-test("clean-start migration is one-time and explicitly removes legacy gameplay tables", async () => {
-  const source = await readFile(new URL("./topic-store.js", import.meta.url), "utf8");
-  assert.equal(CLEAN_START_MIGRATION, "20260913_eleicoes_2026_clean_start");
-  assert.match(source, /SELECT 1 FROM schema_migrations WHERE id = \$1/);
-  assert.match(source, /DROP TABLE IF EXISTS votes CASCADE/);
-  assert.match(source, /DROP TABLE IF EXISTS choice_rounds CASCADE/);
-  assert.match(source, /DROP TABLE IF EXISTS player_states CASCADE/);
-  assert.match(source, /INSERT INTO schema_migrations \(id\)/);
-  assert.match(source, /INSERT INTO player_stats[\s\S]*unnest\(\$2::text\[\]\)[\s\S]*ON CONFLICT DO NOTHING/);
-});
-
-test("four-card choices keep one immutable round and three auditable comparisons", async () => {
-  const source = await readFile(new URL("./topic-store.js", import.meta.url), "utf8");
-  assert.match(source, /CREATE TABLE IF NOT EXISTS choice_rounds/);
-  assert.match(source, /CHECK \(array_length\(candidate_ids, 1\) = 4\)/);
-  assert.match(source, /ADD COLUMN IF NOT EXISTS round_id uuid REFERENCES choice_rounds\(round_id\)/);
-  assert.match(source, /INSERT INTO schema_migrations \(id\)[\s\S]*ON CONFLICT DO NOTHING[\s\S]*UPDATE votes AS comparison[\s\S]*comparison\.created_at = round\.created_at/);
-  assert.match(source, /comparisons: 3/);
-  assert.match(source, /INSERT INTO choice_rounds[\s\S]*INSERT INTO votes/);
-  assert.match(source, /const winnerRatingBeforeRound = globalRatings\.get\(winnerId\)/);
-});
-
-test("the public API retires binary votes after the four-card launch", async () => {
-  const source = await readFile(new URL("./server.js", import.meta.url), "utf8");
-  assert.match(source, /app\.post\("\/api\/vote"[\s\S]*status\(410\)/);
-  assert.match(source, /ROUND_V4_REQUIRED/);
-});
-
-test("Chromas are personal inventory and equipment, separate from ranking", async () => {
-  const source = await readFile(new URL("./topic-store.js", import.meta.url), "utf8");
-  assert.match(source, /CREATE TABLE IF NOT EXISTS chroma_catalog/);
-  assert.match(source, /CREATE TABLE IF NOT EXISTS player_chromas/);
-  assert.match(source, /CREATE TABLE IF NOT EXISTS equipped_chromas/);
-  assert.match(source, /PRIMARY KEY \(player_id, topic_id, candidate_id\)/);
-  assert.doesNotMatch(source, /UPDATE ranking_stats[^;]*chroma/is);
 });

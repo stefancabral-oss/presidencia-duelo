@@ -674,6 +674,9 @@ try {
     throw new Error("Vitória e derrotas não receberam tratamentos visuais distintos");
   }
   if (!await page.locator(".candidate-card.is-round-winner").getByText("+45 Elo").isVisible()) throw new Error("O ganho real de Elo não apareceu na carta escolhida");
+  if (!await page.locator(".candidate-card.is-round-winner").getByText("Subiu · Em ascensão", { exact: true }).isVisible()) {
+    throw new Error("O teste deixou de exercitar a mensagem longa de mudança de patente");
+  }
   if (await page.locator(".candidate-card.is-round-loser").getByText("-15 Elo").count() !== 3) throw new Error("As perdas reais de Elo não apareceram nas outras cartas");
   const outcomeEvidence = await measureRoundOutcomes(page);
   assertOutcomeSemantics(outcomeEvidence, "390 × 844");

@@ -47,6 +47,7 @@ Artefatos gerados no mesmo diretório:
 - `vote-recovery.mjs`: sete cenários, Chromium e WebKit aprovados.
 - `vote-trust-states.mjs`: estados de confiança, Chromium e WebKit aprovados.
 - `accessible-profile.mjs`: Chromium e WebKit aprovados.
+- A mensagem longa `Subiu · Em ascensão` é exigida pelo smoke e cabe integralmente no bloco de resultado em `320×568`; a folga vertical específica desse estado evita a diferença de 3 px observada nas fontes do runner Linux, sem reduzir a tipografia ou ocultar conteúdo.
 
 ## Limite honesto
 

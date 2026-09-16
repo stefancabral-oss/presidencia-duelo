@@ -1,10 +1,112 @@
 import { chromium, webkit } from "playwright";
+import { writeFile } from "node:fs/promises";
+import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
+import { hasCuratedPortrait } from "../../shared/curated-portraits.js";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
 const browserType = { chromium, webkit }[browserName];
 const googleEnabled = process.env.POLIMATCH_E2E_GOOGLE === "1";
 if (!browserType) throw new Error(`Navegador não suportado: ${browserName}`);
+
+const playableDisplayNames = CATALOG
+  .filter(({ personId }) => hasCuratedPortrait(personId))
+  .map(({ displayName, name }) => displayName || name);
+
+async function measureCardHierarchy(page) {
+  const geometry = await page.evaluate(() => {
+    const bounds = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) return null;
+      const box = element.getBoundingClientRect();
+      return { top: box.top, right: box.right, bottom: box.bottom, left: box.left, width: box.width, height: box.height };
+    };
+    const skip = bounds("#skip-round");
+    const nav = bounds(".bottom-nav");
+    return {
+      viewport: { width: innerWidth, height: innerHeight, scrollY, documentHeight: document.documentElement.scrollHeight },
+      card: bounds(".candidate-card"),
+      portrait: bounds(".candidate-card .portrait"),
+      copy: bounds(".candidate-card .candidate-copy"),
+      skipToNavGap: skip && nav ? nav.top - skip.bottom : null,
+    };
+  });
+  const typography = await page.locator(".candidate-card").first().evaluate((card) => {
+    const read = (selector) => {
+      const element = card.querySelector(selector);
+      if (!element) return null;
+      const style = getComputedStyle(element);
+      return {
+        text: element.textContent.trim(),
+        display: style.display,
+        fontSize: style.fontSize,
+        lineHeight: style.lineHeight,
+        color: style.color,
+        overflow: style.overflow,
+        clientHeight: element.clientHeight,
+        scrollHeight: element.scrollHeight,
+      };
+    };
+    return {
+      name: read(".candidate-name, .candidate-copy > strong"),
+      affiliation: read(".candidate-affiliation"),
+      office: read(".candidate-office"),
+      brand: read(".card-brand b"),
+      rarity: read(".card-rarity"),
+    };
+  });
+  const names = await page.locator(".candidate-name, .candidate-copy > strong").first().evaluate((element, catalogNames) => {
+    const original = element.textContent;
+    const measurements = catalogNames.map((name) => {
+      element.textContent = name;
+      const style = getComputedStyle(element);
+      return {
+        name,
+        fontSize: style.fontSize,
+        lineHeight: style.lineHeight,
+        clientHeight: element.clientHeight,
+        scrollHeight: element.scrollHeight,
+      };
+    });
+    element.textContent = original;
+    return measurements;
+  }, playableDisplayNames);
+  return {
+    geometry,
+    typography,
+    names,
+    descenderNames: names.filter(({ name }) => /[gjpqyç]/.test(name)),
+  };
+}
+
+async function measureRoundOutcomes(page) {
+  return page.locator(".card-outcome").evaluateAll((outcomes) => outcomes.map((outcome) => {
+    const delta = outcome.querySelector("b");
+    const message = outcome.querySelector("small");
+    const deltaStyle = getComputedStyle(delta);
+    const messageStyle = getComputedStyle(message);
+    return {
+      state: outcome.classList.contains("gain") ? "gain" : "loss",
+      delta: delta.textContent.trim(),
+      message: message.textContent.trim(),
+      deltaColor: deltaStyle.color,
+      messageColor: messageStyle.color,
+      deltaFontSize: deltaStyle.fontSize,
+      messageFontSize: messageStyle.fontSize,
+    };
+  }));
+}
+
+function assertOutcomeSemantics(outcomes, viewportLabel) {
+  const gain = outcomes.find(({ state }) => state === "gain");
+  const loss = outcomes.find(({ state }) => state === "loss");
+  if (!gain || !loss || gain.deltaColor === loss.deltaColor || gain.messageColor === loss.messageColor) {
+    throw new Error(`Ganho e perda perderam a distinção semântica de cor em ${viewportLabel}`);
+  }
+  if (outcomes.some(({ deltaFontSize, messageFontSize }) => Number.parseFloat(deltaFontSize) < 11 || Number.parseFloat(messageFontSize) < 11)) {
+    throw new Error(`O resultado voltou a usar texto abaixo de 11px em ${viewportLabel}`);
+  }
+}
 
 const candidates = [
   {
@@ -73,6 +175,7 @@ const page = await context.newPage();
 const pageErrors = [];
 const roundVoteRequests = [];
 let failNextRoundVote = false;
+let holdNextSuccessfulRoundVote = false;
 page.on("pageerror", (error) => pageErrors.push(error.message));
 
 if (googleEnabled) {
@@ -102,6 +205,10 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
       failNextRoundVote = false;
       await route.fulfill({ status: 503, json: { error: "falha passageira de teste" } });
       return;
+    }
+    if (holdNextSuccessfulRoundVote) {
+      holdNextSuccessfulRoundVote = false;
+      await new Promise((resolve) => setTimeout(resolve, 160));
     }
     const feedback = {
       primaryEvent: "tierUp",
@@ -239,8 +346,42 @@ try {
       throw new Error(`A camada premium ${layer} não foi renderizada nas quatro cartas`);
     }
   }
+  const cardHierarchyEvidence = await measureCardHierarchy(page);
+  const mobileText = [
+    cardHierarchyEvidence.typography.name,
+    cardHierarchyEvidence.typography.affiliation,
+    cardHierarchyEvidence.typography.office,
+    cardHierarchyEvidence.typography.rarity,
+  ];
+  if (mobileText.some((measurement) => !measurement || Number.parseFloat(measurement.fontSize) < 11)) {
+    throw new Error("A carta móvel voltou a exibir texto funcional abaixo de 11px");
+  }
+  if (cardHierarchyEvidence.typography.name.overflow !== "visible") {
+    throw new Error("O nome voltou a esconder glifos descendentes com overflow");
+  }
+  if (cardHierarchyEvidence.names.length !== playableDisplayNames.length || playableDisplayNames.length !== 54) {
+    throw new Error("A verificação tipográfica não percorreu os 54 nomes jogáveis");
+  }
+  const clippedNames = cardHierarchyEvidence.names.filter(({ clientHeight, scrollHeight }) => scrollHeight > clientHeight);
+  if (clippedNames.length) {
+    throw new Error(`Nomes com glifo ou linha cortada: ${clippedNames.map(({ name }) => name).join(", ")}`);
+  }
+  const portraitRatio = cardHierarchyEvidence.geometry.portrait.height / (cardHierarchyEvidence.geometry.card.height - 12);
+  if (cardHierarchyEvidence.geometry.card.height < 276
+    || cardHierarchyEvidence.geometry.card.height > 282
+    || portraitRatio < .6
+    || portraitRatio > .68) {
+    throw new Error("A anatomia móvel perdeu a carta de cerca de 280px com retrato dominante");
+  }
+  if (cardHierarchyEvidence.geometry.skipToNavGap < 12 || cardHierarchyEvidence.geometry.skipToNavGap > 40) {
+    throw new Error("O espaço entre a rodada e a navegação não foi redistribuído pela nova carta");
+  }
+  if (cardHierarchyEvidence.typography.brand.display !== "none") {
+    throw new Error("A assinatura textual microscópica reapareceu no card móvel");
+  }
   if (process.env.POLIMATCH_E2E_DUEL_SCREENSHOT) {
-    await page.screenshot({ path: process.env.POLIMATCH_E2E_DUEL_SCREENSHOT, fullPage: true });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({ path: process.env.POLIMATCH_E2E_DUEL_SCREENSHOT });
   }
 
   await page.setViewportSize({ width: 320, height: 568 });
@@ -285,7 +426,19 @@ try {
   await page.locator("dialog[open]").waitFor({ state: "hidden" });
 
   const selectedWinnerId = await firstCard.getAttribute("data-vote");
+  holdNextSuccessfulRoundVote = true;
   await firstCard.click();
+  await page.locator(".candidate-card.is-selected:disabled").waitFor();
+  const pendingEvidence = await page.locator(".candidate-card.is-selected:disabled").evaluate((card) => {
+    const name = card.querySelector(".candidate-name");
+    const office = card.querySelector(".candidate-office");
+    return {
+      className: card.className,
+      nameFontSize: getComputedStyle(name).fontSize,
+      officeFontSize: getComputedStyle(office).fontSize,
+      filter: getComputedStyle(card).filter,
+    };
+  });
   await page.getByText(/subiu de patente/i).waitFor();
   if (!await page.locator("#skip-round").isDisabled()) throw new Error("A troca de rodada permaneceu ativa durante o resultado");
   if (await page.locator(".card-outcome").count() !== 4) throw new Error("O resultado visual não apareceu nas quatro cartas");
@@ -294,6 +447,11 @@ try {
   }
   if (!await page.locator(".candidate-card.is-round-winner").getByText("+45 Elo").isVisible()) throw new Error("O ganho real de Elo não apareceu na carta escolhida");
   if (await page.locator(".candidate-card.is-round-loser").getByText("-15 Elo").count() !== 3) throw new Error("As perdas reais de Elo não apareceram nas outras cartas");
+  const outcomeEvidence = await measureRoundOutcomes(page);
+  assertOutcomeSemantics(outcomeEvidence, "390 × 844");
+  if (process.env.POLIMATCH_E2E_CARD_METRICS) {
+    await writeFile(process.env.POLIMATCH_E2E_CARD_METRICS, `${JSON.stringify({ card: cardHierarchyEvidence, pending: pendingEvidence, outcomes: outcomeEvidence }, null, 2)}\n`);
+  }
   if (process.env.POLIMATCH_E2E_OUTCOME_SCREENSHOT) {
     await page.waitForTimeout(180);
     await page.screenshot({ path: process.env.POLIMATCH_E2E_OUTCOME_SCREENSHOT });
@@ -343,6 +501,21 @@ try {
   if (await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)) {
     throw new Error("O duelo criou overflow horizontal no desktop");
   }
+  const desktopTypography = await page.locator(".candidate-card").first().evaluate((card) => [
+    ".candidate-name",
+    ".card-rarity",
+    ".candidate-affiliation",
+    ".candidate-office",
+    ".candidate-summary",
+    ".candidate-profile-hint",
+  ].map((selector) => {
+    const element = card.querySelector(selector);
+    const style = getComputedStyle(element);
+    return { selector, display: style.display, fontSize: style.fontSize };
+  }));
+  if (desktopTypography.some(({ display, fontSize }) => display !== "none" && Number.parseFloat(fontSize) < 11)) {
+    throw new Error("A carta desktop voltou a exibir texto funcional abaixo de 11px");
+  }
 
   await page.setViewportSize({ width: 1440, height: 900 });
   const imacCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
@@ -359,8 +532,14 @@ try {
   }
 
   if (process.env.POLIMATCH_E2E_SCREENSHOT) {
-    await page.screenshot({ path: process.env.POLIMATCH_E2E_SCREENSHOT, fullPage: true });
+    await page.screenshot({ path: process.env.POLIMATCH_E2E_SCREENSHOT });
   }
+
+  await page.locator(".candidate-card").first().click();
+  await page.getByText(/subiu de patente/i).waitFor();
+  const desktopOutcomeEvidence = await measureRoundOutcomes(page);
+  assertOutcomeSemantics(desktopOutcomeEvidence, "1440 × 900");
+  await page.locator(".card-outcome").first().waitFor({ state: "hidden", timeout: 2500 });
 
   if (pageErrors.length) throw new Error(`Erros na página: ${pageErrors.join(" | ")}`);
   console.log(`${browserName}: navegação Início/Duelo, rodada de quatro, pressão longa e ranking validados`);

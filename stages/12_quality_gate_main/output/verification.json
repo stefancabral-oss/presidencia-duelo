@@ -1,62 +1,50 @@
 {
-  "status": "local-final-passed-ci-and-human-gate-pending",
-  "issue": 174,
+  "status": "local-and-automatic-checks-passed-ready-to-merge",
+  "issue": 165,
   "macroIssue": 175,
-  "baseSha": "6eed68a101c79276c3ce0d2f81b65d0433583e3a",
+  "pullRequest": 186,
+  "baseSha": "9cf11af154d1b5f525e6ae12d82474fe296ba41f",
   "checks": [
     {
-      "name": "conflict-scan",
-      "command": "gh pr list --state open --json number,headRefName,headRefOid,mergeable,mergeStateStatus,files; gh pr view 162 --json mergeable,mergeStateStatus,statusCheckRollup",
-      "result": "passed; PR #162 was integrated before this branch touched .github/workflows/ui-interaction-smoke.yml"
-    },
-    {
-      "name": "pr-162-trigger-cause",
-      "command": "gh pr view 162 --json baseRefOid,headRefOid,mergeable,mergeStateStatus,statusCheckRollup; gh run view 35040127075 --json event,headSha,url; gh run view 35040124969 --json event,headSha,url; gh run view 35040808480 --json event,headSha,url",
-      "result": "explained from the pre-resolution state; PR #162 was conflicting and all three observed workflow runs used workflow_dispatch"
-    },
-    {
-      "name": "pr-162-trigger-confirmation",
-      "command": "gh pr view 162 --json state,mergeCommit,statusCheckRollup; gh run view 35051211773; gh run view 35051211779",
-      "result": "passed; after conflict resolution, both workflows triggered automatically on pull_request and PR #162 merged as 6eed68a"
-    },
-    {
-      "name": "back-unit",
-      "command": "npm test --prefix back",
-      "result": "passed; 17 of 17 behavior tests"
-    },
-    {
-      "name": "shared-data",
-      "command": "npm run test:shared",
-      "result": "passed; 4 of 4 Elo domain behavior tests"
-    },
-    {
-      "name": "back-integration-postgres",
-      "command": "DATABASE_URL=<isolated-postgres> npm run test:integration --prefix back",
-      "result": "passed in PostgreSQL 16 service on pull_request run 35048640056, job 104643965336"
+      "name": "app-unit",
+      "command": "npm test --prefix app",
+      "result": "passed; 46 of 46 tests"
     },
     {
       "name": "root-unit",
       "command": "npm test",
-      "result": "passed; 4 shared plus 17 backend plus 46 app tests"
+      "result": "passed after installing dependencies from both lockfiles; 4 shared, 17 backend and 46 app tests"
     },
     {
       "name": "app-build",
       "command": "npm run build --prefix app",
-      "result": "passed; portrait validator reported 99 of 125 ready and Vite produced the production bundle"
+      "result": "passed; 99 of 125 portrait slots present and Vite bundle generated"
     },
     {
-      "name": "workflow-lint",
-      "command": "actionlint .github/workflows/back-shared.yml .github/workflows/design-validator.yml .github/workflows/ui-interaction-smoke.yml",
-      "result": "passed with actionlint 1.7.12 and no findings"
+      "name": "ui-interaction-chromium",
+      "command": "POLIMATCH_E2E_BROWSER=chromium node app/e2e/interaction-smoke.mjs",
+      "result": "passed; 54 names, mobile hierarchy, pending, gain/loss on mobile and desktop, plus existing viewport contracts"
     },
     {
-      "name": "automatic-pull-request-trigger",
-      "command": "GitHub Actions event=pull_request",
-      "result": "passed on the implementation head; Backend and Shared run 35048640056 and Design Validator run 35048640009 were triggered automatically by PR #185"
+      "name": "ui-interaction-webkit",
+      "command": "POLIMATCH_E2E_BROWSER=webkit node app/e2e/interaction-smoke.mjs",
+      "result": "passed; same behavioral and visual contracts"
+    },
+    {
+      "name": "visual-evidence",
+      "command": "POLIMATCH_E2E_DUEL_SCREENSHOT=<path> POLIMATCH_E2E_OUTCOME_SCREENSHOT=<path> POLIMATCH_E2E_CARD_METRICS=<path> node app/e2e/interaction-smoke.mjs",
+      "result": "passed; before/after screenshots and computed-style JSON stored under references/issue-165"
+    },
+    {
+      "name": "automatic-design-validator",
+      "command": "GitHub Actions pull_request run 35055331571",
+      "result": "passed on head 5513c7e"
+    },
+    {
+      "name": "automatic-ui-interaction",
+      "command": "GitHub Actions pull_request run 35055331595",
+      "result": "passed in Chromium and WebKit on head 5513c7e"
     }
   ],
-  "pending": [
-    "automatic checks on the final head based on main@6eed68a",
-    "human gate"
-  ]
+  "pending": []
 }

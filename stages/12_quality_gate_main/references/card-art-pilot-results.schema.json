@@ -9,6 +9,7 @@
     "protocol",
     "issue",
     "batch",
+    "custody",
     "generatedAt",
     "sample",
     "assets",
@@ -50,6 +51,9 @@
         }
       }
     },
+    "custody": {
+      "$ref": "#/$defs/custody"
+    },
     "generatedAt": {
       "type": "string",
       "format": "date-time"
@@ -70,6 +74,74 @@
     }
   },
   "$defs": {
+    "custody": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "receiptRegistrySha256",
+        "responseCount",
+        "firstCollectedAt",
+        "lastCollectedAt",
+        "entries",
+        "responseSetRootSha256"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "card-art-pilot-176-v2-custody"
+        },
+        "receiptRegistrySha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "responseCount": {
+          "type": "integer",
+          "minimum": 40
+        },
+        "firstCollectedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastCollectedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 40,
+          "items": {
+            "$ref": "#/$defs/custodyEntry"
+          }
+        },
+        "responseSetRootSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "custodyEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "responseId",
+        "receiptSha256",
+        "responseSha256"
+      ],
+      "properties": {
+        "responseId": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$"
+        },
+        "receiptSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "responseSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
     "batchAsset": {
       "type": "object",
       "additionalProperties": false,

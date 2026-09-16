@@ -1,4 +1,12 @@
+import { createHash } from "node:crypto";
 import { CARD_ART_PILOT_CODES, cardArtPilotBatchIdentity } from "../card-art-pilot-validation.js";
+import {
+  CARD_ART_PILOT_BUNDLE_PROTOCOL,
+  CARD_ART_PILOT_RECEIPT_PROTOCOL,
+  cardArtPilotCustodyFromBundle,
+  cardArtPilotReceiptRegistrySha256,
+  cardArtPilotReceiptSha256
+} from "../card-art-pilot-participant-validation.js";
 
 function scenarioMetrics() {
   return {
@@ -18,7 +26,7 @@ function approvedReview(role) {
   return {
     status: "approved",
     reviewedBy: `${role} Reviewer`,
-    reviewedAt: "2026-09-16T01:00:00Z",
+    reviewedAt: "2026-09-16T01:45:00Z",
     notes: "fixture"
   };
 }
@@ -52,10 +60,13 @@ function assetResult(blindCode) {
 }
 
 export function validResultFixture(decision = "iterar", manifest = readyManifestFixture()) {
+  const receiptRegistry = receiptRegistryFixture(manifest);
+  const bundle = validParticipantBundleFixture(manifest, receiptRegistry);
   return {
     protocol: "card-art-pilot-176-v2",
     issue: 176,
     batch: cardArtPilotBatchIdentity(manifest),
+    custody: cardArtPilotCustodyFromBundle(bundle, receiptRegistry),
     generatedAt: "2026-09-16T02:30:00Z",
     sample: {
       participantCount: 40,
@@ -103,7 +114,7 @@ export function validResultFixture(decision = "iterar", manifest = readyManifest
 }
 
 export function readyManifestFixture() {
-  return {
+  const manifest = {
     version: "batch-2-ready",
     status: "pilot-ready-for-human-decision",
     issue: 176,
@@ -119,7 +130,22 @@ export function readyManifestFixture() {
     currentStyleGuideVersion: "pilot-2",
     collectionAllowed: true,
     scaleDecisionAllowed: true,
+    generationContract: {
+      plan: {
+        path: "stages/12_quality_gate_main/evidence/card-art-pilot-176/generation-plan.json",
+        commit: "c".repeat(40),
+        sha256: "d".repeat(64)
+      },
+      receipt: {
+        path: "stages/12_quality_gate_main/evidence/card-art-pilot-176/generation-receipt.json",
+        commit: "b".repeat(40),
+        sha256: "e".repeat(64)
+      }
+    },
+    generationContractSchema: "stages/12_quality_gate_main/references/card-art-pilot-generation-contract.schema.json",
     participantResponseSchema: "stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json",
+    responseBundleSchema: "stages/12_quality_gate_main/references/card-art-pilot-response-bundle.schema.json",
+    receiptRegistrySchema: "stages/12_quality_gate_main/references/card-art-pilot-receipt-registry.schema.json",
     commonPrompt: "locked fixture prompt",
     assets: CARD_ART_PILOT_CODES.map((blindCode, index) => ({
       blindCode,
@@ -131,6 +157,7 @@ export function readyManifestFixture() {
       height: 1400,
       sha256: String(index + 1).padStart(64, "0"),
       sourceOutput: `fixture-output-${blindCode}.png`,
+      styleAnchor: index === 0 ? null : "P01.png",
       identityReference: {
         path: `app/public/portraits/${String(index + 1).padStart(3, "0")}.jpg`,
         sha256: String(index + 101).padStart(64, "0"),
@@ -142,18 +169,52 @@ export function readyManifestFixture() {
       }
     }))
   };
+  const receiptRegistry = receiptRegistryFixture(manifest);
+  manifest.receiptRegistry = {
+    protocol: receiptRegistry.protocol,
+    path: "stages/12_quality_gate_main/evidence/card-art-pilot-176/receipt-registry.json",
+    commit: "9".repeat(40),
+    committedAt: "2026-09-16T00:26:00Z",
+    sha256: cardArtPilotReceiptRegistrySha256(receiptRegistry),
+    issuedCount: receiptRegistry.receiptHashes.length
+  };
+  return manifest;
+}
+
+export function receiptTokenFixture(index) {
+  return createHash("sha256").update(`card-art-pilot-fixture-receipt-${index}`, "utf8").digest("hex");
+}
+
+export function receiptRegistryFixture(manifest = readyManifestFixture()) {
+  const registry = {
+    protocol: CARD_ART_PILOT_RECEIPT_PROTOCOL,
+    batchVersion: manifest.version,
+    assets: CARD_ART_PILOT_CODES.map((blindCode) => {
+      const asset = manifest.assets.find((candidate) => candidate.blindCode === blindCode);
+      return { blindCode, sha256: asset?.sha256 || "0".repeat(64) };
+    }),
+    receiptDomain: "f".repeat(64),
+    issuedAt: "2026-09-16T00:25:00Z",
+    receiptHashes: []
+  };
+  registry.receiptHashes = Array.from({ length: 40 }, (_, index) => cardArtPilotReceiptSha256(receiptTokenFixture(index), registry)).sort();
+  return registry;
 }
 
 export function validParticipantResponseFixture(
   manifest = readyManifestFixture(),
   responseId = "a".repeat(32),
-  scenarioId = "mobile-390x844"
+  scenarioId = "mobile-390x844",
+  receipt = receiptTokenFixture(0),
+  collectedAt = "2026-09-16T00:30:00Z"
 ) {
   const mobile = scenarioId === "mobile-390x844";
   return {
     protocol: "card-art-pilot-176-v2-participant",
     batch: cardArtPilotBatchIdentity(manifest),
     responseId,
+    receipt,
+    collectedAt,
     displayScenario: {
       id: scenarioId,
       viewport: mobile ? { width: 390, height: 844 } : { width: 1000, height: 800 },
@@ -174,5 +235,21 @@ export function validParticipantResponseFixture(
       tone: "neutra"
     })),
     disclosureSeen: true
+  };
+}
+
+export function validParticipantBundleFixture(manifest = readyManifestFixture(), receiptRegistry = receiptRegistryFixture(manifest)) {
+  const responses = Array.from({ length: 40 }, (_, index) => validParticipantResponseFixture(
+    manifest,
+    index.toString(16).padStart(32, "0"),
+    index < 20 ? "mobile-390x844" : "desktop-1000x800",
+    receiptTokenFixture(index),
+    new Date(Date.parse("2026-09-16T00:30:00Z") + (index * 60_000)).toISOString()
+  ));
+  return {
+    protocol: CARD_ART_PILOT_BUNDLE_PROTOCOL,
+    batch: cardArtPilotBatchIdentity(manifest),
+    receiptRegistrySha256: cardArtPilotReceiptRegistrySha256(receiptRegistry),
+    responses
   };
 }

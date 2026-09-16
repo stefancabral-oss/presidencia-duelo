@@ -8,6 +8,8 @@
     "protocol",
     "batch",
     "responseId",
+    "receipt",
+    "collectedAt",
     "displayScenario",
     "strata",
     "responses",
@@ -23,6 +25,15 @@
     "responseId": {
       "type": "string",
       "pattern": "^[a-f0-9]{32}$"
+    },
+    "receipt": {
+      "description": "Nonce aleatório pré-emitido, não identificador e consumível uma única vez.",
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "collectedAt": {
+      "type": "string",
+      "format": "date-time"
     },
     "displayScenario": {
       "$ref": "#/$defs/displayScenario"

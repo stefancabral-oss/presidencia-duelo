@@ -3,6 +3,10 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
 import { cardArtPilotBatchIdentity } from "../src/card-art-pilot-validation.js";
+import {
+  CARD_ART_PILOT_GEOMETRY_TOLERANCE_CSS_PX,
+  CARD_ART_PILOT_SCENARIO_GEOMETRY
+} from "../src/card-art-pilot-participant-validation.js";
 
 const browserName = process.env.POLIMATCH_PILOT_BROWSER || "chromium";
 const browserType = { chromium, webkit }[browserName];
@@ -15,6 +19,8 @@ const manifest = JSON.parse(await readFile(new URL("manifest.json", evidenceRoot
 const expectedBatchIdentity = cardArtPilotBatchIdentity(manifest);
 const formSource = await readFile(formUrl, "utf8");
 assert.match(formSource, /batch:\s*batchIdentity/, "participant export must carry the immutable batch identity");
+assert.match(formSource, /receiptWasPreissued\s*=\s*await receiptIsPreissued\(\)/, "form must verify receipt membership before collection");
+assert.match(formSource, /receiptRegistry\.receiptHashes\.includes\(receiptSha256\)/, "form must require a pre-issued receipt hash");
 const canonicalCss = await readFile(new URL("../src/styles.css", import.meta.url), "utf8");
 const cases = [
   { scenario: "mobile-390x844", viewport: { width: 390, height: 844 } },
@@ -91,6 +97,15 @@ try {
     const pageErrors = [];
     page.on("pageerror", (error) => pageErrors.push(error.message));
     const expected = await canonicalGeometry(page, testCase.viewport);
+    const contractGeometry = CARD_ART_PILOT_SCENARIO_GEOMETRY[testCase.scenario];
+    for (const area of ["card", "artWindow", "image", "blindPlate"]) {
+      for (const dimension of ["width", "height"]) {
+        assert.ok(
+          Math.abs(expected[area][dimension] - contractGeometry[area][dimension]) <= CARD_ART_PILOT_GEOMETRY_TOLERANCE_CSS_PX,
+          `${testCase.scenario}/${area}.${dimension}: CSS canônico divergiu do contrato de geometria`
+        );
+      }
+    }
     const baseUrl = `http://127.0.0.1:${port}/references/card-art-pilot-176.html?scenario=${testCase.scenario}`;
 
     await page.goto(baseUrl);
@@ -111,6 +126,14 @@ try {
     assert.equal(browserBatch.frozen, true);
     assert.equal(browserBatch.assetsFrozen, true);
     assert.equal(browserBatch.assetItemsFrozen, true);
+    const finalSubmitSource = formSource.slice(
+      formSource.indexOf('finalStep.addEventListener("submit"'),
+      formSource.indexOf("if (collectionIsAuthorized())", formSource.indexOf('finalStep.addEventListener("submit"'))
+    );
+    assert.doesNotMatch(finalSubmitSource, /scaleDecisionAllowed/);
+    assert.match(finalSubmitSource, /collectionIsAuthorized\(\)/);
+    assert.match(finalSubmitSource, /receipt,/);
+    assert.match(finalSubmitSource, /collectedAt:/);
 
     await page.goto(`${baseUrl}&technicalPreview=1`);
     await page.locator(".test-card img").waitFor({ state: "visible" });

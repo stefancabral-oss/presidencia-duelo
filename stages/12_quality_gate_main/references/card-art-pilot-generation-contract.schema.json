@@ -1,0 +1,308 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://polimatch.com.br/schemas/card-art-pilot-176-generation-contract.schema.json",
+  "title": "Plano ou receipt de geração do piloto #176",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/plan"
+    },
+    {
+      "$ref": "#/$defs/receipt"
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "contractPointer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "commit",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "commit": {
+          "$ref": "#/$defs/commit"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "identityReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "derivation",
+        "photoSource",
+        "photographer",
+        "license",
+        "licenseStatus"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "derivation": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "editorialRecord": {
+          "type": "string"
+        },
+        "receivedFile": {
+          "type": "string"
+        },
+        "photoSource": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "photographer": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "license": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "licenseStatus": {
+          "enum": [
+            "documented",
+            "license-pending"
+          ]
+        },
+        "provenanceNote": {
+          "type": "string"
+        }
+      }
+    },
+    "planAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blindCode",
+        "personId",
+        "identityReference"
+      ],
+      "properties": {
+        "blindCode": {
+          "type": "string",
+          "pattern": "^P0[1-8]$"
+        },
+        "personId": {
+          "type": "string",
+          "pattern": "^\\d{3}$"
+        },
+        "identityReference": {
+          "$ref": "#/$defs/identityReference"
+        }
+      }
+    },
+    "receiptAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blindCode",
+        "personId",
+        "generationPath",
+        "sourceOutput",
+        "styleAnchor",
+        "width",
+        "height",
+        "sha256",
+        "identityReference"
+      ],
+      "properties": {
+        "blindCode": {
+          "type": "string",
+          "pattern": "^P0[1-8]$"
+        },
+        "personId": {
+          "type": "string",
+          "pattern": "^\\d{3}$"
+        },
+        "generationPath": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "sourceOutput": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "styleAnchor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "identityReference": {
+          "$ref": "#/$defs/identityReference"
+        }
+      }
+    },
+    "guide": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "version",
+        "commit",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "const": "docs/design/CARD_ART_NEUTRALITY_GUIDE.md"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "commit": {
+          "$ref": "#/$defs/commit"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "issue",
+        "batchVersion",
+        "tool",
+        "commonPrompt",
+        "styleGuide",
+        "assets"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "card-art-pilot-176-generation-plan-v1"
+        },
+        "issue": {
+          "const": 176
+        },
+        "batchVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "tool": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "commonPrompt": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "styleGuide": {
+          "$ref": "#/$defs/guide"
+        },
+        "assets": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/planAsset"
+          }
+        }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "issue",
+        "batchVersion",
+        "generatedAt",
+        "tool",
+        "commonPrompt",
+        "plan",
+        "assets"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "card-art-pilot-176-generation-receipt-v1"
+        },
+        "issue": {
+          "const": 176
+        },
+        "batchVersion": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "generatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tool": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "commonPrompt": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "plan": {
+          "$ref": "#/$defs/contractPointer"
+        },
+        "assets": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/receiptAsset"
+          }
+        }
+      }
+    }
+  }
+}

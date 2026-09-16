@@ -8,6 +8,9 @@ const evidenceRoot = new URL("stages/12_quality_gate_main/evidence/card-art-pilo
 const manifestUrl = new URL("manifest.json", evidenceRoot);
 const resultSchemaUrl = new URL("stages/12_quality_gate_main/references/card-art-pilot-results.schema.json", repoRoot);
 const participantSchemaUrl = new URL("stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json", repoRoot);
+const bundleSchemaUrl = new URL("stages/12_quality_gate_main/references/card-art-pilot-response-bundle.schema.json", repoRoot);
+const receiptRegistrySchemaUrl = new URL("stages/12_quality_gate_main/references/card-art-pilot-receipt-registry.schema.json", repoRoot);
+const generationContractSchemaUrl = new URL("stages/12_quality_gate_main/references/card-art-pilot-generation-contract.schema.json", repoRoot);
 const publicPilotUrl = new URL("app/public/card-art/pilot/", repoRoot);
 
 function sha256(buffer) {
@@ -27,6 +30,8 @@ test("the eight pilot assets stay immutable in evidence storage outside app/publ
   assert.equal(manifest.issue, 176);
   assert.equal(manifest.collectionAllowed, false);
   assert.equal(manifest.scaleDecisionAllowed, false);
+  assert.equal(manifest.generationContract, null);
+  assert.equal(manifest.receiptRegistry, null);
   assert.equal(manifest.styleGuideAtGeneration, "pilot-1");
   assert.equal(manifest.currentStyleGuideVersion, "pilot-2");
   assert.match(manifest.generationCommit, /^[a-f0-9]{40}$/);
@@ -79,10 +84,13 @@ test("the eight pilot assets stay immutable in evidence storage outside app/publ
 test("the consolidation schema requires accountable reviews and a human decision", async () => {
   const schema = JSON.parse(await readFile(resultSchemaUrl, "utf8"));
   assert.equal(schema.$schema, "https://json-schema.org/draft/2020-12/schema");
-  assert.deepEqual(schema.required, ["protocol", "issue", "batch", "generatedAt", "sample", "assets", "decision"]);
+  assert.deepEqual(schema.required, ["protocol", "issue", "batch", "custody", "generatedAt", "sample", "assets", "decision"]);
   assert.deepEqual(schema.properties.batch.required, ["version", "manifestSha256", "assets"]);
   assert.equal(schema.properties.batch.properties.manifestSha256.pattern, "^[a-f0-9]{64}$");
   assert.equal(schema.properties.batch.properties.assets.minItems, 8);
+  assert.equal(schema.$defs.custody.properties.responseCount.minimum, 40);
+  assert.equal(schema.$defs.custody.properties.entries.minItems, 40);
+  assert.deepEqual(schema.$defs.custodyEntry.required, ["responseId", "receiptSha256", "responseSha256"]);
   assert.ok(schema.$defs.sample.required.includes("externalRecruitment"));
   assert.deepEqual(schema.$defs.sample.properties.externalRecruitment.required, ["externalParticipantsOnly", "productionTeamExcluded", "attestedBy", "attestedAt"]);
   assert.ok(schema.$defs.assetResult.required.includes("byDisplayScenario"));
@@ -98,8 +106,24 @@ test("the individual response schema requires the same version, manifest and eig
   const schema = JSON.parse(await readFile(participantSchemaUrl, "utf8"));
   assert.equal(schema.$schema, "https://json-schema.org/draft/2020-12/schema");
   assert.ok(schema.required.includes("batch"));
+  assert.ok(schema.required.includes("receipt"));
+  assert.ok(schema.required.includes("collectedAt"));
   assert.deepEqual(schema.$defs.batchIdentity.required, ["version", "manifestSha256", "assets"]);
   assert.equal(schema.$defs.batchIdentity.properties.assets.minItems, 8);
   assert.equal(schema.$defs.batchIdentity.properties.assets.maxItems, 8);
   assert.equal(schema.$defs.batchAsset.properties.sha256.pattern, "^[a-f0-9]{64}$");
+});
+
+test("bundle, receipt registry and generation contract schemas close empty and post-hoc inputs", async () => {
+  const [bundle, registry, generation] = await Promise.all([
+    readFile(bundleSchemaUrl, "utf8").then(JSON.parse),
+    readFile(receiptRegistrySchemaUrl, "utf8").then(JSON.parse),
+    readFile(generationContractSchemaUrl, "utf8").then(JSON.parse)
+  ]);
+  assert.equal(bundle.properties.responses.minItems, 1);
+  assert.equal(registry.properties.receiptHashes.minItems, 40);
+  assert.equal(registry.properties.receiptHashes.uniqueItems, true);
+  assert.equal(generation.oneOf.length, 2);
+  assert.equal(generation.$defs.plan.properties.assets.minItems, 8);
+  assert.equal(generation.$defs.receipt.properties.assets.minItems, 8);
 });

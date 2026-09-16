@@ -8,7 +8,7 @@ const RATE_TOLERANCE = 1e-6;
 const PERCENTAGE_POINT_TOLERANCE = 1e-4;
 const MINIMUM_VALID_RESPONSES_PER_ASSET_SCENARIO = 20;
 const PILOT_GUIDE_VERSIONED_AT = Date.UTC(2026, 8, 16);
-const MAXIMUM_CLOCK_SKEW_MS = 5 * 60 * 1000;
+export const CARD_ART_PILOT_MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 const FORBIDDEN_PARTICIPANT_KEYS = new Set([
   "participant",
   "participants",
@@ -49,35 +49,40 @@ const FORBIDDEN_PII_PATTERNS = [
   { label: "telefone", pattern: /(?<![A-Fa-f0-9])(?:\+?55[\s.-]*)?(?:\(?\d{2}\)?[\s.-]*)?(?:9\d{4}|\d{4})[\s.-]?\d{4}(?![A-Fa-f0-9])/ },
   { label: "RG", pattern: /\bRG\s*(?:n[.º°o]?\s*)?[:#=-]?\s*\d{1,2}[.\s-]?\d{3}[.\s-]?\d{3}[-.\s]?[0-9X]\b/i },
   { label: "endereço IPv4", pattern: /\b(?:\d{1,3}\.){3}\d{1,3}\b/ },
-  { label: "marcador de participante", pattern: /\b(?:participante|respondente|nome do participante|id do participante)\s*[:#=-]\s*\S+/i },
-  { label: "nome de participante", pattern: /\b(?:A\s+|O\s+)?(?:Participante|Respondente)\s+(?!(?:extern[oa]s?|anônim[oa]s?|sem|não)\b)(?:[A-ZÀ-ÖØ-Þ][\p{L}'-]+\s+){1,3}[A-ZÀ-ÖØ-Þ][\p{L}'-]+\b/u },
-  { label: "identificação natural de participante", pattern: /\b(?:a|o)\s+(?:participante|respondente)\s+(?!(?:extern[oa]s?|anônim[oa]s?|não|sem)\b)(?:[\p{L}'-]+\s+){2,5}(?:mora|reside|vive)\b/iu },
+  { label: "marcador de participante", pattern: /\b(?:participante|respondente|pessoa|voluntári[oa]|entrevistad[oa]|nome do participante|id do participante)\s*[:#=-]\s*\S+/i },
+  { label: "nome de participante", pattern: /\b(?:A\s+|O\s+)?(?:Participante|Respondente|Pessoa|Voluntári[oa]|Entrevistad[oa])\s+(?!(?:extern[oa]s?|anônim[oa]s?|sem|não)\b)(?:[A-ZÀ-ÖØ-Þ][\p{L}'-]+\s+){1,3}[A-ZÀ-ÖØ-Þ][\p{L}'-]+\b/u },
+  { label: "identificação natural de participante", pattern: /\b(?:a|o)\s+(?:participante|respondente|pessoa|voluntári[oa]|entrevistad[oa])\s+(?!(?:extern[oa]s?|anônim[oa]s?|não|sem|que)\b)(?:[\p{L}'-]+\s+){1,5}(?:mora|reside|vive)\b/iu },
   { label: "marcador de endereço", pattern: /\b(?:endereço|endereco|logradouro|CEP)\s*[:#=-]\s*\S+/i },
-  { label: "endereço postal", pattern: /\b(?:Rua|R\.|Avenida|Av\.|Travessa|Trav\.|Alameda|Al\.|Rodovia|Rod\.|Praça|Pç\.|Largo|Estrada|Beco|Viela|Quadra|Condomínio|Setor|Sítio|Fazenda)\s+[\p{L}\d][^\r\n,;]{1,80}(?:,\s*)?(?:n(?:[.º°o])?\s*)?\d+\b/iu }
+  { label: "CEP", pattern: /\b(?:CEP\s*[:#=-]?\s*)?\d{5}-?\d{3}\b/iu },
+  { label: "endereço postal", pattern: /\b(?:Rua|R\.|Avenida|Av\.|Travessa|Trav\.|Alameda|Al\.|Rodovia|Rod\.|Praça|Pç\.|Largo|Estrada|Beco|Viela|Quadra|Condomínio|Setor|Sítio|Fazenda)\s+[\p{L}\d][^\r\n,;]{1,80}(?:,\s*)?(?:(?:n(?:[.º°o])?\s*)?\d+|s\s*\/?\s*n(?:[.º°o])?|sem\s+n[uú]mero)\b/iu }
 ];
 
 function isRecord(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-function canonicalJson(value) {
+export function cardArtPilotCanonicalJson(value) {
   if (value === null || typeof value === "boolean" || typeof value === "string") return JSON.stringify(value);
   if (typeof value === "number") {
     if (!Number.isFinite(value)) throw new TypeError("manifesto contém número não finito");
     return JSON.stringify(value);
   }
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (Array.isArray(value)) return `[${value.map(cardArtPilotCanonicalJson).join(",")}]`;
   if (isRecord(value)) {
     return `{${Object.keys(value)
       .sort()
-      .map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`)
+      .map((key) => `${JSON.stringify(key)}:${cardArtPilotCanonicalJson(value[key])}`)
       .join(",")}}`;
   }
   throw new TypeError(`manifesto contém valor JSON inválido: ${typeof value}`);
 }
 
+export function cardArtPilotCanonicalSha256(value) {
+  return createHash("sha256").update(cardArtPilotCanonicalJson(value), "utf8").digest("hex");
+}
+
 export function cardArtPilotManifestSha256(manifest) {
-  return createHash("sha256").update(canonicalJson(manifest), "utf8").digest("hex");
+  return cardArtPilotCanonicalSha256(manifest);
 }
 
 export function cardArtPilotBatchIdentity(manifest) {
@@ -217,14 +222,14 @@ function validateManifestForCollection(errors, manifest, now) {
     addError(errors, "manifest.generatedOn", "data ISO do lote obrigatória");
   } else {
     if (manifestDate < PILOT_GUIDE_VERSIONED_AT) addError(errors, "manifest.generatedOn", "lote não pode anteceder o guia versionado");
-    if (manifestDate > now + MAXIMUM_CLOCK_SKEW_MS) addError(errors, "manifest.generatedOn", "lote não pode ter data futura");
+    if (manifestDate > now + CARD_ART_PILOT_MAX_CLOCK_SKEW_MS) addError(errors, "manifest.generatedOn", "lote não pode ter data futura");
   }
   const generatedAt = parsedDate(manifest.generatedAt);
   const styleGuideVersionedAt = parsedDate(manifest.styleGuideVersionedAt);
   if (generatedAt === null) addError(errors, "manifest.generatedAt", "instante de geração válido obrigatório");
   if (styleGuideVersionedAt === null) addError(errors, "manifest.styleGuideVersionedAt", "instante de versão do guia válido obrigatório");
-  if (generatedAt !== null && generatedAt > now + MAXIMUM_CLOCK_SKEW_MS) addError(errors, "manifest.generatedAt", "geração não pode estar no futuro");
-  if (styleGuideVersionedAt !== null && styleGuideVersionedAt > now + MAXIMUM_CLOCK_SKEW_MS) addError(errors, "manifest.styleGuideVersionedAt", "versionamento do guia não pode estar no futuro");
+  if (generatedAt !== null && generatedAt > now + CARD_ART_PILOT_MAX_CLOCK_SKEW_MS) addError(errors, "manifest.generatedAt", "geração não pode estar no futuro");
+  if (styleGuideVersionedAt !== null && styleGuideVersionedAt > now + CARD_ART_PILOT_MAX_CLOCK_SKEW_MS) addError(errors, "manifest.styleGuideVersionedAt", "versionamento do guia não pode estar no futuro");
   if (generatedAt !== null && manifestDate !== null && new Date(generatedAt).toISOString().slice(0, 10) !== manifest.generatedOn) {
     addError(errors, "manifest.generatedOn", "data civil deve corresponder ao instante UTC de geração");
   }
@@ -245,8 +250,48 @@ function validateManifestForCollection(errors, manifest, now) {
   }
   if (!hasText(manifest.tool)) addError(errors, "manifest.tool", "ferramenta de geração obrigatória");
   if (!hasText(manifest.commonPrompt)) addError(errors, "manifest.commonPrompt", "prompt comum imutável obrigatório");
+  const generationContract = manifest.generationContract;
+  if (!isRecord(generationContract)) {
+    addError(errors, "manifest.generationContract", "plano prévio e receipt histórico da geração obrigatórios");
+  } else {
+    for (const phase of ["plan", "receipt"]) {
+      const record = generationContract[phase];
+      if (!isRecord(record)) {
+        addError(errors, `manifest.generationContract.${phase}`, "registro obrigatório");
+        continue;
+      }
+      if (!hasText(record.path)) addError(errors, `manifest.generationContract.${phase}.path`, "caminho obrigatório");
+      if (!/^[a-f0-9]{40}$/.test(record.commit || "")) addError(errors, `manifest.generationContract.${phase}.commit`, "commit obrigatório");
+      if (!isSha256(record.sha256)) addError(errors, `manifest.generationContract.${phase}.sha256`, "SHA-256 obrigatório");
+    }
+    if (generationContract.receipt?.commit !== manifest.generationCommit) {
+      addError(errors, "manifest.generationContract.receipt.commit", "receipt precisa estar no commit de geração");
+    }
+  }
+  const receiptRegistry = manifest.receiptRegistry;
+  if (!isRecord(receiptRegistry)) {
+    addError(errors, "manifest.receiptRegistry", "registro de receipts pré-emitidos obrigatório");
+  } else {
+    if (receiptRegistry.protocol !== "card-art-pilot-176-receipts-v1") addError(errors, "manifest.receiptRegistry.protocol", "protocolo inválido");
+    if (!hasText(receiptRegistry.path)) addError(errors, "manifest.receiptRegistry.path", "caminho obrigatório");
+    if (!/^[a-f0-9]{40}$/.test(receiptRegistry.commit || "")) addError(errors, "manifest.receiptRegistry.commit", "commit obrigatório");
+    if (parsedDate(receiptRegistry.committedAt) === null) addError(errors, "manifest.receiptRegistry.committedAt", "instante do commit válido obrigatório");
+    if (!isSha256(receiptRegistry.sha256)) addError(errors, "manifest.receiptRegistry.sha256", "SHA-256 obrigatório");
+    if (!Number.isInteger(receiptRegistry.issuedCount) || receiptRegistry.issuedCount < 40) {
+      addError(errors, "manifest.receiptRegistry.issuedCount", "ao menos 40 receipts pré-emitidos obrigatórios");
+    }
+  }
+  if (manifest.generationContractSchema !== "stages/12_quality_gate_main/references/card-art-pilot-generation-contract.schema.json") {
+    addError(errors, "manifest.generationContractSchema", "schema canônico do contrato de geração obrigatório");
+  }
   if (manifest.participantResponseSchema !== "stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json") {
     addError(errors, "manifest.participantResponseSchema", "schema canônico das respostas individuais obrigatório");
+  }
+  if (manifest.responseBundleSchema !== "stages/12_quality_gate_main/references/card-art-pilot-response-bundle.schema.json") {
+    addError(errors, "manifest.responseBundleSchema", "schema canônico do bundle obrigatório");
+  }
+  if (manifest.receiptRegistrySchema !== "stages/12_quality_gate_main/references/card-art-pilot-receipt-registry.schema.json") {
+    addError(errors, "manifest.receiptRegistrySchema", "schema canônico do registro de receipts obrigatório");
   }
   if (manifest.collectionAllowed !== true) {
     addError(errors, "manifest.collectionAllowed", "nenhum resultado pode ser consolidado enquanto a coleta não estiver explicitamente autorizada");
@@ -387,6 +432,47 @@ function validatePrivacy(errors, privacy) {
   }
 }
 
+function validateCustody(errors, result, manifest) {
+  const custody = result?.custody;
+  if (!isRecord(custody)) {
+    addError(errors, "custody", "cadeia de custódia das respostas individuais ausente");
+    return;
+  }
+  if (custody.protocol !== "card-art-pilot-176-v2-custody") addError(errors, "custody.protocol", "protocolo de custódia inválido");
+  if (!isSha256(custody.receiptRegistrySha256)) addError(errors, "custody.receiptRegistrySha256", "SHA-256 do registro de receipts obrigatório");
+  if (custody.receiptRegistrySha256 !== manifest?.receiptRegistry?.sha256) {
+    addError(errors, "custody.receiptRegistrySha256", "registro de receipts diverge do manifesto");
+  }
+  if (!Number.isInteger(custody.responseCount) || custody.responseCount < 1) addError(errors, "custody.responseCount", "contagem positiva obrigatória");
+  if (!Array.isArray(custody.entries) || custody.entries.length === 0) {
+    addError(errors, "custody.entries", "resultado final não pode consolidar um conjunto vazio");
+    return;
+  }
+  if (custody.entries.length !== custody.responseCount) addError(errors, "custody.entries", "quantidade diverge de custody.responseCount");
+  if (result?.sample?.participantCount !== custody.responseCount) addError(errors, "custody.responseCount", "quantidade diverge de sample.participantCount");
+
+  const responseIds = custody.entries.map((entry) => entry?.responseId);
+  const receiptHashes = custody.entries.map((entry) => entry?.receiptSha256);
+  const responseHashes = custody.entries.map((entry) => entry?.responseSha256);
+  for (const [label, values] of [
+    ["responseId", responseIds],
+    ["receiptSha256", receiptHashes],
+    ["responseSha256", responseHashes]
+  ]) {
+    if (new Set(values).size !== values.length) addError(errors, `custody.entries.${label}`, "valores precisam ser únicos");
+  }
+  const sorted = [...custody.entries].sort((left, right) => String(left?.receiptSha256).localeCompare(String(right?.receiptSha256))
+    || String(left?.responseId).localeCompare(String(right?.responseId)));
+  if (cardArtPilotCanonicalJson(sorted) !== cardArtPilotCanonicalJson(custody.entries)) {
+    addError(errors, "custody.entries", "entradas precisam estar na ordem canônica por receiptSha256 e responseId");
+  }
+  const { responseSetRootSha256, ...envelope } = custody;
+  const expectedRoot = cardArtPilotCanonicalSha256({ batch: result.batch, ...envelope });
+  if (responseSetRootSha256 !== expectedRoot) {
+    addError(errors, "custody.responseSetRootSha256", `raiz canônica diverge; esperado ${expectedRoot}`);
+  }
+}
+
 function parsedDate(value) {
   if (!hasText(value)) return null;
   const timestamp = Date.parse(value);
@@ -417,8 +503,13 @@ function validateHumanAccountability(errors, result, manifest, now) {
   }
 
   const manifestDate = parsedCivilDate(manifest?.generatedOn);
+  const manifestGeneratedAt = parsedDate(manifest?.generatedAt);
+  const firstCollectedAt = parsedDate(result?.custody?.firstCollectedAt);
+  const lastCollectedAt = parsedDate(result?.custody?.lastCollectedAt);
   const latestPilotDate = manifestDate === null ? null : manifestDate + (366 * 24 * 60 * 60 * 1000);
   const boundedDates = [
+    ["custody.firstCollectedAt", firstCollectedAt],
+    ["custody.lastCollectedAt", lastCollectedAt],
     ["sample.externalRecruitment.attestedAt", attestedAt],
     ["decision.decidedAt", decisionAt],
     ["generatedAt", generatedAt]
@@ -441,12 +532,29 @@ function validateHumanAccountability(errors, result, manifest, now) {
       } else if (decisionAt !== null && reviewedAt > decisionAt) {
         addError(errors, `${path}.reviewedAt`, "revisão não pode ser posterior à decisão");
       }
+      if (reviewedAt !== null && attestedAt !== null && reviewedAt < attestedAt) {
+        addError(errors, `${path}.reviewedAt`, "revisão não pode anteceder a atestação final da coleta");
+      }
       boundedDates.push([`${path}.reviewedAt`, reviewedAt]);
     }
   }
 
+  if (firstCollectedAt !== null && lastCollectedAt !== null && firstCollectedAt > lastCollectedAt) {
+    addError(errors, "custody.firstCollectedAt", "primeira coleta não pode ser posterior à última coleta");
+  }
+  if (lastCollectedAt !== null && attestedAt !== null && lastCollectedAt > attestedAt) {
+    addError(errors, "sample.externalRecruitment.attestedAt", "atestação não pode anteceder o encerramento da coleta");
+  }
+  if (manifestGeneratedAt !== null) {
+    for (const [path, timestamp] of boundedDates) {
+      if (timestamp !== null && timestamp <= manifestGeneratedAt) {
+        addError(errors, path, "instante precisa ser posterior a manifest.generatedAt");
+      }
+    }
+  }
+
   for (const [path, timestamp] of boundedDates) {
-    if (timestamp !== null && timestamp > now + MAXIMUM_CLOCK_SKEW_MS) {
+    if (timestamp !== null && timestamp > now + CARD_ART_PILOT_MAX_CLOCK_SKEW_MS) {
       addError(errors, path, "data não pode estar no futuro");
     }
   }
@@ -617,6 +725,7 @@ export function validateCardArtPilotResults(result, manifest, options) {
   validateNoParticipantPii(errors, result);
   validateManifestBinding(errors, result, manifest);
   validateManifestForCollection(errors, manifest, now);
+  validateCustody(errors, result, manifest);
 
   const sample = result.sample;
   if (!isRecord(sample)) {

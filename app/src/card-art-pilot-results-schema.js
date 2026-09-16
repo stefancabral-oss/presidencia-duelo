@@ -28,16 +28,26 @@ function schemaError(error) {
   return `schema${path}: ${error.message}`;
 }
 
-export function validateCardArtPilotResultSchema(result, schema) {
+export function validateCardArtPilotSchemaDocument(document, schema) {
   const validate = compileSchema(schema);
-  if (validate(result)) return [];
+  if (validate(document)) return [];
   return validate.errors.map(schemaError);
 }
 
+export function validateCardArtPilotResultSchema(result, schema) {
+  return validateCardArtPilotSchemaDocument(result, schema);
+}
+
 export function validateCardArtPilotParticipantResponseSchema(response, schema) {
-  const validate = compileSchema(schema);
-  if (validate(response)) return [];
-  return validate.errors.map(schemaError);
+  return validateCardArtPilotSchemaDocument(response, schema);
+}
+
+export function validateCardArtPilotResponseBundleSchema(bundle, schema) {
+  return validateCardArtPilotSchemaDocument(bundle, schema);
+}
+
+export function validateCardArtPilotReceiptRegistrySchema(registry, schema) {
+  return validateCardArtPilotSchemaDocument(registry, schema);
 }
 
 export function validateCardArtPilotResultDocument(result, manifest, schema, options) {

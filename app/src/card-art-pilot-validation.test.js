@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { assertCardArtPilotResults, cardArtPilotManifestSha256, validateCardArtPilotResults } from "./card-art-pilot-validation.js";
 import { validateCardArtPilotResultDocument, validateCardArtPilotResultSchema } from "./card-art-pilot-results-schema.js";
-import { readyManifestFixture, validResultFixture } from "./fixtures/card-art-pilot-validation-fixtures.js";
+import { readyManifestFixture, validParticipantBundleFixture, validResultFixture } from "./fixtures/card-art-pilot-validation-fixtures.js";
 
 const currentManifestUrl = new URL("../../stages/12_quality_gate_main/evidence/card-art-pilot-176/manifest.json", import.meta.url);
 const resultSchemaUrl = new URL("../../stages/12_quality_gate_main/references/card-art-pilot-results.schema.json", import.meta.url);
@@ -17,8 +17,8 @@ async function resultSchema() {
   return JSON.parse(await readFile(resultSchemaUrl, "utf8"));
 }
 
-function executeCli(resultPath, directory) {
-  return spawnSync(process.execPath, [cliPath, basename(resultPath)], {
+function executeCli(resultPath, bundlePath, directory) {
+  return spawnSync(process.execPath, [cliPath, basename(resultPath), basename(bundlePath)], {
     cwd: directory,
     encoding: "utf8",
     env: { ...process.env, INIT_CWD: directory }
@@ -135,6 +135,25 @@ test("the Draft schema requires a lowercase SHA-256 manifest fingerprint at the 
   assert.ok(validateCardArtPilotResultSchema(malformed, schema).some((error) => error.includes("batch/manifestSha256")));
   assert.ok(validateCardArtPilotResultSchema(legacy, schema).some((error) => error.includes("version") && error.includes("obrigatório")));
   assert.ok(validateCardArtPilotResultSchema(legacy, schema).some((error) => error.includes("assets") && error.includes("obrigatório")));
+});
+
+test("custody metadata cannot be empty, reordered or detached from its canonical root", async () => {
+  const manifest = readyManifestFixture();
+  const missing = validResultFixture("iterar", manifest);
+  delete missing.custody;
+  assert.ok(validateCardArtPilotResultSchema(missing, await resultSchema())
+    .some((error) => error.includes("custody") && error.includes("obrigatório")));
+
+  const tamperedRoot = validResultFixture("iterar", manifest);
+  tamperedRoot.custody.responseSetRootSha256 = "f".repeat(64);
+  assert.ok(validateCardArtPilotResults(tamperedRoot, manifest)
+    .some((error) => error.includes("responseSetRootSha256") && error.includes("raiz canônica")));
+
+  const reordered = validResultFixture("iterar", manifest);
+  [reordered.custody.entries[0], reordered.custody.entries[1]] = [reordered.custody.entries[1], reordered.custody.entries[0]];
+  const errors = validateCardArtPilotResults(reordered, manifest);
+  assert.ok(errors.some((error) => error.includes("custody.entries") && error.includes("ordem canônica")));
+  assert.ok(errors.some((error) => error.includes("responseSetRootSha256")));
 });
 
 test("the CLI prints the canonical fingerprint of the committed manifest", async () => {
@@ -279,6 +298,26 @@ test("human chronology is attestation and reviews, then decision, then consolida
   assert.ok(errors.some((error) => error.includes("decision.decidedAt") && error.includes("posterior à geração do consolidado")));
 });
 
+test("collection and every accountable stage follow exact manifest.generatedAt in order", () => {
+  const manifest = readyManifestFixture();
+  const lowerBound = validResultFixture("iterar", manifest);
+  lowerBound.custody.firstCollectedAt = manifest.generatedAt;
+  const lowerErrors = validateCardArtPilotResults(lowerBound, manifest);
+  assert.ok(lowerErrors.some((error) => error.includes("custody.firstCollectedAt") && error.includes("posterior a manifest.generatedAt")));
+
+  const ordering = validResultFixture("abandonar", manifest);
+  ordering.sample.externalRecruitment.attestedAt = "2026-09-16T01:00:00Z";
+  ordering.assets[0].identityReview.reviewedAt = "2026-09-16T00:59:59Z";
+  const orderingErrors = validateCardArtPilotResults(ordering, manifest);
+  assert.ok(orderingErrors.some((error) => error.includes("identityReview.reviewedAt") && error.includes("atestação")));
+
+  const prematureAttestation = validResultFixture("iterar", manifest);
+  prematureAttestation.sample.externalRecruitment.attestedAt = "2026-09-16T01:00:00Z";
+  prematureAttestation.custody.lastCollectedAt = "2026-09-16T01:01:00Z";
+  assert.ok(validateCardArtPilotResults(prematureAttestation, manifest)
+    .some((error) => error.includes("attestedAt") && error.includes("encerramento da coleta")));
+});
+
 test("all accountable timestamps reject the future through an injectable clock with five minutes tolerance", () => {
   const now = Date.parse("2026-09-16T03:00:00Z");
   const manifest = readyManifestFixture();
@@ -340,6 +379,7 @@ test("collection is blocked when documented license metadata is incomplete", () 
 
 test("a result cannot legitimize an originally hashless or style-incoherent ready manifest", () => {
   const manifest = readyManifestFixture();
+  const result = validResultFixture("iterar", manifest);
   manifest.styleGuide = "docs/design/OUTRO_GUIA.md";
   manifest.styleGuideAtGeneration = "pilot-1";
   manifest.tool = " ";
@@ -353,8 +393,6 @@ test("a result cannot legitimize an originally hashless or style-incoherent read
   delete manifest.assets[0].sourceOutput;
   delete manifest.assets[0].identityReference.sha256;
   delete manifest.assets[0].identityReference.path;
-  const result = validResultFixture("iterar", manifest);
-
   const errors = validateCardArtPilotResults(result, manifest);
   assert.ok(errors.some((error) => error.includes("manifest.styleGuide") && error.includes("guia canônico")));
   assert.ok(errors.some((error) => error.includes("manifest.styleGuideAtGeneration") && error.includes("versão vigente")));
@@ -407,6 +445,8 @@ test("scaleDecisionAllowed is boolean, cannot precede collection and only blocks
   const noScale = readyManifestFixture();
   noScale.scaleDecisionAllowed = false;
   assert.equal(validateCardArtPilotResults(validResultFixture("iterar", noScale), noScale)
+    .some((error) => error.includes("decision.value") && error.includes("scaleDecisionAllowed")), false);
+  assert.equal(validateCardArtPilotResults(validResultFixture("abandonar", noScale), noScale)
     .some((error) => error.includes("decision.value") && error.includes("scaleDecisionAllowed")), false);
   assert.ok(validateCardArtPilotResults(validResultFixture("seguir", noScale), noScale)
     .some((error) => error.includes("decision.value") && error.includes("scaleDecisionAllowed")));
@@ -466,10 +506,16 @@ test("natural participant identification and common Brazilian address variants a
   const result = validResultFixture("iterar", manifest);
   result.assets[0].identityReview.notes = "A respondente Ana Silva mora na Praça da Sé, 1";
   result.assets[0].dignityReview.notes = "O participante João Souza reside na Av. Paulista, nº 1000";
-  result.decision.rationale = "Contato informado na Alameda Santos 42";
+  result.assets[1].identityReview.notes = "A pessoa Maria Oliveira vive na Rua das Flores, s/n";
+  result.assets[1].dignityReview.notes = "A voluntária Joana Pereira mora na Avenida Central sem número";
+  result.assets[2].identityReview.notes = "A entrevistada Carla Mendes reside na Praça Azul, 20";
+  result.assets[2].dignityReview.notes = "CEP 01001-000";
+  result.assets[3].identityReview.notes = "A pessoa Ana mora na Rua Verde, sem número";
+  result.decision.rationale = "Endereço agregado omitido; código postal observado 01001000";
   const errors = validateCardArtPilotResults(result, manifest);
   assert.ok(errors.some((error) => error.includes("identificação natural de participante")));
   assert.ok(errors.some((error) => error.includes("endereço postal")));
+  assert.ok(errors.some((error) => error.includes("CEP")), "CEP must be detected independently of phone detection");
 
   const safe = validResultFixture("iterar", manifest);
   safe.assets[0].identityReview.notes = "Participantes externos foram recrutados sem coleta de texto livre.";
@@ -512,9 +558,11 @@ test("Draft 2020-12 schema rejects the exact PII and unsigned-result bypass", as
 test("the CLI resolves a relative result path and rejects every result for the invalidated batch", async () => {
   const temporaryDirectory = await mkdtemp(join(tmpdir(), "card-art-pilot-176-"));
   const resultPath = join(temporaryDirectory, "result.json");
+  const bundlePath = join(temporaryDirectory, "bundle.json");
   try {
     await writeFile(resultPath, JSON.stringify(validResultFixture()), "utf8");
-    const execution = executeCli(resultPath, temporaryDirectory);
+    await writeFile(bundlePath, JSON.stringify(validParticipantBundleFixture()), "utf8");
+    const execution = executeCli(resultPath, bundlePath, temporaryDirectory);
     assert.equal(execution.status, 1, execution.stdout);
     assert.match(execution.stderr, /manifest\.collectionAllowed/);
     assert.match(execution.stderr, new RegExp(basename(resultPath).replace(".", "\\.")));
@@ -527,16 +575,35 @@ test("the CLI resolves a relative result path and rejects every result for the i
 test("the CLI validates schema before semantics", async () => {
   const temporaryDirectory = await mkdtemp(join(tmpdir(), "card-art-pilot-176-schema-"));
   const resultPath = join(temporaryDirectory, "malicious-result.json");
+  const bundlePath = join(temporaryDirectory, "bundle.json");
   const result = validResultFixture("seguir");
   result.participantRecords = [{ email: "participante@example.org" }];
   result.decision = { value: "seguir" };
   try {
     await writeFile(resultPath, JSON.stringify(result), "utf8");
-    const execution = executeCli(resultPath, temporaryDirectory);
+    await writeFile(bundlePath, JSON.stringify(validParticipantBundleFixture()), "utf8");
+    const execution = executeCli(resultPath, bundlePath, temporaryDirectory);
     assert.equal(execution.status, 1, execution.stdout);
     assert.match(execution.stderr, /schema.*participantRecords.*propriedade não permitida/i);
     assert.match(execution.stderr, /decidedBy.*campo obrigatório ausente/i);
     assert.doesNotMatch(execution.stderr, /manifest\.collectionAllowed/);
+  } finally {
+    await rm(temporaryDirectory, { recursive: true, force: true });
+  }
+});
+
+test("the final CLI refuses a result without a non-empty individual response bundle", async () => {
+  const temporaryDirectory = await mkdtemp(join(tmpdir(), "card-art-pilot-176-no-bundle-"));
+  const resultPath = join(temporaryDirectory, "result.json");
+  try {
+    await writeFile(resultPath, JSON.stringify(validResultFixture()), "utf8");
+    const execution = spawnSync(process.execPath, [cliPath, basename(resultPath)], {
+      cwd: temporaryDirectory,
+      encoding: "utf8",
+      env: { ...process.env, INIT_CWD: temporaryDirectory }
+    });
+    assert.equal(execution.status, 2);
+    assert.match(execution.stderr, /response-bundle\.json/);
   } finally {
     await rm(temporaryDirectory, { recursive: true, force: true });
   }

@@ -46,7 +46,10 @@ test("the root Docker context explicitly supplies the isolation manifest before 
     "'CREDITS.md'",
     "'stages/12_quality_gate_main/evidence/card-art-pilot-176/**'",
     "'stages/12_quality_gate_main/output/card-art-pilot-results.json'",
+    "'stages/12_quality_gate_main/references/card-art-pilot-generation-contract.schema.json'",
     "'stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json'",
+    "'stages/12_quality_gate_main/references/card-art-pilot-receipt-registry.schema.json'",
+    "'stages/12_quality_gate_main/references/card-art-pilot-response-bundle.schema.json'",
     "'stages/12_quality_gate_main/references/card-art-pilot-results.schema.json'"
   ]) {
     assert.ok(workflow.includes(trigger), `remote Docker gate must run when ${trigger} changes`);

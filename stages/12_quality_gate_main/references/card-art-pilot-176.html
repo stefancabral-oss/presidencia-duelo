@@ -33,7 +33,7 @@
       [hidden] { display: none !important; }
     </style>
   </head>
-  <body data-batch-status="pilot-invalidated-regeneration-required" data-batch-version="batch-1-invalidated" data-manifest-sha256="ac94792a9cef850c9c326f1dc98c89d45c07abfbcbad12404dad7e7eb5846b88" data-collection-allowed="false">
+  <body data-batch-status="pilot-invalidated-regeneration-required" data-batch-version="batch-1-invalidated" data-manifest-sha256="8aae361bf58590c398bc089eaeb7d6395690cb61a04faea44916abca38301d74" data-collection-allowed="false">
     <main>
       <header>
         <h1>Teste cego de reconhecimento</h1>
@@ -83,7 +83,7 @@
 
       const batchIdentity = deepFreeze({
         version: "batch-1-invalidated",
-        manifestSha256: "ac94792a9cef850c9c326f1dc98c89d45c07abfbcbad12404dad7e7eb5846b88",
+        manifestSha256: "8aae361bf58590c398bc089eaeb7d6395690cb61a04faea44916abca38301d74",
         assets: [
           { blindCode: "P01", sha256: "3b853beeda66b6e8346c11126081359fd0955ce51a13832798690a0ab288a99d" },
           { blindCode: "P02", sha256: "4adc80542a5dafdf38c8a7043f61cc403d168e43677c7238be5bec7d25344359" },
@@ -103,8 +103,11 @@
       const batchGate = Object.freeze({
         status: "pilot-invalidated-regeneration-required",
         collectionAllowed: false,
-        scaleDecisionAllowed: false
+        receiptRegistrySha256: null
       });
+      // Um lote futuro autorizado deve embutir aqui o registro público versionado.
+      // O lote invalidado deliberadamente não inventa esse artefato histórico.
+      const receiptRegistry = deepFreeze(null);
       const scenarioDefinitions = {
         "mobile-390x844": { viewport: { width: 390, height: 844 } },
         "desktop-1000x800": { viewport: { width: 1000, height: 800 } }
@@ -112,6 +115,7 @@
       const query = new URLSearchParams(location.search);
       const requestedScenario = query.get("scenario");
       const technicalPreview = query.get("technicalPreview") === "1";
+      const receipt = query.get("receipt") || "";
       const scenarioIds = Object.keys(scenarioDefinitions);
       const scenarioId = scenarioIds.includes(requestedScenario)
         ? requestedScenario
@@ -136,6 +140,51 @@
       const status = document.querySelector("#status");
       let currentIndex = 0;
       let observedDisplayScenario = null;
+      let receiptWasPreissued = false;
+
+      function canonicalJson(value) {
+        if (value === null || typeof value === "boolean" || typeof value === "string" || typeof value === "number") {
+          return JSON.stringify(value);
+        }
+        if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+        return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
+      }
+
+      async function sha256Hex(value) {
+        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+        return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+      }
+
+      function batchIdentityIsComplete() {
+        return typeof batchIdentity.version === "string"
+          && /^[a-f0-9]{64}$/.test(batchIdentity.manifestSha256)
+          && batchIdentity.assets.length === 8
+          && batchIdentity.assets.every((asset, index) => asset.blindCode === `P0${index + 1}` && /^[a-f0-9]{64}$/.test(asset.sha256));
+      }
+
+      async function receiptIsPreissued() {
+        if (!/^[a-f0-9]{64}$/.test(receipt)
+          || !receiptRegistry
+          || receiptRegistry.protocol !== "card-art-pilot-176-receipts-v1"
+          || receiptRegistry.batchVersion !== batchIdentity.version
+          || !/^[a-f0-9]{64}$/.test(receiptRegistry.receiptDomain)
+          || !Array.isArray(receiptRegistry.assets)
+          || !Array.isArray(receiptRegistry.receiptHashes)) return false;
+        const expectedAssets = batchIdentity.assets.map(({ blindCode, sha256 }) => ({ blindCode, sha256 }));
+        if (canonicalJson(receiptRegistry.assets) !== canonicalJson(expectedAssets)) return false;
+        if (await sha256Hex(canonicalJson(receiptRegistry)) !== batchGate.receiptRegistrySha256) return false;
+        const receiptSha256 = await sha256Hex([
+          receiptRegistry.protocol,
+          receiptRegistry.batchVersion,
+          receiptRegistry.receiptDomain,
+          receipt
+        ].join("\0"));
+        return receiptRegistry.receiptHashes.includes(receiptSha256);
+      }
+
+      function collectionIsAuthorized() {
+        return batchGate.collectionAllowed && batchIdentityIsComplete() && receiptWasPreissued;
+      }
 
       function rounded(value) {
         return Math.round(value * 10) / 10;
@@ -182,13 +231,13 @@
             </fieldset>
             <button type="submit">${currentIndex + 1 === assets.length ? "Ir à etapa final" : "Próxima imagem"}</button>
           </article>`;
-        if (batchGate.collectionAllowed) imageStep.querySelector("input[name=identity]").focus();
+        if (collectionIsAuthorized()) imageStep.querySelector("input[name=identity]").focus();
       }
 
       imageStep.addEventListener("submit", (event) => {
         event.preventDefault();
-        if (!batchGate.collectionAllowed) {
-          status.textContent = "Coleta bloqueada: este lote precisa ser regenerado sob o guia já versionado.";
+        if (!collectionIsAuthorized()) {
+          status.textContent = "Coleta bloqueada: lote, fingerprint ou receipt pré-emitido inválido.";
           return;
         }
         if (!imageStep.reportValidity()) return;
@@ -214,8 +263,8 @@
 
       finalStep.addEventListener("submit", (event) => {
         event.preventDefault();
-        if (!batchGate.collectionAllowed || !batchGate.scaleDecisionAllowed) {
-          status.textContent = "Exportação bloqueada: este lote foi invalidado antes do teste humano.";
+        if (!collectionIsAuthorized()) {
+          status.textContent = "Exportação bloqueada: lote, fingerprint ou receipt pré-emitido inválido.";
           return;
         }
         if (!finalStep.reportValidity()) return;
@@ -226,6 +275,8 @@
           protocol: "card-art-pilot-176-v2-participant",
           batch: batchIdentity,
           responseId,
+          receipt,
+          collectedAt: new Date().toISOString(),
           displayScenario: observedDisplayScenario || captureDisplayScenario(),
           strata: {
             familiarity: String(data.get("familiarity")),
@@ -245,20 +296,26 @@
         status.textContent = "Respostas salvas. Envie o arquivo ao responsável pelo piloto.";
       });
 
-      if (batchGate.collectionAllowed) {
-        batchBlocked.hidden = true;
-        renderImageStep();
-      } else if (technicalPreview) {
-        progress.textContent = "Prévia técnica — coleta e exportação desativadas";
-        renderImageStep();
-        imageStep.setAttribute("aria-disabled", "true");
-        imageStep.querySelectorAll("input, button").forEach((control) => { control.disabled = true; });
-      } else {
-        progress.textContent = "Coleta bloqueada até a geração de um novo lote";
-        imageStep.hidden = true;
-        finalStep.hidden = true;
-        status.textContent = "Nenhuma resposta pode ser coletada com P01–P08.";
+      async function initialize() {
+        receiptWasPreissued = await receiptIsPreissued();
+        if (collectionIsAuthorized()) {
+          batchBlocked.hidden = true;
+          renderImageStep();
+        } else if (technicalPreview) {
+          progress.textContent = "Prévia técnica — coleta e exportação desativadas";
+          renderImageStep();
+          imageStep.setAttribute("aria-disabled", "true");
+          imageStep.querySelectorAll("input, button").forEach((control) => { control.disabled = true; });
+        } else {
+          progress.textContent = "Coleta bloqueada até a geração de um novo lote";
+          imageStep.hidden = true;
+          finalStep.hidden = true;
+          status.textContent = batchGate.collectionAllowed
+            ? "Receipt pré-emitido ausente ou inválido; nenhuma resposta foi coletada."
+            : "Nenhuma resposta pode ser coletada com P01–P08.";
+        }
       }
+      void initialize();
     </script>
   </body>
 </html>

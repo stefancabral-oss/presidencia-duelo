@@ -20,7 +20,7 @@
     {
       "name": "pilot-asset-and-reference-integrity",
       "command": "npm test",
-      "result": "passed; 138 of 138 tests (4 shared, 39 backend, 95 app), including anonymous filenames, 4:5 dimensions, hashes, invalidation state and bypass payloads for replay, PII, whitespace signatures, chronology, neutrality, recognition and denominators"
+      "result": "passed; 160 of 160 tests (4 shared, 39 backend, 117 app), including the invalidation state and bypass payloads for empty or renamed bundles, reused or post-hoc receipts, detached custody roots, geometry, PII, chronology, neutrality, recognition and denominators"
     },
     {
       "name": "reference-provenance",
@@ -29,22 +29,22 @@
     {
       "name": "blind-form-breakpoints",
       "command": "npm run test:card-art-pilot-form --prefix app",
-      "result": "passed in Chromium and WebKit; the smoke derived expected geometry from app/src/styles.css and matched mobile 183.5x280 with a 167.5x160 image plus desktop 226x316.4 with a 204x187.4 image while collection and export remained blocked"
+      "result": "passed in Chromium and WebKit; the smoke derived expected geometry from app/src/styles.css and matched both scenarios, while the semantic contract checks every viewport/card/art-window/image/blind-plate dimension within 0.2 CSS px; collection and export require collectionAllowed, the immutable batch and membership in the pre-issued receipt registry, independently of scaleDecisionAllowed"
     },
     {
       "name": "result-governance-schema",
       "command": "npm run test:card-art-pilot-contract --prefix app",
-      "result": "passed 33 of 33; locked Ajv 8.20.0 plus ajv-formats 3.0.1 validates every result instance against Draft 2020-12 before semantics, including a required manifest SHA-256, additionalProperties, nonblank authors, dates, reviews and decision; npm audit reports zero vulnerabilities"
+      "result": "passed 55 of 55; locked Ajv 8.20.0 plus ajv-formats 3.0.1 validates the generation plan/receipt, registry, non-empty response bundle, each individual response and the result against Draft 2020-12 before semantics; npm audit reports zero vulnerabilities"
     },
     {
       "name": "result-semantic-validator",
-      "command": "npm run card-art-pilot:validate-results --prefix app -- <result.json>",
-      "result": "passed with positive, negative and CLI fixtures; rejects nested PII, binds the result to the canonical SHA-256 of the complete manifest, requires complete unique P01-P08 coverage, coherent counts/rates/strata, at least 20 valid external responses per asset and scenario, ordered human dates and complete hashes/license provenance; any decision is blocked while collectionAllowed is false, while seguir also enforces 20% neutrality and 15-point recognition-gap limits"
+      "command": "npm run card-art-pilot:validate-results --prefix app -- <result.json> <response-bundle.json>",
+      "result": "passed with positive, negative and CLI fixtures; recomputes custody from a non-empty bundle, rejects receipt replay and a Git registry committed after collection, binds generation plan/receipt and registry bytes to historical commits, validates every geometry field, rejects expanded nested PII and requires exact collection-to-result chronology; any decision is blocked while collectionAllowed is false, while scaleDecisionAllowed blocks only seguir"
     },
     {
       "name": "continuous-integration-enforcement",
       "command": "design-validator.yml and ui-interaction-smoke.yml",
-      "result": "configured; path triggers cover app, shared, .dockerignore, credits, the style guide, protocol, result, schema, manifest and evidence; CI runs the result contract, dist isolation, a real repository-root Docker image build and the canonical-geometry form smoke in Chromium and WebKit"
+      "result": "configured; path triggers cover app, shared, .dockerignore, credits, the style guide, protocol, result, all five schemas, manifest and evidence; CI runs the result contract, dist isolation, a real repository-root Docker image build and the canonical-geometry form smoke in Chromium and WebKit"
     },
     {
       "name": "blind-recognition-test",

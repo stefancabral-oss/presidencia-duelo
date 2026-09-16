@@ -7,7 +7,7 @@
 - Macro: https://github.com/stefancabral-oss/presidencia-duelo/issues/175
 - Branch: `icm/12-u06-editorial-gate-171-v2`
 - Base: `icm/12-u04-taxonomy-173@b9009233fc3b1461840b3eb082ac2e28623eed0d`
-- PR: será aberta como draft sobre a base acima; merge não faz parte desta unidade
+- PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/200 (`draft`; merge não faz parte desta unidade)
 
 ## Entregue
 

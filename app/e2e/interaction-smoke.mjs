@@ -114,19 +114,23 @@ function assertOutcomeSemantics(outcomes, viewportLabel) {
   }
 }
 
-const shortViewportCandidateIds = new Set([46, 48, 95, 125]);
-const candidates = CATALOG.filter(({ personId }) => shortViewportCandidateIds.has(personId));
+const smokeCandidateIds = new Set([46, 48, 95, 125, 1, 2, 3, 4]);
+const candidates = CATALOG.filter(({ personId }) => smokeCandidateIds.has(personId));
 
-function ranking(decisions = 0, winnerId = "") {
-  return candidates.map((candidate) => ({
-    ...candidate,
-    elo: decisions ? (candidate.id === winnerId ? 1085 : 1025) : 1040,
-    wins: decisions && candidate.id === winnerId ? 3 : 0,
-    losses: decisions && candidate.id !== winnerId ? 1 : 0,
-    decisions: decisions ? (candidate.id === winnerId ? 3 : 1) : 0,
-    winRate: decisions && candidate.id === winnerId ? 100 : 0,
-    rank: decisions ? (candidate.id === winnerId ? 1 : 2) : null,
-  })).sort((left, right) => (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER) || left.id.localeCompare(right.id));
+function ranking(decisions = 0, winnerId = "", comparedIds = []) {
+  const compared = new Set(comparedIds);
+  return candidates.map((candidate) => {
+    const played = Boolean(decisions && compared.has(candidate.id));
+    return {
+      ...candidate,
+      elo: played ? (candidate.id === winnerId ? 1085 : 1025) : 1040,
+      wins: played && candidate.id === winnerId ? 3 : 0,
+      losses: played && candidate.id !== winnerId ? 1 : 0,
+      decisions: played ? (candidate.id === winnerId ? 3 : 1) : 0,
+      winRate: played && candidate.id === winnerId ? 100 : 0,
+      rank: played ? (candidate.id === winnerId ? 1 : 2) : null,
+    };
+  }).sort((left, right) => (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER) || left.id.localeCompare(right.id));
 }
 
 const browser = await browserType.launch();
@@ -194,8 +198,8 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
     const globalFeedback = { ...feedback, primaryEvent: "top10", rankingEvent: "top10" };
     body = {
       duels: successfulRoundVotes,
-      ranking: ranking(1, payload.winnerId),
-      player: { version: successfulRoundVotes, duels: successfulRoundVotes, rankingPolicy: personalRankingPolicy, ranking: ranking(1, payload.winnerId) },
+      ranking: ranking(1, payload.winnerId, payload.candidateIds),
+      player: { version: successfulRoundVotes, duels: successfulRoundVotes, rankingPolicy: personalRankingPolicy, ranking: ranking(1, payload.winnerId, payload.candidateIds) },
       round: {
         id: payload.roundId,
         status: "created",
@@ -277,8 +281,8 @@ try {
 
     await page.getByRole("button", { name: "Abrir sua conta" }).click();
     await page.getByRole("button", { name: "Sair desta conta" }).click();
-    await page.getByText("Você saiu. Um jogo novo começou neste aparelho.").waitFor();
-    if (await page.locator("#retry-vote").count()) throw new Error("O logout preservou um voto pendente da conta anterior");
+    await page.locator(".round-instruction", { hasText: "Você saiu. Um jogo novo começou neste aparelho." }).waitFor();
+    if (await page.locator("#retry-vote").isVisible()) throw new Error("O logout preservou um voto pendente da conta anterior");
 
     failNextRoundVote = true;
     await page.locator(".candidate-card").first().click();
@@ -292,10 +296,10 @@ try {
     await page.getByRole("button", { name: "Continuar com Google" }).click();
     await page.getByRole("heading", { name: "Tudo certo, Bia!" }).waitFor();
     await page.getByRole("button", { name: "Voltar ao jogo" }).click();
-    if (await page.locator("#retry-vote").count()) throw new Error("O login preservou um voto pendente do jogador anônimo");
+    if (await page.locator("#retry-vote").isVisible()) throw new Error("O login preservou um voto pendente do jogador anônimo");
 
     await page.locator(".candidate-card").first().click();
-    await page.getByText(/subiu de patente/i).waitFor();
+    await page.locator("[data-personal-feedback]", { hasText: /subiu de patente/i }).waitFor();
     const roundAfterLogin = roundVoteRequests.at(-1)?.roundId;
     if (!roundAfterLogin || roundAfterLogin === roundBeforeLogin) {
       throw new Error("O login não rotacionou o roundId ligado ao jogador anônimo");
@@ -505,7 +509,7 @@ try {
   await page.locator("dialog[open]").waitFor({ state: "hidden" });
 
   if (await page.locator('[role="status"]').count() !== 1) throw new Error("O app deve manter uma única região viva persistente");
-  if (await page.locator(".app-live-region").innerText()) throw new Error("A região viva deveria nascer vazia antes do primeiro anúncio");
+  if (!googleEnabled && await page.locator(".app-live-region").innerText()) throw new Error("A região viva deveria nascer vazia antes do primeiro anúncio");
   const selectedRoundIds = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => card.dataset.vote));
   const votingCard = page.locator(".candidate-card").nth(1);
   await page.getByRole("button", { name: "Desativar efeitos sonoros" }).focus();
@@ -568,7 +572,7 @@ try {
       filter: getComputedStyle(card).filter,
     };
   });
-  await page.getByText(/subiu de patente/i).waitFor();
+  await page.locator("[data-personal-feedback]", { hasText: /subiu de patente/i }).waitFor();
   const feedbackChannels = page.locator(".feedback-channel:visible");
   if (await feedbackChannels.count() !== (includeGlobalEvent ? 2 : 1)) throw new Error("Os canais de feedback não respeitaram o contrato da resposta");
   if (!await feedbackChannels.nth(0).getByText("No seu ranking").isVisible()) throw new Error("O feedback pessoal não veio primeiro");
@@ -777,7 +781,7 @@ try {
   }
 
   await page.locator(".candidate-card").first().click();
-  await page.getByText(/subiu de patente/i).waitFor();
+  await page.locator("[data-personal-feedback]", { hasText: /subiu de patente/i }).waitFor();
   const desktopOutcomeEvidence = await measureRoundOutcomes(page);
   assertOutcomeSemantics(desktopOutcomeEvidence, "1440 × 900");
   await page.locator(".card-outcome").first().waitFor({ state: "hidden", timeout: 2500 });

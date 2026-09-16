@@ -641,6 +641,8 @@ async function vote(winnerId, { retry = false } = {}) {
       state.busy = false;
       state.selectedId = "";
       state.roundOutcome = null;
+      state.personalFeedbackMessage = "";
+      state.globalFeedbackMessage = "";
       state.result = "Nova rodada disponível";
       state.resultTone = "";
       render();

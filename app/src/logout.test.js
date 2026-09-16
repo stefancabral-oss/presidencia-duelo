@@ -27,7 +27,14 @@ test("login and logout rotate the round and abandon a pending vote from the prev
   for (const transition of ["login", "logout"]) {
     const state = {
       identityEpoch: 7,
+      dailyLoadEpoch: 11,
       roundId: `${transition}-old-round`,
+      dailySession: { edition: { id: `${transition}-old-edition` } },
+      dailyCandidates: [{ id: "old-candidate" }],
+      dailyLoading: true,
+      dailyLoadError: "old error",
+      pendingDailySession: { edition: { id: `${transition}-old-edition` } },
+      pendingDailyRefresh: true,
       pendingWinnerId: "lula",
       votePhase: "rate-limited",
       voteAction: "retry-vote",
@@ -47,7 +54,14 @@ test("login and logout rotate the round and abandon a pending vote from the prev
 
     assert.deepEqual(state, {
       identityEpoch: 8,
+      dailyLoadEpoch: 12,
       roundId: `${transition}-new-round`,
+      dailySession: null,
+      dailyCandidates: [],
+      dailyLoading: false,
+      dailyLoadError: "",
+      pendingDailySession: null,
+      pendingDailyRefresh: false,
       pendingWinnerId: "",
       votePhase: "ready",
       voteAction: "",

@@ -1,5 +1,6 @@
 import "./styles.css";
-import { createPlayer, endSession, exchangeGoogleCredential, loadCandidates, loadPlayerRanking, loadRanking, submitRoundVote } from "./api.js";
+import { createPlayer, endSession, exchangeGoogleCredential, loadCandidates, loadDailySession, loadPlayerRanking, loadRanking, submitDailyVote, submitRoundVote } from "./api.js";
+import { confirmedDailyVoteData, dailyRoundCandidates, dailySessionRoundChanged, validateDailySession } from "./daily-session.js";
 import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, rankingPodium, shortName } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
@@ -15,6 +16,14 @@ const app = document.querySelector("#app");
 const sound = createSoundController();
 const state = {
   screen: "topics",
+  gameMode: "daily",
+  dailySession: null,
+  dailyCandidates: [],
+  pendingDailySession: null,
+  pendingDailyRefresh: false,
+  dailyLoadEpoch: 0,
+  dailyLoading: false,
+  dailyLoadError: "",
   candidates: [],
   round: [],
   matchQueue: [],
@@ -69,6 +78,31 @@ function clearVoteTimers() {
   clearTimeout(resultTimer);
   clearTimeout(roundAdvanceTimer);
   clearTimeout(retryEnableTimer);
+}
+
+function installDailySession(session, { createAnswerId = true } = {}) {
+  state.dailySession = validateDailySession(session);
+  state.dailyCandidates = state.dailySession.catalog;
+  state.dailyLoading = false;
+  state.dailyLoadError = "";
+  state.pendingDailyRefresh = false;
+  if (state.dailySession.status === "active") {
+    state.round = dailyRoundCandidates(state.dailySession);
+    state.previousRound = [];
+    state.matchQueue = [];
+    if (createAnswerId) state.roundId = crypto.randomUUID();
+  } else {
+    state.round = [];
+    state.roundId = "";
+  }
+}
+
+function prepareFreeRound() {
+  const firstMatch = nextBalancedGroup(state.candidates);
+  state.round = firstMatch.group;
+  state.matchQueue = firstMatch.queue;
+  state.previousRound = [];
+  state.roundId = crypto.randomUUID();
 }
 
 const chromaPreviews = [
@@ -193,6 +227,10 @@ function topicsScreen() {
     </article>`;
   }).join("");
   const approvedCount = approvedCandidates.length;
+  const dailyAnswered = Number(state.dailySession?.progress?.answered) || 0;
+  const dailyTotal = Number(state.dailySession?.progress?.total) || 10;
+  const dailyComplete = state.dailySession?.status === "completed";
+  const dailyAction = dailyComplete ? "Ver fechamento de hoje" : dailyAnswered ? `Continuar · ${dailyAnswered}/${dailyTotal}` : "Jogar rodada do dia";
   return `<main class="screen home-screen">
     <section class="home-hero">
       <div class="home-hero-copy">
@@ -200,11 +238,11 @@ function topicsScreen() {
         <h1>Quem representa o Brasil que você imagina?</h1>
         <p class="lead">Escolha entre pessoas públicas, conheça cada perfil e veja seu ranking ganhar forma — uma decisão por vez.</p>
         <div class="home-actions">
-          <button class="primary home-primary" type="button" id="start-election">${state.personalDuels ? "Continuar escolhendo" : "Começar agora"}<span aria-hidden="true">→</span></button>
+          <button class="primary home-primary" type="button" id="start-election">${dailyAction}<span aria-hidden="true">→</span></button>
           <button class="home-ranking-link" type="button" id="open-ranking">Ver ranking do público</button>
         </div>
         <div class="home-trust" aria-label="Informações da edição">
-          <span><strong>${approvedCount}</strong> perfis com foto aprovada</span>
+          <span><strong>${dailyAnswered}/${dailyTotal}</strong> rodada do dia</span>
           <span><strong>${state.globalDuels}</strong> escolhas confirmadas</span>
         </div>
       </div>
@@ -220,38 +258,77 @@ function topicsScreen() {
         <div><p class="eyebrow">Edição disponível</p><h2 id="home-topic-title">Eleições 2026</h2></div>
         <span class="home-live"><i aria-hidden="true"></i> no ar</span>
       </div>
-      <p>Compare políticos e influenciadores que já passaram pelo gate de fotografia. Segure qualquer carta para conhecer o perfil completo antes de escolher.</p>
-      <button class="home-topic-cta" type="button" id="start-election-secondary"><span>Entrar na rodada</span><b aria-hidden="true">→</b></button>
+      <p>Dez escolhas fixas, iguais para todo mundo, fechadas à meia-noite de São Paulo. Segure qualquer carta para conhecer o perfil antes de escolher.</p>
+      <button class="home-topic-cta" type="button" id="start-election-secondary"><span>${dailyAction}</span><b aria-hidden="true">→</b></button>
     </section>
 
     <section class="home-how" aria-labelledby="home-how-title">
       <div><p class="eyebrow">Como funciona</p><h2 id="home-how-title">Rápido de jogar. Fácil de entender.</h2></div>
       <ol>
-        <li><span>01</span><strong>Observe as cartas</strong><small>As opções mudam a cada rodada.</small></li>
+        <li><span>01</span><strong>Jogue as mesmas dez</strong><small>O baralho do dia é igual para todos.</small></li>
         <li><span>02</span><strong>Escolha sua preferida</strong><small>Um toque confirma a sua decisão.</small></li>
-        <li><span>03</span><strong>Acompanhe o ranking</strong><small>Veja seu retrato pessoal e o placar do público.</small></li>
+        <li><span>03</span><strong>Feche 10/10</strong><small>O recorte só inclui sessões concluídas.</small></li>
       </ol>
     </section>
 
     <section class="home-next" aria-label="Perfis disponíveis nesta edição">
       <p class="eyebrow">Todos no ar</p>
-      <div><strong>Políticos + influenciadores</strong><span>54 perfis com foto aprovada</span><small>Disponível</small></div>
+      <div><strong>Políticos + influenciadores</strong><span>${approvedCount} perfis com foto aprovada</span><small>Disponível</small></div>
     </section>
     <p class="legal-note home-legal">Experiência lúdica de opinião. Não constitui pesquisa eleitoral.</p>
   </main>`;
 }
 
+function dailyClosingScreen() {
+  const session = state.dailySession;
+  const byId = new Map(state.dailyCandidates.map((candidate) => [candidate.id, candidate]));
+  const choices = session.answers.map((answer) => {
+    const candidate = byId.get(answer.winnerId);
+    return `<li><span>${String(answer.slot).padStart(2, "0")}</span><strong>${escapeHtml(candidate?.displayName || shortName(candidate?.name || answer.winnerId))}</strong></li>`;
+  }).join("");
+  return `<main class="screen daily-close-screen">
+    <section class="daily-close-hero">
+      <p class="eyebrow">Rodada do dia · 10/10</p>
+      <span class="daily-close-mark" aria-hidden="true">✓</span>
+      <h1>Você fechou a rodada.</h1>
+      <p class="lead">Suas dez escolhas ficaram registradas. Este é um recorte fechado — amanhã, todo mundo recebe outro baralho.</p>
+      <p class="daily-methodology">${escapeHtml(session.cut.methodology)}</p>
+      <small>O resultado público final fica disponível depois de ${new Date(session.cut.availableAt).toLocaleString("pt-BR", { timeZone: session.ruleset.timeZone, hour: "2-digit", minute: "2-digit" })}. Somente sessões 10/10 entram no recorte.</small>
+    </section>
+    <section class="daily-receipt" aria-labelledby="daily-receipt-title">
+      <div><p class="eyebrow">Seu comprovante</p><h2 id="daily-receipt-title">As dez escolhidas</h2></div>
+      <ol>${choices}</ol>
+    </section>
+    <div class="daily-close-actions">
+      <button class="primary" id="start-free-mode" type="button">Continuar no modo livre</button>
+      <button class="secondary" id="daily-open-ranking" type="button">Ver meu ranking</button>
+    </div>
+    <p class="legal-note">Experiência lúdica de opinião. Não constitui pesquisa eleitoral.</p>
+  </main>`;
+}
+
 function duelScreen() {
+  if (state.gameMode === "daily" && (state.dailyLoading || state.dailyLoadError)) {
+    const error = state.dailyLoadError
+      ? `<p>${escapeHtml(state.dailyLoadError)}</p><button class="primary" id="retry-daily" type="button">Tentar novamente</button><button class="secondary" id="daily-loading-free" type="button">Ir para o modo livre</button>`
+      : '<p role="status">Atualizando o baralho do dia…</p>';
+    return `<main class="screen connection"><section class="panel"><p class="eyebrow">Rodada do dia</p><h1>${state.dailyLoadError ? "Não conseguimos atualizar a rodada." : "Buscando a edição vigente…"}</h1>${error}</section></main>`;
+  }
+  if (state.gameMode === "daily" && state.dailySession?.status === "completed") return dailyClosingScreen();
   const recovery = voteRecoveryControl(state);
   const feedback = state.personalFeedbackMessage
     ? `<section class="round-feedback" aria-live="polite" aria-atomic="true"><p class="feedback-channel feedback-personal"><strong>No seu ranking</strong><span>${escapeHtml(state.personalFeedbackMessage)}</span></p>${state.globalFeedbackMessage ? `<p class="feedback-channel feedback-global"><strong>No placar do público</strong><span>${escapeHtml(state.globalFeedbackMessage)}</span></p>` : ""}</section>`
     : `<p class="round-instruction${state.result ? " is-result" : ""}${state.resultTone === "erro" ? " is-error" : ""}" role="status">${escapeHtml(state.result || "Toque na sua preferida. Segure para conhecer o perfil.")}</p>`;
-  return `<main class="screen duel-screen" data-vote-phase="${escapeHtml(state.votePhase)}" aria-busy="${state.busy ? "true" : "false"}">
-    <div class="duel-head"><div><p class="eyebrow">Escolha uma entre quatro</p><h1>Quem você prefere?</h1></div><span class="progress-pill">${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}</span></div>
+  const daily = state.gameMode === "daily";
+  const progress = daily
+    ? `${state.dailySession.progress.answered + 1}/${state.dailySession.progress.total}`
+    : `${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}`;
+  return `<main class="screen duel-screen" data-game-mode="${daily ? "daily" : "free"}" data-vote-phase="${escapeHtml(state.votePhase)}" aria-busy="${state.busy ? "true" : "false"}">
+    <div class="duel-head"><div><p class="eyebrow">${daily ? "Rodada do dia" : "Modo livre"}</p><h1>Quem você prefere?</h1></div><span class="progress-pill">${progress}</span></div>
     ${feedback}
     ${recovery.visible ? `<button class="retry-vote" type="button" id="${recovery.id}" ${recovery.disabled ? "disabled" : ""}>${escapeHtml(recovery.label)}</button>` : ""}
     <div class="arena arena-four">${state.round.map(card).join("")}</div>
-    <button class="skip-button" type="button" id="skip-round" ${state.busy || state.pendingWinnerId ? "disabled" : ""}>Nenhuma destas · trocar as quatro</button>
+    ${daily ? '<p class="daily-fixed-note">Este slot é igual para todos e não pode ser trocado.</p>' : `<button class="skip-button" type="button" id="skip-round" ${state.busy || state.pendingWinnerId ? "disabled" : ""}>Nenhuma destas · trocar as quatro</button>`}
   </main>`;
 }
 
@@ -319,7 +396,10 @@ function connectionScreen() {
 
 function coachOverlay() {
   if (!state.showCoach) return "";
-  return `<div class="coach-overlay" role="dialog" aria-modal="true" aria-labelledby="coach-title"><section class="coach-card"><span class="coach-icon" aria-hidden="true">${brandSymbol("coach-symbol")}</span><p class="eyebrow">Primeira rodada</p><h2 id="coach-title">Escolha uma entre quatro.</h2><p>Toque na sua preferida. Segure qualquer carta para conhecer a pessoa. Se nenhuma fizer sentido, troque as quatro.</p><button class="primary" id="dismiss-coach" type="button">Começar rodada</button></section></div>`;
+  const finalInstruction = state.gameMode === "daily"
+    ? "Esta combinação é fixa e igual para todos: não há troca no modo diário."
+    : "Se nenhuma fizer sentido, troque as quatro.";
+  return `<div class="coach-overlay" role="dialog" aria-modal="true" aria-labelledby="coach-title"><section class="coach-card"><span class="coach-icon" aria-hidden="true">${brandSymbol("coach-symbol")}</span><p class="eyebrow">Primeira rodada</p><h2 id="coach-title">Escolha uma entre quatro.</h2><p>Toque na sua preferida. Segure qualquer carta para conhecer a pessoa. ${finalInstruction}</p><button class="primary" id="dismiss-coach" type="button">Começar rodada</button></section></div>`;
 }
 
 function render() {
@@ -333,7 +413,8 @@ function render() {
 }
 
 function showProfile(id) {
-  const person = state.candidates.find((candidate) => candidate.id === id);
+  const person = state.dailyCandidates.find((candidate) => candidate.id === id)
+    || state.candidates.find((candidate) => candidate.id === id);
   if (!person) return;
   sound.play("profile");
   const modal = document.querySelector("#modal");
@@ -367,6 +448,7 @@ function showProfile(id) {
 }
 
 function chooseNextRound() {
+  if (state.gameMode !== "free") throw new Error("rodada diária só avança pela resposta autoritativa do servidor");
   state.previousRound = state.round.map(({ id }) => id);
   const next = nextBalancedGroup(state.candidates, state.matchQueue, state.previousRound);
   state.round = next.group;
@@ -380,11 +462,49 @@ function chooseNextRound() {
   state.sessionRecoveryMode = "";
 }
 
-function enterDuel() {
-  sound.play("enter");
-  state.screen = "duel";
-  state.showCoach = localStorage.getItem("polimatch:v4:round-coach") !== "seen";
+async function refreshDailySession(identity, { showCoach = false } = {}) {
+  const loadEpoch = Number(state.dailyLoadEpoch || 0) + 1;
+  state.dailyLoadEpoch = loadEpoch;
+  state.dailyLoading = true;
+  state.dailyLoadError = "";
   render();
+  try {
+    const session = await loadDailySession(identity.recoveryKey);
+    if (state.dailyLoadEpoch !== loadEpoch || !isCurrentVoteIdentity(state, identity)) return false;
+    installDailySession(session);
+    state.showCoach = showCoach && state.dailySession.status === "active"
+      && localStorage.getItem("polimatch:v4:round-coach") !== "seen";
+    render();
+    return true;
+  } catch (error) {
+    if (state.dailyLoadEpoch !== loadEpoch || !isCurrentVoteIdentity(state, identity)) return false;
+    state.dailyLoading = false;
+    state.dailyLoadError = error.message || "Falha desconhecida";
+    state.showCoach = false;
+    render();
+    return false;
+  }
+}
+
+async function enterDuel(mode = state.gameMode) {
+  if (state.busy) return;
+  sound.play("enter");
+  const previousMode = state.gameMode;
+  state.dailyLoadEpoch = Number(state.dailyLoadEpoch || 0) + 1;
+  state.gameMode = mode;
+  state.screen = "duel";
+  state.dailyLoadError = "";
+  if (mode === "free") {
+    state.dailyLoading = false;
+    if (previousMode !== "free" || state.round.length !== 4) prepareFreeRound();
+    state.showCoach = localStorage.getItem("polimatch:v4:round-coach") !== "seen";
+    render();
+    return;
+  }
+
+  const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+  state.showCoach = false;
+  await refreshDailySession(identity, { showCoach: true });
 }
 
 async function vote(winnerId, { retry = false } = {}) {
@@ -392,9 +512,14 @@ async function vote(winnerId, { retry = false } = {}) {
   const winner = state.round.find(({ id }) => id === winnerId);
   if (!winner || state.round.length !== 4) return;
   const attempt = {
+    gameMode: state.gameMode,
     roundId: state.roundId,
     winnerId: winner.id,
     candidateIds: state.round.map(({ id }) => id),
+    ...(state.gameMode === "daily" ? {
+      editionId: state.dailySession.edition.id,
+      slot: state.dailySession.round.slot,
+    } : {}),
   };
   const attemptIdentity = {
     epoch: state.identityEpoch,
@@ -416,12 +541,35 @@ async function vote(winnerId, { retry = false } = {}) {
   state.resultTone = "";
   render();
   try {
-    const response = await submitRoundVote(attempt.roundId, attempt.winnerId, attempt.candidateIds, "eleicoes-2026", {
-      recoveryKey: attemptIdentity.recoveryKey,
-      version: attemptPlayerVersion,
-    });
+    const response = attempt.gameMode === "daily"
+      ? await submitDailyVote(attempt.roundId, attempt.editionId, attempt.slot, attempt.winnerId, "eleicoes-2026", {
+        recoveryKey: attemptIdentity.recoveryKey,
+        version: attemptPlayerVersion,
+      })
+      : await submitRoundVote(attempt.roundId, attempt.winnerId, attempt.candidateIds, "eleicoes-2026", {
+        recoveryKey: attemptIdentity.recoveryKey,
+        version: attemptPlayerVersion,
+      });
     if (!isCurrentVoteIdentity(state, attemptIdentity)) return;
-    const confirmed = confirmedVoteData(response, state.candidates, attempt, state);
+    const dailyMode = attempt.gameMode === "daily";
+    const confirmed = dailyMode
+      ? confirmedDailyVoteData(response, state.candidates, attempt, state)
+      : confirmedVoteData(response, state.candidates, attempt, state);
+    let landingDailySession = dailyMode ? confirmed.dailySession : null;
+    let forceDailyRefresh = false;
+    if (dailyMode && response.round?.status === "alreadyProcessed") {
+      try {
+        const currentDailySession = validateDailySession(await loadDailySession(attemptIdentity.recoveryKey));
+        if (!isCurrentVoteIdentity(state, attemptIdentity)) return;
+        landingDailySession = currentDailySession;
+      } catch {
+        // Um replay pode pertencer à edição que acabou de fechar. Sem uma
+        // leitura autoritativa, nunca instalamos a sessão histórica como se
+        // ainda aceitasse o próximo slot.
+        forceDailyRefresh = true;
+        landingDailySession = null;
+      }
+    }
     state.pendingWinnerId = "";
     state.votePhase = VOTE_PHASES.CONFIRMED;
     state.resultTone = "";
@@ -431,6 +579,8 @@ async function vote(winnerId, { retry = false } = {}) {
     state.playerVersion = confirmed.playerVersion;
     state.globalDuels = confirmed.globalDuels;
     state.personalDuels = confirmed.personalDuels;
+    state.pendingDailySession = landingDailySession;
+    state.pendingDailyRefresh = forceDailyRefresh;
     const { channels } = confirmed;
     state.roundOutcome = channels.personal;
     state.personalFeedbackMessage = channels.personal.message;
@@ -441,7 +591,23 @@ async function vote(winnerId, { retry = false } = {}) {
     sound.play(feedbackEvent);
     try { navigator.vibrate?.(hapticPattern(feedbackEvent)); } catch {}
     roundAdvanceTimer = setTimeout(() => {
-      chooseNextRound();
+      if (dailyMode) {
+        if (state.pendingDailyRefresh || !state.pendingDailySession) {
+          state.pendingDailySession = null;
+          state.pendingDailyRefresh = false;
+          state.busy = false;
+          state.selectedId = "";
+          state.roundOutcome = null;
+          state.personalFeedbackMessage = "";
+          state.globalFeedbackMessage = "";
+          enterDuel("daily");
+          return;
+        }
+        installDailySession(state.pendingDailySession);
+        state.pendingDailySession = null;
+      } else {
+        chooseNextRound();
+      }
       state.busy = false;
       state.selectedId = "";
       state.roundOutcome = null;
@@ -457,7 +623,7 @@ async function vote(winnerId, { retry = false } = {}) {
     }, 1050);
   } catch (error) {
     if (!isCurrentVoteIdentity(state, attemptIdentity)) return;
-    await recoverFromVoteFailure(error, winner, attemptIdentity);
+    await recoverFromVoteFailure(error, winner, attemptIdentity, attempt.gameMode);
   }
 }
 
@@ -468,7 +634,7 @@ async function vote(winnerId, { retry = false } = {}) {
  * contado" — e nenhum deles oferecia saída. Pior: quando o tempo se esgota, o
  * servidor pode já ter gravado a rodada, e afirmar que não contou é falso.
  */
-async function recoverFromVoteFailure(error, winner, attemptIdentity) {
+async function recoverFromVoteFailure(error, winner, attemptIdentity, attemptGameMode) {
   state.busy = false;
   state.selectedId = "";
   state.roundOutcome = null;
@@ -476,6 +642,23 @@ async function recoverFromVoteFailure(error, winner, attemptIdentity) {
   state.globalFeedbackMessage = "";
   state.resultTone = "erro";
   state.pendingWinnerId = winner.id;
+  if (attemptGameMode === "daily" && error?.status === 409
+    && ["DAILY_EDITION_CLOSED", "DAILY_SLOT_OUT_OF_ORDER"].includes(error?.code)) {
+    const resynced = await resyncDailyState(attemptIdentity);
+    if (!isCurrentVoteIdentity(state, attemptIdentity)) return;
+    state.pendingWinnerId = "";
+    state.votePhase = VOTE_PHASES.READY;
+    state.voteAction = "";
+    state.resultTone = resynced ? "" : "erro";
+    state.result = resynced
+      ? error.code === "DAILY_EDITION_CLOSED"
+        ? "Virou o dia em São Paulo. O novo baralho já está na mesa."
+        : "Seu outro acesso já avançou a rodada. Retomamos do próximo slot."
+      : "Não conseguimos atualizar a rodada do dia. Recarregue para continuar.";
+    render();
+    sound.play(resynced ? "navigation" : "error");
+    return;
+  }
   const failure = voteFailureState(error);
   state.votePhase = failure.phase;
   state.voteAction = failure.action;
@@ -530,12 +713,34 @@ async function restoreVoteSession() {
       state.sessionRecoveryMode = "load";
       localStorage.setItem("polimatch:v3:recovery-key", recoveryKey);
     }
-    const personal = await loadPlayerRanking(recoveryKey);
+    const restoringDailyVote = state.gameMode === "daily";
+    const [personal, dailySession] = await Promise.all([
+      loadPlayerRanking(recoveryKey),
+      // O modo livre não depende da disponibilidade do serviço diário. Só uma
+      // tentativa diária precisa restaurar ambos os estados em conjunto.
+      restoringDailyVote ? loadDailySession(recoveryKey) : Promise.resolve(null),
+    ]);
     if (Number(state.identityEpoch || 0) !== recoveryEpoch || state.recoveryKey !== recoveryKey) return;
     state.playerVersion = personal.version ?? 0;
     state.personalRanking = rankingForCatalog(personal, state.candidates);
     state.personalRankingPolicy = personal.rankingPolicy || null;
     state.personalDuels = Number(personal.duels) || 0;
+    if (dailySession) {
+      const validatedDaily = validateDailySession(dailySession);
+      const changedRound = dailySessionRoundChanged(state.dailySession, validatedDaily);
+      if (state.gameMode === "daily" && changedRound) {
+        installDailySession(validatedDaily);
+        state.pendingWinnerId = "";
+        state.busy = false;
+        state.votePhase = VOTE_PHASES.READY;
+        state.voteAction = "";
+        state.sessionRecoveryMode = "";
+        state.result = "A rodada do dia mudou enquanto a sessão era restabelecida.";
+        render();
+        return;
+      }
+      state.dailySession = validatedDaily;
+    }
     state.busy = false;
     state.votePhase = VOTE_PHASES.RETRY_READY;
     state.voteAction = VOTE_ACTIONS.RETRY;
@@ -573,6 +778,25 @@ async function resyncPlayer(attemptIdentity) {
   }
 }
 
+async function resyncDailyState(attemptIdentity) {
+  try {
+    const [personal, session] = await Promise.all([
+      loadPlayerRanking(attemptIdentity.recoveryKey),
+      loadDailySession(attemptIdentity.recoveryKey),
+    ]);
+    if (!isCurrentVoteIdentity(state, attemptIdentity)) return false;
+    state.playerVersion = personal.version ?? state.playerVersion;
+    state.personalRanking = rankingForCatalog(personal, state.candidates);
+    state.personalRankingPolicy = personal.rankingPolicy || state.personalRankingPolicy;
+    state.personalDuels = Number(personal.duels) || 0;
+    state.pendingDailySession = null;
+    installDailySession(session);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function bindEvents() {
   document.querySelector("#account-button")?.addEventListener("click", () => {
     sound.play("navigation");
@@ -599,10 +823,25 @@ function bindEvents() {
     document.querySelector("#sound-toggle")?.focus();
   });
   document.querySelector("#retry")?.addEventListener("click", () => { sound.play("navigation"); initialize(); });
-  document.querySelector("#start-election")?.addEventListener("click", enterDuel);
-  document.querySelector("#start-election-secondary")?.addEventListener("click", enterDuel);
+  document.querySelector("#start-election")?.addEventListener("click", () => enterDuel("daily"));
+  document.querySelector("#start-election-secondary")?.addEventListener("click", () => enterDuel("daily"));
   document.querySelector("#open-ranking")?.addEventListener("click", () => { sound.play("navigation"); state.screen = "ranking"; state.result = ""; state.resultTone = ""; render(); });
   document.querySelector("#continue-duels")?.addEventListener("click", () => { state.result = ""; state.resultTone = ""; enterDuel(); });
+  document.querySelector("#start-free-mode")?.addEventListener("click", () => {
+    state.result = "";
+    state.resultTone = "";
+    enterDuel("free");
+  });
+  document.querySelector("#retry-daily")?.addEventListener("click", () => enterDuel("daily"));
+  document.querySelector("#daily-loading-free")?.addEventListener("click", () => enterDuel("free"));
+  document.querySelector("#daily-open-ranking")?.addEventListener("click", () => {
+    sound.play("navigation");
+    state.screen = "ranking";
+    state.rankingView = "personal";
+    state.result = "";
+    state.resultTone = "";
+    render();
+  });
   document.querySelector("#retry-vote")?.addEventListener("click", () => {
     if (state.busy || !state.pendingWinnerId) return;
     // Mesmo `state.roundId` da tentativa anterior: se aquela chegou ao servidor,
@@ -688,26 +927,33 @@ async function handleGoogleCredential(response) {
   state.authBusy = true;
   state.authError = "";
   render();
+  let result;
   try {
-    const result = await exchangeGoogleCredential(response.credential, state.recoveryKey);
-    clearVoteTimers();
-    resetPendingVoteForIdentityChange(state);
-    localStorage.setItem("polimatch:v3:recovery-key", result.sessionToken);
-    state.recoveryKey = result.sessionToken;
-    state.account = result.account;
-    state.personalRanking = rankingForCatalog(result.player, state.candidates);
-    state.personalRankingPolicy = result.player.rankingPolicy || state.personalRankingPolicy;
-    state.playerVersion = result.player.version;
-    state.personalDuels = Number(result.player.duels) || 0;
-    state.authBusy = false;
-    sound.play("confirm");
-    render();
+    result = await exchangeGoogleCredential(response.credential, state.recoveryKey);
   } catch (error) {
     state.authBusy = false;
     state.authError = error.message || "Não foi possível salvar seu jogo agora.";
     sound.play("error");
     render();
+    return;
   }
+  clearVoteTimers();
+  resetPendingVoteForIdentityChange(state);
+  localStorage.setItem("polimatch:v3:recovery-key", result.sessionToken);
+  state.recoveryKey = result.sessionToken;
+  state.account = result.account;
+  state.personalRanking = rankingForCatalog(result.player, state.candidates);
+  state.personalRankingPolicy = result.player.rankingPolicy || state.personalRankingPolicy;
+  state.playerVersion = result.player.version;
+  state.personalDuels = Number(result.player.duels) || 0;
+  state.gameMode = "daily";
+  state.dailyLoading = true;
+  state.authBusy = false;
+  sound.play("confirm");
+  render();
+  // A identidade já foi confirmada e persistida. Uma indisponibilidade só do
+  // serviço diário não pode desfazer o login nem bloquear ranking/modo livre.
+  await refreshDailySession({ epoch: state.identityEpoch, recoveryKey: state.recoveryKey });
 }
 
 async function signOut() {
@@ -729,10 +975,15 @@ async function signOut() {
     state.personalRankingPolicy = player.personal.rankingPolicy || state.personalRankingPolicy;
     state.playerVersion = player.personal.version;
     state.personalDuels = Number(player.personal.duels) || 0;
+    state.gameMode = "daily";
+    state.dailyLoading = true;
     state.authBusy = false;
     state.authOpen = false;
     state.result = "Você saiu. Um jogo novo começou neste aparelho.";
     render();
+    // A sessão antiga já foi revogada e a identidade anônima já está ativa.
+    // O diário tem retry próprio e jamais pode restaurar visualmente a conta.
+    await refreshDailySession({ epoch: state.identityEpoch, recoveryKey: state.recoveryKey });
   } catch (error) {
     state.authBusy = false;
     state.authError = error.message || "Não foi possível sair agora.";
@@ -767,6 +1018,7 @@ async function initialize() {
   state.error = "";
   state.ready = false;
   render();
+  let identity = null;
   try {
     const [candidates, snapshot, player] = await Promise.all([loadCandidates(), loadRanking(), ensurePlayer()]);
     state.candidates = catalogForTopic(candidates);
@@ -779,16 +1031,19 @@ async function initialize() {
     state.personalRankingPolicy = player.personal.rankingPolicy || null;
     state.account = player.personal.account || null;
     state.personalDuels = Number(player.personal.duels) || 0;
-    const firstMatch = nextBalancedGroup(state.candidates);
-    state.round = firstMatch.group;
-    state.matchQueue = firstMatch.queue;
-    state.roundId = crypto.randomUUID();
+    state.gameMode = "daily";
+    state.dailyLoading = true;
     state.pendingWinnerId = "";
     state.ready = true;
+    identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
   } catch (error) {
     state.error = error.message || "Falha desconhecida";
   }
   render();
+  // O catálogo, os rankings e a identidade são o núcleo do app. O endpoint
+  // diário é opcional nesta etapa e expõe sua própria falha/retry sem derrubar
+  // home, ranking ou modo livre.
+  if (identity) await refreshDailySession(identity);
 }
 
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));

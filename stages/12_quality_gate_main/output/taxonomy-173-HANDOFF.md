@@ -7,10 +7,10 @@
 - Macro: https://github.com/stefancabral-oss/presidencia-duelo/issues/175
 - Branch: `icm/12-u04-taxonomy-173`
 - PR: `não aberta por instrução`
-- Base do restack: `dbf55ca304989a455e792f82b0d73e1070dcd857`
-- Commit de implementação: `c3e05215b1ea98468e23cab315008374c4ad6d89`
-- Commit de correção adversarial: `49e709004421da7abdca64cd6c8d8951fd107d0d`
-- Commit de validação semântica: `178e46331be91924124ddaa73dc55a95ed7eb169`
+- Base do restack: `8f7ba527e03851370b5f5476adc68cd21d655634`
+- Commit de implementação: `e8a8534f4f3b065401f6f33752d0c61de8b5774f`
+- Commit de correção adversarial: `60357ff39a5bff20087de62e6fa407f6ba19a426`
+- Commit de validação semântica: `8116ebf255b0939058616d8567246f5e884e3ca5`
 
 ## Causa corrigida
 
@@ -48,10 +48,10 @@ Nenhum valor foi criado para um atributo ambíguo. `ambiguous` significa falta d
 ## Testes e evidências
 
 - `npm run test:shared`: 16/16 testes e validação estrutural/evidencial/semântica dos 125 registros, incluindo paridade bidirecional e duplicatas nas quatro fontes.
-- `npm test`: 98/98 testes (16 shared, 31 back, 51 app).
+- `npm test`: 121/121 testes (16 shared, 42 back, 63 app).
 - Regressões negativas reais: Paulo Guedes não pode receber `PL` a partir de `órbita PL`; Guilherme Boulos, Jones Manoel, Carla Zambelli e Deltan Dallagnol não podem recuperar rótulos categoriais como contexto; a filiação explícita de Gracyanne continua válida.
 - `npm run build`: aprovado; 99/125 retratos presentes e bundle Vite produzido.
-- E2E Chromium e WebKit: navegação, rodada, perfil estruturado, busca, filtros, ranking, anatomia móvel atual e limpeza de filtros na troca de visão aprovados.
+- E2E Chromium e WebKit: navegação, rodada, perfil estruturado, busca, filtros, ranking, anatomia móvel atual e limpeza de filtros na troca de visão aprovados; recuperação de voto e estados `sending`/`401`/`429`/`5xx` da base #170 também permaneceram verdes.
 - Regeneração consecutiva: hashes SHA-256 idênticos para candidatos e Chromas.
 - Workflow: YAML válido; `test:shared` é chamado uma vez pelo job `shared-data` e os caminhos das três fontes editoriais acionam o workflow.
 

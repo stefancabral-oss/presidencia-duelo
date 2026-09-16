@@ -3,11 +3,11 @@
   "issue": 173,
   "macroIssue": 175,
   "branch": "icm/12-u04-taxonomy-173",
-  "baseCommit": "dbf55ca304989a455e792f82b0d73e1070dcd857",
-  "implementationCommit": "c3e05215b1ea98468e23cab315008374c4ad6d89",
-  "adversarialReviewCommit": "49e709004421da7abdca64cd6c8d8951fd107d0d",
-  "semanticReviewCommit": "178e46331be91924124ddaa73dc55a95ed7eb169",
-  "generatedAt": "2026-09-16T03:01:17-03:00",
+  "baseCommit": "8f7ba527e03851370b5f5476adc68cd21d655634",
+  "implementationCommit": "e8a8534f4f3b065401f6f33752d0c61de8b5774f",
+  "adversarialReviewCommit": "60357ff39a5bff20087de62e6fa407f6ba19a426",
+  "semanticReviewCommit": "8116ebf255b0939058616d8567246f5e884e3ca5",
+  "generatedAt": "2026-09-16T03:49:45-03:00",
   "catalog": {
     "records": 125,
     "schemaVersion": 2,
@@ -30,7 +30,7 @@
     {
       "name": "root-unit",
       "command": "npm test",
-      "result": "passed; 98 of 98 tests (16 shared, 31 back, 51 app), including source-parity negatives, real 125-record API serialization and regressions for Paulo Guedes, Guilherme Boulos, Jones Manoel, Carla Zambelli and Deltan Dallagnol"
+      "result": "passed; 121 of 121 tests (16 shared, 42 back, 63 app), including source-parity negatives, protected vote-boundary regressions, real 125-record API serialization and regressions for Paulo Guedes, Guilherme Boulos, Jones Manoel, Carla Zambelli and Deltan Dallagnol"
     },
     {
       "name": "app-build",
@@ -46,6 +46,11 @@
       "name": "taxonomy-ui-smoke",
       "command": "POLIMATCH_E2E_BROWSER=chromium|webkit node app/e2e/interaction-smoke.mjs",
       "result": "passed in Chromium and WebKit; current mobile card hierarchy, structured profile sections, search, filters, compact labels and filter reset when switching ranking views verified"
+    },
+    {
+      "name": "vote-integrity-regression",
+      "command": "POLIMATCH_E2E_BROWSER=chromium|webkit node app/e2e/vote-recovery.mjs && node app/e2e/vote-trust-states.mjs",
+      "result": "passed in Chromium and WebKit; timeout, 503, 401, 409, idempotency, truncated 200 and legacy replay recovery stayed valid, as did sending, 401, 429 and 5xx trust states"
     },
     {
       "name": "taxonomy-screenshot",

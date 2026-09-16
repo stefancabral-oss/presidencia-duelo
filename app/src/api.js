@@ -89,6 +89,10 @@ export async function loadCandidates(topicId = "eleicoes-2026") {
   return result.candidates;
 }
 
+export function loadCapabilities() {
+  return requestJson("/api/capabilities");
+}
+
 export function loadRanking(topicId = "eleicoes-2026") {
   return requestJson(`/api/ranking?topic=${encodeURIComponent(topicId)}`);
 }
@@ -193,7 +197,7 @@ export function submitDailyVote(answerId, editionId, slot, winnerId, topicId = "
       winnerId,
       topicId,
       playerVersion: player.version,
-      predictionContractVersion: 1,
+      ...(player.predictionEnabled === true ? { predictionContractVersion: 1 } : {}),
     }),
   });
 }

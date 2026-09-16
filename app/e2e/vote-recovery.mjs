@@ -25,6 +25,7 @@
  */
 import { chromium, webkit } from "playwright";
 import { completedDailySession } from "./daily-fixture.mjs";
+import { capabilityFixture, voteResponseV2 } from "./aggregate-fixture.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -142,6 +143,7 @@ async function instalarServidor(page, servidor) {
     const request = route.request();
     const { pathname } = new URL(request.url());
 
+    if (pathname === "/api/capabilities") return route.fulfill({ status: 200, json: capabilityFixture() });
     if (pathname === "/api/candidates") return route.fulfill({ status: 200, json: { candidates } });
     if (pathname === "/api/ranking") {
       return route.fulfill({ status: 200, json: { topicId: "eleicoes-2026", duels: servidor.duels, ranking: servidor.ranking() } });
@@ -187,7 +189,7 @@ async function instalarServidor(page, servidor) {
         const repetida = structuredClone(guardada);
         repetida.round.status = "alreadyProcessed";
         repetida.vote.status = "alreadyProcessed";
-        return route.fulfill({ status: 200, json: repetida });
+        return route.fulfill({ status: 200, json: voteResponseV2(repetida) });
       }
 
       if (Number(playerVersion) !== servidor.version) {
@@ -208,7 +210,7 @@ async function instalarServidor(page, servidor) {
         // em que dizer "seu voto não foi contado" seria mentira.
         await new Promise((resolve) => setTimeout(resolve, ALEM_DO_TEMPO_LIMITE));
       }
-      return route.fulfill({ status: 200, json: corpo });
+      return route.fulfill({ status: 200, json: voteResponseV2(corpo) });
     }
 
     return route.fulfill({ status: 404, json: { error: "rota não encontrada" } });
@@ -483,7 +485,7 @@ try {
             feedback: globalFeedback,
           },
         });
-        return replay;
+        return voteResponseV2(replay);
       },
     };
 

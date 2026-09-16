@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { authorizedAggregatePublication } from "../test-support/aggregate-publication-fixtures.js";
 import { createHttpApp, configuredAppOrigins, isAllowedBrowserOrigin, networkPseudonym, normalizedNetworkIdentity } from "./http-app.js";
 
 function fakeStore(overrides = {}) {
@@ -156,6 +157,113 @@ test("candidate responses use the same public projection as historical daily sna
   });
 });
 
+test("aggregate capabilities are no-store and default to personal-only", async () => {
+  const app = createHttpApp({ store: fakeStore(), googleIdentity, env: {} });
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/capabilities`);
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    assert.equal(body.mode, "personal-only");
+    assert.deepEqual(Object.fromEntries(Object.entries(body.scopes).map(([scope, value]) => [scope, value.status])), {
+      "global-ranking": "withheld",
+      "daily-distribution": "withheld",
+      "prediction-reveal": "withheld",
+      "mirror-comparison": "withheld",
+    });
+  });
+});
+
+test("withheld aggregate reads are rejected before any store access", async () => {
+  const calls = [];
+  const app = createHttpApp({
+    store: fakeStore({
+      ranking: async () => { calls.push("ranking"); return {}; },
+      dailyCut: async () => { calls.push("daily-cut"); return {}; },
+      dailyPredictionResults: async () => { calls.push("prediction-reveal"); return {}; },
+    }),
+    googleIdentity,
+    env: {},
+  });
+  await withServer(app, async (baseUrl) => {
+    for (const [path, scope, headers] of [
+      ["/api/ranking", "global-ranking", {}],
+      ["/api/daily-cut?date=2026-09-16", "daily-distribution", {}],
+      ["/api/daily-prediction-results", "prediction-reveal", { Authorization: "Bearer pm2_player" }],
+    ]) {
+      const response = await fetch(`${baseUrl}${path}`, { headers });
+      const body = await response.json();
+      assert.equal(response.status, 403);
+      assert.equal(response.headers.get("cache-control"), "no-store");
+      assert.equal(body.code, "AGGREGATE_PUBLICATION_WITHHELD");
+      assert.equal(body.scope, scope);
+    }
+  });
+  assert.deepEqual(calls, []);
+});
+
+test("aggregate scope grants are independent", async () => {
+  const calls = [];
+  const app = createHttpApp({
+    store: fakeStore({
+      ranking: async () => { calls.push("ranking"); return { ranking: [] }; },
+      dailyCut: async () => { calls.push("daily-cut"); return {}; },
+      dailyPredictionResults: async () => { calls.push("prediction-reveal"); return {}; },
+    }),
+    googleIdentity,
+    env: {},
+    aggregatePublication: authorizedAggregatePublication({ scopes: ["global-ranking"] }),
+  });
+  await withServer(app, async (baseUrl) => {
+    assert.equal((await fetch(`${baseUrl}/api/ranking`)).status, 200);
+    assert.equal((await fetch(`${baseUrl}/api/daily-cut?date=2026-09-16`)).status, 403);
+    assert.equal((await fetch(`${baseUrl}/api/daily-prediction-results`, {
+      headers: { Authorization: "Bearer pm2_player" },
+    })).status, 403);
+  });
+  assert.deepEqual(calls, ["ranking"]);
+});
+
+test("vote responses use contract V2 and never expose withheld aggregate state", async () => {
+  const personalFeedback = { rankingEvent: "confirm", primaryEvent: "confirm", zebra: false, outcomes: [] };
+  const raw = {
+    topicId: "eleicoes-2026",
+    duels: 44,
+    ranking: [{ id: "public-leader", rank: 1, elo: 4000 }],
+    player: { duels: 1, version: 1, ranking: [{ id: "personal-choice", rank: 1, elo: 1010 }] },
+    round: {
+      id: "round-1",
+      status: "created",
+      winnerId: "personal-choice",
+      candidateIds: ["personal-choice", "b", "c", "d"],
+      personalFeedback,
+      feedback: personalFeedback,
+      feedbackScope: "personal",
+      globalEvent: { feedback: { secretLeader: "public-leader" } },
+      comparisons: 3,
+    },
+  };
+  raw.vote = raw.round;
+  const app = createHttpApp({ store: fakeStore({ roundVote: async () => raw }), googleIdentity, env: {} });
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/round-vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer pm2_player" },
+      body: JSON.stringify({}),
+    });
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    assert.equal(body.contractVersion, 2);
+    assert.deepEqual(body.publicAggregate, { status: "withheld", scope: "global-ranking" });
+    assert.equal(Object.hasOwn(body, "ranking"), false);
+    assert.equal(Object.hasOwn(body, "duels"), false);
+    assert.equal(Object.hasOwn(body.round, "globalEvent"), false);
+    assert.equal(JSON.stringify(body).includes("public-leader"), false);
+    assert.equal(body.player.ranking[0].id, "personal-choice");
+  });
+});
+
 test("round writes require a player bearer token before reaching the store", async () => {
   let writes = 0;
   const app = createHttpApp({ store: fakeStore({ roundVote: async () => { writes += 1; return {}; } }), googleIdentity, env: {} });
@@ -200,6 +308,7 @@ test("daily votes forward only edition, slot and winner, never a client card ord
     googleIdentity,
     env: {},
     clock: () => now,
+    aggregatePublication: authorizedAggregatePublication({ scopes: ["prediction-reveal"], now }),
   });
   await withServer(app, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/daily-vote`, {
@@ -231,6 +340,37 @@ test("daily votes forward only edition, slot and winner, never a client card ord
   assert.equal(Object.hasOwn(received, "candidateIds"), false);
 });
 
+test("personal-only daily votes ignore a stale client's prediction contract and preserve the session", async () => {
+  let received;
+  const app = createHttpApp({
+    store: fakeStore({ dailyVote: async (input) => {
+      received = input;
+      return { dailySession: { status: "active", progress: { answered: 2, total: 10 } } };
+    } }),
+    googleIdentity,
+    env: {},
+  });
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/daily-vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer pm2_player" },
+      body: JSON.stringify({
+        answerId: "550e8400-e29b-41d4-a716-446655440000",
+        editionId: "edition-1",
+        slot: 2,
+        winnerId: "lula",
+        playerVersion: 1,
+        predictionContractVersion: 1,
+      }),
+    });
+    const body = await response.json();
+    assert.equal(response.status, 200);
+    assert.deepEqual(body.dailySession, { status: "active", progress: { answered: 2, total: 10 } });
+    assert.deepEqual(body.publicAggregate, { status: "withheld", scope: "global-ranking" });
+  });
+  assert.equal(received.predictionContractVersion, undefined);
+});
+
 test("daily predictions forward only the separate prediction contract", async () => {
   const calls = [];
   const now = new Date("2026-09-16T12:00:00.000Z");
@@ -239,6 +379,7 @@ test("daily predictions forward only the separate prediction contract", async ()
     googleIdentity,
     env: {},
     clock: () => now,
+    aggregatePublication: authorizedAggregatePublication({ scopes: ["prediction-reveal"], now }),
   });
   await withServer(app, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/daily-prediction`, {
@@ -256,6 +397,7 @@ test("daily predictions forward only the separate prediction contract", async ()
       }),
     });
     assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store");
   });
   assert.deepEqual(calls, [{
     predictionId: "550e8400-e29b-41d4-a716-446655440001",
@@ -267,6 +409,28 @@ test("daily predictions forward only the separate prediction contract", async ()
     recoveryKey: "pm2_player",
     now,
   }]);
+});
+
+test("withheld daily predictions are rejected before the store", async () => {
+  let writes = 0;
+  const app = createHttpApp({
+    store: fakeStore({ dailyPrediction: async () => { writes += 1; return {}; } }),
+    googleIdentity,
+    env: {},
+  });
+  await withServer(app, async (baseUrl) => {
+    assert.equal((await fetch(`${baseUrl}/api/daily-prediction`, { method: "POST" })).status, 401);
+    const response = await fetch(`${baseUrl}/api/daily-prediction`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer pm2_player" },
+      body: JSON.stringify({ predictionId: "550e8400-e29b-41d4-a716-446655440001" }),
+    });
+    const body = await response.json();
+    assert.equal(response.status, 403);
+    assert.equal(body.code, "AGGREGATE_PUBLICATION_WITHHELD");
+    assert.equal(body.scope, "prediction-reveal");
+  });
+  assert.equal(writes, 0);
 });
 
 test("cumulative prediction results are private and clocked", async () => {
@@ -282,6 +446,7 @@ test("cumulative prediction results are private and clocked", async () => {
     googleIdentity,
     env: {},
     clock: () => now,
+    aggregatePublication: authorizedAggregatePublication({ scopes: ["prediction-reveal"], now }),
   });
   await withServer(app, async (baseUrl) => {
     assert.equal((await fetch(`${baseUrl}/api/daily-prediction-results`)).status, 401);
@@ -289,6 +454,7 @@ test("cumulative prediction results are private and clocked", async () => {
       headers: { Authorization: "Bearer pm2_player" },
     });
     assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store");
     assert.equal((await response.json()).baselinePercent, 25);
   });
   assert.deepEqual(calls, [["pm2_player", "eleicoes-2026", { now }]]);
@@ -302,6 +468,7 @@ test("the closed daily cut is public but never opened before its editorial date 
     googleIdentity,
     env: {},
     clock: () => now,
+    aggregatePublication: authorizedAggregatePublication({ scopes: ["daily-distribution"], now }),
   });
   await withServer(app, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/daily-cut?date=2026-09-16`);
@@ -318,6 +485,7 @@ test("internal failures are logged by request id without leaking their message",
     googleIdentity,
     env: {},
     logger: { error: (entry) => logs.push(entry) },
+    aggregatePublication: authorizedAggregatePublication({ scopes: ["global-ranking"] }),
   });
   await withServer(app, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/api/ranking`);

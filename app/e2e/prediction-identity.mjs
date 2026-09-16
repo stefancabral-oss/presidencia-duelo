@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { chromium, webkit } from "playwright";
 import { completedDailySession } from "./daily-fixture.mjs";
+import { capabilityFixture } from "./aggregate-fixture.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -61,6 +62,7 @@ await page.route("https://accounts.google.com/gsi/client", (route) => route.fulf
 await page.route((url) => url.pathname.startsWith("/api/"), async (route) => {
   const request = route.request();
   const { pathname } = new URL(request.url());
+  if (pathname === "/api/capabilities") return route.fulfill({ status: 200, json: capabilityFixture() });
   if (pathname === "/api/candidates") return route.fulfill({ status: 200, json: { candidates } });
   if (pathname === "/api/ranking") return route.fulfill({ status: 200, json: { duels: 0, ranking: ranking() } });
   if (pathname === "/api/player" && request.method() === "POST") {

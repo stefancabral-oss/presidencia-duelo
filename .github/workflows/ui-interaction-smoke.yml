@@ -78,6 +78,11 @@ jobs:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
         run: node app/e2e/daily-prediction.mjs
 
+      - name: Validate fail-closed personal-only journey
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/aggregate-publication-gate.mjs
+
       - name: Validate prediction scoreboard across identity switches
         env:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}

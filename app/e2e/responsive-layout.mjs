@@ -3,6 +3,7 @@ import { chromium, webkit } from "playwright";
 import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import { curatedPortraitPath, hasCuratedPortrait } from "../../shared/curated-portraits.js";
 import { completedDailySession } from "./daily-fixture.mjs";
+import { capabilityFixture } from "./aggregate-fixture.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -123,6 +124,7 @@ page.on("pageerror", (error) => pageErrors.push(error.message));
 await page.route(/\/api(?:\/|$)/, async (route) => {
   const request = route.request();
   const path = new URL(request.url()).pathname;
+  if (path === "/api/capabilities") return route.fulfill({ status: 200, json: capabilityFixture() });
   if (path === "/api/candidates") return route.fulfill({ status: 200, json: { candidates } });
   if (path === "/api/ranking") return route.fulfill({ status: 200, json: { duels: 240, ranking: candidates } });
   if (path === "/api/player" && request.method() === "POST") return route.fulfill({ status: 200, json: { recoveryKey: "responsive-layout-key" } });

@@ -1,5 +1,8 @@
 import { createHash } from "node:crypto";
+import { AGGREGATE_PUBLIC_COPY_POLICY, formatAggregateCopy } from "../../shared/aggregate-publication-copy.js";
 import { PUBLIC_CANDIDATE_SCHEMA_V1 } from "./candidates.js";
+
+const DAILY_DISTRIBUTION_COPY = AGGREGATE_PUBLIC_COPY_POLICY.scopes["daily-distribution"].copy;
 
 export const DAILY_SESSION_RULESET = Object.freeze({
   id: "daily-four-card-v1",
@@ -116,7 +119,13 @@ export function editionWindow(dateKey, timeZone = DAILY_SESSION_RULESET.timeZone
 export function dailyCutMethodology(dateKey) {
   const normalized = validateEditionDate(dateKey);
   const [, month, day] = normalized.split("-");
-  return `entre quem concluiu a rodada de ${day}/${month}`;
+  return formatAggregateCopy(DAILY_DISTRIBUTION_COPY.methodologyTemplate, { day, month });
+}
+
+export function dailyCutSampleNotice(completedPlayers) {
+  if (completedPlayers === 0) return DAILY_DISTRIBUTION_COPY.noCompletedSessions;
+  if (completedPlayers < 30) return DAILY_DISTRIBUTION_COPY.lowParticipation;
+  return null;
 }
 
 export function buildDailyEdition({ topicId, candidateIds, dateKey, ruleset = DAILY_SESSION_RULESET }) {

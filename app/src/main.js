@@ -1,5 +1,6 @@
 import "./styles.css";
-import { createPlayer, endSession, exchangeGoogleCredential, loadCandidates, loadDailyPredictionResults, loadDailySession, loadPlayerRanking, loadRanking, submitDailyPrediction, submitDailyVote, submitRoundVote } from "./api.js";
+import { createPlayer, endSession, exchangeGoogleCredential, loadCandidates, loadCapabilities, loadDailyPredictionResults, loadDailySession, loadPlayerRanking, loadRanking, submitDailyPrediction, submitDailyVote, submitRoundVote } from "./api.js";
+import { aggregateScopeAvailable, nextAggregateCapabilityExpiry, PERSONAL_ONLY_CAPABILITIES, validateCapabilities, withAggregateScopeWithheld } from "./capabilities.js";
 import { confirmedDailyVoteData, dailyPendingPredictionCandidates, dailyRoundCandidates, dailySessionRoundChanged, validateDailySession } from "./daily-session.js";
 import { confirmedDailyPredictionData, validateDailyPredictionResults } from "./daily-prediction.js";
 import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, rankingPodium, shortName } from "./domain.js";
@@ -12,6 +13,7 @@ import { googleClientId, mountGoogleButton } from "./google-login.js";
 import { isCurrentVoteIdentity, resetPendingVoteForIdentityChange, revokeSessionBeforeClearing } from "./logout.js";
 import { VOTE_ACTIONS, VOTE_PHASES, voteFailureState, voteRecoveryControl } from "./vote-flow.js";
 import { confirmedVoteData } from "./vote-response.js";
+import { formatAggregateCopy, PREDICTION_REVEAL_COPY, PUBLIC_RANKING_COPY, WITHHELD_COPY } from "./aggregate-copy.js";
 
 const app = document.querySelector("#app");
 const sound = createSoundController();
@@ -32,6 +34,7 @@ const state = {
   predictionResults: null,
   predictionResultsLoading: false,
   predictionResultsError: "",
+  capabilities: PERSONAL_ONLY_CAPABILITIES,
   candidates: [],
   round: [],
   matchQueue: [],
@@ -41,7 +44,7 @@ const state = {
   personalRankingPolicy: null,
   globalDuels: 0,
   personalDuels: 0,
-  rankingView: "general",
+  rankingView: "personal",
   rankingQuery: "",
   rankingExpanded: false,
   chromaBatchExpanded: false,
@@ -81,6 +84,53 @@ const state = {
 let resultTimer;
 let roundAdvanceTimer;
 let retryEnableTimer;
+let aggregateExpiryTimer;
+
+function aggregateAvailable(scope) {
+  return aggregateScopeAvailable(state.capabilities, scope);
+}
+
+function applyExpiredAggregateCapabilities() {
+  const hadGlobalRanking = state.capabilities.scopes["global-ranking"].status === "available";
+  const hadPredictionReveal = state.capabilities.scopes["prediction-reveal"].status === "available";
+  state.capabilities = validateCapabilities(JSON.parse(JSON.stringify(state.capabilities)));
+  const globalRankingExpired = hadGlobalRanking && !aggregateAvailable("global-ranking");
+  const predictionRevealExpired = hadPredictionReveal && !aggregateAvailable("prediction-reveal");
+  if (globalRankingExpired) {
+    state.ranking = [];
+    state.globalDuels = 0;
+    state.globalFeedbackMessage = "";
+    state.rankingView = "personal";
+  }
+  if (predictionRevealExpired) {
+    state.predictionResults = null;
+    state.predictionResultsLoading = false;
+    state.predictionResultsError = "";
+    state.predictionBusy = false;
+    state.pendingPredictionAction = null;
+    state.selectedId = "";
+    if (state.dailySession) installDailySession(state.dailySession);
+  }
+  return globalRankingExpired || predictionRevealExpired;
+}
+
+function scheduleAggregateCapabilityExpiry() {
+  clearTimeout(aggregateExpiryTimer);
+  const expiresAt = nextAggregateCapabilityExpiry(state.capabilities);
+  if (expiresAt === null) return;
+  const delay = Math.min(Math.max(0, expiresAt - Date.now() + 1), 2_147_000_000);
+  aggregateExpiryTimer = setTimeout(() => {
+    const changed = applyExpiredAggregateCapabilities();
+    scheduleAggregateCapabilityExpiry();
+    if (changed) render();
+  }, delay);
+}
+
+function installCapabilities(capabilities) {
+  state.capabilities = validateCapabilities(JSON.parse(JSON.stringify(capabilities)));
+  applyExpiredAggregateCapabilities();
+  scheduleAggregateCapabilityExpiry();
+}
 
 function clearVoteTimers() {
   clearTimeout(resultTimer);
@@ -100,7 +150,7 @@ function installDailySession(session, { createAnswerId = true } = {}) {
   const pendingKey = state.dailySession.pendingPrediction
     ? `${state.dailySession.edition.id}:${state.dailySession.pendingPrediction.slot}`
     : "";
-  if (state.dailySession.pendingPrediction) {
+  if (aggregateAvailable("prediction-reveal") && state.dailySession.pendingPrediction) {
     state.round = dailyPendingPredictionCandidates(state.dailySession);
     if (pendingKey !== previousPendingKey || !state.predictionId) state.predictionId = crypto.randomUUID();
     state.roundId = "";
@@ -113,7 +163,7 @@ function installDailySession(session, { createAnswerId = true } = {}) {
     state.round = [];
     state.roundId = "";
   }
-  if (!state.dailySession.pendingPrediction) state.predictionId = "";
+  if (!aggregateAvailable("prediction-reveal") || !state.dailySession.pendingPrediction) state.predictionId = "";
   state.predictionBusy = false;
   state.predictionError = "";
   state.pendingPredictionAction = null;
@@ -193,10 +243,10 @@ function card(candidate, { mode = "vote" } = {}) {
     : state.busy || Boolean(state.pendingWinnerId);
   const dataAttribute = prediction ? "data-predict" : "data-vote";
   const ariaInstruction = prediction
-    ? "Toque para apostar."
+    ? PREDICTION_REVEAL_COPY.cardAria
     : "Toque para escolher; segure para saber quem é.";
   const interactionHint = prediction
-    ? '<small class="candidate-profile-hint">Toque para apostar</small>'
+    ? `<small class="candidate-profile-hint">${PREDICTION_REVEAL_COPY.cardHint}</small>`
     : '<small class="candidate-profile-hint"><span aria-hidden="true">ⓘ</span> Segure para conhecer</small>';
   const activelySending = prediction ? state.predictionBusy : state.busy;
   return `<div class="candidate-wrap">
@@ -263,9 +313,13 @@ function topicsScreen() {
   const dailyAnswered = Number(state.dailySession?.progress?.answered) || 0;
   const dailyTotal = Number(state.dailySession?.progress?.total) || 10;
   const dailyComplete = state.dailySession?.status === "completed";
-  const dailyAction = state.dailySession?.pendingPrediction
-    ? `Responder aposta · ${state.dailySession.pendingPrediction.slot}/${dailyTotal}`
+  const dailyAction = aggregateAvailable("prediction-reveal") && state.dailySession?.pendingPrediction
+    ? formatAggregateCopy(PREDICTION_REVEAL_COPY.resumeTemplate, { slot: state.dailySession.pendingPrediction.slot, total: dailyTotal })
     : dailyComplete ? "Ver fechamento de hoje" : dailyAnswered ? `Continuar · ${dailyAnswered}/${dailyTotal}` : "Jogar rodada do dia";
+  const predictionReveal = aggregateAvailable("prediction-reveal");
+  const aggregateTrust = aggregateAvailable("global-ranking")
+    ? `<span>${formatAggregateCopy(PUBLIC_RANKING_COPY.homeCountTemplate, { count: `<strong>${state.globalDuels}</strong>` })}</span>`
+    : `<span><strong>${state.personalDuels}</strong> escolhas no seu ranking</span>`;
   return `<main class="screen home-screen">
     <section class="home-hero">
       <div class="home-hero-copy">
@@ -274,12 +328,12 @@ function topicsScreen() {
         <p class="lead">Escolha entre pessoas públicas, conheça cada perfil e veja seu ranking ganhar forma — uma decisão por vez.</p>
         <div class="home-actions">
           <button class="primary home-primary" type="button" id="start-election">${dailyAction}<span aria-hidden="true">→</span></button>
-          <button class="home-ranking-link" type="button" id="open-ranking">Ver ranking do público</button>
-          <button class="home-ranking-link" type="button" id="open-prediction-results">Meu placar de apostas</button>
+          <button class="home-ranking-link" type="button" id="open-ranking">${aggregateAvailable("global-ranking") ? PUBLIC_RANKING_COPY.homeCta : "Ver meu ranking"}</button>
+          ${predictionReveal ? `<button class="home-ranking-link" type="button" id="open-prediction-results">${PREDICTION_REVEAL_COPY.homeCta}</button>` : ""}
         </div>
         <div class="home-trust" aria-label="Informações da edição">
           <span><strong>${dailyAnswered}/${dailyTotal}</strong> rodada do dia</span>
-          <span><strong>${state.globalDuels}</strong> escolhas confirmadas</span>
+          ${aggregateTrust}
         </div>
       </div>
       <div class="home-deck" aria-label="Prévia das cartas básicas">
@@ -303,7 +357,7 @@ function topicsScreen() {
       <ol>
         <li><span>01</span><strong>Jogue as mesmas dez</strong><small>O baralho do dia é igual para todos.</small></li>
         <li><span>02</span><strong>Escolha sua preferida</strong><small>Um toque confirma a sua decisão.</small></li>
-        <li><span>03</span><strong>Feche 10/10</strong><small>O recorte só inclui sessões concluídas.</small></li>
+        <li><span>03</span><strong>Feche 10/10</strong><small>Receba o comprovante das suas dez preferências.</small></li>
       </ol>
     </section>
 
@@ -311,7 +365,7 @@ function topicsScreen() {
       <p class="eyebrow">Todos no ar</p>
       <div><strong>Políticos + influenciadores</strong><span>${approvedCount} perfis com foto aprovada</span><small>Disponível</small></div>
     </section>
-    <p class="legal-note home-legal">Experiência lúdica de opinião. Não constitui pesquisa eleitoral.</p>
+    ${aggregateAvailable("global-ranking") || aggregateAvailable("prediction-reveal") ? "" : `<p class="legal-note home-legal">${WITHHELD_COPY.comparisonUnavailable} ${WITHHELD_COPY.homeSuffix}</p>`}
   </main>`;
 }
 
@@ -322,25 +376,35 @@ function dailyClosingScreen() {
     const candidate = byId.get(answer.winnerId);
     return `<li><span>${String(answer.slot).padStart(2, "0")}</span><strong>${escapeHtml(candidate?.displayName || shortName(candidate?.name || answer.winnerId))}</strong></li>`;
   }).join("");
+  const predictionReveal = aggregateAvailable("prediction-reveal");
+  const cutCopy = predictionReveal
+    ? formatAggregateCopy(PREDICTION_REVEAL_COPY.availabilityTemplate, { time: new Date(session.cut.availableAt).toLocaleString("pt-BR", { timeZone: session.ruleset.timeZone, hour: "2-digit", minute: "2-digit" }) })
+    : WITHHELD_COPY.comparisonUnavailable;
+  const receiptCopy = predictionReveal
+    ? formatAggregateCopy(PREDICTION_REVEAL_COPY.receiptTemplate, {
+      count: session.predictionProgress.predicted,
+      noun: session.predictionProgress.predicted === 1 ? PREDICTION_REVEAL_COPY.predictionNounOne : PREDICTION_REVEAL_COPY.predictionNounMany,
+    })
+    : "Suas dez preferências ficaram registradas.";
   return `<main class="screen daily-close-screen">
     <section class="daily-close-hero">
       <p class="eyebrow">Rodada do dia · 10/10</p>
       <span class="daily-close-mark" aria-hidden="true">✓</span>
       <h1>Você fechou a rodada.</h1>
-      <p class="lead">Suas dez preferências e ${session.predictionProgress.predicted} aposta${session.predictionProgress.predicted === 1 ? "" : "s"} ficaram registradas. Este é um recorte fechado — amanhã, todo mundo recebe outro baralho.</p>
-      <p class="daily-methodology">${escapeHtml(session.cut.methodology)}</p>
-      <small>O resultado público final fica disponível depois de ${new Date(session.cut.availableAt).toLocaleString("pt-BR", { timeZone: session.ruleset.timeZone, hour: "2-digit", minute: "2-digit" })}. Somente sessões 10/10 entram no recorte.</small>
+      <p class="lead">${receiptCopy} Este é um recorte fechado — amanhã, todo mundo recebe outro baralho.</p>
+      ${predictionReveal ? `<p class="daily-methodology">${escapeHtml(session.cut.methodology)}</p>` : ""}
+      <small>${escapeHtml(cutCopy)}</small>
     </section>
     <section class="daily-receipt" aria-labelledby="daily-receipt-title">
       <div><p class="eyebrow">Seu comprovante</p><h2 id="daily-receipt-title">As dez escolhidas</h2></div>
       <ol>${choices}</ol>
     </section>
     <div class="daily-close-actions">
-      <button class="primary" id="open-prediction-results" type="button">Ver meu placar de apostas</button>
+      ${predictionReveal ? `<button class="primary" id="open-prediction-results" type="button">${PREDICTION_REVEAL_COPY.closeCta}</button>` : ""}
       <button class="primary" id="start-free-mode" type="button">Continuar no modo livre</button>
       <button class="secondary" id="daily-open-ranking" type="button">Ver meu ranking</button>
     </div>
-    <p class="legal-note">Experiência lúdica de opinião. Não constitui pesquisa eleitoral.</p>
+    ${predictionReveal ? "" : `<p class="legal-note">${WITHHELD_COPY.comparisonUnavailable} ${WITHHELD_COPY.receiptSuffix}</p>`}
   </main>`;
 }
 
@@ -348,38 +412,43 @@ function dailyPredictionScreen() {
   const pending = state.dailySession.pendingPrediction;
   const failed = Boolean(state.pendingPredictionAction && state.predictionError);
   const instruction = state.predictionBusy
-    ? "Guardando sua aposta…"
-    : state.predictionError || "Aposte em quem será a pessoa mais escolhida neste slot.";
+    ? PREDICTION_REVEAL_COPY.promptBusy
+    : state.predictionError || PREDICTION_REVEAL_COPY.promptInstruction;
   return `<main class="screen duel-screen prediction-screen" data-game-mode="daily-prediction" aria-busy="${state.predictionBusy ? "true" : "false"}">
-    <div class="duel-head"><div><p class="eyebrow">Aposta opcional · slot ${pending.slot}</p><h1>E o Brasil, escolhe quem?</h1></div><span class="progress-pill">${pending.slot}/${state.dailySession.progress.total}</span></div>
-    <section class="prediction-baseline" aria-label="Linha de base da aposta"><strong>25%</strong><span>é a chance de acertar ao acaso entre quatro cartas</span></section>
+    <div class="duel-head"><div><p class="eyebrow">${formatAggregateCopy(PREDICTION_REVEAL_COPY.promptEyebrowTemplate, { slot: pending.slot })}</p><h1>${PREDICTION_REVEAL_COPY.promptHeading}</h1></div><span class="progress-pill">${pending.slot}/${state.dailySession.progress.total}</span></div>
+    <section class="prediction-baseline" aria-label="${PREDICTION_REVEAL_COPY.baselineAria}"><strong>${PREDICTION_REVEAL_COPY.baselinePercent}</strong><span>${PREDICTION_REVEAL_COPY.baselineDetail}</span></section>
     <p class="round-instruction${state.predictionError ? " is-error" : ""}" role="${state.predictionError ? "alert" : "status"}">${escapeHtml(instruction)}</p>
-    ${failed ? '<button class="retry-vote" id="retry-prediction" type="button">Tentar a mesma aposta novamente</button><button class="secondary prediction-refresh" id="refresh-prediction" type="button">Atualizar estado</button>' : ""}
+    ${failed ? `<button class="retry-vote" id="retry-prediction" type="button">${PREDICTION_REVEAL_COPY.retrySame}</button><button class="secondary prediction-refresh" id="refresh-prediction" type="button">${PREDICTION_REVEAL_COPY.refreshState}</button>` : ""}
     <div class="arena arena-four prediction-arena">${state.round.map((candidate) => card(candidate, { mode: "prediction" })).join("")}</div>
-    <button class="skip-button" type="button" id="skip-prediction" ${state.predictionBusy || state.pendingPredictionAction ? "disabled" : ""}>Pular esta aposta</button>
-    <p class="daily-fixed-note">Sua preferência já foi confirmada. A aposta é separada, opcional e não altera ranking nem progresso.</p>
-    <p class="prediction-sealed">O resultado só aparece depois do fechamento do recorte diário — nunca ao vivo.</p>
+    <button class="skip-button" type="button" id="skip-prediction" ${state.predictionBusy || state.pendingPredictionAction ? "disabled" : ""}>${PREDICTION_REVEAL_COPY.skip}</button>
+    <p class="daily-fixed-note">${PREDICTION_REVEAL_COPY.fixedPreference}</p>
+    <p class="prediction-sealed">${PREDICTION_REVEAL_COPY.sealed}</p>
   </main>`;
 }
 
 function predictionResultLabel(round, byId) {
-  if (round.result === "correct") return "Acertou";
-  if (round.result === "incorrect") return "Não acertou";
-  if (round.result === "skipped") return "Pulou";
-  if (round.result === "tie") return "Empate — não pontua";
-  if (round.result === "no-sample") return "Sem amostra — não pontua";
-  if (!round.preference) return "Não jogou este slot";
+  if (round.result === "correct") return PREDICTION_REVEAL_COPY.resultCorrect;
+  if (round.result === "incorrect") return PREDICTION_REVEAL_COPY.resultIncorrect;
+  if (round.result === "skipped") return PREDICTION_REVEAL_COPY.resultSkipped;
+  if (round.result === "tie") return PREDICTION_REVEAL_COPY.resultTie;
+  if (round.result === "no-sample") return PREDICTION_REVEAL_COPY.resultNoSample;
+  if (!round.preference) return PREDICTION_REVEAL_COPY.resultNotAnswered;
   const predicted = byId.get(round.prediction?.candidateId);
-  return predicted ? `Apostou em ${predicted.displayName || shortName(predicted.name)}` : "Sem aposta";
+  return predicted
+    ? formatAggregateCopy(PREDICTION_REVEAL_COPY.predictedTemplate, { person: predicted.displayName || shortName(predicted.name) })
+    : PREDICTION_REVEAL_COPY.noPrediction;
 }
 
 function dailyPredictionResultsScreen() {
+  if (!aggregateAvailable("prediction-reveal")) {
+    return `<main class="screen connection prediction-results-state"><section class="panel"><p class="eyebrow">${PREDICTION_REVEAL_COPY.scoreboardEyebrow}</p><h1>${WITHHELD_COPY.comparisonHeading}</h1><p>${WITHHELD_COPY.comparisonUnavailable}</p><button class="secondary" id="prediction-results-home" type="button">${PREDICTION_REVEAL_COPY.backHome}</button></section></main>`;
+  }
   if (state.predictionResultsLoading || state.predictionResultsError) {
-    return `<main class="screen connection prediction-results-state"><section class="panel"><p class="eyebrow">Seu placar de apostas</p><h1>${state.predictionResultsError ? "Não conseguimos abrir o placar." : "Apurando recortes fechados…"}</h1>${state.predictionResultsError ? `<p role="alert">${escapeHtml(state.predictionResultsError)}</p><button class="primary" id="retry-prediction-results" type="button">Tentar novamente</button>` : '<p role="status">Nenhum resultado ao vivo será exibido.</p>'}<button class="secondary" id="prediction-results-home" type="button">Voltar ao início</button></section></main>`;
+    return `<main class="screen connection prediction-results-state"><section class="panel"><p class="eyebrow">${PREDICTION_REVEAL_COPY.scoreboardEyebrow}</p><h1>${state.predictionResultsError ? PREDICTION_REVEAL_COPY.loadErrorHeading : PREDICTION_REVEAL_COPY.loadingHeading}</h1>${state.predictionResultsError ? `<p role="alert">${escapeHtml(state.predictionResultsError)}</p><button class="primary" id="retry-prediction-results" type="button">${PREDICTION_REVEAL_COPY.retry}</button>` : `<p role="status">${PREDICTION_REVEAL_COPY.loadingDetail}</p>`}<button class="secondary" id="prediction-results-home" type="button">${PREDICTION_REVEAL_COPY.backHome}</button></section></main>`;
   }
   const results = state.predictionResults;
   if (!results?.sessions.length) {
-    return `<main class="screen prediction-results-screen"><section class="prediction-score-card"><p class="eyebrow">Seu placar de apostas</p><h1>Ainda não há recorte fechado.</h1><p>Faça apostas opcionais na rodada do dia. Elas só serão apuradas depois da meia-noite de São Paulo.</p><strong class="prediction-baseline-copy">Linha de base: 25%</strong></section><button class="primary" id="prediction-results-home" type="button">Voltar ao início</button></main>`;
+    return `<main class="screen prediction-results-screen"><section class="prediction-score-card"><p class="eyebrow">${PREDICTION_REVEAL_COPY.scoreboardEyebrow}</p><h1>${PREDICTION_REVEAL_COPY.noCutHeading}</h1><p>${PREDICTION_REVEAL_COPY.noCutDetail}</p><strong class="prediction-baseline-copy">${formatAggregateCopy(PREDICTION_REVEAL_COPY.baselineLabelTemplate, { percent: PREDICTION_REVEAL_COPY.baselinePercent })}</strong></section><button class="primary" id="prediction-results-home" type="button">${PREDICTION_REVEAL_COPY.backHome}</button></main>`;
   }
   const score = results.score;
   const accuracy = score.accuracyPercent === null ? "—" : `${String(score.accuracyPercent).replace(".", ",")}%`;
@@ -393,21 +462,27 @@ function dailyPredictionResultsScreen() {
         return `<li><span><b>${escapeHtml(candidate?.displayName || shortName(candidate?.name || choice.candidateId))}</b><small>${String(choice.percent).replace(".", ",")}% · ${choice.count}</small></span><i aria-hidden="true"><em style="width:${choice.percent}%"></em></i></li>`;
       }).join("");
       const actual = round.outcome === "decided"
-        ? `Mais escolhida: ${winner?.displayName || shortName(winner?.name || round.winnerId)}`
-        : round.outcome === "tie" ? "Empate na liderança" : "Sem sessão 10/10 na amostra";
+        ? formatAggregateCopy(PREDICTION_REVEAL_COPY.mostChosenTemplate, { person: winner?.displayName || shortName(winner?.name || round.winnerId) })
+        : round.outcome === "tie" ? PREDICTION_REVEAL_COPY.actualTie : PREDICTION_REVEAL_COPY.actualNoSample;
       const predictionCopy = round.prediction?.skipped
-        ? "Você pulou"
-        : predicted ? `Sua aposta: ${predicted.displayName || shortName(predicted.name)}` : "Você não respondeu";
-      return `<li class="prediction-result-round is-${escapeHtml(round.result)}"><div><span>Slot ${round.slot}</span><strong>${escapeHtml(predictionResultLabel(round, byId))}</strong><small>${escapeHtml(predictionCopy)} · ${escapeHtml(actual)}</small></div><ul aria-label="Distribuição do slot ${round.slot}">${distribution}</ul></li>`;
+        ? PREDICTION_REVEAL_COPY.playerSkipped
+        : predicted
+          ? formatAggregateCopy(PREDICTION_REVEAL_COPY.playerPredictionTemplate, { person: predicted.displayName || shortName(predicted.name) })
+          : PREDICTION_REVEAL_COPY.playerDidNotAnswer;
+      return `<li class="prediction-result-round is-${escapeHtml(round.result)}"><div><span>${formatAggregateCopy(PREDICTION_REVEAL_COPY.slotTemplate, { slot: round.slot })}</span><strong>${escapeHtml(predictionResultLabel(round, byId))}</strong><small>${escapeHtml(predictionCopy)} · ${escapeHtml(actual)}</small></div><ul aria-label="${formatAggregateCopy(PREDICTION_REVEAL_COPY.distributionAriaTemplate, { slot: round.slot })}">${distribution}</ul></li>`;
     }).join("");
     const date = new Date(`${session.edition.date}T12:00:00`).toLocaleDateString("pt-BR");
-    return `<details class="prediction-session"${results.sessions[0] === session ? " open" : ""}><summary><span><strong>${escapeHtml(date)}</strong><small>${escapeHtml(session.methodology)}</small></span><b>${session.completedPlayers} sessão${session.completedPlayers === 1 ? "" : "ões"} 10/10</b></summary>${session.sampleNotice ? `<p class="prediction-sample-note">${escapeHtml(session.sampleNotice)}</p>` : ""}<ol>${rounds}</ol></details>`;
+    const completedSessions = formatAggregateCopy(
+      session.completedPlayers === 1 ? PREDICTION_REVEAL_COPY.completedSessionsOneTemplate : PREDICTION_REVEAL_COPY.completedSessionsManyTemplate,
+      { count: session.completedPlayers },
+    );
+    return `<details class="prediction-session"${results.sessions[0] === session ? " open" : ""}><summary><span><strong>${escapeHtml(date)}</strong><small>${escapeHtml(session.methodology)}</small></span><b>${completedSessions}</b></summary>${session.sampleNotice ? `<p class="prediction-sample-note">${escapeHtml(session.sampleNotice)}</p>` : ""}<ol>${rounds}</ol></details>`;
   }).join("");
   return `<main class="screen prediction-results-screen">
-    <section class="prediction-score-card"><p class="eyebrow">Seu placar de apostas</p><h1>${accuracy}</h1><p><strong>${score.correct} de ${score.scored}</strong> apostas apuráveis corretas.</p><span>Acima de <b>${results.baselinePercent}%</b>, você supera a escolha ao acaso entre quatro.</span><small>Empates, ausência de amostra, pulos e slots sem resposta não contam como acerto nem erro.</small></section>
-    <section class="prediction-history" aria-labelledby="prediction-history-title"><div><p class="eyebrow">Recortes fechados</p><h2 id="prediction-history-title">Preferência × consenso percebido</h2></div>${sessions}</section>
-    <button class="primary" id="prediction-results-home" type="button">Voltar ao início</button>
-    <p class="legal-note">Este placar mede apenas a precisão das suas apostas. Não altera Elo, ranking ou contagem de confrontos.</p>
+    <section class="prediction-score-card"><p class="eyebrow">${PREDICTION_REVEAL_COPY.scoreboardEyebrow}</p><h1>${accuracy}</h1><p><strong>${formatAggregateCopy(PREDICTION_REVEAL_COPY.scoreTemplate, { correct: score.correct, scored: score.scored })}</strong> ${PREDICTION_REVEAL_COPY.scoreDetail}</p><span>${formatAggregateCopy(PREDICTION_REVEAL_COPY.baselineComparisonTemplate, { percent: `<b>${results.baselinePercent}</b>` })}</span><small>${PREDICTION_REVEAL_COPY.neutralResults}</small></section>
+    <section class="prediction-history" aria-labelledby="prediction-history-title"><div><p class="eyebrow">${PREDICTION_REVEAL_COPY.historyEyebrow}</p><h2 id="prediction-history-title">${PREDICTION_REVEAL_COPY.historyHeading}</h2></div>${sessions}</section>
+    <button class="primary" id="prediction-results-home" type="button">${PREDICTION_REVEAL_COPY.backHome}</button>
+    <p class="legal-note">${PREDICTION_REVEAL_COPY.scoreLimit}</p>
   </main>`;
 }
 
@@ -418,11 +493,11 @@ function duelScreen() {
       : '<p role="status">Atualizando o baralho do dia…</p>';
     return `<main class="screen connection"><section class="panel"><p class="eyebrow">Rodada do dia</p><h1>${state.dailyLoadError ? "Não conseguimos atualizar a rodada." : "Buscando a edição vigente…"}</h1>${error}</section></main>`;
   }
-  if (state.gameMode === "daily" && state.dailySession?.pendingPrediction) return dailyPredictionScreen();
+  if (state.gameMode === "daily" && aggregateAvailable("prediction-reveal") && state.dailySession?.pendingPrediction) return dailyPredictionScreen();
   if (state.gameMode === "daily" && state.dailySession?.status === "completed") return dailyClosingScreen();
   const recovery = voteRecoveryControl(state);
   const feedback = state.personalFeedbackMessage
-    ? `<section class="round-feedback" aria-live="polite" aria-atomic="true"><p class="feedback-channel feedback-personal"><strong>No seu ranking</strong><span>${escapeHtml(state.personalFeedbackMessage)}</span></p>${state.globalFeedbackMessage ? `<p class="feedback-channel feedback-global"><strong>No placar do público</strong><span>${escapeHtml(state.globalFeedbackMessage)}</span></p>` : ""}</section>`
+    ? `<section class="round-feedback" aria-live="polite" aria-atomic="true"><p class="feedback-channel feedback-personal"><strong>No seu ranking</strong><span>${escapeHtml(state.personalFeedbackMessage)}</span></p>${state.globalFeedbackMessage ? `<p class="feedback-channel feedback-global"><strong>${PUBLIC_RANKING_COPY.feedbackChannel}</strong><span>${escapeHtml(state.globalFeedbackMessage)}</span></p>` : ""}</section>`
     : `<p class="round-instruction${state.result ? " is-result" : ""}${state.resultTone === "erro" ? " is-error" : ""}" role="status">${escapeHtml(state.result || "Toque na sua preferida. Segure para conhecer o perfil.")}</p>`;
   const daily = state.gameMode === "daily";
   const progress = daily
@@ -438,24 +513,49 @@ function duelScreen() {
 }
 
 function rankingScreen() {
-  const personal = state.rankingView === "personal";
+  const publicRankingAvailable = aggregateAvailable("global-ranking");
+  const personal = !publicRankingAvailable || state.rankingView === "personal";
   const ranking = displayRanking(personal ? state.personalRanking : state.ranking, { personal });
   const filtered = filterRanking(ranking, state.rankingQuery);
   const visible = state.rankingExpanded || state.rankingQuery ? filtered : filtered.slice(0, 25);
-  const podium = rankingPodium(ranking);
-  const highlights = rankingHighlights(ranking);
+  const podium = publicRankingAvailable ? rankingPodium(ranking) : [];
+  const highlights = publicRankingAvailable ? rankingHighlights(ranking) : { chosen: [], rejected: [] };
   const totalDuels = personal ? state.personalDuels : state.globalDuels;
-  const rows = visible.map((person) => `<button class="ranking-row" type="button" data-profile="${escapeHtml(person.id)}"><strong class="rank-position">${person.displayRank ?? "—"}</strong><span class="rank-person">${escapeHtml(person.displayName || shortName(person.name))}<small>${escapeHtml(person.affiliation || person.party || candidateRole(person))}</small>${person.decisions ? `<span class="vote-counts"><b class="vote-positive">+ ${person.wins} vitória${person.wins === 1 ? "" : "s"}</b><b class="vote-negative">− ${person.losses} derrota${person.losses === 1 ? "" : "s"}</b></span>` : '<span class="not-played">Ainda sem comparações</span>'}</span><strong class="rank-score">${person.decisions ? `${person.winRate}%<small>${person.elo} Elo</small>` : "—"}</strong></button>`).join("");
+  const rows = visible.map((person) => {
+    const winNoun = personal
+      ? `vitória${person.wins === 1 ? "" : "s"}`
+      : person.wins === 1 ? PUBLIC_RANKING_COPY.rowWinOne : PUBLIC_RANKING_COPY.rowWinMany;
+    const lossNoun = personal
+      ? `derrota${person.losses === 1 ? "" : "s"}`
+      : person.losses === 1 ? PUBLIC_RANKING_COPY.rowLossOne : PUBLIC_RANKING_COPY.rowLossMany;
+    const unplayed = personal ? "Ainda sem comparações" : PUBLIC_RANKING_COPY.rowUnplayed;
+    const eloSuffix = personal ? "Elo" : PUBLIC_RANKING_COPY.eloSuffix;
+    return `<button class="ranking-row" type="button" data-profile="${escapeHtml(person.id)}"><strong class="rank-position">${person.displayRank ?? "—"}</strong><span class="rank-person">${escapeHtml(person.displayName || shortName(person.name))}<small>${escapeHtml(person.affiliation || person.party || candidateRole(person))}</small>${person.decisions ? `<span class="vote-counts"><b class="vote-positive">+ ${person.wins} ${winNoun}</b><b class="vote-negative">− ${person.losses} ${lossNoun}</b></span>` : `<span class="not-played">${unplayed}</span>`}</span><strong class="rank-score">${person.decisions ? `${person.winRate}%<small>${person.elo} ${eloSuffix}</small>` : "—"}</strong></button>`;
+  }).join("");
   const podiumCards = podium.map((person) => `<button class="podium-card podium-${Math.min(person.displayRank, 3)}" type="button" data-profile="${escapeHtml(person.id)}"><span>${person.displayRank}º</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><small>${person.winRate}%</small></button>`).join("");
-  const highlightColumn = (title, type, people) => `<section class="ranking-highlight ranking-highlight-${type}"><p>${title}</p>${people.length ? people.map((person, index) => `<button type="button" data-profile="${escapeHtml(person.id)}"><span>${index + 1}</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><b>${type === "chosen" ? `+${person.wins}` : `−${person.losses}`}</b></button>`).join("") : '<small>Aguardando duelos</small>'}</section>`;
-  const publicPulse = !personal && (highlights.chosen.length || highlights.rejected.length) ? `<section class="public-pulse" aria-label="Resumo das comparações"><div class="section-title"><span>Placar do público</span><small>cada rodada compara a escolhida com as outras três</small></div><div class="pulse-grid">${highlightColumn("Mais vitórias", "chosen", highlights.chosen)}${highlightColumn("Mais derrotas", "rejected", highlights.rejected)}</div></section>` : "";
-  const empty = state.rankingQuery ? "Nenhum nome encontrado." : personal ? "Faça uma escolha para começar seu ranking pessoal." : "Ainda não há resultados confirmados.";
-  const reveal = !state.rankingQuery && !state.rankingExpanded && filtered.length > visible.length ? `<button class="secondary reveal-ranking" id="reveal-ranking" type="button">Ver ranking completo (${filtered.length})</button>` : "";
+  const highlightColumn = (title, type, people) => `<section class="ranking-highlight ranking-highlight-${type}"><p>${title}</p>${people.length ? people.map((person, index) => `<button type="button" data-profile="${escapeHtml(person.id)}"><span>${index + 1}</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><b>${type === "chosen" ? `+${person.wins}` : `−${person.losses}`}</b></button>`).join("") : `<small>${PUBLIC_RANKING_COPY.awaitingDuels}</small>`}</section>`;
+  const publicPulse = !personal && (highlights.chosen.length || highlights.rejected.length) ? `<section class="public-pulse" aria-label="${PUBLIC_RANKING_COPY.pulseAria}"><div class="section-title"><span>${PUBLIC_RANKING_COPY.pulse}</span><small>${PUBLIC_RANKING_COPY.pulseDetail}</small></div><div class="pulse-grid">${highlightColumn(PUBLIC_RANKING_COPY.mostWins, "chosen", highlights.chosen)}${highlightColumn(PUBLIC_RANKING_COPY.mostLosses, "rejected", highlights.rejected)}</div></section>` : "";
+  const empty = state.rankingQuery
+    ? personal ? "Nenhum nome encontrado." : PUBLIC_RANKING_COPY.searchEmpty
+    : personal ? "Faça uma escolha para começar seu ranking pessoal." : PUBLIC_RANKING_COPY.empty;
+  const reveal = !state.rankingQuery && !state.rankingExpanded && filtered.length > visible.length
+    ? `<button class="secondary reveal-ranking" id="reveal-ranking" type="button">${personal ? `Ver ranking completo (${filtered.length})` : formatAggregateCopy(PUBLIC_RANKING_COPY.revealTemplate, { count: filtered.length })}</button>`
+    : "";
   const policy = personal && state.personalRankingPolicy
     ? `<p class="ranking-policy"><strong>Ordenado por ${escapeHtml(state.personalRankingPolicy.label)}</strong><span>${escapeHtml(state.personalRankingPolicy.explanation)}</span></p>`
     : "";
-  const trust = personal ? "" : '<p class="ranking-trust">Escolhas confirmadas pelo servidor. <a href="/integridade.html">Como o placar é protegido</a></p>';
-  return `<main class="screen ranking-screen">${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}<section class="ranking-overview"><header class="ranking-heading"><p class="eyebrow">Eleições 2026</p><h1>Ranking</h1><p>${personal ? "O retrato das comparações que você fez." : "O placar vivo das escolhas do público."}</p><strong>${totalDuels} ${totalDuels === 1 ? "escolha confirmada" : "escolhas confirmadas"}</strong>${trust}</header><div class="segmented" aria-label="Tipo de ranking"><button class="${personal ? "" : "active"}" data-ranking-view="general">Geral</button><button class="${personal ? "active" : ""}" data-ranking-view="personal">Seu ranking</button></div>${policy}${publicPulse}${podiumCards ? `<section class="podium" aria-label="Pódio">${podiumCards}</section>` : ""}</section><section class="ranking-results"><label class="ranking-search"><span>Todos os nomes</span><input id="ranking-search" type="search" value="${escapeHtml(state.rankingQuery)}" placeholder="Buscar nome ou partido" autocomplete="off"></label><section class="panel ranking-list">${rows || `<p class="empty">${empty}</p>`}</section>${reveal}<button class="primary continue-duels" id="continue-duels" type="button">Voltar às escolhas</button></section></main>`;
+  const trust = personal ? "" : `<p class="ranking-trust">${PUBLIC_RANKING_COPY.trust} <a href="/integridade.html">${PUBLIC_RANKING_COPY.integrityLink}</a></p>`;
+  const selector = publicRankingAvailable
+    ? `<div class="segmented" aria-label="Tipo de ranking"><button class="${personal ? "" : "active"}" data-ranking-view="general">${PUBLIC_RANKING_COPY.selector}</button><button class="${personal ? "active" : ""}" data-ranking-view="personal">${PUBLIC_RANKING_COPY.personalSelector}</button></div>`
+    : `<p class="ranking-trust">${WITHHELD_COPY.comparisonUnavailable} ${WITHHELD_COPY.rankingSuffix}</p>`;
+  const countNoun = personal
+    ? totalDuels === 1 ? "escolha confirmada" : "escolhas confirmadas"
+    : totalDuels === 1 ? PUBLIC_RANKING_COPY.choiceCountOne : PUBLIC_RANKING_COPY.choiceCountMany;
+  const topicEyebrow = personal ? "Eleições 2026" : PUBLIC_RANKING_COPY.topicEyebrow;
+  const searchLabel = personal ? "Todos os nomes" : PUBLIC_RANKING_COPY.searchLabel;
+  const searchPlaceholder = personal ? "Buscar nome ou partido" : PUBLIC_RANKING_COPY.searchPlaceholder;
+  const backToChoices = personal ? "Voltar às escolhas" : PUBLIC_RANKING_COPY.backToChoices;
+  return `<main class="screen ranking-screen">${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}<section class="ranking-overview"><header class="ranking-heading"><p class="eyebrow">${topicEyebrow}</p><h1>${publicRankingAvailable ? PUBLIC_RANKING_COPY.heading : "Seu ranking"}</h1><p>${personal ? "O retrato das comparações que você fez." : PUBLIC_RANKING_COPY.description}</p><strong>${totalDuels} ${countNoun}</strong>${trust}</header>${selector}${policy}${publicPulse}${podiumCards ? `<section class="podium" aria-label="${PUBLIC_RANKING_COPY.podiumAria}">${podiumCards}</section>` : ""}</section><section class="ranking-results"><label class="ranking-search"><span>${searchLabel}</span><input id="ranking-search" type="search" value="${escapeHtml(state.rankingQuery)}" placeholder="${searchPlaceholder}" autocomplete="off"></label><section class="panel ranking-list">${rows || `<p class="empty">${empty}</p>`}</section>${reveal}<button class="primary continue-duels" id="continue-duels" type="button">${backToChoices}</button></section></main>`;
 }
 
 function collectionScreen() {
@@ -538,7 +638,8 @@ function showProfile(id) {
     const label = typeof source === "string" ? "Fonte" : source.label || source.publisher || "Fonte";
     return href ? `<li><a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a></li>` : "";
   }).join("");
-  const canVote = state.screen === "duel" && !state.dailySession?.pendingPrediction
+  const predictionBlocksVote = aggregateAvailable("prediction-reveal") && state.dailySession?.pendingPrediction;
+  const canVote = state.screen === "duel" && !predictionBlocksVote
     && state.round.some((candidate) => candidate.id === person.id) && !state.busy && !state.pendingWinnerId;
   modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar resumo">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2>${escapeHtml(person.name)}</h2><p class="profile-role"><strong>${escapeHtml(candidateRole(person))}</strong></p>${metadata.length ? `<p class="profile-meta">${metadata.map(escapeHtml).join(" · ")}</p>` : ""}${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions">${canVote ? `<button class="primary" id="vote-from-profile" data-candidate="${escapeHtml(person.id)}" type="button">Escolher esta pessoa</button>` : ""}<button class="secondary" id="close-modal" type="button">Voltar ao duelo</button></div>`;
   let silentClose = false;
@@ -653,12 +754,14 @@ async function vote(winnerId, { retry = false } = {}) {
   state.globalFeedbackMessage = "";
   state.result = "Confirmando sua escolha…";
   state.resultTone = "";
+  const aggregateResponseAllowed = aggregateAvailable("global-ranking");
   render();
   try {
     const response = attempt.gameMode === "daily"
       ? await submitDailyVote(attempt.roundId, attempt.editionId, attempt.slot, attempt.winnerId, "eleicoes-2026", {
         recoveryKey: attemptIdentity.recoveryKey,
         version: attemptPlayerVersion,
+        predictionEnabled: aggregateAvailable("prediction-reveal"),
       })
       : await submitRoundVote(attempt.roundId, attempt.winnerId, attempt.candidateIds, "eleicoes-2026", {
         recoveryKey: attemptIdentity.recoveryKey,
@@ -666,9 +769,16 @@ async function vote(winnerId, { retry = false } = {}) {
       });
     if (!isCurrentVoteIdentity(state, attemptIdentity)) return;
     const dailyMode = attempt.gameMode === "daily";
+    const responseForValidation = aggregateResponseAllowed && aggregateAvailable("global-ranking")
+      ? response
+      : { ...response, publicAggregate: { status: "withheld", scope: "global-ranking" } };
     const confirmed = dailyMode
-      ? confirmedDailyVoteData(response, state.candidates, attempt, state)
-      : confirmedVoteData(response, state.candidates, attempt, state);
+      ? confirmedDailyVoteData(responseForValidation, state.candidates, attempt, state)
+      : confirmedVoteData(responseForValidation, state.candidates, attempt, state);
+    if (!confirmed.aggregateAvailable) {
+      installCapabilities(withAggregateScopeWithheld(state.capabilities, "global-ranking"));
+      state.rankingView = "personal";
+    }
     let landingDailySession = dailyMode ? confirmed.dailySession : null;
     let forceDailyRefresh = false;
     if (dailyMode && response.round?.status === "alreadyProcessed") {
@@ -770,6 +880,17 @@ async function answerDailyPrediction(candidateId, { retry = false } = {}) {
     );
     if (!isCurrentVoteIdentity(state, identity)) return;
     const confirmed = confirmedDailyPredictionData(response, attempt, state.dailySession);
+    if (!aggregateAvailable("prediction-reveal")) {
+      installCapabilities(withAggregateScopeWithheld(state.capabilities, "prediction-reveal"));
+      installDailySession(confirmed.dailySession);
+      state.predictionBusy = false;
+      state.pendingPredictionAction = null;
+      state.selectedId = "";
+      state.result = `${WITHHELD_COPY.comparisonUnavailable} ${WITHHELD_COPY.runtimeSuffix}`;
+      state.resultTone = "";
+      render();
+      return;
+    }
     const replayed = confirmed.prediction.status === "alreadyProcessed";
     installDailySession(confirmed.dailySession);
     if (replayed) {
@@ -780,8 +901,8 @@ async function answerDailyPrediction(candidateId, { retry = false } = {}) {
       state.dailyLoading = true;
     }
     const confirmationMessage = attempt.candidateId === null
-      ? "Aposta pulada. Sua preferência continua registrada."
-      : "Aposta guardada. O resultado só aparece depois do fechamento.";
+      ? PREDICTION_REVEAL_COPY.confirmationSkipped
+      : PREDICTION_REVEAL_COPY.confirmationSaved;
     state.result = confirmationMessage;
     state.resultTone = "";
     state.selectedId = "";
@@ -799,7 +920,7 @@ async function answerDailyPrediction(candidateId, { retry = false } = {}) {
       state.dailyLoading = !resynced;
       state.dailyLoadError = resynced
         ? ""
-        : "A aposta foi confirmada, mas não conseguimos abrir a edição vigente.";
+        : PREDICTION_REVEAL_COPY.confirmedCurrentUnavailable;
       const editionChanged = resynced && state.dailySession.edition.id !== confirmedEditionId;
       if (editionChanged) {
         state.personalFeedbackMessage = "";
@@ -807,15 +928,28 @@ async function answerDailyPrediction(candidateId, { retry = false } = {}) {
         state.roundOutcome = null;
       }
       state.result = editionChanged
-        ? `${confirmationMessage} A edição vigente já foi aberta.`
+        ? `${confirmationMessage} ${PREDICTION_REVEAL_COPY.currentEditionOpened}`
         : resynced
           ? confirmationMessage
-          : `${confirmationMessage} Atualize para abrir a edição vigente.`;
+          : `${confirmationMessage} ${PREDICTION_REVEAL_COPY.refreshCurrentPrompt}`;
       state.resultTone = "";
       render();
     }
   } catch (error) {
     if (!isCurrentVoteIdentity(state, identity)) return;
+    if (error?.status === 403 && error?.code === "AGGREGATE_PUBLICATION_WITHHELD") {
+      installCapabilities(withAggregateScopeWithheld(state.capabilities, "prediction-reveal"));
+      installDailySession(state.dailySession);
+      state.predictionBusy = false;
+      state.pendingPredictionAction = null;
+      state.selectedId = "";
+      state.predictionError = "";
+      state.result = `${WITHHELD_COPY.comparisonUnavailable} ${WITHHELD_COPY.runtimeSuffix}`;
+      state.resultTone = "";
+      render();
+      sound.play("navigation");
+      return;
+    }
     if (error?.status === 409 && [
       "DAILY_PREDICTION_ALREADY_RECORDED",
       "DAILY_PREDICTION_OUT_OF_ORDER",
@@ -829,9 +963,9 @@ async function answerDailyPrediction(candidateId, { retry = false } = {}) {
       state.predictionError = "";
       state.result = resynced
         ? error.code === "DAILY_PREDICTION_CLOSED"
-          ? "O recorte fechou. Abrimos o baralho vigente sem registrar aposta retroativa."
-          : "Outro acesso já respondeu. Seu jogo foi atualizado."
-        : "Não conseguimos atualizar a rodada do dia.";
+          ? PREDICTION_REVEAL_COPY.closedResync
+          : PREDICTION_REVEAL_COPY.concurrentResync
+        : PREDICTION_REVEAL_COPY.resyncFailed;
       state.resultTone = resynced ? "" : "erro";
       render();
       sound.play(resynced ? "navigation" : "error");
@@ -840,8 +974,8 @@ async function answerDailyPrediction(candidateId, { retry = false } = {}) {
     state.predictionBusy = false;
     state.selectedId = "";
     state.predictionError = error?.unreachable
-      ? "Não sabemos se a aposta chegou. Repita a mesma tentativa ou atualize o estado."
-      : error?.message || "Não foi possível guardar a aposta.";
+      ? PREDICTION_REVEAL_COPY.uncertain
+      : PREDICTION_REVEAL_COPY.saveFailed;
     render();
     sound.play("error");
   }
@@ -849,6 +983,13 @@ async function answerDailyPrediction(candidateId, { retry = false } = {}) {
 
 async function openDailyPredictionResults() {
   if (state.predictionResultsLoading) return;
+  if (!aggregateAvailable("prediction-reveal")) {
+    state.screen = "prediction-results";
+    state.predictionResultsLoading = false;
+    state.predictionResultsError = "";
+    render();
+    return;
+  }
   const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
   state.screen = "prediction-results";
   state.predictionResultsLoading = true;
@@ -857,13 +998,29 @@ async function openDailyPredictionResults() {
   try {
     const results = validateDailyPredictionResults(await loadDailyPredictionResults(identity.recoveryKey));
     if (!isCurrentVoteIdentity(state, identity)) return;
+    if (!aggregateAvailable("prediction-reveal")) {
+      installCapabilities(withAggregateScopeWithheld(state.capabilities, "prediction-reveal"));
+      state.predictionResults = null;
+      state.predictionResultsLoading = false;
+      state.predictionResultsError = "";
+      render();
+      return;
+    }
     state.predictionResults = results;
     state.predictionResultsLoading = false;
     render();
   } catch (error) {
     if (!isCurrentVoteIdentity(state, identity)) return;
+    if (error?.code === "AGGREGATE_PUBLICATION_WITHHELD") {
+      installCapabilities(withAggregateScopeWithheld(state.capabilities, "prediction-reveal"));
+      state.predictionResults = null;
+      state.predictionResultsLoading = false;
+      state.predictionResultsError = "";
+      render();
+      return;
+    }
     state.predictionResultsLoading = false;
-    state.predictionResultsError = error.message || "Falha desconhecida";
+    state.predictionResultsError = PREDICTION_REVEAL_COPY.resultsLoadFailed;
     render();
   }
 }
@@ -895,7 +1052,7 @@ async function recoverFromVoteFailure(error, winner, attemptIdentity, attemptGam
       ? error.code === "DAILY_EDITION_CLOSED"
         ? "Virou o dia em São Paulo. O novo baralho já está na mesa."
         : error.code === "DAILY_PREDICTION_REQUIRED"
-          ? "Sua preferência já foi confirmada. Retomamos na aposta opcional."
+          ? PREDICTION_REVEAL_COPY.requiredResume
         : "Seu outro acesso já avançou a rodada. Retomamos do próximo slot."
       : "Não conseguimos atualizar a rodada do dia. Recarregue para continuar.";
     render();
@@ -1068,7 +1225,14 @@ function bindEvents() {
   document.querySelector("#retry")?.addEventListener("click", () => { sound.play("navigation"); initialize(); });
   document.querySelector("#start-election")?.addEventListener("click", () => enterDuel("daily"));
   document.querySelector("#start-election-secondary")?.addEventListener("click", () => enterDuel("daily"));
-  document.querySelector("#open-ranking")?.addEventListener("click", () => { sound.play("navigation"); state.screen = "ranking"; state.result = ""; state.resultTone = ""; render(); });
+  document.querySelector("#open-ranking")?.addEventListener("click", () => {
+    sound.play("navigation");
+    state.screen = "ranking";
+    state.rankingView = aggregateAvailable("global-ranking") ? state.rankingView : "personal";
+    state.result = "";
+    state.resultTone = "";
+    render();
+  });
   document.querySelector("#open-prediction-results")?.addEventListener("click", () => { sound.play("navigation"); openDailyPredictionResults(); });
   document.querySelector("#retry-prediction-results")?.addEventListener("click", openDailyPredictionResults);
   document.querySelector("#prediction-results-home")?.addEventListener("click", () => {
@@ -1109,7 +1273,7 @@ function bindEvents() {
     if (!isCurrentVoteIdentity(state, identity)) return;
     state.predictionBusy = false;
     if (!resynced) {
-      state.predictionError = "Não conseguimos atualizar o estado. Tente novamente.";
+      state.predictionError = PREDICTION_REVEAL_COPY.refreshFailed;
     }
     render();
   });
@@ -1160,6 +1324,7 @@ function bindEvents() {
     }
     sound.play("navigation");
     state.screen = button.dataset.screen;
+    if (state.screen === "ranking" && !aggregateAvailable("global-ranking")) state.rankingView = "personal";
     state.result = "";
     state.resultTone = "";
     render();
@@ -1293,17 +1458,30 @@ async function initialize() {
   render();
   let identity = null;
   try {
-    const [candidates, snapshot, player] = await Promise.all([loadCandidates(), loadRanking(), ensurePlayer()]);
+    const capabilitiesRequest = loadCapabilities()
+      .then(validateCapabilities)
+      .catch(() => PERSONAL_ONLY_CAPABILITIES);
+    const [candidates, player, capabilities] = await Promise.all([loadCandidates(), ensurePlayer(), capabilitiesRequest]);
+    installCapabilities(capabilities);
+    let snapshot = null;
+    if (aggregateAvailable("global-ranking")) {
+      try {
+        snapshot = await loadRanking();
+      } catch {
+        installCapabilities(withAggregateScopeWithheld(state.capabilities, "global-ranking"));
+      }
+    }
     state.candidates = catalogForTopic(candidates);
     if (state.candidates.length < 4) throw new Error("O elenco ainda não está disponível");
-    state.ranking = rankingForCatalog(snapshot, state.candidates);
-    state.globalDuels = Number(snapshot.duels) || 0;
+    state.ranking = snapshot ? rankingForCatalog(snapshot, state.candidates) : [];
+    state.globalDuels = snapshot ? Number(snapshot.duels) || 0 : 0;
     state.recoveryKey = player.recoveryKey;
     state.playerVersion = player.personal.version;
     state.personalRanking = rankingForCatalog(player.personal, state.candidates);
     state.personalRankingPolicy = player.personal.rankingPolicy || null;
     state.account = player.personal.account || null;
     state.personalDuels = Number(player.personal.duels) || 0;
+    state.rankingView = aggregateAvailable("global-ranking") ? "general" : "personal";
     state.gameMode = "daily";
     state.dailyLoading = true;
     state.pendingWinnerId = "";
@@ -1313,11 +1491,21 @@ async function initialize() {
     state.error = error.message || "Falha desconhecida";
   }
   render();
-  // O catálogo, os rankings e a identidade são o núcleo do app. O endpoint
-  // diário é opcional nesta etapa e expõe sua própria falha/retry sem derrubar
-  // home, ranking ou modo livre.
+  // Catálogo, identidade e ranking pessoal são o núcleo do app. Agregados são
+  // opcionais e fail-closed; sua ausência nunca derruba o jogo pessoal.
   if (identity) await refreshDailySession(identity);
 }
 
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  const changed = applyExpiredAggregateCapabilities();
+  scheduleAggregateCapabilityExpiry();
+  if (changed) render();
+});
+window.addEventListener("focus", () => {
+  const changed = applyExpiredAggregateCapabilities();
+  scheduleAggregateCapabilityExpiry();
+  if (changed) render();
+});
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
 initialize();

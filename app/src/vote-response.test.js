@@ -16,8 +16,13 @@ const ranking = candidates.map((candidate, index) => ({
 
 function response(overrides = {}) {
   return {
-    duels: 12,
-    ranking,
+    contractVersion: 2,
+    publicAggregate: {
+      status: "available",
+      scope: "global-ranking",
+      snapshot: { topicId: "eleicoes-2026", duels: 12, rankingPolicy: { id: "elo-v1" }, ranking },
+      event: null,
+    },
     player: { duels: 4, version: 4, ranking, rankingPolicy: { id: "majority" } },
     round: {
       id: "round-1",
@@ -60,6 +65,31 @@ test("only a complete matching confirmation can advance UI progress", () => {
   assert.match(data.channels.personal.message, /A/);
 });
 
+test("withheld aggregates preserve personal progress without accepting hidden public fields", () => {
+  const personalOnly = response({ publicAggregate: { status: "withheld", scope: "global-ranking" } });
+  const currentRanking = [{ id: "previous-public-snapshot" }];
+  const data = confirmedVoteData(personalOnly, candidates, attempt, {
+    ranking: currentRanking,
+    globalDuels: 99,
+    personalDuels: 3,
+    playerVersion: 3,
+  });
+  assert.equal(data.aggregateAvailable, false);
+  assert.equal(data.globalDuels, 99);
+  assert.equal(data.ranking, currentRanking);
+  assert.equal(data.channels.global, null);
+  assert.equal(data.personalDuels, 4);
+
+  const leakedRoot = response({
+    publicAggregate: { status: "withheld", scope: "global-ranking" },
+    ranking,
+  });
+  assert.throws(() => confirmedVoteData(leakedRoot, candidates, attempt), /rankings/);
+  const leakedEvent = response({ publicAggregate: { status: "withheld", scope: "global-ranking" } });
+  leakedEvent.vote.globalEvent = { feedback: { outcomes: [] } };
+  assert.throws(() => confirmedVoteData(leakedEvent, candidates, attempt), /rankings/);
+});
+
 test("truncated, stale or divergent 200 responses are rejected", () => {
   const missingCounter = response();
   delete missingCounter.player.duels;
@@ -82,7 +112,8 @@ test("truncated, stale or divergent 200 responses are rejected", () => {
 test("numeric response fields never coerce null and ranks match played state", () => {
   for (const field of ["elo", "wins", "losses", "decisions", "winRate"]) {
     const invalid = response();
-    invalid.ranking = invalid.ranking.map((row, index) => (index ? { ...row } : { ...row, [field]: null }));
+    invalid.publicAggregate.snapshot.ranking = invalid.publicAggregate.snapshot.ranking
+      .map((row, index) => (index ? { ...row } : { ...row, [field]: null }));
     assert.throws(() => confirmedVoteData(invalid, candidates, attempt), /métricas de ranking/);
   }
 
@@ -103,7 +134,10 @@ test("numeric response fields never coerce null and ranks match played state", (
     rank: null,
   };
   const withUnplayed = response();
-  withUnplayed.ranking = [...withUnplayed.ranking.map((row) => ({ ...row })), { ...unplayedRanking }];
+  withUnplayed.publicAggregate.snapshot.ranking = [
+    ...withUnplayed.publicAggregate.snapshot.ranking.map((row) => ({ ...row })),
+    { ...unplayedRanking },
+  ];
   withUnplayed.player = {
     ...withUnplayed.player,
     ranking: [...withUnplayed.player.ranking.map((row) => ({ ...row })), { ...unplayedRanking }],
@@ -115,7 +149,8 @@ test("numeric response fields never coerce null and ranks match played state", (
   assert.throws(() => confirmedVoteData(withUnplayed, extendedCandidates, attempt), /métricas de player\.ranking/);
 
   const playedWithoutRank = response();
-  playedWithoutRank.ranking = playedWithoutRank.ranking.map((row, index) => (index ? { ...row } : { ...row, rank: null }));
+  playedWithoutRank.publicAggregate.snapshot.ranking = playedWithoutRank.publicAggregate.snapshot.ranking
+    .map((row, index) => (index ? { ...row } : { ...row, rank: null }));
   assert.throws(() => confirmedVoteData(playedWithoutRank, candidates, attempt), /métricas de ranking/);
 });
 
@@ -138,14 +173,14 @@ test("only an exact legacy replay may omit personal outcomes", () => {
     feedbackScope: "legacy-global",
     feedback: neutralPersonalFeedback,
     personalFeedback: neutralPersonalFeedback,
-    globalEvent: {
-      scope: "global",
-      rankingEvent: "top10",
-      winnerDelta: 3,
-      zebra: false,
-      feedback: globalFeedback,
-    },
   });
+  legacy.publicAggregate.event = {
+    scope: "global",
+    rankingEvent: "top10",
+    winnerDelta: 3,
+    zebra: false,
+    feedback: globalFeedback,
+  };
 
   const data = confirmedVoteData(legacy, candidates, attempt);
   assert.equal(data.channels.personal.message, LEGACY_REPLAY_MESSAGE);

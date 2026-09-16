@@ -185,8 +185,13 @@ test("a daily confirmation advances only the authoritative edition and slot", ()
     personalFeedback: feedback,
   };
   const response = {
-    duels: 1,
-    ranking,
+    contractVersion: 2,
+    publicAggregate: {
+      status: "available",
+      scope: "global-ranking",
+      snapshot: { topicId: "eleicoes-2026", duels: 1, rankingPolicy: { id: "elo-v1" }, ranking },
+      event: null,
+    },
     player: { duels: 1, version: 1, ranking },
     round,
     vote: { ...round },
@@ -219,7 +224,7 @@ test("a daily confirmation advances only the authoritative edition and slot", ()
   );
 
   const multiTab = structuredClone(response);
-  multiTab.duels = 2;
+  multiTab.publicAggregate.snapshot.duels = 2;
   multiTab.player.version = 2;
   multiTab.player.duels = 2;
   multiTab.dailySession = activeSession(2, 1);

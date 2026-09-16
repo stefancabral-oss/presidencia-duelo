@@ -3,6 +3,7 @@ import path from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
 import { completedDailySession } from "./daily-fixture.mjs";
+import { capabilityFixture, voteResponseV2 } from "./aggregate-fixture.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -98,6 +99,7 @@ async function installApi(page, server) {
   await page.route((url) => url.pathname.startsWith("/api/"), async (route) => {
     const request = route.request();
     const { pathname } = new URL(request.url());
+    if (pathname === "/api/capabilities") return route.fulfill({ status: 200, json: capabilityFixture() });
     if (pathname === "/api/candidates") return route.fulfill({ status: 200, json: { candidates } });
     if (pathname === "/api/ranking") return route.fulfill({ status: 200, json: { duels: server.duels, ranking: server.ranking() } });
     if (pathname === "/api/player" && request.method() === "POST") {
@@ -134,7 +136,7 @@ async function installApi(page, server) {
           json: failure.body,
         });
       }
-      return route.fulfill({ status: 200, json: roundResponse(server, payload) });
+      return route.fulfill({ status: 200, json: voteResponseV2(roundResponse(server, payload)) });
     }
     return route.fulfill({ status: 404, json: { error: "rota não encontrada" } });
   });

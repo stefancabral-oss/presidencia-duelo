@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium, webkit } from "playwright";
+import { capabilityFixture, voteResponseV2 } from "./aggregate-fixture.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -182,6 +183,7 @@ async function installApi(page, server) {
   await page.route((url) => url.pathname.startsWith("/api/"), async (route) => {
     const request = route.request();
     const { pathname } = new URL(request.url());
+    if (pathname === "/api/capabilities") return route.fulfill({ status: 200, json: capabilityFixture() });
     if (pathname === "/api/candidates") return route.fulfill({ status: 200, json: { candidates: currentCatalog } });
     if (pathname === "/api/ranking") return route.fulfill({ status: 200, json: { duels: server.duels, ranking: ranking() } });
     if (pathname === "/api/player" && request.method() === "POST") {
@@ -209,7 +211,7 @@ async function installApi(page, server) {
         const body = structuredClone(replay);
         body.round.status = "alreadyProcessed";
         body.vote.status = "alreadyProcessed";
-        return route.fulfill({ status: 200, json: body });
+        return route.fulfill({ status: 200, json: voteResponseV2(body) });
       }
       const dailyState = [...server.days.values()].find(({ edition: value }) => value.id === payload.editionId);
       if (!dailyState) return route.fulfill({ status: 409, json: { code: "DAILY_EDITION_CLOSED", error: "edição fechada" } });
@@ -235,7 +237,7 @@ async function installApi(page, server) {
         server.loseNextResponse = false;
         return route.abort("failed");
       }
-      return route.fulfill({ status: 200, json: body });
+      return route.fulfill({ status: 200, json: voteResponseV2(body) });
     }
     if (pathname === "/api/daily-prediction" && request.method() === "POST") {
       const payload = request.postDataJSON();

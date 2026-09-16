@@ -6,7 +6,7 @@ Esta política existe para que o placar público seja um painel de preferências
 
 ## Quem pode votar
 
-- Leituras de catálogo, perfis e ranking continuam públicas.
+- Leituras de catálogo e perfis continuam públicas. Ranking, distribuição diária, revelação de previsões e futura comparação de espelho ficam retidos por padrão e seguem o [gate de publicação agregada](../legal/AGGREGATE_PUBLICATION_GATE.md).
 - Uma escrita no ranking só é aceita quando vinculada a um jogador existente por um token opaco emitido pelo servidor (`pm2_` para visitante anônimo ou `pms_` para sessão Google).
 - Requisições sem token, com token inválido ou expirado não alteram o ranking.
 - Um login Google verificado é ligado a um único jogador por `provider + subject`; trocar de sessão não cria um novo histórico para a mesma identidade.

@@ -1,4 +1,5 @@
 import { dailyMethodologyForDate, validateDailySession } from "./daily-session.js";
+import { DAILY_DISTRIBUTION_COPY } from "./aggregate-copy.js";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const HASH_PATTERN = /^[a-f0-9]{64}$/;
@@ -54,8 +55,8 @@ function saoPauloWallClock(value) {
 }
 
 function expectedSampleNotice(completedPlayers) {
-  if (completedPlayers === 0) return "Nenhuma sessão concluída; não há resultado a interpretar.";
-  if (completedPlayers < 30) return "Recorte de baixa participação; apresente contagens, não uma conclusão populacional.";
+  if (completedPlayers === 0) return DAILY_DISTRIBUTION_COPY.noCompletedSessions;
+  if (completedPlayers < 30) return DAILY_DISTRIBUTION_COPY.lowParticipation;
   return null;
 }
 

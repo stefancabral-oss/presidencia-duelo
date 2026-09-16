@@ -1,4 +1,5 @@
 import { eloTier as sharedEloTier } from "../../shared/elo.js";
+import { formatAggregateCopy, PUBLIC_RANKING_COPY } from "./aggregate-copy.js";
 
 export function catalogForTopic(candidates, ids = []) {
   if (!ids.length) return [...candidates];
@@ -141,12 +142,32 @@ export function roundOutcome(feedback, candidates = [], winnerId = "") {
   return { outcomes, message, primaryEvent };
 }
 
+function publicRoundOutcome(feedback, candidates = [], winnerId = "") {
+  const result = roundOutcome(feedback, candidates, winnerId);
+  const winner = result.outcomes.find((outcome) => outcome.winner);
+  const dropped = result.outcomes.find((outcome) => outcome.tierChange === "down");
+  const copy = PUBLIC_RANKING_COPY.feedback;
+  let message = winner
+    ? formatAggregateCopy(copy.defaultTemplate, { name: winner.name, delta: winner.delta })
+    : copy.confirm;
+  if (feedback?.zebra && winner) message = formatAggregateCopy(copy.zebraTemplate, { name: winner.name });
+  else if (result.primaryEvent === "leader" && winner) message = formatAggregateCopy(copy.leaderTemplate, { name: winner.name });
+  else if (result.primaryEvent === "leaderDefense" && winner) message = formatAggregateCopy(copy.leaderDefenseTemplate, { name: winner.name });
+  else if (result.primaryEvent === "podium" && winner) message = formatAggregateCopy(copy.podiumTemplate, { name: winner.name });
+  else if (result.primaryEvent === "top10" && winner) message = formatAggregateCopy(copy.top10Template, { name: winner.name });
+  else if (result.primaryEvent === "overtake" && winner) message = formatAggregateCopy(copy.overtakeTemplate, { name: winner.name });
+  else if (result.primaryEvent === "recovery" && winner) message = formatAggregateCopy(copy.recoveryTemplate, { name: winner.name });
+  else if (winner?.tierChange === "up") message = formatAggregateCopy(copy.tierUpTemplate, { name: winner.name, tier: winner.tier.label });
+  else if (dropped) message = formatAggregateCopy(copy.tierDownTemplate, { name: dropped.name, tier: dropped.tier.label });
+  return { ...result, message };
+}
+
 export function roundFeedbackChannels(round, candidates = [], winnerId = "") {
   if (!round?.personalFeedback) throw new Error("feedback pessoal ausente na resposta da rodada");
   return {
     personal: roundOutcome(round.personalFeedback, candidates, winnerId),
     global: round.globalEvent?.feedback
-      ? roundOutcome(round.globalEvent.feedback, candidates, winnerId)
+      ? publicRoundOutcome(round.globalEvent.feedback, candidates, winnerId)
       : null,
   };
 }

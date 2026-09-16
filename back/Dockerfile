@@ -8,6 +8,9 @@ COPY back back
 COPY shared shared
 
 WORKDIR /repo/back
+ARG SOURCE_COMMIT=""
+RUN if [ -n "$SOURCE_COMMIT" ]; then echo "$SOURCE_COMMIT" | grep -Eq '^[0-9a-f]{40}$|^[0-9a-f]{64}$'; fi \
+  && printf 'export const EMBEDDED_RELEASE_REVISION = "%s";\n' "$SOURCE_COMMIT" > src/release-identity.js
 ENV NODE_ENV=production
 ENV PORT=3001
 

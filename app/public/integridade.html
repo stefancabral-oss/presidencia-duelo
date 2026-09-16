@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#003c2f">
-    <title>Como o placar é protegido · PoliMatch</title>
+    <title>Como seu jogo é confirmado · PoliMatch</title>
     <style>
       :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #f2eee4; color: #10241e; }
       * { box-sizing: border-box; }
@@ -28,13 +28,13 @@
     <main>
       <header>
         <p class="eyebrow">Integridade do PoliMatch</p>
-        <h1>Escolhas confirmadas pelo servidor</h1>
-        <p>O placar só muda depois que a API confirma uma rodada vinculada a uma sessão de jogador. Uma tela dizendo “enviando” não conta como voto.</p>
+        <h1>Seu jogo é confirmado pelo servidor</h1>
+        <p>Seu ranking pessoal só muda depois que a API confirma uma rodada vinculada à sua sessão. Uma tela dizendo “enviando” não conta como escolha.</p>
       </header>
       <section>
         <h2>O que bloqueamos</h2>
         <ul>
-          <li>Requisições sem uma sessão válida não alteram o ranking.</li>
+          <li>Requisições sem uma sessão válida não alteram seu ranking pessoal.</li>
           <li>Cada jogador pode confirmar no máximo <strong>8 rodadas por minuto</strong> e <strong>30 por dia</strong>.</li>
           <li>Uma mesma rede pode emitir até <strong>3 novos jogadores anônimos por dia</strong>.</li>
           <li>Repetir a mesma rodada depois de uma queda de conexão devolve a confirmação anterior, sem contar duas vezes.</li>
@@ -44,19 +44,13 @@
         <h2>O que protegemos</h2>
         <p>O banco guarda hashes, não os tokens de acesso. O endereço de rede vira um pseudônimo criptográfico antes de chegar ao controle de emissão; o endereço bruto não é persistido nem incluído nos logs de erro.</p>
       </section>
-      <section>
-        <h2>Como funcionam as apostas diárias</h2>
-        <p>Depois de cada preferência diária, você pode apostar em qual das mesmas quatro cartas será a mais escolhida. A aposta é registrada separadamente e <strong>não altera Elo, ranking, preferência nem progresso</strong>.</p>
-        <p>A distribuição permanece lacrada durante o dia. O resultado só é comparado com o recorte real depois do fechamento imutável da edição; não exibimos parcial ao vivo. Acertar ao acaso entre quatro cartas tem linha de base de <strong>25%</strong>.</p>
-        <p>Empates, edições sem amostra, pulos e slots sem resposta são neutros: não contam como acerto nem erro. O placar acumulado mede apenas a precisão das apostas apuráveis.</p>
-      </section>
       <section class="note">
-        <h2>O que este placar não é</h2>
-        <p>O PoliMatch é um painel lúdico de preferência declarada entre participantes voluntários. Não usa amostra representativa e <strong>não constitui pesquisa eleitoral nem previsão de resultado</strong>.</p>
+        <h2>Estado da comparação pública</h2>
+        <p>A disponibilidade de cada superfície é indicada em tempo real nas telas do app. No modo pessoal, vale o estado seguro: <strong>A comparação pública está indisponível nesta edição.</strong> Ranking público, distribuição diária, apostas e revelações não aparecem no modo pessoal.</p>
       </section>
       <section>
         <h2>Limite honesto</h2>
-        <p>Essas barreiras reduzem automação oportunista e mutirões simples, mas não provam que cada sessão corresponde a uma pessoa única. Redes distribuídas e múltiplas identidades ainda são risco monitorado; qualquer endurecimento futuro precisa de nova decisão de produto e privacidade.</p>
+        <p>Essas barreiras reduzem automação oportunista e mutirões simples, mas não provam que cada sessão corresponde a uma pessoa única. Redes distribuídas e múltiplas identidades ainda são um risco técnico conhecido.</p>
         <a class="back" href="./">Voltar ao PoliMatch</a>
       </section>
     </main>

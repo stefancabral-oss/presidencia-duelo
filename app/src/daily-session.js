@@ -1,4 +1,5 @@
 import { confirmedVoteData } from "./vote-response.js";
+import { DAILY_DISTRIBUTION_COPY, formatAggregateCopy } from "./aggregate-copy.js";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -15,7 +16,7 @@ function integer(value, field) {
 export function dailyMethodologyForDate(date) {
   if (!DATE_PATTERN.test(String(date || ""))) fail("edition.date");
   const [, month, day] = date.split("-");
-  return `entre quem concluiu a rodada de ${day}/${month}`;
+  return formatAggregateCopy(DAILY_DISTRIBUTION_COPY.methodologyTemplate, { day, month });
 }
 
 export function validateDailySession(payload) {

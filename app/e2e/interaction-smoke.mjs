@@ -3,6 +3,7 @@ import { writeFile } from "node:fs/promises";
 import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import { hasCuratedPortrait } from "../../shared/curated-portraits.js";
 import { completedDailySession } from "./daily-fixture.mjs";
+import { capabilityFixture, voteResponseV2 } from "./aggregate-fixture.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -153,7 +154,8 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
   const request = route.request();
   const path = new URL(request.url()).pathname;
   let body;
-  if (path === "/api/candidates") body = { candidates };
+  if (path === "/api/capabilities") body = capabilityFixture();
+  else if (path === "/api/candidates") body = { candidates };
   else if (path === "/api/ranking") body = { duels: 0, ranking: ranking() };
   else if (path === "/api/player" && request.method() === "POST") body = { recoveryKey: "e2e-recovery-key" };
   else if (path === "/api/player/state") body = { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking() };
@@ -200,7 +202,7 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
       })),
     };
     const globalFeedback = { ...feedback, primaryEvent: "top10", rankingEvent: "top10" };
-    body = {
+    body = voteResponseV2({
       duels: successfulRoundVotes,
       ranking: ranking(1, payload.winnerId),
       player: { version: successfulRoundVotes, duels: successfulRoundVotes, rankingPolicy: personalRankingPolicy, ranking: ranking(1, payload.winnerId) },
@@ -230,7 +232,7 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
           ? { scope: "global", rankingEvent: "top10", winnerDelta: 45, zebra: false, feedback: globalFeedback }
           : null,
       },
-    };
+    });
   } else {
     await route.fulfill({ status: 404, json: { error: "mock não encontrado" } });
     return;

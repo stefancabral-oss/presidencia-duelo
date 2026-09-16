@@ -1,5 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import pg from "pg";
+import { AGGREGATE_PUBLIC_COPY_POLICY } from "../../shared/aggregate-publication-copy.js";
 import { eloTier, isZebra, ratingDeltas } from "../../shared/elo.js";
 import {
   CANDIDATES,
@@ -12,6 +13,7 @@ import {
   DAILY_SESSION_RULESET,
   buildDailyEdition,
   dailyCutMethodology,
+  dailyCutSampleNotice,
   dailyRulesetByIdentity,
   editionWindow,
   editorialDateKey,
@@ -30,10 +32,11 @@ const NETWORK_HASH_PATTERN = /^[a-f0-9]{64}$/;
 const FEEDBACK_SCOPE_PERSONAL = "personal";
 const FEEDBACK_SCOPE_LEGACY_GLOBAL = "legacy-global";
 const DAILY_CUT_MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;
+const PUBLIC_RANKING_COPY = AGGREGATE_PUBLIC_COPY_POLICY.scopes["global-ranking"].copy;
 const GLOBAL_RANKING_POLICY = Object.freeze({
   id: "elo-v1",
-  label: "Elo do placar público",
-  explanation: "A ordem pública usa Elo, vitórias e nome como critérios sucessivos.",
+  label: PUBLIC_RANKING_COPY.rankingPolicyLabel,
+  explanation: PUBLIC_RANKING_COPY.rankingPolicyExplanation,
 });
 
 export const VOTE_ABUSE_LIMITS = Object.freeze({
@@ -2291,11 +2294,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
             methodology: record.methodology,
             completedPlayers: record.completedPlayers,
             completedAnswers: record.completedAnswers,
-            sampleNotice: record.completedPlayers === 0
-              ? "Nenhuma sessão concluída; não há resultado a interpretar."
-              : record.completedPlayers < 30
-                ? "Recorte de baixa participação; apresente contagens, não uma conclusão populacional."
-                : null,
+            sampleNotice: dailyCutSampleNotice(record.completedPlayers),
             catalogSnapshotHash: record.results.catalogSnapshotHash,
             catalog: record.results.catalog,
             rounds: record.results.rounds,
@@ -2372,11 +2371,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           methodology: record.methodology,
           completedPlayers: record.completedPlayers,
           completedAnswers: record.completedAnswers,
-          sampleNotice: record.completedPlayers === 0
-            ? "Nenhuma sessão concluída; não há resultado a interpretar."
-            : record.completedPlayers < 30
-              ? "Recorte de baixa participação; apresente contagens, não uma conclusão populacional."
-              : null,
+          sampleNotice: dailyCutSampleNotice(record.completedPlayers),
           catalogSnapshotHash: record.results.catalogSnapshotHash,
           catalog: record.results.catalog,
           rounds: record.results.rounds,

@@ -2,7 +2,15 @@ import { createHmac, randomUUID } from "node:crypto";
 import { isIP } from "node:net";
 import cors from "cors";
 import express from "express";
+import { AGGREGATE_PUBLIC_COPY_POLICY } from "../../shared/aggregate-publication-copy.js";
+import {
+  aggregatePublicationAuthorityFromEnvironment,
+  isAggregatePublicationAuthority,
+  projectVoteResponseV2,
+} from "./aggregate-publication.js";
 import { CANDIDATES, TOPICS, candidatesForTopic, publicCandidate } from "./candidates.js";
+
+const WITHHELD_COPY = AGGREGATE_PUBLIC_COPY_POLICY.withheld.copy;
 
 const PRODUCTION_ORIGINS = ["https://polimatch.com.br"];
 const LOCAL_ORIGIN_PATTERN = /^http:\/\/(?:127\.0\.0\.1|localhost):\d+$/;
@@ -73,11 +81,15 @@ export function createHttpApp({
   logger = console,
   clock = () => new Date(),
   candidateCatalog = candidatesForTopic,
+  aggregatePublication,
 } = {}) {
   if (!store) throw new Error("store é obrigatório");
   if (!googleIdentity) throw new Error("googleIdentity é obrigatório");
 
   const production = env.NODE_ENV === "production";
+  const publicationAuthority = isAggregatePublicationAuthority(aggregatePublication)
+    ? aggregatePublication
+    : aggregatePublicationAuthorityFromEnvironment(env, { now: () => clock() });
   const voterNetworkSecret = String(env.VOTER_NETWORK_SECRET || (production ? "" : "polimatch-local-development-secret"));
   if (production && voterNetworkSecret.length < 32) {
     throw new Error("VOTER_NETWORK_SECRET de produção deve ter ao menos 32 caracteres");
@@ -135,6 +147,26 @@ export function createHttpApp({
     return res.status(status).json(body);
   }
 
+  function noStore(res) {
+    res.set("Cache-Control", "no-store");
+    return res;
+  }
+
+  function requireAggregateScope(req, res, scope) {
+    if (publicationAuthority.allows(scope)) return true;
+    noStore(res).status(403).json({
+      error: WITHHELD_COPY.apiError,
+      code: "AGGREGATE_PUBLICATION_WITHHELD",
+      scope,
+      requestId: req.requestId,
+    });
+    return false;
+  }
+
+  app.get("/api/capabilities", (_req, res) => {
+    noStore(res).json(publicationAuthority.capabilities());
+  });
+
   app.get("/api/health", async (req, res) => {
     try {
       await store.health();
@@ -165,8 +197,9 @@ export function createHttpApp({
   });
 
   app.get("/api/ranking", async (req, res) => {
+    if (!requireAggregateScope(req, res, "global-ranking")) return;
     try {
-      res.json(await store.ranking(String(req.query.topic || "eleicoes-2026")));
+      noStore(res).json(await store.ranking(String(req.query.topic || "eleicoes-2026")));
     } catch (error) {
       sendError(req, res, error);
     }
@@ -202,8 +235,9 @@ export function createHttpApp({
   });
 
   app.get("/api/daily-cut", async (req, res) => {
+    if (!requireAggregateScope(req, res, "daily-distribution")) return;
     try {
-      res.json(await store.dailyCut(
+      noStore(res).json(await store.dailyCut(
         String(req.query.topic || "eleicoes-2026"),
         String(req.query.date || ""),
         { now: clock() },
@@ -215,8 +249,10 @@ export function createHttpApp({
 
   app.get("/api/daily-prediction-results", async (req, res) => {
     try {
-      res.json(await store.dailyPredictionResults(
-        requiredRecoveryKey(req),
+      const recoveryKey = requiredRecoveryKey(req);
+      if (!requireAggregateScope(req, res, "prediction-reveal")) return;
+      noStore(res).json(await store.dailyPredictionResults(
+        recoveryKey,
         String(req.query.topic || "eleicoes-2026"),
         { now: clock() },
       ));
@@ -257,14 +293,15 @@ export function createHttpApp({
   app.post("/api/round-vote", async (req, res) => {
     const { roundId, winnerId, candidateIds, topicId, playerVersion } = req.body || {};
     try {
-      res.json(await store.roundVote({
+      const payload = await store.roundVote({
         roundId,
         winnerId: String(winnerId || ""),
         candidateIds,
         topicId: String(topicId || "eleicoes-2026"),
         recoveryKey: requiredRecoveryKey(req),
         playerVersion,
-      }));
+      });
+      noStore(res).json(projectVoteResponseV2(payload, publicationAuthority));
     } catch (error) {
       sendError(req, res, error);
     }
@@ -284,7 +321,7 @@ export function createHttpApp({
       predictionContractVersion,
     } = req.body || {};
     try {
-      res.json(await store.dailyVote({
+      const payload = await store.dailyVote({
         answerId,
         editionId: String(editionId || ""),
         slot,
@@ -292,9 +329,12 @@ export function createHttpApp({
         topicId: String(topicId || "eleicoes-2026"),
         recoveryKey: requiredRecoveryKey(req),
         playerVersion,
-        predictionContractVersion,
+        predictionContractVersion: publicationAuthority.allows("prediction-reveal")
+          ? predictionContractVersion
+          : undefined,
         now: clock(),
-      }));
+      });
+      noStore(res).json(projectVoteResponseV2(payload, publicationAuthority));
     } catch (error) {
       sendError(req, res, error);
     }
@@ -306,14 +346,16 @@ export function createHttpApp({
     // pular; isso mantém a aposta separada da preferência e do Elo.
     const { predictionId, editionId, slot, decision, candidateId, topicId } = req.body || {};
     try {
-      res.json(await store.dailyPrediction({
+      const recoveryKey = requiredRecoveryKey(req);
+      if (!requireAggregateScope(req, res, "prediction-reveal")) return;
+      noStore(res).json(await store.dailyPrediction({
         predictionId,
         editionId: String(editionId || ""),
         slot,
         decision: String(decision || ""),
         candidateId: candidateId === null || candidateId === undefined ? null : String(candidateId),
         topicId: String(topicId || "eleicoes-2026"),
-        recoveryKey: requiredRecoveryKey(req),
+        recoveryKey,
         now: clock(),
       }));
     } catch (error) {

@@ -81,9 +81,40 @@ test("the public candidate projection excludes eligibility and editorial audit m
   assert.deepEqual(candidateProjectorBySchema(PUBLIC_CANDIDATE_SCHEMA_V2)(CANDIDATES[0]), projected);
   assert.deepEqual(serializeCandidate(CANDIDATES[0]), projected);
 
-  const historicalV1 = candidateProjectorBySchema(PUBLIC_CANDIDATE_SCHEMA_V1)(CANDIDATES[0]);
-  assert.equal(Object.hasOwn(historicalV1, "affiliation"), true);
-  assert.equal(Object.hasOwn(historicalV1, "primaryArea"), false);
-  assert.equal(Object.hasOwn(historicalV1, "taxonomyProvenance"), false);
+  const historicalCandidate = {
+    personId: 1,
+    id: "pessoa-historica",
+    name: "Pessoa Histórica",
+    displayName: "Pessoa",
+    affiliation: "PARTIDO",
+    photo: "/pessoa.webp",
+    role: "PARTIDO",
+    summary: "Resumo histórico.",
+    office: "Cargo histórico",
+    party: "PARTIDO",
+    location: "Brasil",
+    bio: "Biografia histórica.",
+    relevance2026: "Relevância histórica.",
+    facts: ["Fato histórico."],
+    highlight: "Destaque histórico.",
+    controversy: "Ponto de atenção histórico.",
+    sources: [{ label: "Fonte", url: "https://example.test/fonte" }],
+    reviewedAt: "2026-09-13",
+    reviewStatus: "pending",
+    topicIds: ["eleicoes-2026"],
+  };
+  const historicalV1 = candidateProjectorBySchema(PUBLIC_CANDIDATE_SCHEMA_V1)(historicalCandidate);
+  assert.equal(
+    JSON.stringify(historicalV1),
+    '{"personId":1,"id":"pessoa-historica","name":"Pessoa Histórica","displayName":"Pessoa","affiliation":"PARTIDO","photo":"/pessoa.webp","role":"PARTIDO","summary":"Resumo histórico.","office":"Cargo histórico","party":"PARTIDO","location":"Brasil","bio":"Biografia histórica.","relevance2026":"Relevância histórica.","facts":["Fato histórico."],"highlight":"Destaque histórico.","controversy":"Ponto de atenção histórico.","sources":[{"label":"Fonte","url":"https://example.test/fonte"}],"reviewedAt":"2026-09-13","reviewStatus":"pending","topicIds":["eleicoes-2026"]}',
+  );
+  assert.throws(
+    () => candidateProjectorBySchema(PUBLIC_CANDIDATE_SCHEMA_V1)(CANDIDATES[0]),
+    /candidate-public-v1; campos ausentes: affiliation, office/,
+  );
+  assert.throws(
+    () => candidateProjectorBySchema(PUBLIC_CANDIDATE_SCHEMA_V1)({ ...historicalCandidate, office: undefined }),
+    /campos ausentes: office/,
+  );
   assert.throws(() => candidateProjectorBySchema("candidate-public-v999"), /não suportado/);
 });

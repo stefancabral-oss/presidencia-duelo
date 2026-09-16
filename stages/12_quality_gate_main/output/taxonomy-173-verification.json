@@ -3,12 +3,12 @@
   "issue": 173,
   "macroIssue": 175,
   "branch": "icm/12-u04-taxonomy-173",
-  "baseCommit": "8f7ba527e03851370b5f5476adc68cd21d655634",
+  "baseCommit": "f86aec40ba4770fc71de6deca55175e356ac942d",
   "implementationCommit": "e8a8534f4f3b065401f6f33752d0c61de8b5774f",
   "adversarialReviewCommit": "60357ff39a5bff20087de62e6fa407f6ba19a426",
   "semanticReviewCommit": "8116ebf255b0939058616d8567246f5e884e3ca5",
   "parityValidationCommit": "88d9ea957c7e221a63d004631055def5778331bd",
-  "generatedAt": "2026-09-16T04:05:13-03:00",
+  "generatedAt": "2026-09-16T08:56:18-03:00",
   "catalog": {
     "records": 125,
     "schemaVersion": 2,
@@ -31,12 +31,12 @@
     {
       "name": "root-unit",
       "command": "npm test",
-      "result": "passed; 122 of 122 tests (16 shared, 43 back, 63 app), including source-parity negatives, protected vote-boundary regressions, real 125-record API serialization, rejection of the retired affiliation field and regressions for Paulo Guedes, Guilherme Boulos, Jones Manoel, Carla Zambelli and Deltan Dallagnol"
+      "result": "passed; 163 of 163 tests (16 shared, 63 back, 84 app), including source-parity negatives, candidate-public-v1 golden bytes, fail-closed missing legacy fields, persisted v1 replay, new v2 materialization, sealed predictions and real 125-record API serialization"
     },
     {
       "name": "app-build",
       "command": "npm run build",
-      "result": "passed; portrait validator found 99 of 125 ready and Vite produced the production bundle"
+      "result": "passed with the CI Google client fixture; portrait validator found 99 of 125 ready and Vite produced the production bundle"
     },
     {
       "name": "catalog-determinism",
@@ -44,9 +44,9 @@
       "result": "passed; elections-2026.json F9A666ABAE8F62FE675734EAF08B8B8B551839560DEBA005FD9BB0432879B897 and chromas-catalog-draft.json 0DAAE462C7E010FCCB5375855FE0A867E7F8F92CABBDF1CE9808B36D6DF707E0 remained identical across consecutive rebuilds"
     },
     {
-      "name": "taxonomy-ui-smoke",
-      "command": "POLIMATCH_E2E_BROWSER=chromium|webkit node app/e2e/interaction-smoke.mjs",
-      "result": "passed in Chromium and WebKit; current mobile card hierarchy, structured profile sections, search, filters, compact labels and filter reset when switching ranking views verified"
+      "name": "browser-matrix",
+      "command": "POLIMATCH_E2E_BROWSER=chromium|webkit; run all eight UI workflow scripts",
+      "result": "passed in Chromium and WebKit on an isolated 127.0.0.1:4178 preview with strictPort and verified worktree PID; interaction, Google login/logout, persisted v1 to new v2 daily transition, prediction and sealed reveal, identity switch, 3 screens across 16 viewports, vote recovery and trust states verified"
     },
     {
       "name": "vote-integrity-regression",
@@ -62,12 +62,22 @@
       "name": "workflow-yaml",
       "command": "python -c yaml.safe_load(.github/workflows/back-shared.yml)",
       "result": "passed; actionlint was unavailable on this host"
+    },
+    {
+      "name": "production-audit",
+      "command": "npm audit --omit=dev --prefix app; npm audit --omit=dev --prefix back",
+      "result": "passed; 0 production vulnerabilities in both workspaces"
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check",
+      "result": "passed"
     }
   ],
   "pending": [
     "human review of 111 inferred primary areas and the one inferred context affiliation",
     "attribute-level editorial research for 40 ambiguous parties and 106 ambiguous context affiliations",
-    "automatic GitHub Actions run on pull_request",
+    "automatic GitHub Actions rerun for the updated pull request, including PostgreSQL integration",
     "human gate"
   ]
 }

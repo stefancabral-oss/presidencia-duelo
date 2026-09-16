@@ -6,7 +6,7 @@ const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
 const browserType = { chromium, webkit }[browserName];
 if (!browserType) throw new Error(`Navegador não suportado: ${browserName}`);
 
-const RULESET = {
+const RULESET_V1 = {
   id: "daily-four-card-v1",
   version: 1,
   timeZone: "America/Sao_Paulo",
@@ -17,24 +17,42 @@ const RULESET = {
   quota: { id: "editorial-day-v2", totalChoices: 30, dailyChoices: 10, freeChoices: 20 },
 };
 
-function candidate(index) {
-  return {
+const RULESET_V2 = {
+  ...RULESET_V1,
+  id: "daily-four-card-v2",
+  version: 2,
+  catalogSchema: "candidate-public-v2",
+};
+
+function candidate(index, { historical = false } = {}) {
+  const shared = {
     personId: index,
     id: `candidate-${index}`,
     name: `Pessoa Histórica ${index}`,
     displayName: `Pessoa ${index}`,
-    affiliation: "E2E",
     party: "E2E",
     role: "Perfil de teste",
-    office: "Perfil de teste",
     summary: `Snapshot editorial ${index}`,
     bio: `Biografia preservada no snapshot ${index}.`,
     facts: [],
     sources: [],
   };
+  return historical
+    ? { ...shared, affiliation: "E2E", office: "Perfil de teste" }
+    : {
+      ...shared,
+      primaryArea: "Política institucional",
+      contextAffiliation: null,
+      taxonomyProvenance: {
+        role: { status: "extracted", source: "e2e#role" },
+        party: { status: "extracted", source: "e2e#party" },
+        primaryArea: { status: "inferred", source: "e2e#primaryArea" },
+        contextAffiliation: { status: "ambiguous", source: "e2e#contextAffiliation" },
+      },
+    };
 }
 
-const dayOneCatalog = Array.from({ length: 40 }, (_, index) => candidate(index + 1));
+const dayOneCatalog = Array.from({ length: 40 }, (_, index) => candidate(index + 1, { historical: true }));
 const dayTwoCatalog = Array.from({ length: 40 }, (_, index) => candidate(index + 2));
 // candidate-1 foi retirado depois da materialização; candidate-41 só entra no
 // catálogo corrente e na edição seguinte.
@@ -43,13 +61,14 @@ const currentCatalog = dayTwoCatalog;
 function edition(day) {
   const date = day === 1 ? "2026-09-16" : "2026-09-17";
   const nextDate = day === 1 ? "2026-09-17" : "2026-09-18";
+  const ruleset = day === 1 ? RULESET_V1 : RULESET_V2;
   return {
-    id: `daily-four-card-v1:v1:eleicoes-2026:${date}:e2e-day-${day}`,
+    id: `${ruleset.id}:v${ruleset.version}:eleicoes-2026:${date}:e2e-day-${day}`,
     date,
     topicId: "eleicoes-2026",
-    rulesetId: RULESET.id,
-    rulesetVersion: RULESET.version,
-    catalogSchema: RULESET.catalogSchema,
+    rulesetId: ruleset.id,
+    rulesetVersion: ruleset.version,
+    catalogSchema: ruleset.catalogSchema,
     catalogHash: String(day).repeat(64),
     snapshotHash: String(day + 2).repeat(64),
     candidateCount: 40,
@@ -62,20 +81,44 @@ function edition(day) {
 
 function createDailyState(day) {
   const catalog = day === 1 ? dayOneCatalog : dayTwoCatalog;
-  return { day, edition: edition(day), catalog, answers: [], completion: null };
+  return {
+    day,
+    ruleset: day === 1 ? RULESET_V1 : RULESET_V2,
+    edition: edition(day),
+    catalog,
+    answers: [],
+    predictions: [],
+    completion: null,
+  };
 }
 
 function publicSession(state) {
   const answered = state.answers.length;
+  const responded = state.predictions.length;
   const completed = answered === 10;
   const [, month, day] = state.edition.date.split("-");
   return {
-    ruleset: RULESET,
+    ruleset: state.ruleset,
     edition: state.edition,
     status: completed ? "completed" : "active",
     progress: { answered, total: 10 },
     catalog: state.catalog,
+    rounds: Array.from({ length: 10 }, (_, index) => ({
+      slot: index + 1,
+      candidateIds: state.catalog.slice(index * 4, index * 4 + 4).map(({ id }) => id),
+    })),
     answers: structuredClone(state.answers),
+    predictions: structuredClone(state.predictions),
+    predictionProgress: {
+      responded,
+      predicted: state.predictions.filter(({ skipped }) => !skipped).length,
+      skipped: state.predictions.filter(({ skipped }) => skipped).length,
+      total: answered,
+    },
+    pendingPrediction: responded < answered ? {
+      slot: responded + 1,
+      candidateIds: state.catalog.slice(responded * 4, responded * 4 + 4).map(({ id }) => id),
+    } : null,
     round: completed ? null : {
       slot: answered + 1,
       candidateIds: state.catalog.slice(answered * 4, answered * 4 + 4).map(({ id }) => id),
@@ -128,6 +171,7 @@ function createServer() {
     failDailySession: false,
     requests: [],
     responses: new Map(),
+    predictionResponses: new Map(),
   };
 }
 
@@ -185,6 +229,7 @@ async function installApi(page, server) {
     if (pathname === "/api/daily-vote" && request.method() === "POST") {
       const payload = request.postDataJSON();
       assert.equal(Object.hasOwn(payload, "candidateIds"), false, "o cliente enviou a ordem do baralho diário");
+      assert.equal(payload.predictionContractVersion, 1, "o cliente moderno não declarou o contrato de aposta");
       server.requests.push(payload);
       const replay = server.responses.get(payload.answerId);
       if (replay) {
@@ -195,6 +240,9 @@ async function installApi(page, server) {
       }
       const dailyState = [...server.days.values()].find(({ edition: value }) => value.id === payload.editionId);
       if (!dailyState) return route.fulfill({ status: 409, json: { code: "DAILY_EDITION_CLOSED", error: "edição fechada" } });
+      if (dailyState.answers.length !== dailyState.predictions.length) {
+        return route.fulfill({ status: 409, json: { code: "DAILY_PREDICTION_REQUIRED", error: "aposta pendente" } });
+      }
       const expectedSlot = dailyState.answers.length + 1;
       const candidateIds = dailyState.catalog.slice((payload.slot - 1) * 4, payload.slot * 4).map(({ id }) => id);
       assert.equal(payload.slot, expectedSlot);
@@ -216,6 +264,45 @@ async function installApi(page, server) {
       }
       return route.fulfill({ status: 200, json: body });
     }
+    if (pathname === "/api/daily-prediction" && request.method() === "POST") {
+      const payload = request.postDataJSON();
+      assert.equal(Object.hasOwn(payload, "answerId"), false);
+      assert.equal(Object.hasOwn(payload, "candidateIds"), false);
+      const replay = server.predictionResponses.get(payload.predictionId);
+      if (replay) {
+        const body = structuredClone(replay);
+        body.prediction.status = "alreadyProcessed";
+        return route.fulfill({ status: 200, json: body });
+      }
+      const dailyState = [...server.days.values()].find(({ edition: value }) => value.id === payload.editionId);
+      if (!dailyState || dailyState.day !== server.currentDay) {
+        return route.fulfill({ status: 409, json: { code: "DAILY_PREDICTION_CLOSED", error: "edição fechada" } });
+      }
+      assert.equal(payload.slot, dailyState.predictions.length + 1);
+      assert.equal(dailyState.answers.length, dailyState.predictions.length + 1);
+      const candidateIds = dailyState.catalog.slice((payload.slot - 1) * 4, payload.slot * 4).map(({ id }) => id);
+      if (payload.decision === "predict") assert.ok(candidateIds.includes(payload.candidateId));
+      else assert.equal(payload.decision, "skip");
+      dailyState.predictions.push({
+        slot: payload.slot,
+        predictionId: payload.predictionId,
+        candidateId: payload.decision === "skip" ? null : payload.candidateId,
+        skipped: payload.decision === "skip",
+        respondedAt: `${dailyState.edition.date}T${String(payload.slot + 9).padStart(2, "0")}:01:00.000Z`,
+      });
+      const body = {
+        prediction: {
+          id: payload.predictionId,
+          status: "created",
+          slot: payload.slot,
+          candidateId: payload.decision === "skip" ? null : payload.candidateId,
+          skipped: payload.decision === "skip",
+        },
+        dailySession: publicSession(dailyState),
+      };
+      server.predictionResponses.set(payload.predictionId, structuredClone(body));
+      return route.fulfill({ status: 200, json: body });
+    }
     return route.fulfill({ status: 404, json: { error: "rota não encontrada" } });
   });
 }
@@ -230,6 +317,9 @@ async function openDaily(page) {
 
 async function voteAndWait(page, expectedAnswered) {
   await page.locator(".candidate-card").first().click();
+  await page.getByRole("heading", { name: "E o Brasil, escolhe quem?" }).waitFor({ timeout: 5000 });
+  if (expectedAnswered % 2) await page.locator("[data-predict]").nth(1).click();
+  else await page.getByRole("button", { name: "Pular esta aposta" }).click();
   if (expectedAnswered === 10) {
     await page.getByRole("heading", { name: "Você fechou a rodada." }).waitFor({ timeout: 5000 });
   } else {

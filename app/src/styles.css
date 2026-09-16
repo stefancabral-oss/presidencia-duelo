@@ -216,6 +216,49 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .daily-close-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
 .daily-close-actions button { min-height: 50px; }
 
+.prediction-screen { width: min(100%, 980px); }
+.prediction-baseline { width: min(100%, 520px); display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; justify-self: center; padding: 10px 14px; border: 1px solid rgb(227 196 106 / 36%); border-radius: 16px; background: rgb(0 31 24 / 66%); color: #b9cac2; }
+.prediction-baseline strong { color: #f0d478; font-family: Georgia, serif; font-size: 1.45rem; }
+.prediction-baseline span { font-size: .72rem; line-height: 1.35; }
+.prediction-arena .candidate-card { border-color: #7ddbb9; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 52%), inset 0 0 0 4px rgb(35 23 2 / 42%), inset 0 0 0 6px rgb(125 219 185 / 34%), 0 4px 0 #285e4c, 0 18px 38px rgb(0 12 9 / 48%), 0 0 24px rgb(60 210 156 / 15%); }
+.prediction-refresh { justify-self: center; min-height: 42px; }
+.prediction-sealed { justify-self: center; max-width: 620px; margin: -7px 0 0; color: #79ad9a; font-size: .66rem; line-height: 1.4; text-align: center; }
+
+.prediction-results-screen { width: min(100%, 980px); gap: 20px; }
+.prediction-score-card { padding: clamp(26px, 6vw, 54px); border: 1px solid rgb(227 196 106 / 38%); border-radius: 30px; background: radial-gradient(circle at 85% 10%, rgb(61 214 140 / 20%), transparent 32%), linear-gradient(145deg, #07513f, #012c23); box-shadow: inset 0 1px rgb(255 255 255 / 8%), 0 24px 54px rgb(0 12 9 / 28%); text-align: center; }
+.prediction-score-card h1 { margin: 8px 0; color: #f1d77f; font-family: Georgia, serif; font-size: clamp(3.4rem, 11vw, 6.4rem); letter-spacing: -.06em; }
+.prediction-score-card p:not(.eyebrow) { margin-bottom: 9px; color: #d8e3de; }
+.prediction-score-card > span, .prediction-score-card > small { display: block; max-width: 620px; margin-inline: auto; }
+.prediction-score-card > span { color: #afc4bb; line-height: 1.45; }
+.prediction-score-card > small { margin-top: 12px; color: #7fa092; font-size: .68rem; line-height: 1.45; }
+.prediction-baseline-copy { display: inline-block; margin: 10px auto 0; color: #f1d77f; }
+.prediction-history { display: grid; gap: 12px; }
+.prediction-history h2 { margin: 5px 0 8px; font-size: clamp(1.6rem, 5vw, 2.3rem); letter-spacing: -.045em; }
+.prediction-session { overflow: hidden; border: 1px solid rgb(255 255 255 / 11%); border-radius: 20px; background: rgb(1 35 27 / 76%); }
+.prediction-session summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px; cursor: pointer; }
+.prediction-session summary span { display: grid; gap: 3px; }
+.prediction-session summary strong { color: #f2df9e; }
+.prediction-session summary small { color: #91aa9f; font-size: .66rem; }
+.prediction-session summary > b { color: #82d7b9; font-size: .68rem; }
+.prediction-session > ol { margin: 0; padding: 0 12px 12px; display: grid; gap: 8px; list-style: none; }
+.prediction-sample-note { margin: 0 14px 12px; padding: 9px 11px; border-left: 2px solid #e3c46a; color: #c7b87d; font-size: .7rem; }
+.prediction-result-round { padding: 13px; border: 1px solid rgb(255 255 255 / 8%); border-radius: 15px; background: rgb(0 23 18 / 48%); }
+.prediction-result-round > div { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 10px; }
+.prediction-result-round > div > span { grid-row: 1 / 3; align-self: center; color: #d6b566; font-family: Georgia, serif; font-size: .68rem; }
+.prediction-result-round > div strong { font-size: .84rem; }
+.prediction-result-round > div small { color: #9db2a8; font-size: .67rem; line-height: 1.35; }
+.prediction-result-round.is-correct { border-color: rgb(61 214 140 / 44%); }
+.prediction-result-round.is-correct > div strong { color: #6ce0ad; }
+.prediction-result-round.is-incorrect > div strong { color: #ffaaa2; }
+.prediction-result-round > ul { margin: 12px 0 0; padding: 0; display: grid; gap: 6px; list-style: none; }
+.prediction-result-round > ul li { display: grid; grid-template-columns: minmax(0, 150px) minmax(80px, 1fr); align-items: center; gap: 10px; }
+.prediction-result-round > ul span { min-width: 0; display: flex; justify-content: space-between; gap: 7px; }
+.prediction-result-round > ul b { overflow: hidden; font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
+.prediction-result-round > ul small { flex: 0 0 auto; color: #90a69c; font-size: .6rem; }
+.prediction-result-round > ul i { height: 6px; overflow: hidden; border-radius: 999px; background: rgb(255 255 255 / 8%); }
+.prediction-result-round > ul em { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg, #2a9d77, #e3c46a); }
+.prediction-results-state .panel { max-width: 640px; justify-self: center; }
+
 .result-banner { position: fixed; z-index: 40; top: calc(max(10px, env(safe-area-inset-top)) + 58px); left: 50%; width: min(calc(100% - 24px), 520px); padding: 13px 15px; transform: translateX(-50%); border: 1px solid rgb(231 199 98 / 58%); border-radius: 16px; background: rgb(3 43 33 / 96%); color: white; box-shadow: 0 18px 50px rgb(0 14 10 / 48%), 0 0 24px rgb(231 199 98 / 12%); line-height: 1.35; text-align: center; animation: result-in 180ms ease-out; }
 @keyframes result-in { from { opacity: 0; transform: translate(-50%, -8px) scale(.98); } }
 .panel { padding: 18px; }
@@ -476,6 +519,12 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   .daily-receipt ol { grid-template-columns: 1fr; }
   .daily-close-actions { align-items: stretch; flex-direction: column; }
   .daily-close-actions button { width: 100%; }
+  .prediction-baseline { gap: 9px; padding: 8px 11px; }
+  .prediction-baseline strong { font-size: 1.2rem; }
+  .prediction-baseline span { font-size: .64rem; }
+  .prediction-session summary { align-items: start; flex-direction: column; gap: 7px; }
+  .prediction-result-round > ul li { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .prediction-score-card { padding: 28px 18px; border-radius: 24px; }
   .feedback-channel { grid-template-columns: 1fr; gap: 1px; padding: 5px 8px; }
 }
 
@@ -491,6 +540,7 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
   /* Em alturas curtas, manter a anatomia da carta exige rolagem vertical. */
   .candidate-card { height: clamp(276px, 86.25vw, 280px); grid-template-rows: minmax(0, 1fr) 104px; }
   .arena { gap: 5px; }
+  .prediction-screen .candidate-card { height: 265px; grid-template-rows: minmax(0, 1fr) 100px; }
   dialog { width: calc(100% - 18px); height: calc(100dvh - max(28px, env(safe-area-inset-top)) - max(18px, env(safe-area-inset-bottom))); max-height: none; margin-block: max(14px, env(safe-area-inset-top)) max(9px, env(safe-area-inset-bottom)); }
   .profile-preview { width: min(100%, 330px); }
   .profile-preview .portrait { max-height: 38dvh; }

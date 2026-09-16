@@ -108,13 +108,20 @@ const PUBLIC_CANDIDATE_FIELDS_V2 = Object.freeze([
   "topicIds",
 ]);
 
-function projectCandidateFields(candidate, fields) {
-  return Object.fromEntries(fields.map((field) => [field, candidate?.[field]]));
+function projectCandidateFields(candidate, fields, schema) {
+  if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+    throw new TypeError(`candidato incompatível com ${schema}`);
+  }
+  const missing = fields.filter((field) => !Object.hasOwn(candidate, field) || candidate[field] === undefined);
+  if (missing.length) {
+    throw new TypeError(`candidato incompatível com ${schema}; campos ausentes: ${missing.join(", ")}`);
+  }
+  return Object.fromEntries(fields.map((field) => [field, candidate[field]]));
 }
 
 const PUBLIC_CANDIDATE_PROJECTORS = new Map([
-  [PUBLIC_CANDIDATE_SCHEMA_V1, (candidate) => projectCandidateFields(candidate, PUBLIC_CANDIDATE_FIELDS_V1)],
-  [PUBLIC_CANDIDATE_SCHEMA_V2, (candidate) => projectCandidateFields(candidate, PUBLIC_CANDIDATE_FIELDS_V2)],
+  [PUBLIC_CANDIDATE_SCHEMA_V1, (candidate) => projectCandidateFields(candidate, PUBLIC_CANDIDATE_FIELDS_V1, PUBLIC_CANDIDATE_SCHEMA_V1)],
+  [PUBLIC_CANDIDATE_SCHEMA_V2, (candidate) => projectCandidateFields(candidate, PUBLIC_CANDIDATE_FIELDS_V2, PUBLIC_CANDIDATE_SCHEMA_V2)],
 ]);
 
 export function candidateProjectorBySchema(schema) {

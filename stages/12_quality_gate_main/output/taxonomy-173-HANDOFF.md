@@ -2,12 +2,12 @@
 
 ## Status
 
-- Estado: `pronto para revisão local`
+- Estado: `PR em rascunho; verificação local aprovada e CI da atualização pendente`
 - Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/173
 - Macro: https://github.com/stefancabral-oss/presidencia-duelo/issues/175
 - Branch: `icm/12-u04-taxonomy-173`
-- PR: `não aberta por instrução`
-- Base do restack: `8f7ba527e03851370b5f5476adc68cd21d655634`
+- PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/194 (rascunho)
+- Base integrada: `f86aec40ba4770fc71de6deca55175e356ac942d` (merge da #178)
 - Commit de implementação: `e8a8534f4f3b065401f6f33752d0c61de8b5774f`
 - Commit de correção adversarial: `60357ff39a5bff20087de62e6fa407f6ba19a426`
 - Commit de validação semântica: `8116ebf255b0939058616d8567246f5e884e3ca5`
@@ -35,6 +35,9 @@ O gerador copiava `partido_ou_area` simultaneamente para cargo, afiliação e pa
 - Um único validador compartilhado pelo gerador, teste e CI.
 - Contrato de serialização exercitado sobre os 125 registros reais, incluindo Lula e Antonia Fontenelle.
 - Screenshot comparativo em `references/taxonomy-comparison.png`, regenerado com quatro registros reais: Lindbergh Farias (`PT`), Alexandre de Moraes (`Justiça`, partido ambíguo/nulo), Paulo Guedes (`Economia`, sem promover `órbita PL` a partido) e Gracyanne Barbosa (`REPUBLICANOS`).
+- Contrato diário promovido para `daily-four-card-v2@2`/`candidate-public-v2` somente em datas ainda não materializadas; `daily-four-card-v1@1` continua registrado para replay e corte de edições persistidas.
+- O projector histórico v1 agora falha fechado se receber um registro v2 sem `affiliation`/`office`, impedindo que `undefined` desapareça silenciosamente do JSON e altere o snapshot.
+- Frontend e placar de apostas aceitam as identidades seladas v1 e v2, mas rejeitam combinações cruzadas de ID, versão e schema.
 
 ## Estado editorial explícito
 
@@ -48,10 +51,13 @@ Nenhum valor foi criado para um atributo ambíguo. `ambiguous` significa falta d
 ## Testes e evidências
 
 - `npm run test:shared`: 16/16 testes e validação estrutural/evidencial/semântica dos 125 registros, incluindo paridade bidirecional e duplicatas nas quatro fontes.
-- `npm test`: 121/121 testes (16 shared, 42 back, 63 app).
+- `npm test`: 163/163 testes (16 shared, 63 back, 84 app), incluindo golden byte a byte do projector v1, rejeição de campos v1 ausentes, replay de edição v1 já persistida, criação de edição v2 e validação cliente dos dois contratos.
 - Regressões negativas reais: Paulo Guedes não pode receber `PL` a partir de `órbita PL`; Guilherme Boulos, Jones Manoel, Carla Zambelli e Deltan Dallagnol não podem recuperar rótulos categoriais como contexto; a filiação explícita de Gracyanne continua válida.
 - `npm run build`: aprovado; 99/125 retratos presentes e bundle Vite produzido.
-- E2E Chromium e WebKit: navegação, rodada, perfil estruturado, busca, filtros, ranking, anatomia móvel atual e limpeza de filtros na troca de visão aprovados; recuperação de voto e estados `sending`/`401`/`429`/`5xx` da base #170 também permaneceram verdes.
+- E2E Chromium e WebKit: oito fluxos por navegador aprovados — interação, login/logout, sessão diária, aposta/revelação, troca de identidade, 3 telas em 16 viewports, recuperação de voto e estados de confiança. O preview foi isolado em `127.0.0.1:4178` com `--strictPort`, PID/caminho conferidos, e o fluxo diário atravessou explicitamente uma edição v1 persistida para uma nova edição v2.
+- `npm run build --prefix app`: aprovado com `VITE_GOOGLE_CLIENT_ID` de teste; 99/125 retratos presentes e bundle Vite produzido.
+- `npm audit --omit=dev --prefix app` e `--prefix back`: 0 vulnerabilidades de produção.
+- `git diff --check`: limpo.
 - Regeneração consecutiva: hashes SHA-256 idênticos para candidatos e Chromas.
 - Workflow: YAML válido; `test:shared` é chamado uma vez pelo job `shared-data` e os caminhos das três fontes editoriais acionam o workflow.
 
@@ -61,13 +67,13 @@ Nenhum valor foi criado para um atributo ambíguo. `ambiguous` significa falta d
 - Quarenta partidos e 106 contextos continuam ambíguos por falta de evidência explícita suficiente.
 - O único contexto `inferred` preserva a redação editorial sobre a filiação de Gracyanne Barbosa e deve ser confirmado no gate humano.
 - Os 125 perfis permanecem com `reviewStatus=pending`; a revisão fonte a fonte descrita no gate editorial anterior não foi simulada nesta unidade.
-- O disparo remoto em `pull_request` permanece pendente porque não houve push nem PR.
+- A execução remota desta atualização permanece pendente até o push; o PostgreSQL não foi reproduzido localmente neste host.
 - `actionlint` não estava disponível neste host; a sintaxe YAML foi validada com `yaml.safe_load` e o workflow deve passar pelo check remoto.
 
 ## Próximo passo exato
 
 1. Revisar a amostra visual e as classificações `inferred`.
-2. Abrir PR da branch e confirmar o job automático `shared-data` no evento `pull_request`.
+2. Confirmar os jobs automáticos da PR #194, incluindo PostgreSQL, Chromium e WebKit.
 3. Somente após o human gate, integrar em `main`.
 
 ## Human gate

@@ -115,7 +115,7 @@ Exemplo do corpo atual:
 
 O PostgreSQL guarda somente hashes das chaves de recuperação e sessões. O token de identidade do Google não é persistido; a ligação usa o `sub` validado pelo servidor. A rodada é idempotente e imutável; ela avança a escolha uma vez e mantém três comparações Elo vinculadas ao mesmo `roundId`. Escritas exigem sessão emitida pelo servidor e seguem a [política de integridade do voto](docs/security/VOTE_ABUSE_POLICY.md).
 
-A edição diária persiste ruleset, versão da ficha pública (`catalogSchema`), janela, dez slots e o snapshot editorial completo antes do primeiro jogador. Retirar uma pessoa ou ampliar a projeção da API corrente não reescreve a edição aberta nem seu recorte: sessões históricas e cortes publicados continuam autoexplicativos pelo snapshot e seus hashes. Um schema novo só estreia junto de um ruleset novo, numa data ainda não materializada. Somente sessões concluídas em `10/10` entram no recorte público.
+A edição diária persiste ruleset, versão da ficha pública (`catalogSchema`), janela, dez slots e o snapshot editorial completo antes do primeiro jogador. Retirar uma pessoa ou ampliar a projeção da API corrente não reescreve a edição aberta nem seu recorte: sessões históricas e cortes publicados continuam autoexplicativos pelo snapshot e seus hashes. `daily-four-card-v1@1` permanece selado com `candidate-public-v1`; datas ainda não materializadas usam `daily-four-card-v2@2` com `candidate-public-v2`. Somente sessões concluídas em `10/10` entram no recorte público.
 
 ## Deploy no Dokploy
 

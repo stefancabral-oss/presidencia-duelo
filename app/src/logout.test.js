@@ -35,6 +35,13 @@ test("login and logout rotate the round and abandon a pending vote from the prev
       dailyLoadError: "old error",
       pendingDailySession: { edition: { id: `${transition}-old-edition` } },
       pendingDailyRefresh: true,
+      predictionId: `${transition}-old-prediction`,
+      predictionBusy: true,
+      predictionError: "old prediction error",
+      pendingPredictionAction: { candidateId: "lula" },
+      predictionResults: { sessions: [{ edition: { id: `${transition}-old-edition` } }] },
+      predictionResultsLoading: true,
+      predictionResultsError: "old results error",
       pendingWinnerId: "lula",
       votePhase: "rate-limited",
       voteAction: "retry-vote",
@@ -62,6 +69,13 @@ test("login and logout rotate the round and abandon a pending vote from the prev
       dailyLoadError: "",
       pendingDailySession: null,
       pendingDailyRefresh: false,
+      predictionId: "",
+      predictionBusy: false,
+      predictionError: "",
+      pendingPredictionAction: null,
+      predictionResults: null,
+      predictionResultsLoading: false,
+      predictionResultsError: "",
       pendingWinnerId: "",
       votePhase: "ready",
       voteAction: "",
@@ -76,6 +90,37 @@ test("login and logout rotate the round and abandon a pending vote from the prev
       personalFeedbackMessage: "",
       globalFeedbackMessage: "",
     });
+  }
+});
+
+test("login or logout during a result load releases the new identity to open its own scoreboard", () => {
+  for (const transition of ["login", "logout"]) {
+    const state = {
+      identityEpoch: 2,
+      dailyLoadEpoch: 3,
+      recoveryKey: "pm2_previous",
+      predictionId: "650e8400-e29b-41d4-a716-446655440000",
+      predictionBusy: true,
+      predictionError: "pending",
+      pendingPredictionAction: { candidateId: "candidate-1" },
+      predictionResults: { sessions: [] },
+      predictionResultsLoading: true,
+      predictionResultsError: "pending",
+    };
+    const staleLoad = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+    resetPendingVoteForIdentityChange(state, () => `${transition}-round`);
+    state.recoveryKey = `pm2_${transition}`;
+
+    assert.equal(isCurrentVoteIdentity(state, staleLoad), false);
+    assert.equal(state.predictionResultsLoading, false);
+    assert.equal(state.predictionResults, null);
+    assert.equal(state.pendingPredictionAction, null);
+    assert.equal(state.predictionBusy, false);
+
+    // É o mesmo gate usado por openDailyPredictionResults: a identidade nova
+    // não fica presa pelo carregamento que pertencia à credencial anterior.
+    if (!state.predictionResultsLoading) state.predictionResultsLoading = true;
+    assert.equal(state.predictionResultsLoading, true);
   }
 });
 

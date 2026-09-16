@@ -1,67 +1,75 @@
-# HANDOFF — ICM 12 · U05
+# HANDOFF — ICM 12 · U06
 
 ## Status
 
-- Estado: `implementação, CI e human gate aprovados; pronta para merge`
-- Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/170
+- Estado: `implementação local concluída; gate humano de publicação pendente`
+- Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/171
 - Macro: https://github.com/stefancabral-oss/presidencia-duelo/issues/175
-- Branch: `icm/12-u05-vote-abuse-170-v2`
-- Base: `main@dbf55ca`
-- PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/192
+- Branch: `icm/12-u06-editorial-gate-171-v2`
+- Base: `main@8f7ba527e03851370b5f5476adc68cd21d655634`
+- PR: não criada por esta unidade
 
 ## Entregue
 
-- Política normativa de integridade escrita antes do código em `docs/security/VOTE_ABUSE_POLICY.md`.
-- Token opaco emitido pelo servidor obrigatório para qualquer escrita no ranking.
-- Cotas persistentes e atômicas no PostgreSQL: 8 rodadas/minuto e 30/dia por jogador; 3 emissões anônimas/dia por pseudônimo de rede.
-- Replay idempotente verificado antes da cobrança de cota.
-- Pseudônimo de rede por HMAC-SHA-256, normalização IPv4 e prefixo IPv6 `/64`, sem guardar token ou IP bruto.
-- CORS exato, com padrão de produção limitado a `https://polimatch.com.br`; `www`, origem hostil e origens locais em produção ficam bloqueados.
-- Inicialização de produção falha sem `VOTER_NETWORK_SECRET` adequado e `TRUST_PROXY_HOPS` explícito.
-- Resposta `5xx` genérica com `requestId`; detalhe estruturado permanece no log sem cabeçalho, corpo, token ou IP.
-- Fluxo de voto congelado até confirmação completa, com recuperação explícita de `401`, espera de `429`, repetição idempotente de `5xx` e incerteza de rede declarada.
-- Página pública `integridade.html` e sinal de confiança no ranking, sem apresentar o placar como pesquisa eleitoral.
-- Evidência visual e automatizada dos quatro estados de confiança em Chromium e WebKit.
+- Ledger de decisões editoriais e registro de assets versionados separados do catálogo.
+- Estados independentes para conteúdo, arte da carta e foto documental.
+- Elegibilidade calculada somente por conteúdo aprovado + arte aprovada; foto ausente não bloqueia.
+- Fingerprints SHA-256 que invalidam decisões quando conteúdo, bytes, caminho, versão ou procedência de asset muda.
+- Projeção pública única compartilhada pela API e pelo fingerprint, protegendo campos editoriais adicionados no futuro.
+- Tópicos inativos/desconhecidos permanecem fechados no registry e na API.
+- Falha fechada para dados desconhecidos, duplicados, malformados, sem evidência ou com caminho inseguro.
+- Registry injetável no domínio, API e store; produção não aceita fixture nem variável de bypass.
+- API exclui pendentes/rejeitados e não expõe fingerprints ou auditoria privada.
+- UI usa arte aprovada na carta, foto documental aprovada no perfil e placeholder neutro quando ela falta.
+- Home conta perfis realmente disponíveis; procedência só declara revisão quando o conteúdo está aprovado.
+- Governança com responsáveis, evidência mínima e mutação exata dos dados.
+- Matriz automatizada das 27 combinações e smoke visual com e sem foto em Chromium/WebKit.
 
-## Fora desta unidade
+## Estado editorial real
 
-- Revisão editorial e portão de publicação: #171.
-- Controle separado para abrir perfil: #167.
-- Unicidade civil, CAPTCHA obrigatório ou autenticação Google obrigatória.
-- Qualquer mudança de catálogo, áudio ou deploy além das variáveis exigidas pela política.
+- Catálogo: 125 pessoas.
+- Elegíveis/publicáveis: 0.
+- Conteúdo efetivamente `pending`: 125.
+- Arte da carta efetivamente `missing`: 125.
+- Foto documental efetivamente `missing`: 125.
+- Decisões humanas concedidas por esta unidade: nenhuma.
+
+Esse estado é intencional. Assets existentes, nomes legados contendo `approved` e o piloto da #176 não foram promovidos automaticamente.
 
 ## Validação local
 
-- Suite consolidada: 101/101 testes aprovados (4 shared, 39 back, 58 app).
-- `npm run build --prefix app`: aprovado; 99/125 slots de retrato presentes.
+- Suite consolidada: 148/148 testes aprovados (4 shared, 78 back, 66 app).
+- `npm run build --prefix app`: aprovado; 0 assets no registro editorial real e bundle Vite gerado.
 - `interaction-smoke.mjs`: aprovado em Chromium e WebKit.
+- `editorial-gate.mjs`: aprovado em Chromium e WebKit.
 - `responsive-layout.mjs`: 3 telas × 16 viewports aprovados em Chromium e WebKit.
 - `vote-recovery.mjs`: aprovado em Chromium e WebKit.
-- `vote-trust-states.mjs`: `sending`, `401`, `429` e `5xx` aprovados em Chromium e WebKit.
-- Back, shared, integração PostgreSQL 16 e prova `vote-abuse-smoke.mjs`: aprovados no run [35061796786](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35061796786).
-- Design Validator: aprovado no run [35061796548](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35061796548).
-- UI Interaction Smoke: Chromium e WebKit aprovados no run [35061796801](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35061796801).
+- `vote-trust-states.mjs`: aprovado em Chromium e WebKit.
+- CLI de fingerprint de conteúdo e asset: aprovada.
+- `git diff --check`: aprovado.
 
 ## Evidência
 
-- Matriz técnica e visual: `references/issue-170/EVIDENCE.md`.
-- `references/issue-170/chromium-{sending,401-session-required,429-rate-limited,503-server-error}.png`.
-- `references/issue-170/webkit-{sending,401-session-required,429-rate-limited,503-server-error}.png`.
-- Estados capturados: `references/issue-170/{chromium,webkit}-states.json`.
+- Governança: `docs/editorial/PUBLICATION_GOVERNANCE.md`.
+- Matriz técnica: `references/issue-171/EVIDENCE.md`.
+- Capturas: `references/issue-171/chromium-home.png`, `chromium-profile-with-photo.png` e `chromium-profile-without-photo.png`.
 
-## Riscos conhecidos
+## Pendências externas
 
-- A política reduz automação oportunista, mas não garante uma pessoa civil por voto; ataques distribuídos ainda exigiriam outra decisão de identidade e privacidade.
-- `TRUST_PROXY_HOPS` só é seguro se o container não estiver publicamente acessível e o proxy sobrescrever `X-Forwarded-For`; essa topologia deve ser confirmada no deploy.
-- A nova configuração falha fechada em produção. O ambiente precisa receber `VOTER_NETWORK_SECRET` e `TRUST_PROXY_HOPS` antes de publicar a versão.
+- Integração PostgreSQL 16 e prova de abuso não foram executadas localmente porque esta estação não possui Docker, `psql`, serviço PostgreSQL nem `DATABASE_URL`. O workflow `back-shared.yml` executará ambas quando houver PR.
+- Ao integrar a #179, o snapshot diário deve chamar `candidatePublicPayload` (e sua base `candidatePublicContent`) em vez de copiar o candidato do registry. O objeto interno contém `publication.audit`, aprovador, evidências e fingerprints que nunca devem ser persistidos nem servidos pelo snapshot.
+- Cada aprovação real requer a revisão humana individual prevista na governança. Não deve haver preenchimento em massa do ledger.
+- O gate visual da #176 é uma evidência necessária para decidir arte, mas não substitui a decisão `cardArt.approved` por pessoa.
 
 ## Próximo passo exato
 
-1. Mesclar a PR #192 pela autorização permanente e verificar o fechamento da #170.
-2. Iniciar #171 somente a partir da nova `main`.
+1. Publicar a branch e abrir uma PR isolada para a #171.
+2. Confirmar os jobs `back-unit`, `shared-data`, `back-integration-postgres` e `UI Interaction Smoke` em ambos os navegadores.
+3. Depois da aprovação técnica, iniciar PRs editoriais pequenas: uma decisão humana, uma pessoa e uma base de evidência auditável por vez.
+4. Só considerar o app com elenco público quando ao menos quatro pessoas tiverem conteúdo e arte aprovados; foto documental continua opcional.
 
 ## Human gate
 
-- Decisão: `autorização permanente concedida para merge quando isolada e verde`
-- Responsável: Stefan Cabral
-- Observação: não usar essa autorização para misturar a #171.
+- Implementação do mecanismo: pronta para revisão.
+- Publicação dos 125 perfis: bloqueada por decisão humana, por desenho.
+- Responsável final: Stefan Cabral (`stefancabral-oss`) ou pessoa delegada e identificada nominalmente na PR.

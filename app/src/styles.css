@@ -340,6 +340,13 @@ dialog::backdrop { background: rgb(4 24 17 / 68%); backdrop-filter: blur(5px); }
 .dialog-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .profile-preview { width: min(100%, 360px); margin: 0 auto; padding: 12px 12px 0; }
 .profile-preview .portrait { max-height: 42dvh; border-radius: 18px; border: 1px solid rgb(231 199 98 / 55%); }
+.profile-photo-placeholder { min-height: 220px; display: grid; align-content: center; justify-items: center; gap: 12px; padding: 28px; border: 1px dashed rgb(125 97 29 / 50%); border-radius: 18px; background: linear-gradient(145deg, #f7f3e8, #e6dfcd); color: #665a3e; text-align: center; }
+.profile-photo-placeholder span { font-size: 2.4rem; color: #9d8751; }
+.profile-photo-placeholder strong { max-width: 230px; font-size: .9rem; line-height: 1.4; }
+.profile-documentary-photo .profile-photo-placeholder { position: absolute; inset: 0; min-height: 0; border: 0; border-radius: inherit; }
+.profile-provenance { display: grid; gap: 7px; }
+.profile-provenance p { margin: 0; color: #48574f; font-size: .78rem; line-height: 1.45; }
+.profile-provenance .content-provenance { color: #075f4b; font-weight: 850; }
 .dialog-body { padding: 22px; }
 .dialog-body h2 { margin-bottom: 7px; font-size: 1.65rem; }
 .dialog-body p { color: #48574f; line-height: 1.5; }

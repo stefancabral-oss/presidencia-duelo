@@ -60,6 +60,11 @@ jobs:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
         run: node app/e2e/interaction-smoke.mjs
 
+      - name: Validate responsive layout
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/responsive-layout.mjs
+
       - name: Run vote recovery e2e
         env:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}

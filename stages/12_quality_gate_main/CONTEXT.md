@@ -7,39 +7,40 @@ Fazer cada mudança chegar à `main` com evidência automática da camada que el
 ## Macro e unidade ativa
 
 - Macro: [#175 — Portão de qualidade para main](https://github.com/stefancabral-oss/presidencia-duelo/issues/175).
-- Unidade concluída: `U01`, [#174 — cobertura de CI para `back/` e `shared/`](https://github.com/stefancabral-oss/presidencia-duelo/issues/174), integrada pela PR #185.
-- Unidade ativa: `U02`, [#165 — hierarquia de informação da carta](https://github.com/stefancabral-oss/presidencia-duelo/issues/165).
-- Próxima unidade: [#168 — sistema responsivo por comportamento](https://github.com/stefancabral-oss/presidencia-duelo/issues/168), somente depois do gate de U02.
+- Unidades concluídas: `U01`, [#174 — cobertura de CI para `back/` e `shared/`](https://github.com/stefancabral-oss/presidencia-duelo/issues/174), integrada pela PR #185; e `U02`, [#165 — hierarquia de informação da carta](https://github.com/stefancabral-oss/presidencia-duelo/issues/165), integrada pela PR #186.
+- Unidade ativa: `U03`, [#168 — sistema responsivo por comportamento](https://github.com/stefancabral-oss/presidencia-duelo/issues/168).
+- Próxima unidade: [#169 — feedback da rodada pessoal](https://github.com/stefancabral-oss/presidencia-duelo/issues/169), somente depois do gate de U03.
 
-## Escopo de U02
+## Escopo de U03
 
-- reconstruir a anatomia móvel da carta em 390 × 844 usando o espaço vertical ocioso;
-- manter retrato dominante e criar uma placa de porcelana própria para nome, raridade, partido/área e função;
-- eliminar texto funcional abaixo de 11 px;
-- impedir corte de glifos em todos os nomes jogáveis;
-- restaurar a semântica verde/vermelha de ganho e perda sem `!important`;
-- registrar screenshots e medidas de `getComputedStyle` antes/depois.
+- declarar faixas contíguas para celular compacto, celular confortável, tablet, desktop e wide;
+- fazer `.app-shell`, `.topbar` e marca manterem a mesma geometria em Início, Duelo e Ranking;
+- assumir o intervalo 700–999 px com um duelo 2 × 2 próprio, sem herdar o desktop por acidente;
+- manter quatro cartas em uma fileira a partir de 1000 px e tratar janelas largas e baixas sem esconder a ação;
+- usar duas regiões no ranking desktop, deixando visão geral à esquerda e busca/lista à direita;
+- automatizar medidas e screenshots responsivos em Chromium e WebKit.
 
-## Exclusões de U02
+## Exclusões de U03
 
-- não redesenhar os breakpoints gerais, o shell ou o ranking da #168;
-- não criar o controle de acesso ao perfil da #167;
+- não alterar a hierarquia interna da carta aprovada na #165;
+- não implementar o feedback pessoal da #169;
 - não alterar backend, autenticação, catálogo, áudio ou deploy;
 - não misturar qualquer outra issue do portão de qualidade.
 
 ## Dependência resolvida
 
-U01 foi integrada à `main` como `9cf11af`. U02 nasceu diretamente desse commit, em branch e worktree próprios.
+U02 foi integrada à `main` como `3dfd4b4`. U03 nasceu diretamente desse commit, em branch e worktree próprios.
 
 ## Critérios de aceite
 
-- carta móvel próxima de 185 × 280 px, com quatro cartas e navegação no primeiro viewport de 390 × 844;
-- nenhum texto funcional da carta abaixo de 11 px;
-- os 54 nomes jogáveis medidos sem `scrollHeight > clientHeight`;
-- ganho e perda com cores distintas em Chromium e WebKit;
-- evidência antes/depois e métricas versionadas;
-- smokes existentes de 320 × 568, desktop e iMac continuam aprovados.
+- faixas 320–479, 480–699, 700–999, 1000–1279 e 1280+ declaradas sem buracos;
+- shell e marca invariantes entre as três telas em cada viewport;
+- duelo 2 × 2 abaixo de 1000 px e 4 × 1 a partir de 1000 px;
+- zero overflow horizontal ou nome cortado nos 16 viewports automatizados;
+- ranking em coluna larga no tablet e em duas regiões a partir de 1000 px;
+- busca e primeira linha do ranking visíveis nas janelas 1280 × 620 e 1440 × 640;
+- tabela antes/depois e evidência visual versionadas.
 
 ## Human gate
 
-Stefan autorizou a integração automática das unidades que estiverem isoladas, revisadas, testadas e com CI verde. Essa autorização não substitui os gates técnicos nem permite empilhar #168 nesta PR.
+Stefan autorizou a integração automática das unidades que estiverem isoladas, revisadas, testadas e com CI verde. Essa autorização não substitui os gates técnicos nem permite empilhar #169 nesta PR.

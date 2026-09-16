@@ -13,9 +13,14 @@
       "result": "passed; all eight PNGs and the manifest are outside app/public; post-build verification scanned 157 dist files and found no pilot SHA-256 or evidence path"
     },
     {
+      "name": "docker-build-context",
+      "command": "npm run test:card-art-pilot-contract --prefix app",
+      "result": "passed static contract; app/Dockerfile copies the manifest from the documented repository-root context before npm run build and only app/dist reaches nginx; Docker CLI was unavailable locally, so an actual image build remains a remote CI/deploy check"
+    },
+    {
       "name": "pilot-asset-and-reference-integrity",
       "command": "npm test",
-      "result": "passed; 117 of 117 tests (4 shared, 39 backend, 74 app), including anonymous filenames, 4:5 dimensions, hashes, invalidation state and negative semantic-validation fixtures"
+      "result": "passed; 123 of 123 tests (4 shared, 39 backend, 80 app), including anonymous filenames, 4:5 dimensions, hashes, invalidation state and the exact schema, PII, unsigned-decision and one-response bypass payloads"
     },
     {
       "name": "reference-provenance",
@@ -28,13 +33,18 @@
     },
     {
       "name": "result-governance-schema",
-      "command": "npx --yes --package=ajv-cli@5.0.0 --package=ajv-formats@3.0.1 ajv compile -s stages/12_quality_gate_main/references/card-art-pilot-results.schema.json --spec=draft2020 -c ajv-formats",
-      "result": "passed; valid Draft 2020-12 schema requiring aggregate privacy controls, regional/familiarity strata, per-asset identity and dignity reviewers, dates, and an authored final decision"
+      "command": "npm run test:card-art-pilot-contract --prefix app",
+      "result": "passed 18 of 18; locked Ajv 8.17.1 plus ajv-formats 3.0.1 validates every result instance against Draft 2020-12 before semantics, including additionalProperties, required authors, dates, reviews and decision"
     },
     {
       "name": "result-semantic-validator",
       "command": "npm run card-art-pilot:validate-results --prefix app -- <result.json>",
-      "result": "passed with positive, negative and CLI fixtures; requires complete unique P01-P08 coverage, coherent counts/rates/strata, aggregate privacy controls, at least 20 external participants per scenario with accountable dated attestation, and blocks seguir for low recognition, non-approved reviews, pending licenses or a blocked manifest"
+      "result": "passed with positive, negative and CLI fixtures; rejects PII, requires complete unique P01-P08 coverage, coherent counts/rates/strata, at least 20 valid external responses per asset and scenario, dated attestation and complete license provenance; any decision is blocked while collectionAllowed is false, with additional scale gates for seguir"
+    },
+    {
+      "name": "continuous-integration-enforcement",
+      "command": "design-validator.yml and ui-interaction-smoke.yml",
+      "result": "configured; path triggers cover app, the style guide, protocol, form, schema, manifest and evidence; CI runs the result contract, dist isolation and the canonical-geometry form smoke in Chromium and WebKit"
     },
     {
       "name": "blind-recognition-test",

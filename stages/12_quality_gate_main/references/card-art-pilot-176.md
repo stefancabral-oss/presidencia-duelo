@@ -43,6 +43,7 @@ Esta seção só entra em vigor para um novo lote cujo manifesto tenha `collecti
 
 - Mínimo total: 40 adultos que não participaram da geração, curadoria nem revisão das imagens.
 - Mínimo por cenário: 20 em `mobile-390x844` e 20 em `desktop-1000x800`.
+- Mínimo válido por arte e cenário: cada uma das oito artes precisa conservar pelo menos 20 respostas válidas externas em cada cenário; o número atribuído em `sample.displayScenarios` é um teto, não substitui esse denominador observado.
 - Recrutar pessoas de macrorregiões e níveis de familiaridade política variados.
 - Não informar quais nomes aparecem antes do teste.
 - Não mostrar fotografia de referência, manifesto nem mapeamento dos códigos.
@@ -89,7 +90,7 @@ O consolidado deve obedecer a `card-art-pilot-results.schema.json` e conter, par
 - revisão de dignidade com os mesmos campos;
 - contagens brutas e taxas de reconhecimento e neutralidade.
 
-A decisão de um lote válido exige `seguir`, `iterar` ou `abandonar`, acompanhada por `decidedBy`, `decidedAt` e justificativa. O agente que preparou o piloto não pode preencher a amostra, assinar as revisões humanas nem decidir o próprio gate. O validador semântico `app/scripts/validate-card-art-pilot-results.mjs` impede `seguir` com reconhecimento inferior a 70% em qualquer cenário, licença pendente, revisão não aprovada ou bloqueio no manifesto.
+A decisão de um lote válido exige `seguir`, `iterar` ou `abandonar`, acompanhada por `decidedBy`, `decidedAt` e justificativa. O agente que preparou o piloto não pode preencher a amostra, assinar as revisões humanas nem decidir o próprio gate. A CLI `app/scripts/validate-card-art-pilot-results.mjs` valida primeiro a instância completa contra o schema Draft 2020-12 com dependências lockadas e só então executa a semântica. Ela recusa qualquer consolidado — inclusive `iterar` ou `abandonar` — enquanto `collectionAllowed` não for `true`, exige proveniência completa das licenças e pelo menos 20 respostas válidas externas por arte e cenário. Para `seguir`, também bloqueia reconhecimento inferior a 70% em qualquer cenário, revisão não aprovada ou `scaleDecisionAllowed` diferente de `true`.
 
 Além dos limiares, `seguir` continua bloqueado enquanto qualquer referência tiver `licenseStatus: license-pending`. Isso hoje vale para cinco arquivos editados recebidos do usuário; o registro de uma fonte editorial anterior não substitui a licença da fotografia efetivamente usada.
 

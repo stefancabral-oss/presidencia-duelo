@@ -6,6 +6,9 @@ on:
     paths:
       - 'app/**'
       - 'docs/design/**'
+      - 'stages/12_quality_gate_main/evidence/card-art-pilot-176/**'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-176.*'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-results.schema.json'
       - '.github/workflows/design-validator.yml'
   workflow_dispatch:
 
@@ -25,5 +28,7 @@ jobs:
         run: npm ci --prefix app
       - name: Test app
         run: npm test --prefix app
-      - name: Build app
+      - name: Validate card-art pilot schema, semantics and Docker context
+        run: npm run test:card-art-pilot-contract --prefix app
+      - name: Build app and verify pilot evidence isolation
         run: npm run build --prefix app

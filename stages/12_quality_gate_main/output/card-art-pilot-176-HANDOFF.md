@@ -17,15 +17,18 @@
 - Formulário bloqueado contra coleta e exportação; a prévia técnica reproduz os recortes reais de 390 × 844 e 1000 × 800.
 - Smoke que renderiza `app/src/styles.css` e compara sua geometria com o formulário, sem manter uma segunda tabela de dimensões esperadas.
 - Schema consolidado sem registros individuais, com supressão de células pequenas, revisão humana de identidade/dignidade e autor/data da decisão.
-- Validador semântico executável para cobertura P01–P08, somas, denominadores, taxas, estratos, mínimo de 20 externos por cenário, atestação responsável e bloqueios da decisão `seguir`.
-- Verificador pós-build que compara hashes e impede afirmar isolamento sem inspecionar `app/dist`.
+- Validador executável que aplica o schema Draft 2020-12 antes da semântica, rejeita propriedades extras e PII, exige autoria/data das revisões e decisão, cobertura P01–P08, somas, taxas, estratos e pelo menos 20 respostas válidas externas por combinação arte × cenário.
+- Gate que recusa qualquer consolidado enquanto `collectionAllowed` não for `true`, exige URL/autoria/licença completas e reserva os bloqueios de escala adicionais para a decisão `seguir`.
+- Verificador pós-build que compara hashes e impede afirmar isolamento sem inspecionar `app/dist`; o Dockerfile fornece seu manifesto explicitamente apenas no estágio de build.
+- Workflows com gatilhos para app, guia, protocolo, formulário, schema, manifesto e evidências; o contrato, o isolamento e o smoke Chromium/WebKit passam a ser checks de CI.
 
 ## Verificação técnica
 
-- `npm test`: 117/117 aprovados (4 compartilhados, 39 backend, 74 app), incluindo as fixtures negativas do validador semântico.
+- `npm test`: 123/123 aprovados (4 compartilhados, 39 backend, 80 app), incluindo os payloads negativos que antes burlavam schema, PII, autoria, invalidação e denominadores.
 - `npm run build --prefix app`: aprovado; 157 arquivos do `dist` inspecionados e nenhum hash do piloto empacotado.
 - `npm run test:card-art-pilot-form --prefix app`: aprovado em Chromium e WebKit nos dois cenários; geometria canônica igual ao CSS do app e coleta/exportação bloqueadas.
-- `npx --yes --package=ajv-cli@5.0.0 --package=ajv-formats@3.0.1 ajv compile -s stages/12_quality_gate_main/references/card-art-pilot-results.schema.json --spec=draft2020 -c ajv-formats`: aprovado; schema Draft 2020-12 válido.
+- `npm run test:card-art-pilot-contract --prefix app`: 18/18 aprovados; Ajv 8.17.1 e ajv-formats 3.0.1 lockados validam a instância Draft 2020-12 antes da semântica, além do contrato do contexto Docker.
+- `docker build -f app/Dockerfile .`: não executado porque o binário Docker não está instalado neste ambiente; o teste automatizado confirma estaticamente o `COPY` a partir do contexto-raiz, sua ordem antes do build, o `.dockerignore` e que o manifesto não entra no estágio final nginx.
 - `git diff --check`: aprovado.
 
 ## Proveniência que ainda bloqueia produção
@@ -45,5 +48,5 @@ As referências `017`, `019` e `052` têm fonte, autoria e licença documentadas
 2. Regularizar ou substituir as cinco referências `license-pending`.
 3. Gerar oito imagens novas sob essa regra prévia; P01–P08 atuais não podem ser reaproveitadas.
 4. Atualizar manifesto, hashes e formulário, e só então mudar `collectionAllowed` após revisão técnica.
-5. Executar o formulário com pelo menos 20 pessoas externas em cada cenário.
+5. Executar o formulário até obter pelo menos 20 respostas válidas externas para cada uma das oito artes em cada cenário.
 6. Validar o consolidado pelo schema e pelo validador semântico, registrar revisores de identidade/dignidade e uma decisão humana assinada na issue #176.

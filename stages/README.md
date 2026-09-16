@@ -13,6 +13,9 @@ Este diretório organiza a reconstrução do frontend em estágios sequenciais e
 7. `07_acessibilidade_performance_qa` — a11y, performance, regressões e dispositivos.
 8. `08_release_deploy_observabilidade` — release, Dokploy, smoke tests e sinais de produção.
 9. `09_validacao_final_handoff` — QA completo, documentação final e próximos passos.
+10. `10_rebuild_eleicoes_2026` — fundação da edição, catálogo e rodada de quatro.
+11. `11_google_login` — acesso opcional e recuperação segura do progresso.
+12. `12_quality_gate_main` — checks por camada e correções estruturais antes da `main`.
 
 ## Regra de dependência
 

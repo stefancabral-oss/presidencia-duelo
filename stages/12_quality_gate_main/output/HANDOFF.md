@@ -2,12 +2,12 @@
 
 ## Status
 
-- Estado: `implementação e validação local aprovadas; CI remoto pendente`
+- Estado: `implementação, CI e human gate aprovados; pronta para merge`
 - Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/169
 - Macro: https://github.com/stefancabral-oss/presidencia-duelo/issues/175
 - Branch: `icm/12-u04-feedback-169`
 - Base: `main@86d2659`
-- PR: pendente
+- PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/188
 
 ## Entregue
 
@@ -34,7 +34,9 @@
 - `interaction-smoke.mjs`: canais pessoal + público e somente pessoal aprovados em Chromium; os dois canais aprovados em WebKit.
 - `responsive-layout.mjs`: 3 telas × 16 viewports aprovados em Chromium e WebKit.
 - `vote-recovery.mjs`: aprovado em Chromium e WebKit.
-- Integração PostgreSQL: coberta pelo smoke atualizado e pendente do runner PostgreSQL 16 do CI; Docker/PostgreSQL não estão disponíveis no ambiente local.
+- Back e integração PostgreSQL 16: aprovados no run [35059178219](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35059178219).
+- Design Validator: aprovado no run [35059178209](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35059178209).
+- UI Interaction Smoke: Chromium e WebKit aprovados no run [35059178205](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35059178205).
 
 ## Evidência
 
@@ -50,9 +52,9 @@
 
 ## Próximo passo exato
 
-1. Abrir a PR isolada com `Closes #169`.
-2. Aguardar testes de back, integração PostgreSQL, design e interação em Chromium/WebKit.
-3. Registrar os links dos runs, mesclar com a autorização permanente e iniciar #170 somente a partir da nova `main`.
+1. Confirmar os checks automáticos do head documental final.
+2. Mesclar com a autorização permanente e verificar o fechamento da #169.
+3. Iniciar #170 somente a partir da nova `main`.
 
 ## Human gate
 

@@ -399,6 +399,9 @@ function assertPlayerVersion(value, current) {
     const error = new Error("ranking pessoal mais recente disponível");
     error.status = 409;
     error.code = "PLAYER_VERSION_CONFLICT";
+    // `sendError` já repassa este campo ao cliente; sem preenchê-lo aqui, o
+    // conflito chegava sem a informação necessária para se resolver sozinho.
+    error.current = current;
     throw error;
   }
 }

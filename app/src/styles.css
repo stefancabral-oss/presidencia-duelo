@@ -124,6 +124,12 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .progress-pill { flex: 0 0 auto; padding: 8px 11px; border: 1px solid rgb(231 199 98 / 30%); border-radius: 999px; background: rgb(4 48 37 / 76%); color: var(--gold); font-size: .72rem; font-weight: 900; }
 .round-instruction { margin: -8px 0 0; color: #9fb2aa; font-size: .72rem; text-align: center; }
 .round-instruction.is-result { color: #f0d478; font-weight: 850; letter-spacing: .01em; animation: outcome-copy-in 220ms ease-out; }
+/* Falha não pode ser grafada como festa: o dourado acima é a cor de "invadiu o
+   Top 10". A mensagem de erro precisa de cor própria e de mais corpo, porque é
+   ela que carrega a informação de que a escolha pode não ter sido registrada. */
+.round-instruction.is-error { color: #ffa196; font-size: .84rem; }
+.retry-vote { justify-self: center; min-height: 46px; margin-top: 2px; padding: 9px 20px; border: 1px solid #ffa196; border-radius: 999px; background: rgb(96 24 18 / 45%); color: #ffd3cd; font-size: .8rem; font-weight: 800; cursor: pointer; }
+.retry-vote:hover { background: rgb(126 32 24 / 55%); }
 .arena { width: min(100%, 920px); margin: 0 auto; display: grid; align-items: stretch; gap: 12px; }
 .arena-four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .versus { position: relative; z-index: 3; display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid rgb(231 199 98 / 70%); border-radius: 50%; background: #082f25; color: var(--gold); box-shadow: 0 0 18px rgb(231 199 98 / 30%); font-size: .68rem; font-weight: 950; }

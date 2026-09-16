@@ -27,6 +27,15 @@ const state = {
   playerVersion: 0,
   collection: [],
   result: "",
+  // "erro" faz a mensagem ser grafada como falha. Sem isso, "seu voto não foi
+  // contado" sai no mesmo dourado de "invadiu o Top 10".
+  resultTone: "",
+  // Chave de idempotência da rodada atual. Nasce junto com as quatro cartas e
+  // sobrevive às tentativas, para que repetir um voto que já chegou ao servidor
+  // seja reconhecido como repetição em vez de virar uma segunda rodada.
+  roundId: "",
+  // Escolha que falhou e pode ser repetida pelo botão "Tentar de novo".
+  pendingWinnerId: "",
   roundOutcome: null,
   selectedId: "",
   showCoach: false,
@@ -186,7 +195,8 @@ function topicsScreen() {
 function duelScreen() {
   return `<main class="screen duel-screen">
     <div class="duel-head"><div><p class="eyebrow">Escolha uma entre quatro</p><h1>Quem você prefere?</h1></div><span class="progress-pill">${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}</span></div>
-    <p class="round-instruction${state.result ? " is-result" : ""}" role="status">${escapeHtml(state.result || "Toque na sua preferida. Segure para conhecer o perfil.")}</p>
+    <p class="round-instruction${state.result ? " is-result" : ""}${state.resultTone === "erro" ? " is-error" : ""}" role="status">${escapeHtml(state.result || "Toque na sua preferida. Segure para conhecer o perfil.")}</p>
+    ${state.pendingWinnerId ? '<button class="retry-vote" type="button" id="retry-vote">Tentar de novo</button>' : ""}
     <div class="arena arena-four">${state.round.map(card).join("")}</div>
     <button class="skip-button" type="button" id="skip-round" ${state.busy ? "disabled" : ""}>Nenhuma destas · trocar as quatro</button>
   </main>`;
@@ -304,6 +314,8 @@ function chooseNextRound() {
   const next = nextBalancedGroup(state.candidates, state.matchQueue, state.previousRound);
   state.round = next.group;
   state.matchQueue = next.queue;
+  state.roundId = crypto.randomUUID();
+  state.pendingWinnerId = "";
 }
 
 function enterDuel() {
@@ -324,12 +336,15 @@ async function vote(winnerId) {
   clearTimeout(roundAdvanceTimer);
   state.roundOutcome = null;
   state.result = "Confirmando sua escolha…";
+  state.resultTone = "";
   render();
   try {
-    const response = await submitRoundVote(winner.id, state.round.map(({ id }) => id), "eleicoes-2026", {
+    const response = await submitRoundVote(state.roundId, winner.id, state.round.map(({ id }) => id), "eleicoes-2026", {
       recoveryKey: state.recoveryKey,
       version: state.playerVersion,
     });
+    state.pendingWinnerId = "";
+    state.resultTone = "";
     state.ranking = rankingForCatalog(response, state.candidates);
     state.personalRanking = rankingForCatalog(response.player, state.candidates);
     state.playerVersion = response.player?.version ?? state.playerVersion;
@@ -354,16 +369,61 @@ async function vote(winnerId) {
       resultTimer = setTimeout(() => {
         if (state.busy) return;
         state.result = "";
+        state.resultTone = "";
         render();
       }, 1800);
     }, 1050);
   } catch (error) {
-    state.busy = false;
-    state.selectedId = "";
-    state.roundOutcome = null;
-    state.result = "Não foi possível confirmar. Seu voto não foi contado.";
+    await recoverFromVoteFailure(error, winner);
+  }
+}
+
+/**
+ * Traduz a falha de um voto em estado honesto e recuperável.
+ *
+ * Três motivos distintos chegavam aqui como a mesma frase — "seu voto não foi
+ * contado" — e nenhum deles oferecia saída. Pior: quando o tempo se esgota, o
+ * servidor pode já ter gravado a rodada, e afirmar que não contou é falso.
+ */
+async function recoverFromVoteFailure(error, winner) {
+  state.busy = false;
+  state.selectedId = "";
+  state.roundOutcome = null;
+  state.resultTone = "erro";
+  state.pendingWinnerId = winner.id;
+
+  // A versão pessoal ficou para trás porque uma rodada anterior chegou ao
+  // servidor sem que a resposta voltasse. Realinhar aqui é o que impede o app
+  // de recusar todo voto seguinte até alguém recarregar a página.
+  if (error?.status === 409) {
+    const resynced = await resyncPlayer();
+    state.result = resynced
+      ? "Sua escolha anterior já tinha sido registrada. Pode escolher de novo."
+      : "Não conseguimos alinhar seu ranking. Toque em Tentar de novo.";
+    state.pendingWinnerId = resynced ? "" : winner.id;
+    if (resynced) chooseNextRound();
     render();
     sound.play("error");
+    return;
+  }
+
+  state.result = error?.unreachable
+    ? "Não tivemos resposta do servidor. Sua escolha pode não ter sido registrada."
+    : `Não foi possível confirmar: ${error?.message || "erro inesperado"}.`;
+  render();
+  sound.play("error");
+}
+
+/** Relê o estado do jogador no servidor. Devolve `false` se nem isso deu. */
+async function resyncPlayer() {
+  try {
+    const personal = await loadPlayerRanking(state.recoveryKey);
+    state.playerVersion = personal.version ?? state.playerVersion;
+    state.personalRanking = rankingForCatalog(personal, state.candidates);
+    state.personalDuels = Number(personal.duels) || state.personalDuels;
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -382,12 +442,19 @@ function bindEvents() {
   document.querySelector("#retry")?.addEventListener("click", () => { sound.play("navigation"); initialize(); });
   document.querySelector("#start-election")?.addEventListener("click", enterDuel);
   document.querySelector("#start-election-secondary")?.addEventListener("click", enterDuel);
-  document.querySelector("#open-ranking")?.addEventListener("click", () => { sound.play("navigation"); state.screen = "ranking"; state.result = ""; render(); });
-  document.querySelector("#continue-duels")?.addEventListener("click", () => { state.result = ""; enterDuel(); });
+  document.querySelector("#open-ranking")?.addEventListener("click", () => { sound.play("navigation"); state.screen = "ranking"; state.result = ""; state.resultTone = ""; render(); });
+  document.querySelector("#continue-duels")?.addEventListener("click", () => { state.result = ""; state.resultTone = ""; enterDuel(); });
+  document.querySelector("#retry-vote")?.addEventListener("click", () => {
+    if (state.busy || !state.pendingWinnerId) return;
+    // Mesmo `state.roundId` da tentativa anterior: se aquela chegou ao servidor,
+    // esta é reconhecida como repetição e devolve o mesmo resultado.
+    vote(state.pendingWinnerId);
+  });
   document.querySelector("#skip-round")?.addEventListener("click", () => {
     if (state.busy) return;
     sound.play("shuffle");
     state.result = "";
+    state.resultTone = "";
     chooseNextRound();
     render();
   });
@@ -426,6 +493,7 @@ function bindEvents() {
     sound.play("navigation");
     state.screen = button.dataset.screen;
     state.result = "";
+    state.resultTone = "";
     render();
   }));
   document.querySelectorAll("[data-ranking-view]").forEach((button) => button.addEventListener("click", () => { sound.play("navigation"); state.rankingView = button.dataset.rankingView; state.rankingQuery = ""; state.rankingExpanded = false; render(); }));
@@ -452,7 +520,12 @@ async function ensurePlayer() {
   }
   try {
     return { recoveryKey, personal: await loadPlayerRanking(recoveryKey) };
-  } catch {
+  } catch (error) {
+    // A chave é a única credencial do jogador e não é exibida em lugar nenhum:
+    // descartá-la apaga o ranking pessoal para sempre. Só um 401 prova que ela
+    // não vale mais. Qualquer outra falha — 500, 503, tempo esgotado, rede fora —
+    // é passageira, e nesses casos a chave precisa sobreviver.
+    if (error?.status !== 401) throw error;
     localStorage.removeItem(storageKey);
     const created = await createPlayer();
     localStorage.setItem(storageKey, created.recoveryKey);
@@ -477,6 +550,8 @@ async function initialize() {
     const firstMatch = nextBalancedGroup(state.candidates);
     state.round = firstMatch.group;
     state.matchQueue = firstMatch.queue;
+    state.roundId = crypto.randomUUID();
+    state.pendingWinnerId = "";
     state.ready = true;
   } catch (error) {
     state.error = error.message || "Falha desconhecida";

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import pg from "pg";
+import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import { createTopicStore, recoveryKeyHash } from "../src/topic-store.js";
-import { candidatesForTopic } from "../src/candidates.js";
 import { createApprovedTestRegistry } from "../test-support/editorial-fixtures.js";
 
 const connectionString = process.env.DATABASE_URL;
@@ -216,10 +216,24 @@ await upgradedStore.close();
 // aplicação recebeu. A limpeza abaixo atinge somente a cota por minuto para o
 // smoke conseguir percorrer 10 slots sem esperar fisicamente dois minutos.
 let dailyNow = new Date("2026-09-16T12:00:00.000Z");
-let mutableCatalog = candidatesForTopic("eleicoes-2026").map((candidate) => structuredClone(candidate));
+const completeCandidateRegistry = createApprovedTestRegistry(CATALOG.map(({ id }) => id));
+let mutableCatalog = completeCandidateRegistry
+  .candidatesForTopic("eleicoes-2026")
+  .map((candidate) => structuredClone(candidate));
+const currentCandidatesForTopic = (topicId) => {
+  if (!completeCandidateRegistry.topicsById.get(topicId)?.active) return Object.freeze([]);
+  return Object.freeze(mutableCatalog.filter((candidate) => candidate.topicIds.includes(topicId)));
+};
+const mutableCandidateRegistry = Object.freeze({
+  ...completeCandidateRegistry,
+  candidatesForTopic: currentCandidatesForTopic,
+  candidateBelongsToTopic(candidateId, topicId) {
+    return currentCandidatesForTopic(topicId).some(({ id }) => id === candidateId);
+  },
+});
 const dailyStore = createTopicStore(connectionString, {
   clock: () => dailyNow,
-  candidateCatalog: () => mutableCatalog.map((candidate) => structuredClone(candidate)),
+  candidateRegistry: mutableCandidateRegistry,
 });
 await dailyStore.init();
 const firstDailyPlayer = await dailyStore.createPlayer({ networkHash: "b".repeat(64) });
@@ -785,7 +799,7 @@ assert.equal(legacyTailResults.sessions[0].rounds.filter(({ preference }) => pre
 assert.equal(legacyTailResults.sessions[0].rounds.filter(({ prediction }) => prediction).length, 2);
 const cutReaderStore = createTopicStore(connectionString, {
   clock: () => dailyNow,
-  candidateCatalog: () => mutableCatalog.map((candidate) => structuredClone(candidate)),
+  candidateRegistry: mutableCandidateRegistry,
 });
 await cutReaderStore.init();
 const repeatedCut = await cutReaderStore.dailyCut("eleicoes-2026", "2026-09-16");
@@ -815,7 +829,7 @@ const predictionCommitGate = new Promise((resolve) => { releasePredictionCommit 
 const predictionReachedCommit = new Promise((resolve) => { announcePredictionReachedCommit = resolve; });
 const crossingStore = createTopicStore(connectionString, {
   clock: () => afterMidnight,
-  candidateCatalog: () => mutableCatalog.map((candidate) => structuredClone(candidate)),
+  candidateRegistry: mutableCandidateRegistry,
   hooks: {
     async afterDailyVoteAdmission({ answerId, slot }) {
       if (slot !== 10 || !barrierAnswerIds.has(answerId)) return;

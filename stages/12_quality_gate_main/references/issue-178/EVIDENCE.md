@@ -27,9 +27,19 @@
 ## Resiliência e acessibilidade
 
 - Falha ao salvar mantém a mesma identidade idempotente para retry; estado incerto oferece repetir a mesma tentativa ou sincronizar novamente com o servidor.
+- Um `200` de aposta só avança a interface se `predictionId`, edição, slot, candidato/pulo e status coincidirem exatamente com a tentativa e se a sessão devolvida contiver essa mesma gravação. Corpo truncado ou divergente preserva o slot e a chave de retry.
 - Falha ao carregar o histórico ou o diário não derruba home, ranking, login nem modo livre.
-- Cartas de aposta funcionam por teclado com foco visível e `Enter`; o botão de pular permanece uma ação explícita.
+- Login e logout invalidam consultas antigas e limpam `loading`, resultados, erros, tentativa e seleção de aposta; a identidade seguinte pode abrir seu próprio placar mesmo se a resposta anterior chegar atrasada.
+- Cartas de aposta exibem e anunciam “Toque para apostar”, funcionam por teclado com foco visível e `Enter` e suprimem o clique gerado depois de uma pressão longa. O botão de pular permanece uma ação explícita.
 - A interface compacta foi exercitada em `320×568` sem overflow horizontal e mantém textos de lacre, separação de métricas e baseline visíveis.
+
+## Validação defensiva da revelação
+
+- Antes de renderizar, o cliente exige identidade completa e autoconsistente da edição: tema, ruleset, versão, schema, hashes, ID derivado, tamanho elegível, dez slots, quatro cartas e janelas editoriais à meia-noite de São Paulo.
+- O snapshot revelado contém exatamente 40 IDs únicos, e os dez slots formam uma partição exata `10×4`, sem reutilização ou carta alheia ao catálogo.
+- `publishedAt` não pode anteceder o fechamento. Preferências e apostas precisam estar dentro da janela, em ordem temporal, sem lacunas ou IDs repetidos; toda aposta exige sua preferência correspondente.
+- `completed`, metodologia, aviso de amostra, distribuições, líderes, empates, percentuais e totais acumulados são recalculados e comparados antes da renderização.
+- A regressão `ACCEPTED_INVALID_REVEAL` reproduz payloads anteriormente aceitos apesar de identidade reinterpretada, partição quebrada ou histórico incoerente e comprova sua recusa.
 
 ## Cobertura automatizada
 
@@ -37,7 +47,7 @@
 
 - `npm run test:shared`: 4/4.
 - `npm test --prefix back`: 58/58.
-- `npm test --prefix app`: 74/74.
+- `npm test --prefix app`: 78/78.
 - `npm run build --prefix app`: aprovado; a auditoria de retratos encontrou 99/125 slots com imagem aprovada e preservou os 26 pendentes já conhecidos.
 
 ### Navegadores locais
@@ -49,9 +59,10 @@ Chromium e WebKit aprovaram a regressão completa:
 - `vote-recovery.mjs`;
 - `vote-trust-states.mjs`;
 - `daily-session.mjs`;
-- `daily-prediction.mjs`.
+- `daily-prediction.mjs`;
+- `prediction-identity.mjs`.
 
-Os cenários específicos de diário e aposta cobrem mesmas quatro cartas, teclado, retry após resposta perdida, retomada autoritativa, virada de data, lacre sem parcial, revelação após corte, empate neutro, baseline de 25%, falha isolada e viewport `320×568`.
+Os cenários específicos de diário e aposta cobrem mesmas quatro cartas, teclado, retry após resposta perdida, `200` divergente sem avanço, pressão longa sem perfil ou aposta acidental, retomada autoritativa, troca de identidade durante load, virada de data, lacre sem parcial, revelação após corte, empate neutro, baseline de 25%, falha isolada e viewport `320×568`.
 
 ## PostgreSQL 16
 

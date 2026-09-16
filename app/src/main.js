@@ -1,7 +1,7 @@
 import "./styles.css";
 import { createPlayer, endSession, exchangeGoogleCredential, loadCandidates, loadDailyPredictionResults, loadDailySession, loadPlayerRanking, loadRanking, submitDailyPrediction, submitDailyVote, submitRoundVote } from "./api.js";
 import { confirmedDailyVoteData, dailyPendingPredictionCandidates, dailyRoundCandidates, dailySessionRoundChanged, validateDailySession } from "./daily-session.js";
-import { validateDailyPredictionResults } from "./daily-prediction.js";
+import { confirmedDailyPredictionData, validateDailyPredictionResults } from "./daily-prediction.js";
 import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, rankingPodium, shortName } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
 import { candidatePhoto } from "./photos.js";
@@ -193,8 +193,11 @@ function card(candidate, { mode = "vote" } = {}) {
     : state.busy || Boolean(state.pendingWinnerId);
   const dataAttribute = prediction ? "data-predict" : "data-vote";
   const ariaInstruction = prediction
-    ? "Toque para apostar que será a mais escolhida pelo recorte do dia."
+    ? "Toque para apostar."
     : "Toque para escolher; segure para saber quem é.";
+  const interactionHint = prediction
+    ? '<small class="candidate-profile-hint">Toque para apostar</small>'
+    : '<small class="candidate-profile-hint"><span aria-hidden="true">ⓘ</span> Segure para conhecer</small>';
   const activelySending = prediction ? state.predictionBusy : state.busy;
   return `<div class="candidate-wrap">
     <button class="candidate-card basic-card${state.selectedId === candidate.id ? " is-selected" : ""}${outcomeClass}" type="button" ${dataAttribute}="${escapeHtml(candidate.id)}" ${locked ? `disabled${activelySending ? ' aria-busy="true"' : ""}` : ""} aria-label="${escapeHtml(candidate.name)}, carta básica. ${ariaInstruction}">
@@ -207,7 +210,7 @@ function card(candidate, { mode = "vote" } = {}) {
         <span class="candidate-affiliation">${escapeHtml(candidateAffiliation(candidate))}</span>
         <span class="candidate-office">${escapeHtml(candidate.office || candidateRole(candidate))}</span>
         <small class="candidate-summary">${escapeHtml(candidateCardSummary(candidate))}</small>
-        <small class="candidate-profile-hint"><span aria-hidden="true">ⓘ</span> Segure para conhecer</small>
+        ${interactionHint}
         ${outcomeStamp}
       </span>
       <span class="card-corners" aria-hidden="true"></span>
@@ -766,12 +769,13 @@ async function answerDailyPrediction(candidateId, { retry = false } = {}) {
       { recoveryKey: identity.recoveryKey },
     );
     if (!isCurrentVoteIdentity(state, identity)) return;
-    let session = validateDailySession(response.dailySession);
-    if (response.prediction?.status === "alreadyProcessed") {
-      session = validateDailySession(await loadDailySession(identity.recoveryKey));
+    let confirmed = confirmedDailyPredictionData(response, attempt, state.dailySession);
+    if (confirmed.prediction.status === "alreadyProcessed") {
+      const reloaded = await loadDailySession(identity.recoveryKey);
       if (!isCurrentVoteIdentity(state, identity)) return;
+      confirmed = confirmedDailyPredictionData({ prediction: confirmed.prediction, dailySession: reloaded }, attempt, state.dailySession);
     }
-    installDailySession(session);
+    installDailySession(confirmed.dailySession);
     state.result = attempt.candidateId === null
       ? "Aposta pulada. Sua preferência continua registrada."
       : "Aposta guardada. O resultado só aparece depois do fechamento.";
@@ -1114,8 +1118,8 @@ function bindEvents() {
       showProfile(button.dataset.vote);
     },
   }));
-  document.querySelectorAll("[data-predict]").forEach((button) => button.addEventListener("click", () => {
-    answerDailyPrediction(button.dataset.predict);
+  document.querySelectorAll("[data-predict]").forEach((button) => installPressGesture(button, {
+    onTap: () => answerDailyPrediction(button.dataset.predict),
   }));
   document.querySelectorAll("[data-profile]").forEach((button) => button.addEventListener("click", () => showProfile(button.dataset.profile)));
   document.querySelectorAll("[data-screen]").forEach((button) => button.addEventListener("click", () => {

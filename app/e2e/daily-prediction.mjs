@@ -164,7 +164,13 @@ function closedResults() {
     baselinePercent: 25,
     score: { correct: 1, scored: 1, attempted: 2, skipped: 1, ties: 1, noSample: 0, accuracyPercent: 100 },
     sessions: [{
-      edition: { ...edition, id: "closed-edition", date: "2026-09-15", opensAt: "2026-09-15T03:00:00.000Z", closesAt: "2026-09-16T03:00:00.000Z" },
+      edition: {
+        ...edition,
+        id: `daily-four-card-v1:v1:eleicoes-2026:2026-09-15:${edition.catalogHash.slice(0, 16)}`,
+        date: "2026-09-15",
+        opensAt: "2026-09-15T03:00:00.000Z",
+        closesAt: "2026-09-16T03:00:00.000Z",
+      },
       methodology: "entre quem concluiu a rodada de 15/09",
       completedPlayers,
       sampleNotice: "Recorte de baixa participação; apresente contagens, não uma conclusão populacional.",
@@ -183,6 +189,7 @@ function createServer() {
     predictionResponses: new Map(),
     version: 0,
     loseNextPredictionResponse: true,
+    divergeNextPredictionResponse: false,
     failResults: true,
   };
 }
@@ -240,6 +247,12 @@ async function installApi(page, server) {
         server.loseNextPredictionResponse = false;
         return route.abort("failed");
       }
+      if (server.divergeNextPredictionResponse) {
+        server.divergeNextPredictionResponse = false;
+        const divergent = structuredClone(body);
+        divergent.prediction.candidateId = candidateIds.find((id) => id !== body.prediction.candidateId);
+        return route.fulfill({ status: 200, json: divergent });
+      }
       return route.fulfill({ status: 200, json: body });
     }
     if (pathname === "/api/daily-prediction-results") {
@@ -271,6 +284,9 @@ try {
   assert.deepEqual(predictionCards, preferenceCards);
   assert.equal(await page.getByText("25%", { exact: true }).count(), 1);
   assert.equal(await page.getByText(/Mais escolhida:/).count(), 0, "distribuição vazou antes do fechamento");
+  assert.equal(await page.locator(".prediction-screen").getByText("Toque para apostar", { exact: true }).count(), 4);
+  assert.equal(await page.locator(".prediction-screen").getByText(/Segure para conhecer/).count(), 0);
+  assert.match(await page.locator("[data-predict]").first().getAttribute("aria-label"), /Toque para apostar\.$/);
   const geometry = await page.evaluate(() => ({
     overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
     cards: [...document.querySelectorAll("[data-predict]")].map((card) => {
@@ -281,12 +297,33 @@ try {
   assert.equal(geometry.overflow, false);
   assert.ok(geometry.cards.every(({ left, right }) => left >= -1 && right <= 321));
 
+  const heldCard = await page.locator("[data-predict]").first().boundingBox();
+  assert.ok(heldCard);
+  await page.mouse.move(heldCard.x + heldCard.width / 2, heldCard.y + heldCard.height / 2);
+  await page.mouse.down();
+  await page.waitForTimeout(520);
+  await page.mouse.up();
+  await page.waitForTimeout(50);
+  assert.equal(server.predictions.length, 0, "pressão longa registrou aposta acidentalmente");
+  assert.equal(await page.locator("#modal[open]").count(), 0, "pressão longa prometeu/abriu perfil na aposta");
+
   await page.locator("[data-predict]").nth(1).focus();
   await page.keyboard.press("Enter");
   await page.getByRole("button", { name: "Tentar a mesma aposta novamente" }).waitFor({ timeout: 5000 });
   await page.getByRole("button", { name: "Tentar a mesma aposta novamente" }).click();
   await page.getByText("2/10", { exact: true }).waitFor({ timeout: 5000 });
   assert.equal(server.predictions.length, 1, "retry idempotente duplicou a aposta");
+
+  await page.locator("[data-vote]").first().click();
+  await page.getByRole("heading", { name: "E o Brasil, escolhe quem?" }).waitFor({ timeout: 5000 });
+  server.divergeNextPredictionResponse = true;
+  await page.locator("[data-predict]").first().click();
+  await page.getByRole("button", { name: "Tentar a mesma aposta novamente" }).waitFor({ timeout: 5000 });
+  assert.equal(await page.getByText("E o Brasil, escolhe quem?", { exact: true }).count(), 1, "200 divergente avançou o slot");
+  assert.equal(server.predictions.length, 2);
+  await page.getByRole("button", { name: "Tentar a mesma aposta novamente" }).click();
+  await page.getByText("3/10", { exact: true }).waitFor({ timeout: 5000 });
+  assert.equal(server.predictions.length, 2, "retry do 200 divergente duplicou a aposta");
 
   await page.getByRole("button", { name: "Início" }).click();
   await page.getByRole("button", { name: "Meu placar de apostas" }).click();
@@ -302,7 +339,7 @@ try {
   await page.getByText("Empate — não pontua", { exact: true }).waitFor();
   await page.getByText("Acima de", { exact: false }).waitFor();
   assert.deepEqual(errors, []);
-  console.log(`${browserName}: aposta separada, retry, teclado, 320x568 e revelação fechada validados`);
+  console.log(`${browserName}: aposta separada, correlação 200, pressão longa, retry, teclado, 320x568 e revelação fechada validados`);
 } finally {
   await context.close();
   await browser.close();

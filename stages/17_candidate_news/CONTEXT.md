@@ -31,10 +31,10 @@ O README e o manifest.json registram o grafo entre microissues. A ordenação n�
 
 ## Aceite da entrega atual
 
-- [ ] Três issues principais e dezoito microissues abertas e vinculadas corretamente.
-- [ ] Três agente.md e dezoito Markdown individuais publicados em uma branch/PR documental.
-- [ ] Dependências sem ciclos, referências resolvidas e responsabilidades sem duplicação de frontend.
-- [ ] HANDOFF e verification.json distinguem planejamento entregue de implementação, testes de produto, aprovação humana e deploy pendentes.
+- [x] Três issues principais e dezoito microissues abertas e vinculadas corretamente.
+- [x] Três agente.md e dezoito Markdown individuais publicados na PR documental #228.
+- [x] Dependências sem ciclos, referências resolvidas e responsabilidades sem duplicação de frontend.
+- [x] HANDOFF e verification.json distinguem planejamento entregue de implementação, testes de produto, aprovação humana e deploy pendentes.
 
 ## Fora de escopo desta entrega
 

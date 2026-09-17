@@ -228,4 +228,3 @@ A implementação pode preparar extensibilidade para outros cargos/eleições se
 - [ ] Uso das fontes, operação/custos e correções possuem responsáveis e condições documentadas.
 - [ ] Usuários reais e revisão assistiva confirmam os fluxos centrais.
 - [ ] Aceite e eventuais ressalvas registrados no HANDOFF, sem aprovação humana simulada por agente.
-

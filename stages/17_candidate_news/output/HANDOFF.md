@@ -6,6 +6,14 @@ Planejamento separado em Back #207 (7 microissues), Front #208 (6) e App #209 (5
 
 O épico original e seu loop de saturação estão preservados em references/epico-206.md. O escopo final inclui candidatos, vices/suplentes, propostas/fontes, notícias com três espaços de cobertura, revisão editorial e operação. Front permanece dentro de app/; App assume shell/integração/PWA.
 
+## Publicação documental
+
+- PR: [#228](https://github.com/stefancabral-oss/presidencia-duelo/pull/228).
+- Branch: docs/206-planejamento-frentes.
+- Commit inicial dos documentos: [b4d60c5](https://github.com/stefancabral-oss/presidencia-duelo/commit/b4d60c5fdae7394801887ffd1b6b6e4fa52e1aea).
+- Hierarquia verificada: #206 contém #207/#208/#209; estas contêm respectivamente 7/6/5 microissues, totalizando 21 ligações pai-filho.
+- As 22 issues do conjunto, incluindo o épico, estavam abertas na conferência; as 18 microissues continham roteiro, aceite e link para agente.md.
+
 ## Revisão da decomposição
 
 - Separados pré-requisitos para iniciar com mocks e para concluir com integração real (F06 depende de B06 e A02 para conclusão).

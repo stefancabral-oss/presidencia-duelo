@@ -1,5 +1,14 @@
 # PoliMatch — Contexto global ICM
 
+## Recuperação autorizada em 17/09/2026 — issue #202
+
+Stefan solicitou construir as issues e recolocar o jogo em operação, escolhendo
+expressamente restaurar fotografias existentes nas cartas e adiar ilustrações.
+O estágio ativo é `stages/15_operation_recovery/CONTEXT.md`. A recuperação pode
+publicar um catálogo mínimo de nome/fotografia previamente selecionada, com estado
+`restored`; não equivale à aprovação dos textos editoriais, da taxonomia pendente
+ou de agregados. Esses conteúdos continuam retidos até suas próprias evidências.
+
 ## Integração autorizada em 17/09/2026
 
 O responsável solicitou mesclar as PRs pendentes #191, #194, #195, #199, #200 e

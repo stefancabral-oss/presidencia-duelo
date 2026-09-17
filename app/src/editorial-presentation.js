@@ -19,8 +19,8 @@ export function profileProvenance(candidate = {}) {
   const photo = publication.documentaryPhoto || {};
   const cardArt = publication.cardArt || {};
   return Object.freeze({
-    content: contentDate ? `Conteúdo revisado em ${contentDate}` : "",
-    photo: photo.status === "approved" && photo.source && photo.license
+    content: contentDate ? `Conteúdo revisado em ${contentDate}` : "Perfil editorial em revisão. O jogo não apresenta este conteúdo como revisado.",
+    photo: ["approved", "restored"].includes(photo.status) && photo.source && photo.license
       ? `Foto: ${photo.source} · ${photo.license}`
       : "Foto documental ainda não disponível",
     cardArt: cardArt.status === "approved" && cardArt.version

@@ -239,7 +239,7 @@ function cardPortrait(candidate) {
   const art = candidateCardArt(candidate);
   return `<div class="portrait">
     <span class="portrait-fallback">${escapeHtml(initials(candidate.name))}</span>
-    ${art ? `<img src="${escapeHtml(art)}" alt="Ilustração editorial de ${escapeHtml(candidate.name)}" onerror="this.remove()">` : ""}
+    ${art ? `<img src="${escapeHtml(art)}" alt="Retrato de ${escapeHtml(candidate.name)}" onerror="this.remove()">` : ""}
   </div>`;
 }
 
@@ -254,7 +254,7 @@ function profilePortrait(candidate) {
 
 function profileProvenanceMarkup(candidate) {
   const provenance = profileProvenance(candidate);
-  return `<section class="profile-provenance" aria-labelledby="profile-provenance-title"><h3 id="profile-provenance-title">Procedência</h3>${provenance.content ? `<p class="content-provenance">${escapeHtml(provenance.content)}</p>` : ""}<p class="photo-provenance">${escapeHtml(provenance.photo)}</p>${provenance.cardArt ? `<p class="card-art-provenance">${escapeHtml(provenance.cardArt)}</p>` : ""}</section>`;
+  return `<section class="profile-provenance" aria-labelledby="profile-provenance-title"><h3 id="profile-provenance-title">Procedência</h3>${provenance.content ? `<p class="content-provenance">${escapeHtml(provenance.content)}</p>` : ""}<p class="photo-provenance">${escapeHtml(provenance.photo)}</p>${provenance.cardArt ? `<p class="card-art-provenance">${escapeHtml(provenance.cardArt)}</p>` : ""}<p><a href="https://github.com/stefancabral-oss/presidencia-duelo/blob/main/CREDITS.md" target="_blank" rel="noreferrer">Créditos e origem das imagens</a></p></section>`;
 }
 
 function candidateSlot(index) {
@@ -298,7 +298,7 @@ function candidateSlotModel(candidate, { actionMode = "vote" } = {}) {
     profileAccessibleName: `Conhecer ${candidate.name}`,
     initials: initials(candidate.name),
     photo: candidateCardArt(candidate),
-    photoAlt: `Ilustração editorial de ${candidate.name}`,
+    photoAlt: `Retrato de ${candidate.name}`,
     name: candidate.displayName || shortName(candidate.name),
     affiliation: candidateTaxonomy(candidate),
     office: candidateRole(candidate),
@@ -394,7 +394,7 @@ function topicsContent() {
         <div><p class="eyebrow">Edição disponível</p><h2 id="home-topic-title">${PUBLIC_RANKING_COPY.topicEyebrow}</h2></div>
         <span class="home-live"><i aria-hidden="true"></i> no ar</span>
       </div>
-      <p>Dez escolhas fixas, iguais para todo mundo, fechadas à meia-noite de São Paulo, usando apenas conteúdo revisado e arte de carta aprovada. Use Conhecer perfil em qualquer carta antes de escolher.</p>
+      <p>Dez escolhas fixas, iguais para todo mundo, fechadas à meia-noite de São Paulo. As fotografias do acervo estão de volta; os perfis editoriais continuam em revisão. Use Conhecer perfil em qualquer carta antes de escolher.</p>
       <button class="home-topic-cta" type="button" id="start-election-secondary"><span>${dailyAction}</span><b aria-hidden="true">→</b></button>
     </section>
 
@@ -1000,7 +1000,7 @@ function showProfile(id, trigger = document.activeElement) {
   profileReturnCandidateId = id;
   const returnLabel = state.screen === "duel" ? "Voltar à rodada" : "Voltar ao ranking";
   modal.setAttribute("aria-labelledby", "profile-title");
-  modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar perfil de ${escapeHtml(person.name)}">×</button><div class="profile-scroll"><div class="profile-preview">${profilePortrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2 id="profile-title">${escapeHtml(person.name)}</h2><div class="profile-taxonomy">${profileSection("Cargo/função", candidateRole(person))}${profileSection("Partido", person.party || person.affiliation || "Não informado")}${profileSection("Área de atuação", person.primaryArea || person.area || "Não informado")}${person.contextAffiliation || person.office ? profileSection("Contexto/afiliação", person.contextAffiliation || person.office) : ""}</div>${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>` : '<p class="review-note">Nenhuma fonte pública foi fornecida.</p>'}</section>${profileProvenanceMarkup(person)}</div></div><div class="dialog-actions"><button class="secondary" id="close-modal" type="button">${returnLabel}</button></div>`;
+  modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar perfil de ${escapeHtml(person.name)}">×</button><div class="profile-scroll"><div class="profile-preview">${profilePortrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2 id="profile-title">${escapeHtml(person.name)}</h2>${person.publication?.documentaryPhoto?.status === "restored" ? `<p class="review-note">Nome e fotografia do acervo existente. O perfil completo será publicado após revisão editorial.</p>` : `<div class="profile-taxonomy">${profileSection("Cargo/função", candidateRole(person))}${profileSection("Partido", person.party || person.affiliation || "Não informado")}${profileSection("Área de atuação", person.primaryArea || person.area || "Não informado")}${person.contextAffiliation || person.office ? profileSection("Contexto/afiliação", person.contextAffiliation || person.office) : ""}</div>${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>` : '<p class="review-note">Nenhuma fonte pública foi fornecida.</p>'}</section>`}${profileProvenanceMarkup(person)}</div></div><div class="dialog-actions"><button class="secondary" id="close-modal" type="button">${returnLabel}</button></div>`;
   modal.showModal();
   modal.querySelector("#close-modal-top").focus();
   return true;

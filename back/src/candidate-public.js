@@ -8,6 +8,7 @@ import {
 
 export const PUBLIC_CANDIDATE_SCHEMA_V1 = "candidate-public-v1";
 export const PUBLIC_CANDIDATE_SCHEMA_V2 = "candidate-public-v2";
+export const PUBLIC_CANDIDATE_SCHEMA_V3 = "candidate-public-v3";
 
 export const PUBLIC_CANDIDATE_CONTENT_FIELDS_V1 = Object.freeze([
   "personId",
@@ -262,7 +263,7 @@ function publicationPayload(candidate) {
       version: ownStringOr(cardArt, "version", "", "publication.cardArt.version"),
     },
     documentaryPhoto: {
-      status: status(documentaryPhoto.status, ["missing", "approved", "rejected"], "missing", "publication.documentaryPhoto.status"),
+      status: status(documentaryPhoto.status, ["missing", "approved", "rejected", "restored"], "missing", "publication.documentaryPhoto.status"),
       image: ownStringOr(documentaryPhoto, "image", "", "publication.documentaryPhoto.image"),
       source: ownStringOr(documentaryPhoto, "source", "", "publication.documentaryPhoto.source"),
       license: ownStringOr(documentaryPhoto, "license", "", "publication.documentaryPhoto.license"),
@@ -332,6 +333,7 @@ function candidatePublicSnapshotV2(candidate) {
 const PUBLIC_CANDIDATE_PROJECTORS = new Map([
   [PUBLIC_CANDIDATE_SCHEMA_V1, candidatePublicSnapshotV1],
   [PUBLIC_CANDIDATE_SCHEMA_V2, candidatePublicSnapshotV2],
+  [PUBLIC_CANDIDATE_SCHEMA_V3, (candidate) => candidatePublicPayload(candidate, { ruleset: PUBLIC_CANDIDATE_SCHEMA_V2 })],
 ]);
 
 export function candidatePublicProjectorBySchema(schema) {

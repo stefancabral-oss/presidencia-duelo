@@ -6,6 +6,7 @@ RUN npm ci --omit=dev --prefix back
 
 COPY back back
 COPY shared shared
+COPY app/public/portraits app/public/portraits
 
 WORKDIR /repo/back
 ARG SOURCE_COMMIT=""

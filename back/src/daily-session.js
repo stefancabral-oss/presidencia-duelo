@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { AGGREGATE_PUBLIC_COPY_POLICY, formatAggregateCopy } from "../../shared/aggregate-publication-copy.js";
-import { PUBLIC_CANDIDATE_SCHEMA_V1, PUBLIC_CANDIDATE_SCHEMA_V2 } from "./candidates.js";
+import { PUBLIC_CANDIDATE_SCHEMA_V1, PUBLIC_CANDIDATE_SCHEMA_V2, PUBLIC_CANDIDATE_SCHEMA_V3 } from "./candidates.js";
 
 const DAILY_DISTRIBUTION_COPY = AGGREGATE_PUBLIC_COPY_POLICY.scopes["daily-distribution"].copy;
 
@@ -33,14 +33,18 @@ export const DAILY_SESSION_RULESET_V2 = Object.freeze({
   quota: DAILY_QUOTA,
 });
 
-// O catálogo corrente já usa a taxonomia v2. Edições ainda não materializadas
-// usam o ruleset v2; linhas v1 persistidas continuam resolvidas pela identidade
-// gravada e nunca são reprojetadas com o catálogo corrente.
-export const DAILY_SESSION_RULESET = DAILY_SESSION_RULESET_V2;
+// V3 preserva a autorização e a origem das imagens nos novos baralhos.
+// Edições V1/V2 persistidas mantêm sua identidade e seu snapshot original.
+export const DAILY_SESSION_RULESET_V3 = Object.freeze({
+  ...DAILY_SESSION_RULESET_V2,
+  id: "daily-four-card-v3", version: 3, catalogSchema: PUBLIC_CANDIDATE_SCHEMA_V3,
+});
+export const DAILY_SESSION_RULESET = DAILY_SESSION_RULESET_V3;
 
 const DAILY_RULESET_REGISTRY = new Map([
   [`${DAILY_SESSION_RULESET_V1.id}@${DAILY_SESSION_RULESET_V1.version}`, DAILY_SESSION_RULESET_V1],
   [`${DAILY_SESSION_RULESET_V2.id}@${DAILY_SESSION_RULESET_V2.version}`, DAILY_SESSION_RULESET_V2],
+  [`${DAILY_SESSION_RULESET_V3.id}@${DAILY_SESSION_RULESET_V3.version}`, DAILY_SESSION_RULESET_V3],
 ]);
 
 export function dailyRulesetByIdentity(id, version) {

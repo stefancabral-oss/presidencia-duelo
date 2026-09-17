@@ -1,0 +1,12 @@
+{
+  "issue": 202,
+  "date": "2026-09-17",
+  "unitTests": { "passed": 323, "failed": 0 },
+  "viteBuild": "passed",
+  "verifiedRecoveryPhotos": 54,
+  "photoRecoveryBrowserSmoke": { "chromium": "passed", "webkit": "passed" },
+  "editorialBrowserSmoke": { "webkit": "passed" },
+  "editorialApprovalsInvented": 0,
+  "postgresCI": "pending",
+  "production": "pending"
+}

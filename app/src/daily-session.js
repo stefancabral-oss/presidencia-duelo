@@ -6,6 +6,7 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DAILY_RULESET_SCHEMAS = new Map([
   ["daily-four-card-v1@1", "candidate-public-v1"],
   ["daily-four-card-v2@2", "candidate-public-v2"],
+  ["daily-four-card-v3@3", "candidate-public-v3"],
 ]);
 
 function fail(field) {

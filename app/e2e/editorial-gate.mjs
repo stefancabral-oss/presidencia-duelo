@@ -74,7 +74,7 @@ try {
   await page.getByRole("button", { name: "Começar rodada" }).click();
   await page.locator(".candidate-card").first().waitFor();
   const cardAlts = await page.locator(".candidate-card .portrait img").evaluateAll((images) => images.map((image) => image.alt));
-  if (cardAlts.length !== 4 || cardAlts.some((alt) => !alt.startsWith("Ilustração editorial de "))) {
+  if (cardAlts.length !== 4 || cardAlts.some((alt) => !alt.startsWith("Retrato de "))) {
     throw new Error(`As cartas não usam arte editorial aprovada pela fixture: ${JSON.stringify(cardAlts)}`);
   }
 

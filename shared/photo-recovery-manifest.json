@@ -1,0 +1,387 @@
+{
+  "schemaVersion": 1,
+  "authorizationIssue": 202,
+  "authorizedAt": "2026-09-17",
+  "authorization": "Restaurar as fotografias existentes nas cartas e deixar ilustrações para depois",
+  "scope": "Nomes e fotografias do conjunto anteriormente selecionado; não aprova textos editoriais ou taxonomia.",
+  "photos": [
+    {
+      "personId": 1,
+      "id": "lula",
+      "name": "Luiz Inácio Lula da Silva (Lula)",
+      "image": "/portraits/001.jpg",
+      "sha256": "a791320d1beae02329bfb64f4318179f9a668635df537c6b8072e78f7669c6c1"
+    },
+    {
+      "personId": 2,
+      "id": "flavio-bolsonaro",
+      "name": "Flávio Bolsonaro",
+      "image": "/portraits/002.jpg",
+      "sha256": "ed10021cfe07518474c85206419d0a5c9ec15a18dd2fc330bb22fbb97a1cd3a1"
+    },
+    {
+      "personId": 3,
+      "id": "renan-santos",
+      "name": "Renan Santos",
+      "image": "/portraits/003.jpg",
+      "sha256": "601694654db1912299b1d287316bc297cd228cf83fa7503e3b9563871eec67b5"
+    },
+    {
+      "personId": 4,
+      "id": "ronaldo-caiado",
+      "name": "Ronaldo Caiado",
+      "image": "/portraits/004.jpg",
+      "sha256": "542eebfb4cb590dc9d25d1453d2f60ca2f0dce4100bf92a761d1149a74abc116"
+    },
+    {
+      "personId": 5,
+      "id": "augusto-cury",
+      "name": "Augusto Cury",
+      "image": "/portraits/005.jpg",
+      "sha256": "06feb3c392ff950de7b1c41d2f561498fb2094af57e2d23888acd333e9c21951"
+    },
+    {
+      "personId": 6,
+      "id": "romeu-zema",
+      "name": "Romeu Zema",
+      "image": "/portraits/006.jpg",
+      "sha256": "386b7b3f61c6a1c026abdaa8b3d5e0d7dbe9abfd367c7b69a492daecbec8cc33"
+    },
+    {
+      "personId": 7,
+      "id": "pablo-marcal",
+      "name": "Pablo Marçal",
+      "image": "/portraits/007.jpg",
+      "sha256": "a6d3a34e225d8cfe18b08bd4c7723e87820cd8f1e97520026b1be84176528b55"
+    },
+    {
+      "personId": 11,
+      "id": "tarcisio-de-freitas",
+      "name": "Tarcísio de Freitas",
+      "image": "/portraits/011.jpg",
+      "sha256": "de8891cece89cbd93859d8592ee0ff47299898170bc6b17f9f72828156b02466"
+    },
+    {
+      "personId": 12,
+      "id": "fernando-haddad",
+      "name": "Fernando Haddad",
+      "image": "/portraits/012.jpg",
+      "sha256": "ee6788b8146ed5e5cfdabe850239ce3a2b081fbaf13757d5cd8e17402c12df23"
+    },
+    {
+      "personId": 28,
+      "id": "michelle-bolsonaro",
+      "name": "Michelle Bolsonaro",
+      "image": "/portraits/028.jpg",
+      "sha256": "6657871c921c3f3efa349d1f24e8e73ec57f100fbf422544de5322645f871b53"
+    },
+    {
+      "personId": 31,
+      "id": "gleisi-hoffmann",
+      "name": "Gleisi Hoffmann",
+      "image": "/portraits/031.jpg",
+      "sha256": "a52603656eccd0cca010227ffe299003c6deb9fc37cfbd7cd51fbcb43b1c3209"
+    },
+    {
+      "personId": 33,
+      "id": "marina-silva",
+      "name": "Marina Silva",
+      "image": "/portraits/033.jpg",
+      "sha256": "7c22b5ecbb8fe8a7f9a95b7922699db6f066abf9e0b79df14df7458f4efa20c7"
+    },
+    {
+      "personId": 34,
+      "id": "simone-tebet",
+      "name": "Simone Tebet",
+      "image": "/portraits/034.jpg",
+      "sha256": "7d69c694abb9be7ab985f06a4e10c7735c02bfdeeefc29153e108a25b574ea3b"
+    },
+    {
+      "personId": 35,
+      "id": "rui-costa",
+      "name": "Rui Costa",
+      "image": "/portraits/035.jpg",
+      "sha256": "e9bc95953318235d8b77bbb3f4fdd8553898a9f2b4d99c7a2b540fd8b74d7eda"
+    },
+    {
+      "personId": 36,
+      "id": "hugo-motta",
+      "name": "Hugo Motta",
+      "image": "/portraits/036.jpg",
+      "sha256": "54fbb3f791dd44c5955c95d12acd0c42e4760775e9f81eff11c23d80f022f36b"
+    },
+    {
+      "personId": 37,
+      "id": "davi-alcolumbre",
+      "name": "Davi Alcolumbre",
+      "image": "/portraits/037.jpg",
+      "sha256": "f0f691468fbdd5f038715e2faba191c6f4dabe2aeb0c32abb86d942d6d6fc07e"
+    },
+    {
+      "personId": 39,
+      "id": "nikolas-ferreira",
+      "name": "Nikolas Ferreira",
+      "image": "/portraits/039.jpg",
+      "sha256": "0d45045f720e5aecccd8cfb890db14eb4b3e4e96b4eb6e81a3d415791b030499"
+    },
+    {
+      "personId": 42,
+      "id": "bia-kicis",
+      "name": "Bia Kicis",
+      "image": "/portraits/042.jpg",
+      "sha256": "c465c024a0514c57b483b38cbe15b93ab0a49eb3cb4a77bd19e41b2308fa8e68"
+    },
+    {
+      "personId": 46,
+      "id": "lindbergh-farias",
+      "name": "Lindbergh Farias",
+      "image": "/portraits/046.jpg",
+      "sha256": "faa89896fd2665e8872a19d028e980761839a7c34c8a9cbb066ab1c2beea8e31"
+    },
+    {
+      "personId": 47,
+      "id": "janja",
+      "name": "Janja",
+      "image": "/portraits/047.jpg",
+      "sha256": "cbb0f245987db7f53cee95da3c9da222820183f4dc8eef8e4a4c929e491493eb"
+    },
+    {
+      "personId": 48,
+      "id": "guilherme-boulos",
+      "name": "Guilherme Boulos",
+      "image": "/portraits/048.jpg",
+      "sha256": "64e42b5c5405d64e346f2943b3acb212a6f7b5bda66826e8a43a130fea59631d"
+    },
+    {
+      "personId": 51,
+      "id": "anielle-franco",
+      "name": "Anielle Franco",
+      "image": "/portraits/051.jpg",
+      "sha256": "d9a42434f1ae3b346e9bc6a8747393cffeadb3f868aaa025cc8fed33e07c1990"
+    },
+    {
+      "personId": 53,
+      "id": "alexandre-de-moraes",
+      "name": "Alexandre de Moraes",
+      "image": "/portraits/053.jpg",
+      "sha256": "8ffb2264a0515d3263712859cbba7d108b4c1b9be0eceee03590ab359e283f02"
+    },
+    {
+      "personId": 59,
+      "id": "andre-mendonca",
+      "name": "André Mendonça",
+      "image": "/portraits/059.jpg",
+      "sha256": "58c8bcab6659d00373eb93acbeb3b527ea4bbb08d4736484ae078b6218fe2773"
+    },
+    {
+      "personId": 62,
+      "id": "flavio-dino",
+      "name": "Flávio Dino",
+      "image": "/portraits/062.jpg",
+      "sha256": "cb5d8e6bbbaa40c2d47a6d92e94b825b24d4585861fbd8640b4f697dd1f5d00c"
+    },
+    {
+      "personId": 63,
+      "id": "jair-bolsonaro",
+      "name": "Jair Bolsonaro",
+      "image": "/portraits/063.jpg",
+      "sha256": "616356e291469cc3745dc37cc0163041dde07fa9e71caf6b781b0f2c3adc4761"
+    },
+    {
+      "personId": 64,
+      "id": "eduardo-bolsonaro",
+      "name": "Eduardo Bolsonaro",
+      "image": "/portraits/064.jpg",
+      "sha256": "9b671875cf80fd903fd73748b8a029cd3a10290d29fc594aa06424371aa04bdf"
+    },
+    {
+      "personId": 65,
+      "id": "carlos-bolsonaro",
+      "name": "Carlos Bolsonaro",
+      "image": "/portraits/065.jpg",
+      "sha256": "acfca8611e91b0718312ca818ad59311303851544b12f094b77e86f8382d725d"
+    },
+    {
+      "personId": 72,
+      "id": "rodrigo-pacheco",
+      "name": "Rodrigo Pacheco",
+      "image": "/portraits/072.jpg",
+      "sha256": "9f868b969fe9364d59aac9a037a0ae06407eb00288e91727c5f04dd35928eee2"
+    },
+    {
+      "personId": 73,
+      "id": "rogerio-marinho",
+      "name": "Rogério Marinho",
+      "image": "/portraits/073.jpg",
+      "sha256": "b69659a5ae0a70447ac8b908108d653504db1631dec1b22d64376197d6e81c3e"
+    },
+    {
+      "personId": 78,
+      "id": "rachel-sheherazade",
+      "name": "Rachel Sheherazade",
+      "image": "/portraits/078.jpg",
+      "sha256": "0c9c972a93a72a0429c382a6fb3bc77539a7a3941c8a98019008ecb76a69750e"
+    },
+    {
+      "personId": 79,
+      "id": "kim-kataguiri",
+      "name": "Kim Kataguiri",
+      "image": "/portraits/079.jpg",
+      "sha256": "d286dd5dff7d01adfc1fd4c0bb6e582e6b1d42eb77169b229b477e63a34d1b83"
+    },
+    {
+      "personId": 80,
+      "id": "andre-janones",
+      "name": "André Janones",
+      "image": "/portraits/080.jpg",
+      "sha256": "28b576c9ea3cc2812b14b01f284fd71cd201ffd30f23c386b5d98ddaeddfca49"
+    },
+    {
+      "personId": 83,
+      "id": "carla-zambelli",
+      "name": "Carla Zambelli",
+      "image": "/portraits/083.jpg",
+      "sha256": "c8c8026ec65c04b72e9986b135ed97e97c8d9c6fd51b65d7d9b7e2a6dc550bea"
+    },
+    {
+      "personId": 84,
+      "id": "tabata-amaral",
+      "name": "Tabata Amaral",
+      "image": "/portraits/084.jpg",
+      "sha256": "c632402df925b4b63bc3f4358b0a2a559cf4a0faa2f6f40844f121babaa76537"
+    },
+    {
+      "personId": 85,
+      "id": "glauber-braga",
+      "name": "Glauber Braga",
+      "image": "/portraits/085.jpg",
+      "sha256": "4c6e4ee5d2744fc4be13d83778256f03cba836eeca2db00baa5487ca5eddcd88"
+    },
+    {
+      "personId": 86,
+      "id": "sergio-moro",
+      "name": "Sérgio Moro",
+      "image": "/portraits/086.jpg",
+      "sha256": "f492e5fc9f4f5fcc5aae6e338fb05ce4b0064270d50b641e3c8c182e1fc43cb8"
+    },
+    {
+      "personId": 90,
+      "id": "paulo-guedes",
+      "name": "Paulo Guedes",
+      "image": "/portraits/090.jpg",
+      "sha256": "17214474c70af711748ee74a26a8da6019ebd72d4331474976a63a8ac51182fe"
+    },
+    {
+      "personId": 95,
+      "id": "deltan-dallagnol",
+      "name": "Deltan Dallagnol",
+      "image": "/portraits/095.jpg",
+      "sha256": "c1d0763faf72bc735bf302d9aa49e982ad09a7adee15d8f02ebdcd5d6107ca07"
+    },
+    {
+      "personId": 98,
+      "id": "ricardo-nunes",
+      "name": "Ricardo Nunes",
+      "image": "/portraits/098.jpg",
+      "sha256": "e80a5c8bb0ff27aebabc2125140e25b040bfdd0ccb2484a91fca31597b8adeb5"
+    },
+    {
+      "personId": 101,
+      "id": "anitta",
+      "name": "Anitta",
+      "image": "/portraits/101.jpg",
+      "sha256": "8d564bcd12bc96240edcbf02d2794b0471c67255d400c173ad07495f071b0494"
+    },
+    {
+      "personId": 102,
+      "id": "neymar-jr",
+      "name": "Neymar Jr.",
+      "image": "/portraits/102.jpg",
+      "sha256": "17d358bda213ba3b027f149a3df64876d91e6d1a59ed1fe98ee05a2b857ac888"
+    },
+    {
+      "personId": 103,
+      "id": "gusttavo-lima",
+      "name": "Gusttavo Lima",
+      "image": "/portraits/103.jpg",
+      "sha256": "4ec35519858fbf7f75e548c63e73844428a537721b040f825a0542af4dc6abf7"
+    },
+    {
+      "personId": 104,
+      "id": "ludmilla",
+      "name": "Ludmilla",
+      "image": "/portraits/104.jpg",
+      "sha256": "37a1a3e47cacfeaa1e2a808f9bcb5e8a4849e7943d7427255d5216977df1bf3e"
+    },
+    {
+      "personId": 105,
+      "id": "jose-aldo",
+      "name": "José Aldo",
+      "image": "/portraits/105.jpg",
+      "sha256": "9ee8fb1f12ff9683f44653e44256b00d4d03dba93af9ed437e1dc15a3bd01721"
+    },
+    {
+      "personId": 106,
+      "id": "vitor-belfort",
+      "name": "Vitor Belfort",
+      "image": "/portraits/106.jpg",
+      "sha256": "0be2410f61d27894401ffd5ba6d5c90ded56b9ce0efb0b7d63a510cbfc85edcc"
+    },
+    {
+      "personId": 107,
+      "id": "popo",
+      "name": "Popó (Acelino Freitas)",
+      "image": "/portraits/107.jpg",
+      "sha256": "022b9b030963abd6a522e23579f5ea9d1289c37ca6fe7d85a97854cc3f0d39cb"
+    },
+    {
+      "personId": 108,
+      "id": "luciano-huck",
+      "name": "Luciano Huck",
+      "image": "/portraits/108.jpg",
+      "sha256": "41c2fb2af50d8f88ee2d318a61504274adc71aec1d487a5c2a49f19186f9db69"
+    },
+    {
+      "personId": 109,
+      "id": "ratinho",
+      "name": "Ratinho (apresentador)",
+      "image": "/portraits/109.jpg",
+      "sha256": "3aa18315d7e3ecb3fdc90c36fff0a076a91759d0d2a034e31371b91adde490e0"
+    },
+    {
+      "personId": 110,
+      "id": "casimiro",
+      "name": "Casimiro",
+      "image": "/portraits/110.jpg",
+      "sha256": "847a4f0434418b17056284e9b3ccdb07a0eca846d7256bd283315ae46eb0c940"
+    },
+    {
+      "personId": 111,
+      "id": "whindersson-nunes",
+      "name": "Whindersson Nunes",
+      "image": "/portraits/111.jpg",
+      "sha256": "daff9a428de775bd7a6b24c3196c77c18b0871973597eaa0df19576d5eb0d402"
+    },
+    {
+      "personId": 112,
+      "id": "bruno-gagliasso",
+      "name": "Bruno Gagliasso",
+      "image": "/portraits/112.jpg",
+      "sha256": "01d715eb203ae7d5b8082ee2fcbbd704b0983865c41ad4900d52c61a98d10cac"
+    },
+    {
+      "personId": 121,
+      "id": "antonia-fontenelle",
+      "name": "Antonia Fontenelle",
+      "image": "/portraits/121.jpg",
+      "sha256": "e97eda5685554967e4db55ab62176569d7c169845701e96360a8da7f04db3bef"
+    },
+    {
+      "personId": 125,
+      "id": "gracyanne-barbosa",
+      "name": "Gracyanne Barbosa",
+      "image": "/portraits/125.jpg",
+      "sha256": "18d3d93d308f32c53388fbfe782101846b76b65000f162ca709e194366a2d85a"
+    }
+  ]
+}

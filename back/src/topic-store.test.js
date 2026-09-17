@@ -229,7 +229,10 @@ test("published daily cuts carry and validate their own selected public snapshot
       fingerprint: "internal-only",
       photoApproved: true,
       topicIds: ["eleicoes-2026"],
-      publication: { audit: { reviewer: "interno", decidedBy: "editor", basis: "rascunho" } },
+      publication: {
+        content: { status: "pending", audit: { reviewer: "interno", decidedBy: "editor", basis: "rascunho" } },
+        cardArt: { status: "missing" }, documentaryPhoto: { status: "missing" },
+      },
       } : {}),
     },
   ));
@@ -275,7 +278,8 @@ test("published daily cuts carry and validate their own selected public snapshot
   assert.equal(validated.catalog.length, 40);
   assert.equal(validated.catalog.find(({ id }) => id === candidates[0].id).summary, "Metadado histórico 1");
   assert.deepEqual(validated.catalog[0].topicIds, ["eleicoes-2026"]);
-  for (const field of ["secret", "fingerprint", "photoApproved", "publication"]) {
+  assert.equal(Object.hasOwn(validated.catalog[0].publication.content, "audit"), false);
+  for (const field of ["secret", "fingerprint", "photoApproved"]) {
     assert.equal(Object.hasOwn(validated.catalog[0], field), false, `${field} vazou no recorte diário`);
   }
   assert.throws(
@@ -470,9 +474,9 @@ test("a new editorial date adopts the active ruleset only when no edition exists
   const created = await materializeDailyEdition(fakeClient, "eleicoes-2026", "2026-09-17", {
     candidateCatalog,
   });
-  assert.equal(created.edition.rulesetId, DAILY_SESSION_RULESET_V2.id);
-  assert.equal(created.edition.rulesetVersion, 2);
-  assert.equal(created.edition.catalogSchema, PUBLIC_CANDIDATE_SCHEMA_V2);
+  assert.equal(created.edition.rulesetId, DAILY_SESSION_RULESET.id);
+  assert.equal(created.edition.rulesetVersion, 3);
+  assert.equal(created.edition.catalogSchema, DAILY_SESSION_RULESET.catalogSchema);
   assert.equal(created.catalog[0].primaryArea, "Política institucional");
   assert.equal(Object.hasOwn(created.catalog[0], "affiliation"), false);
 
@@ -481,7 +485,7 @@ test("a new editorial date adopts the active ruleset only when no edition exists
     ruleset: DAILY_SESSION_RULESET_V1,
   });
   assert.equal(reloaded.edition.id, created.edition.id);
-  assert.equal(reloaded.edition.rulesetId, DAILY_SESSION_RULESET_V2.id);
+  assert.equal(reloaded.edition.rulesetId, DAILY_SESSION_RULESET.id);
 });
 
 test("vote ids remain idempotent UUIDs", () => {

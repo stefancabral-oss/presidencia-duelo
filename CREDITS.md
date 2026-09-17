@@ -4,6 +4,8 @@ O PoliMatch mantém ativos com funções e estados diferentes. Fotografia docume
 
 ## Fotografias de perfil
 
+Em 17/09/2026 o responsável pelo produto autorizou restaurar as fotografias existentes nas cartas e adiar as ilustrações (issue #202). O conjunto de 54 nomes e arquivos está fixado, com SHA-256, em `shared/photo-recovery-manifest.json`. Essa restauração não resolve pendências de origem ou licença nem aprova os textos dos perfis. Durante a recuperação, alegações biográficas e classificações pendentes não são publicadas.
+
 As fotografias reais vêm de Wikimedia Commons, páginas institucionais, perfis públicos, veículos de imprensa e lotes entregues pelo curador. Fonte, crédito, licença declarada e checksum dos pacotes de referência estão documentados em:
 
 - `stages/10_rebuild_eleicoes_2026/input/polimatch-fotos-catalogo-125.md`;

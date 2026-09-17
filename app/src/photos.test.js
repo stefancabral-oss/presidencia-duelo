@@ -16,14 +16,16 @@ test("files and legacy fields never bypass explicit editorial asset approval", (
   assert.equal(candidateDocumentaryPhoto({ publication: { documentaryPhoto: { status: "rejected", image: "/portraits/101.jpg" } } }), "");
 });
 
-test("approved card art and documentary photos remain independent", () => {
+test("cards prefer photographs and retain approved artwork as a fallback", () => {
   const candidate = {
     publication: {
       cardArt: { status: "approved", image: "/chromas/fixture.jpg" },
       documentaryPhoto: { status: "approved", image: "/portraits/fixture.jpg" },
     },
   };
-  assert.equal(candidateCardArt(candidate), "/chromas/fixture.jpg?v=test");
+  assert.equal(candidateCardArt(candidate), "/portraits/fixture.jpg?v=test");
+  assert.equal(candidateCardArt({ publication: { cardArt: candidate.publication.cardArt } }), "/chromas/fixture.jpg?v=test");
+  assert.equal(candidateCardArt({ publication: { documentaryPhoto: { status: "restored", image: "/portraits/001.jpg" } } }), "/portraits/001.jpg?v=test");
   assert.equal(candidateDocumentaryPhoto(candidate), "/portraits/fixture.jpg?v=test");
   assert.equal(candidateCardArt({ publication: { cardArt: { status: "approved", image: "https://cdn.example/card.jpg" } } }), "");
   assert.equal(candidateCardArt({ publication: { cardArt: { status: "approved", image: "//cdn.example/card.jpg" } } }), "");

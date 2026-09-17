@@ -5,18 +5,21 @@ import EDITORIAL_GOVERNANCE from "../../shared/editorial-governance-policy.json"
 import {
   PUBLIC_CANDIDATE_SCHEMA_V1,
   PUBLIC_CANDIDATE_SCHEMA_V2,
+  PUBLIC_CANDIDATE_SCHEMA_V3,
   candidatePublicProjectorBySchema,
   candidatePublicSnapshot,
 } from "./candidate-public.js";
 import { approvalAuthorityFromEnvironment } from "./editorial-authority.js";
 import { createCandidateRegistry } from "./editorial-gate.js";
 import { loadRepositoryFile, statRepositoryFile } from "./repository-files.js";
+import PHOTO_RECOVERY from "../../shared/photo-recovery-manifest.json" with { type: "json" };
+import { withPhotoRecovery } from "./photo-recovery.js";
 
 export const TOPICS = Object.freeze([
   {
     id: "eleicoes-2026",
     name: "Eleições 2026",
-    description: "Políticos e influenciadores com conteúdo e arte de carta aprovados para a edição de 2026.",
+    description: "Pessoas públicas com fotografias restauradas do acervo existente. Perfis editoriais seguem em revisão.",
     status: "pilot",
     active: true,
   },
@@ -36,7 +39,7 @@ export const TOPICS = Object.freeze([
   },
 ]);
 
-export const PRODUCTION_CANDIDATE_REGISTRY = createCandidateRegistry({
+export const EDITORIAL_CANDIDATE_REGISTRY = createCandidateRegistry({
   catalog: CATALOG,
   topics: TOPICS,
   ledger: EDITORIAL_LEDGER,
@@ -47,6 +50,7 @@ export const PRODUCTION_CANDIDATE_REGISTRY = createCandidateRegistry({
   statRepositoryFile,
   verifyApprovalAuthority: approvalAuthorityFromEnvironment(process.env),
 });
+export const PRODUCTION_CANDIDATE_REGISTRY = withPhotoRecovery(EDITORIAL_CANDIDATE_REGISTRY, PHOTO_RECOVERY, loadRepositoryFile);
 export const CANDIDATES = PRODUCTION_CANDIDATE_REGISTRY.candidates;
 export const CANDIDATES_BY_ID = PRODUCTION_CANDIDATE_REGISTRY.candidatesById;
 export const TOPICS_BY_ID = PRODUCTION_CANDIDATE_REGISTRY.topicsById;
@@ -55,8 +59,8 @@ export function candidatesForTopic(topicId, registry = PRODUCTION_CANDIDATE_REGI
   return registry.candidatesForTopic(topicId);
 }
 
-export const CURRENT_PUBLIC_CANDIDATE_SCHEMA = PUBLIC_CANDIDATE_SCHEMA_V2;
-export { PUBLIC_CANDIDATE_SCHEMA_V1, PUBLIC_CANDIDATE_SCHEMA_V2 };
+export const CURRENT_PUBLIC_CANDIDATE_SCHEMA = PUBLIC_CANDIDATE_SCHEMA_V3;
+export { PUBLIC_CANDIDATE_SCHEMA_V1, PUBLIC_CANDIDATE_SCHEMA_V2, PUBLIC_CANDIDATE_SCHEMA_V3 };
 
 export function candidateProjectorBySchema(schema) {
   return candidatePublicProjectorBySchema(schema);
@@ -73,5 +77,5 @@ export function candidateBelongsToTopic(candidateId, topicId, registry = PRODUCT
 }
 
 export function serializeCandidate(candidate = {}) {
-  return candidatePublicSnapshot(candidate, PUBLIC_CANDIDATE_SCHEMA_V2);
+  return candidatePublicSnapshot(candidate, CURRENT_PUBLIC_CANDIDATE_SCHEMA);
 }

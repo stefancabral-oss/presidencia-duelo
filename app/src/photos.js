@@ -18,9 +18,10 @@ function approvedLocalAsset(asset = {}) {
 }
 
 export function candidateCardArt(candidate = {}) {
-  return approvedLocalAsset(candidate.publication?.cardArt);
+  return candidateDocumentaryPhoto(candidate) || approvedLocalAsset(candidate.publication?.cardArt);
 }
 
 export function candidateDocumentaryPhoto(candidate = {}) {
-  return approvedLocalAsset(candidate.publication?.documentaryPhoto);
+  const asset = candidate.publication?.documentaryPhoto;
+  return approvedLocalAsset(asset?.status === "restored" ? { ...asset, status: "approved" } : asset);
 }

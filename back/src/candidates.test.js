@@ -5,6 +5,8 @@ import {
   CURRENT_PUBLIC_CANDIDATE_SCHEMA,
   PUBLIC_CANDIDATE_SCHEMA_V1,
   PUBLIC_CANDIDATE_SCHEMA_V2,
+  PUBLIC_CANDIDATE_SCHEMA_V3,
+  EDITORIAL_CANDIDATE_REGISTRY,
   TOPICS,
   candidateBelongsToTopic,
   candidateProjectorBySchema,
@@ -20,19 +22,20 @@ test("the rebuild exposes one active topic and two announced expansions", () => 
   assert.deepEqual(TOPICS.filter(({ active }) => !active).map(({ id }) => id), ["influenciadores", "escandalos"]);
 });
 
-test("production stays closed without externally injected authority receipts", () => {
+test("recovery restores only the authorized photos without approving editorial content", () => {
   assert.deepEqual(PRODUCTION_CANDIDATE_REGISTRY.authority, {
     externalVerifierConfigured: false,
     verifiedDecisions: 0,
     deniedDecisions: 0,
   });
   assert.equal(CANDIDATES.length, 125);
-  assert.equal(candidatesForTopic("eleicoes-2026").length, 0);
+  assert.equal(candidatesForTopic("eleicoes-2026").length, 54);
+  assert.equal(EDITORIAL_CANDIDATE_REGISTRY.candidatesForTopic("eleicoes-2026").length, 0);
   assert.equal(candidatesForTopic("influenciadores").length, 0);
-  assert.equal(candidateBelongsToTopic("lula", "eleicoes-2026"), false);
+  assert.equal(candidateBelongsToTopic("lula", "eleicoes-2026"), true);
   assert.equal(candidateBelongsToTopic("acm-neto", "eleicoes-2026"), false);
-  assert.ok(CANDIDATES.every(({ eligible, reviewStatus, cardArt, photo }) => (
-    !eligible && reviewStatus === "pending" && cardArt === "" && photo === ""
+  assert.ok(CANDIDATES.every(({ reviewStatus, cardArt }) => (
+    reviewStatus === "pending" && cardArt === ""
   )));
 });
 
@@ -66,10 +69,10 @@ test("every candidate exposes a reviewable editorial profile", () => {
     assert.equal(Array.isArray(candidate.sources), true);
     assert.match(candidate.reviewStatus, /^(pending|approved|rejected)$/);
     assert.match(candidate.publication.cardArt.status, /^(missing|approved|rejected)$/);
-    assert.match(candidate.publication.documentaryPhoto.status, /^(missing|approved|rejected)$/);
-    assert.equal(candidate.sources.length > 0, true);
+    assert.match(candidate.publication.documentaryPhoto.status, /^(missing|approved|rejected|restored)$/);
+    assert.equal(candidate.sources.length > 0, !candidate.eligible);
     assert.equal(typeof candidate.role, "string");
-    assert.equal(typeof candidate.primaryArea, "string");
+    assert.equal(typeof candidate.primaryArea, candidate.eligible ? "object" : "string");
     assert.equal(typeof candidate.taxonomyProvenance, "object");
   }
 });
@@ -82,14 +85,14 @@ test("serializes the real catalog through the public API allowlist", () => {
   )));
 
   const lula = serialized.find(({ id }) => id === "lula");
-  assert.equal(lula.party, "PT");
-  assert.equal(lula.taxonomyProvenance.party.status, "extracted");
+  assert.equal(lula.party, null);
+  assert.equal(lula.taxonomyProvenance.party.status, "ambiguous");
 
   const antonia = serialized.find(({ id }) => id === "antonia-fontenelle");
-  assert.equal(antonia.role, "Influenciadora digital e candidata a deputada federal (RJ)");
-  assert.equal(antonia.party, "PSDB");
-  assert.equal(antonia.primaryArea, "Comunicação digital");
-  assert.equal(antonia.taxonomyProvenance.primaryArea.status, "inferred");
+  assert.equal(antonia.role, "Pessoa pública");
+  assert.equal(antonia.party, null);
+  assert.equal(antonia.primaryArea, null);
+  assert.equal(antonia.taxonomyProvenance.primaryArea.status, "ambiguous");
 });
 
 test("the public candidate projection excludes eligibility and editorial audit metadata", () => {
@@ -98,17 +101,22 @@ test("the public candidate projection excludes eligibility and editorial audit m
     secret: "never-public",
     fingerprint: "internal-fingerprint",
     eligible: true,
-    publication: { audit: { decidedBy: "reviewer@example.com", basis: "internal" } },
+    publication: {
+      ...CANDIDATES[0].publication,
+      content: { ...CANDIDATES[0].publication.content, audit: { decidedBy: "reviewer@example.com", basis: "internal" } },
+    },
   });
   assert.equal(projected.id, CANDIDATES[0].id);
   assert.equal(projected.bio, CANDIDATES[0].bio);
   assert.equal(projected.reviewStatus, CANDIDATES[0].reviewStatus);
   assert.deepEqual(projected.topicIds, CANDIDATES[0].topicIds);
-  for (const field of ["secret", "fingerprint", "eligible", "publication", "photoApproved", "group", "area", "affiliation", "office"]) {
+  for (const field of ["secret", "fingerprint", "eligible", "photoApproved", "group", "area", "affiliation", "office"]) {
     assert.equal(Object.hasOwn(projected, field), false, `${field} vazou na projeção pública`);
   }
-  assert.equal(CURRENT_PUBLIC_CANDIDATE_SCHEMA, PUBLIC_CANDIDATE_SCHEMA_V2);
-  assert.deepEqual(candidateProjectorBySchema(PUBLIC_CANDIDATE_SCHEMA_V2)(CANDIDATES[0]), projected);
+  assert.equal(Object.hasOwn(projected.publication.content, "audit"), false);
+  assert.equal(CURRENT_PUBLIC_CANDIDATE_SCHEMA, PUBLIC_CANDIDATE_SCHEMA_V3);
+  assert.deepEqual(candidateProjectorBySchema(PUBLIC_CANDIDATE_SCHEMA_V3)(CANDIDATES[0]), projected);
+  assert.equal(Object.hasOwn(candidateProjectorBySchema(PUBLIC_CANDIDATE_SCHEMA_V2)(CANDIDATES[0]), "publication"), false);
   assert.deepEqual(serializeCandidate(CANDIDATES[0]), projected);
 
   const historicalCandidate = {

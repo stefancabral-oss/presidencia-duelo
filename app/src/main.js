@@ -106,7 +106,6 @@ function applyExpiredAggregateCapabilities(previous = state.capabilities) {
     state.ranking = [];
     state.globalDuels = 0;
     state.globalFeedbackMessage = "";
-    state.rankingView = "personal";
   }
   if (!aggregateAvailable("prediction-reveal")) {
     state.predictionResults = null;
@@ -299,7 +298,7 @@ function candidateSlotModel(candidate, { actionMode = "vote" } = {}) {
     profileAccessibleName: `Conhecer ${candidate.name}`,
     initials: initials(candidate.name),
     photo: candidateCardArt(candidate),
-    photoAlt: `Foto de ${candidate.name}`,
+    photoAlt: `Ilustração editorial de ${candidate.name}`,
     name: candidate.displayName || shortName(candidate.name),
     affiliation: candidateTaxonomy(candidate),
     office: candidateRole(candidate),
@@ -586,7 +585,7 @@ function rankingPresentation() {
     : totalDuels === 1 ? PUBLIC_RANKING_COPY.choiceCountOne : PUBLIC_RANKING_COPY.choiceCountMany;
   const topicEyebrow = personal ? "Eleições 2026" : PUBLIC_RANKING_COPY.topicEyebrow;
   const searchLabel = personal ? "Todos os nomes" : PUBLIC_RANKING_COPY.searchLabel;
-  const searchPlaceholder = personal ? "Buscar nome ou partido" : PUBLIC_RANKING_COPY.searchPlaceholder;
+  const searchPlaceholder = PUBLIC_RANKING_COPY.searchPlaceholder;
   const backToChoices = personal ? "Voltar às escolhas" : PUBLIC_RANKING_COPY.backToChoices;
   return { personal, totalDuels, rows, podiumCards, publicPulse, empty, revealCount: !filtersActive && !state.rankingExpanded && filtered.length > visible.length ? filtered.length : 0, publicRankingAvailable, parties, areas, options, trust, selector, countNoun, topicEyebrow, searchLabel, searchPlaceholder, backToChoices };
 }
@@ -1771,6 +1770,8 @@ function handleAppClick(event) {
     sound.play("navigation");
     state.rankingView = button.dataset.rankingView;
     state.rankingQuery = "";
+    state.rankingParty = "";
+    state.rankingArea = "";
     state.rankingExpanded = false;
     renderRanking();
   }
@@ -1809,10 +1810,12 @@ function installEvents() {
     const returnCandidateId = profileReturnCandidateId;
     profileReturnTarget = null;
     profileReturnCandidateId = "";
-    setTimeout(() => {
-      const currentCandidateId = returnTarget?.dataset.profile || returnTarget?.dataset.vote || "";
-      if (returnTarget?.isConnected && currentCandidateId === returnCandidateId) returnTarget.focus();
-    }, 0);
+    const currentCandidateId = returnTarget?.dataset.profile || returnTarget?.dataset.vote || "";
+    const active = document.activeElement;
+    if (returnTarget?.isConnected && currentCandidateId === returnCandidateId
+      && (active === document.body || active === returnTarget || refs.modal.contains(active))) {
+      returnTarget.focus();
+    }
   });
   refs.coachDialog.addEventListener("close", () => {
     localStorage.setItem("polimatch:v4:round-coach", "seen");

@@ -52,7 +52,7 @@ export const AGGREGATE_PUBLIC_COPY_POLICY = deepFreeze({
         choiceCountMany: "escolhas confirmadas",
         podiumAria: "Pódio",
         searchLabel: "Todos os nomes",
-        searchPlaceholder: "Buscar nome ou partido",
+        searchPlaceholder: "Buscar por nome, partido ou área",
         rowWinOne: "vitória",
         rowWinMany: "vitórias",
         rowLossOne: "derrota",

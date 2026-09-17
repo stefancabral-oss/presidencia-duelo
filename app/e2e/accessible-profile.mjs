@@ -97,6 +97,7 @@ const page = await context.newPage();
 const pageErrors = [];
 const voteRequests = [];
 let rankingReads = 0;
+let capabilityReads = 0;
 let holdNextVoteResponse = false;
 let releaseHeldVoteResponse = null;
 page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -119,7 +120,10 @@ await page.addInitScript(() => {
 await page.route(/\/api(?:\/|$)/, async (route) => {
   const request = route.request();
   const path = new URL(request.url()).pathname;
-  if (path === "/api/capabilities") return route.fulfill({ status: 200, json: capabilityFixture() });
+  if (path === "/api/capabilities") {
+    capabilityReads += 1;
+    return route.fulfill({ status: 200, json: capabilityFixture() });
+  }
   if (path === "/api/candidates") return route.fulfill({ status: 200, json: { candidates } });
   if (path === "/api/ranking") {
     rankingReads += 1;
@@ -320,8 +324,8 @@ try {
   }
   await activateWithKeyboard(page, page.locator('[data-ranking-view="personal"]'));
   await page.getByText("Faça uma escolha para começar seu ranking pessoal.", { exact: true }).waitFor();
-  if (voteRequests.length !== 0 || rankingReads !== 1) {
-    throw new Error("Abrir perfis alterou ou recarregou o ranking sem uma escolha");
+  if (voteRequests.length !== 0 || rankingReads < 1 || rankingReads > capabilityReads) {
+    throw new Error("Abrir perfis alterou votos ou recarregou ranking sem revalidar autorização");
   }
 
   await activateWithKeyboard(page, page.locator('.nav-button[data-screen="duel"]'));

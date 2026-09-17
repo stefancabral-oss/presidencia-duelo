@@ -625,7 +625,7 @@ try {
   }
   await page.keyboard.press("Tab");
   if (!await votingCard.evaluate((card) => card === document.activeElement && card.matches(":focus-visible"))) {
-    throw new Error("A carta de voto não recebeu foco visível pela navegação de teclado");
+    throw new Error(`A carta de voto não recebeu foco visível pela navegação de teclado: ${await page.evaluate(() => document.activeElement.outerHTML)}`);
   }
   await page.evaluate(() => {
     const tracked = {

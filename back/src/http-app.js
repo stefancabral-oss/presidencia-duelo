@@ -199,7 +199,9 @@ export function createHttpApp({
   app.get("/api/ranking", async (req, res) => {
     if (!requireAggregateScope(req, res, "global-ranking")) return;
     try {
-      noStore(res).json(await store.ranking(String(req.query.topic || "eleicoes-2026")));
+      const result = await store.ranking(String(req.query.topic || "eleicoes-2026"));
+      if (!requireAggregateScope(req, res, "global-ranking")) return;
+      noStore(res).json(result);
     } catch (error) {
       sendError(req, res, error);
     }
@@ -237,11 +239,13 @@ export function createHttpApp({
   app.get("/api/daily-cut", async (req, res) => {
     if (!requireAggregateScope(req, res, "daily-distribution")) return;
     try {
-      noStore(res).json(await store.dailyCut(
+      const result = await store.dailyCut(
         String(req.query.topic || "eleicoes-2026"),
         String(req.query.date || ""),
         { now: clock() },
-      ));
+      );
+      if (!requireAggregateScope(req, res, "daily-distribution")) return;
+      noStore(res).json(result);
     } catch (error) {
       sendError(req, res, error);
     }
@@ -251,11 +255,13 @@ export function createHttpApp({
     try {
       const recoveryKey = requiredRecoveryKey(req);
       if (!requireAggregateScope(req, res, "prediction-reveal")) return;
-      noStore(res).json(await store.dailyPredictionResults(
+      const result = await store.dailyPredictionResults(
         recoveryKey,
         String(req.query.topic || "eleicoes-2026"),
         { now: clock() },
-      ));
+      );
+      if (!requireAggregateScope(req, res, "prediction-reveal")) return;
+      noStore(res).json(result);
     } catch (error) {
       sendError(req, res, error);
     }

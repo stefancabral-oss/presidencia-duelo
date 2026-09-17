@@ -90,26 +90,28 @@ function aggregateAvailable(scope) {
   return aggregateScopeAvailable(state.capabilities, scope);
 }
 
-function applyExpiredAggregateCapabilities() {
-  const hadGlobalRanking = state.capabilities.scopes["global-ranking"].status === "available";
-  const hadPredictionReveal = state.capabilities.scopes["prediction-reveal"].status === "available";
+function applyExpiredAggregateCapabilities(previous = state.capabilities) {
+  const hadGlobalRanking = previous.scopes["global-ranking"].status === "available";
+  const hadPredictionReveal = previous.scopes["prediction-reveal"].status === "available";
   state.capabilities = validateCapabilities(JSON.parse(JSON.stringify(state.capabilities)));
   const globalRankingExpired = hadGlobalRanking && !aggregateAvailable("global-ranking");
   const predictionRevealExpired = hadPredictionReveal && !aggregateAvailable("prediction-reveal");
-  if (globalRankingExpired) {
+  if (!aggregateAvailable("global-ranking")) {
     state.ranking = [];
     state.globalDuels = 0;
     state.globalFeedbackMessage = "";
     state.rankingView = "personal";
   }
-  if (predictionRevealExpired) {
+  if (!aggregateAvailable("prediction-reveal")) {
     state.predictionResults = null;
     state.predictionResultsLoading = false;
     state.predictionResultsError = "";
+  }
+  if (predictionRevealExpired) {
     state.predictionBusy = false;
     state.pendingPredictionAction = null;
     state.selectedId = "";
-    if (state.dailySession) installDailySession(state.dailySession);
+    if (state.dailySession && !state.busy) installDailySession(state.dailySession);
   }
   return globalRankingExpired || predictionRevealExpired;
 }
@@ -127,8 +129,9 @@ function scheduleAggregateCapabilityExpiry() {
 }
 
 function installCapabilities(capabilities) {
+  const previous = state.capabilities;
   state.capabilities = validateCapabilities(JSON.parse(JSON.stringify(capabilities)));
-  applyExpiredAggregateCapabilities();
+  applyExpiredAggregateCapabilities(previous);
   scheduleAggregateCapabilityExpiry();
 }
 
@@ -1496,16 +1499,20 @@ async function initialize() {
   if (identity) await refreshDailySession(identity);
 }
 
+let capabilitiesRefreshId = 0;
+async function refreshCapabilitiesOnResume() {
+  const requestId = ++capabilitiesRefreshId;
+  // Hide cached aggregate data while fresh server authorization is unknown.
+  installCapabilities(PERSONAL_ONLY_CAPABILITIES);
+  render();
+  const fresh = await loadCapabilities().catch(() => PERSONAL_ONLY_CAPABILITIES);
+  if (requestId !== capabilitiesRefreshId) return;
+  installCapabilities(fresh);
+  render();
+}
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState !== "visible") return;
-  const changed = applyExpiredAggregateCapabilities();
-  scheduleAggregateCapabilityExpiry();
-  if (changed) render();
+  if (document.visibilityState === "visible") void refreshCapabilitiesOnResume();
 });
-window.addEventListener("focus", () => {
-  const changed = applyExpiredAggregateCapabilities();
-  scheduleAggregateCapabilityExpiry();
-  if (changed) render();
-});
+window.addEventListener("focus", () => { void refreshCapabilitiesOnResume(); });
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
 initialize();

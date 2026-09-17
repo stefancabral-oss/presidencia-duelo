@@ -132,6 +132,7 @@ test("environment receipts require a pinned authority and the embedded release r
   const config = signedAuthority(["global-ranking"]);
   const environment = {
     NODE_ENV: config.environment,
+    AGGREGATE_DEPLOYMENT_ID: config.environment,
     AGGREGATE_AUTHORITY_RECEIPTS: JSON.stringify(config.receipts),
   };
   const trustedAuthorities = [{
@@ -144,6 +145,11 @@ test("environment receipts require a pinned authority and the embedded release r
     trustedAuthorities,
     releaseRevision: config.releaseRevision,
   }).allows("global-ranking"), true);
+  for (const deployment of [undefined, "another-production-deployment"]) {
+    assert.equal(aggregatePublicationAuthorityFromEnvironment({ ...environment, AGGREGATE_DEPLOYMENT_ID: deployment }, {
+      now: config.now, trustedAuthorities, releaseRevision: config.releaseRevision,
+    }).allows("global-ranking"), false);
+  }
   assert.equal(aggregatePublicationAuthorityFromEnvironment({
     ...environment,
     SOURCE_COMMIT: config.releaseRevision,
@@ -262,4 +268,15 @@ test("authorized contract V2 contains aggregates only inside publicAggregate", (
   assert.equal(Object.hasOwn(response, "ranking"), false);
   assert.equal(Object.hasOwn(response.round, "globalEvent"), false);
   assert.deepEqual(response.dailySession, { status: "active" });
+});
+
+test("legacy global round scalars are never projected as personal feedback", () => {
+  const raw = rawVote();
+  raw.round.feedbackScope = "legacy-global";
+  raw.round.personalFeedback = null;
+  raw.vote = raw.round;
+  const result = projectVoteResponseV2(raw, withheldAggregatePublicationAuthority());
+  for (const round of [result.round, result.vote]) {
+    for (const field of ["winnerDelta", "zebra", "rankingEvent"]) assert.equal(Object.hasOwn(round, field), false);
+  }
 });

@@ -262,7 +262,7 @@ export function aggregatePublicationAuthorityFromEnvironment(environment = proce
       issuer,
       keyId,
       receipts,
-      environment: String(environment.NODE_ENV || "development"),
+      environment: String(environment.AGGREGATE_DEPLOYMENT_ID || ""),
       releaseRevision: String(releaseRevision),
       ...(now === undefined ? {} : { now }),
     });
@@ -406,6 +406,11 @@ function personalRound(round) {
     "comparisons",
   ];
   const result = Object.fromEntries(allowed.filter((key) => Object.hasOwn(round, key)).map((key) => [key, round[key]]));
+  if (round.feedbackScope === "legacy-global") {
+    delete result.winnerDelta;
+    delete result.zebra;
+    delete result.rankingEvent;
+  }
   if (Array.isArray(result.candidateIds)) result.candidateIds = [...result.candidateIds];
   if (Object.hasOwn(round, "personalFeedback")) {
     result.feedback = projectFeedback(round.personalFeedback);

@@ -51,6 +51,15 @@ O catálogo de copy está marcado `candidate-pending-human-review`. Versioná-lo
 
 ## Deploy coordenado do contrato V2
 
+`AGGREGATE_DEPLOYMENT_ID` identifica a implantação concreta e precisa coincidir
+com `environment` da autorização assinada (por exemplo, `polimatch-prod-br-01`).
+`NODE_ENV=production` sozinho não autoriza nenhuma implantação. Ausência ou
+divergência do identificador retém os agregados, mesmo com a mesma revisão.
+
+Ao recuperar foco ou visibilidade, o cliente oculta dados agregados em cache e
+consulta novamente `/api/capabilities`. A API também revalida a autorização após
+cada leitura assíncrona agregada, antes de entregar a resposta.
+
 As respostas de `POST /api/round-vote` e `POST /api/daily-vote` mudam de forma incompatível. O frontend novo rejeita V1 para não aceitar agregados fora do envelope; o frontend antigo não entende V2. Portanto, frontend e backend **não são compatíveis em um rolling mix**.
 
 Use uma troca atômica/blue-green, roteamento por versão ou uma janela curta de manutenção:

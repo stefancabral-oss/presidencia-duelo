@@ -502,6 +502,24 @@ test("internal failures are logged by request id without leaking their message",
   });
 });
 
+test("aggregate authority is rechecked after each asynchronous store read", async () => {
+  for (const [route, method] of [["/api/ranking", "ranking"], ["/api/daily-cut?date=2026-09-16", "dailyCut"], ["/api/daily-prediction-results", "dailyPredictionResults"]]) {
+    const now = new Date("2026-09-16T12:00:00.000Z");
+    let reads = 0;
+    const app = createHttpApp({
+      store: fakeStore({ [method]: async () => { reads += 1; now.setUTCFullYear(2028); return { secret: "aggregate" }; } }),
+      googleIdentity, env: {},
+      aggregatePublication: authorizedAggregatePublication({ now }),
+    });
+    await withServer(app, async baseUrl => {
+      const response = await fetch(`${baseUrl}${route}`, { headers: { authorization: "Bearer pm2_player" } });
+      assert.equal(response.status, 403, route);
+      assert.equal(reads, 1, route);
+      assert.equal(JSON.stringify(await response.json()).includes("secret"), false);
+    });
+  }
+});
+
 test("health failures use the same sanitized 5xx contract", async () => {
   const logs = [];
   const app = createHttpApp({

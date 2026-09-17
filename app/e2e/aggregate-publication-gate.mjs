@@ -290,6 +290,23 @@ try {
   assert.deepEqual(expiringErrors, []);
   await expiringPage.close();
 
+  const resumedPage = await context.newPage();
+  await installExpiringApi(resumedPage, createServer(), new Date(Date.now() + 60_000).toISOString());
+  await resumedPage.goto(appUrl, { waitUntil: "networkidle" });
+  await resumedPage.getByRole("button", { name: "Ver ranking do público" }).waitFor();
+  let refreshes = 0;
+  await resumedPage.route("**/api/capabilities", route => {
+    refreshes += 1;
+    return route.fulfill({ status: 200, json: capabilityFixture([]) });
+  });
+  await resumedPage.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await resumedPage.getByRole("button", { name: "Ver meu ranking" }).waitFor();
+  await resumedPage.waitForLoadState("networkidle");
+  assert.equal(refreshes, 1, "foco deve consultar a autoridade novamente");
+  assert.equal(await resumedPage.getByRole("button", { name: "Ver ranking do público" }).count(), 0);
+  assert.equal(await resumedPage.locator(".podium, .public-pulse").count(), 0);
+  await resumedPage.close();
+
   console.log(`${browserName}: modo pessoal conclui 10/10 e capability carregada expira sem manter agregado visível`);
 } finally {
   await context.close();

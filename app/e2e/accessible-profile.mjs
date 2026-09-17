@@ -1,3 +1,5 @@
+import { capabilityFixture, voteResponseV2 } from "./aggregate-fixture.mjs";
+import { approvedEditorialCandidates } from "./editorial-fixtures.mjs";
 import { writeFile } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
 import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
@@ -8,7 +10,7 @@ const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
 const browserType = { chromium, webkit }[browserName];
 if (!browserType) throw new Error(`Navegador não suportado: ${browserName}`);
 
-const candidates = CATALOG.filter(({ personId }) => hasCuratedPortrait(personId)).slice(0, 8);
+const candidates = approvedEditorialCandidates(CATALOG.filter(({ personId }) => hasCuratedPortrait(personId)).slice(0, 8));
 const personalRankingPolicy = {
   id: "pairwise-majority-scc-v1",
   label: "maioria nos confrontos observados",
@@ -117,6 +119,7 @@ await page.addInitScript(() => {
 await page.route(/\/api(?:\/|$)/, async (route) => {
   const request = route.request();
   const path = new URL(request.url()).pathname;
+  if (path === "/api/capabilities") return route.fulfill({ status: 200, json: capabilityFixture() });
   if (path === "/api/candidates") return route.fulfill({ status: 200, json: { candidates } });
   if (path === "/api/ranking") {
     rankingReads += 1;
@@ -136,7 +139,7 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
       await new Promise((resolve) => { releaseHeldVoteResponse = resolve; });
       releaseHeldVoteResponse = null;
     }
-    return route.fulfill({ status: 200, json: voteResponse(payload, voteRequests.length) });
+    return route.fulfill({ status: 200, json: voteResponseV2(voteResponse(payload, voteRequests.length)) });
   }
   return route.fulfill({ status: 404, json: { error: "mock não encontrado" } });
 });

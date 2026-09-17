@@ -598,9 +598,10 @@ function rankingMarkup() {
     <p class="ranking-trust" data-ranking-integrity>Escolhas confirmadas pelo servidor. <a href="/integridade.html">${PUBLIC_RANKING_COPY.integrityLink}</a></p>
     <p class="ranking-policy" data-ranking-policy hidden><strong></strong><span></span></p>
     <div data-ranking-pulse></div>
-    <section class="podium" data-ranking-podium aria-label="Pódio" hidden></section>
+    <section class="podium" data-ranking-podium aria-label="${PUBLIC_RANKING_COPY.podiumAria}" hidden></section>
     <label class="ranking-search"><span>${PUBLIC_RANKING_COPY.searchLabel}</span><input id="ranking-search" type="search" placeholder="Buscar nome ou partido" autocomplete="off"></label>
     <section class="panel ranking-list" data-ranking-list></section>
+    <div class="ranking-filters"><label><span>Partido</span><select id="ranking-party"><option value="">Todos</option></select></label><label><span>Área</span><select id="ranking-area"><option value="">Todas</option></select></label></div>
     <button class="secondary reveal-ranking" id="reveal-ranking" type="button" hidden></button>
     <button class="primary continue-duels" id="continue-duels" type="button">${PUBLIC_RANKING_COPY.backToChoices}</button>`;
 }
@@ -888,6 +889,11 @@ function renderPredictionResults() {
 
 function renderRanking() {
   const presentation = rankingPresentation();
+  refs.panels.ranking.querySelector("#ranking-party").innerHTML = '<option value="">Todos</option>' + presentation.options(presentation.parties, state.rankingParty);
+  refs.panels.ranking.querySelector("#ranking-area").innerHTML = '<option value="">Todas</option>' + presentation.options(presentation.areas, state.rankingArea);
+  refs.rankingSearch.placeholder = presentation.searchPlaceholder;
+  refs.panels.ranking.querySelector(".ranking-search span").textContent = presentation.searchLabel;
+  refs.panels.ranking.querySelector("#continue-duels").textContent = presentation.backToChoices;
   refs.panels.ranking.querySelector("h1").textContent = presentation.publicRankingAvailable ? PUBLIC_RANKING_COPY.heading : "Seu ranking";
   const segmented = refs.panels.ranking.querySelector(".segmented");
   segmented.hidden = !presentation.publicRankingAvailable;
@@ -2009,6 +2015,17 @@ async function refreshCapabilitiesOnResume() {
   const fresh = await loadCapabilities().catch(() => PERSONAL_ONLY_CAPABILITIES);
   if (requestId !== capabilitiesRefreshId) return;
   installCapabilities(fresh);
+  if (aggregateAvailable("global-ranking") && state.ready) {
+    try {
+      const snapshot = await loadRanking();
+      if (requestId !== capabilitiesRefreshId || !aggregateAvailable("global-ranking")) return;
+      state.ranking = rankingForCatalog(snapshot, state.candidates);
+      state.globalDuels = Number(snapshot.duels) || 0;
+    } catch {
+      if (requestId !== capabilitiesRefreshId) return;
+      installCapabilities(withAggregateScopeWithheld(state.capabilities, "global-ranking"));
+    }
+  }
   render();
 }
 document.addEventListener("visibilitychange", () => {

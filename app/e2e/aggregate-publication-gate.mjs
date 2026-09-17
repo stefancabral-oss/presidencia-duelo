@@ -266,9 +266,9 @@ try {
 
   await page.locator("#daily-open-ranking").click();
   await page.getByRole("heading", { name: "Seu ranking", exact: true }).waitFor();
-  assert.equal(await page.locator('[data-ranking-view="general"]').count(), 0);
-  assert.equal(await page.locator(".podium, .public-pulse").count(), 0);
-  await page.getByText("A comparação pública está indisponível nesta edição.", { exact: false }).waitFor();
+  assert.equal(await page.locator('[data-ranking-view="general"]:visible').count(), 0);
+  assert.equal(await page.locator(".podium:visible, .public-pulse:visible").count(), 0);
+  await page.locator('[data-panel="ranking"]').getByText("A comparação pública está indisponível nesta edição.", { exact: false }).waitFor();
   assert.deepEqual(pageErrors, []);
 
   const expiringPage = await context.newPage();
@@ -283,7 +283,7 @@ try {
   });
   await expiringPage.goto(appUrl, { waitUntil: "networkidle" });
   await expiringPage.getByRole("button", { name: "Ver ranking do público" }).waitFor();
-  assert.equal(await expiringPage.getByText("A comparação pública está indisponível nesta edição.", { exact: false }).count(), 0);
+  assert.equal(await expiringPage.getByText("A comparação pública está indisponível nesta edição.", { exact: false }).filter({ visible: true }).count(), 0);
   await expiringPage.getByRole("button", { name: "Ver meu ranking" }).waitFor({ timeout: 8_000 });
   assert.equal(await expiringPage.getByRole("button", { name: "Ver ranking do público" }).count(), 0);
   await expiringPage.getByText("A comparação pública está indisponível nesta edição.", { exact: false }).first().waitFor();
@@ -304,7 +304,7 @@ try {
   await resumedPage.waitForLoadState("networkidle");
   assert.equal(refreshes, 1, "foco deve consultar a autoridade novamente");
   assert.equal(await resumedPage.getByRole("button", { name: "Ver ranking do público" }).count(), 0);
-  assert.equal(await resumedPage.locator(".podium, .public-pulse").count(), 0);
+  assert.equal(await resumedPage.locator(".podium:visible, .public-pulse:visible").count(), 0);
   await resumedPage.close();
 
   console.log(`${browserName}: modo pessoal conclui 10/10 e capability carregada expira sem manter agregado visível`);

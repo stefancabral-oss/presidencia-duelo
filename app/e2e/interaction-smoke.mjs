@@ -122,7 +122,6 @@ function assertOutcomeSemantics(outcomes, viewportLabel) {
 
 const smokeCandidateIds = new Set([46, 48, 95, 125, 1, 2, 3, 4]);
 const candidates = approvedEditorialCandidates(CATALOG.filter(({ personId }) => smokeCandidateIds.has(personId)));
-const firstCandidate = candidates[0];
 
 function ranking(decisions = 0, winnerId = "", comparedIds = []) {
   const compared = new Set(comparedIds);
@@ -577,7 +576,9 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => window.scrollTo(0, 0));
 
-  const firstCard = page.locator(`[data-vote="${firstCandidate.id}"]`);
+  const firstCard = page.locator("[data-vote]").first();
+  const firstId = await firstCard.getAttribute("data-vote");
+  const firstCandidate = candidates.find(candidate => candidate.id === firstId);
   const box = await firstCard.boundingBox();
   if (!box) throw new Error("Carta de duelo não foi renderizada");
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -794,7 +795,7 @@ try {
     throw new Error("Topbar, navegação, instrução, repetição, região viva ou controles dos slots foram substituídos durante o voto");
   }
   if (persistence.substitutions.length) throw new Error(`O MutationObserver detectou substituições persistentes: ${persistence.substitutions.join(", ")}`);
-  if (!persistence.focused || !persistence.focusVisible) throw new Error("O botão votado perdeu o foco ou o anel visível durante a nova rodada");
+  if (!persistence.focused || !persistence.focusVisible) throw new Error(`O botão votado perdeu o foco ou o anel visível durante a nova rodada: ${JSON.stringify(persistence)}`);
   if (!persistence.accessibleNameChanged) throw new Error("O mesmo botão persistiu, mas seu nome acessível não acompanhou a nova pessoa");
   if (persistence.statusCount !== 1) throw new Error("A região viva foi duplicada durante o voto");
   if (persistence.nextRoundIds.some((id) => selectedRoundIds.includes(id))) throw new Error("O smoke não produziu conteúdo novo suficiente para provar a atualização granular dos slots");

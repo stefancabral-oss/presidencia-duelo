@@ -60,7 +60,7 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
 try {
   await page.goto(appUrl, { waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "Quem representa o Brasil que você imagina?" }).waitFor();
-  const homeText = await page.locator("main").innerText();
+  const homeText = await page.locator("main:visible").innerText();
   if (!homeText.includes("4 perfis disponíveis nesta edição") || /foto aprovada/i.test(homeText)) {
     throw new Error(`A home ainda transforma foto em promessa editorial: ${homeText}`);
   }
@@ -93,7 +93,7 @@ try {
   if (process.env.POLIMATCH_E2E_EDITORIAL_WITH_PHOTO_SCREENSHOT) {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_EDITORIAL_WITH_PHOTO_SCREENSHOT, fullPage: true });
   }
-  await page.getByRole("button", { name: "Fechar resumo" }).click();
+  await page.getByRole("button", { name: /^Fechar perfil de / }).click();
   await withPhoto.waitFor({ state: "hidden" });
 
   await longPress(page, page.locator(`[data-vote="${candidateWithoutPhoto.id}"]`));

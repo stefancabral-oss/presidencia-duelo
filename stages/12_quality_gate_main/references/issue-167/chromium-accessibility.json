@@ -1,0 +1,177 @@
+{
+  "browser": "chromium",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "entry": {
+    "dailyFirstFallbackToFree": true
+  },
+  "coach": {
+    "tag": "DIALOG",
+    "open": true,
+    "modal": true,
+    "labelledBy": "coach-title",
+    "activeId": "dismiss-coach",
+    "closedWith": "Escape"
+  },
+  "slots": [
+    {
+      "tag": "ARTICLE",
+      "directButtons": 2,
+      "nestedButtons": 0,
+      "voteName": "Escolher Augusto Cury",
+      "profileName": "Conhecer Augusto Cury",
+      "profileText": "ⓘConhecer perfil",
+      "profileHeight": 44
+    },
+    {
+      "tag": "ARTICLE",
+      "directButtons": 2,
+      "nestedButtons": 0,
+      "voteName": "Escolher Renan Santos",
+      "profileName": "Conhecer Renan Santos",
+      "profileText": "ⓘConhecer perfil",
+      "profileHeight": 44
+    },
+    {
+      "tag": "ARTICLE",
+      "directButtons": 2,
+      "nestedButtons": 0,
+      "voteName": "Escolher Ronaldo Caiado",
+      "profileName": "Conhecer Ronaldo Caiado",
+      "profileText": "ⓘConhecer perfil",
+      "profileHeight": 44
+    },
+    {
+      "tag": "ARTICLE",
+      "directButtons": 2,
+      "nestedButtons": 0,
+      "voteName": "Escolher Pablo Marçal",
+      "profileName": "Conhecer Pablo Marçal",
+      "profileText": "ⓘConhecer perfil",
+      "profileHeight": 44
+    }
+  ],
+  "focusReturns": [
+    {
+      "index": 0,
+      "expectedName": "Conhecer Augusto Cury",
+      "returned": true
+    },
+    {
+      "index": 1,
+      "expectedName": "Conhecer Renan Santos",
+      "returned": true
+    },
+    {
+      "index": 2,
+      "expectedName": "Conhecer Ronaldo Caiado",
+      "returned": true
+    },
+    {
+      "index": 3,
+      "expectedName": "Conhecer Pablo Marçal",
+      "returned": true
+    }
+  ],
+  "accessibilityTree": "- article:\n  - button \"Escolher Augusto Cury\":\n    - text: AC\n    - img \"Foto de Augusto Cury\"\n    - strong: Augusto Cury\n    - text: Avante Escritor e psiquiatra; candidato à Presidência\n  - button \"Conhecer Augusto Cury\": Conhecer perfil\n- article:\n  - button \"Escolher Renan Santos\":\n    - text: RS\n    - img \"Foto de Renan Santos\"\n    - strong: Renan Santos\n    - text: Missão Ativista e fundador do MBL; candidato à Presidência\n  - button \"Conhecer Renan Santos\": Conhecer perfil\n- article:\n  - button \"Escolher Ronaldo Caiado\":\n    - text: RC\n    - img \"Foto de Ronaldo Caiado\"\n    - strong: Ronaldo Caiado\n    - text: PSD Ex-governador de Goiás; candidato à Presidência\n  - button \"Conhecer Ronaldo Caiado\": Conhecer perfil\n- article:\n  - button \"Escolher Pablo Marçal\":\n    - text: PM\n    - img \"Foto de Pablo Marçal\"\n    - strong: Pablo Marçal\n    - text: PRTB Empresário e coach; registro à Presidência indeferido\n  - button \"Conhecer Pablo Marçal\": Conhecer perfil",
+  "keyboard": {
+    "profileActivationKeys": [
+      "Enter",
+      "Space",
+      "Shift+Enter",
+      "Enter"
+    ],
+    "longPressFollowUpKey": "Enter",
+    "voteActivationKey": "Shift+Enter"
+  },
+  "contextualReturnLabels": {
+    "duel": "Voltar à rodada",
+    "ranking": "Voltar ao ranking"
+  },
+  "longPressRegression": {
+    "winnerId": "augusto-cury",
+    "pointerVotesBeforeEscape": 0,
+    "keyboardVotesAfterEscape": 1
+  },
+  "pendingProfileLock": {
+    "ariaDisabled": [
+      "true",
+      "true",
+      "true",
+      "true"
+    ],
+    "pendingRace": {
+      "modalOpen": false,
+      "candidateIds": [
+        "augusto-cury",
+        "renan-santos",
+        "ronaldo-caiado",
+        "pablo-marcal"
+      ]
+    }
+  },
+  "negativeState": {
+    "before": {
+      "progress": "0 escolhas",
+      "candidateIds": [
+        "augusto-cury",
+        "renan-santos",
+        "ronaldo-caiado",
+        "pablo-marcal"
+      ],
+      "generatedRoundIds": [
+        "00000000-0000-4000-8000-000000000001"
+      ]
+    },
+    "after": {
+      "progress": "0 escolhas",
+      "candidateIds": [
+        "augusto-cury",
+        "renan-santos",
+        "ronaldo-caiado",
+        "pablo-marcal"
+      ],
+      "generatedRoundIds": [
+        "00000000-0000-4000-8000-000000000001"
+      ]
+    },
+    "voteRequestsBeforeChoice": 0,
+    "rankingReads": 1,
+    "personalRankingEmpty": true
+  },
+  "completedRounds": [
+    {
+      "roundId": "00000000-0000-4000-8000-000000000001",
+      "before": [
+        "augusto-cury",
+        "renan-santos",
+        "ronaldo-caiado",
+        "pablo-marcal"
+      ],
+      "after": [
+        "flavio-bolsonaro",
+        "romeu-zema",
+        "tarcisio-de-freitas",
+        "lula"
+      ]
+    },
+    {
+      "roundId": "00000000-0000-4000-8000-000000000002",
+      "before": [
+        "flavio-bolsonaro",
+        "romeu-zema",
+        "tarcisio-de-freitas",
+        "lula"
+      ],
+      "after": [
+        "ronaldo-caiado",
+        "pablo-marcal",
+        "augusto-cury",
+        "renan-santos"
+      ]
+    }
+  ],
+  "pageErrors": []
+}

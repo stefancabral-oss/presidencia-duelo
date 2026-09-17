@@ -233,6 +233,22 @@ const votar = (page) => page.locator(".candidate-card").first().click();
 const chaveGuardada = (page) => page.evaluate(() => localStorage.getItem("polimatch:v3:recovery-key"));
 const instrucao = async (page) => (await page.locator(".round-instruction").innerText()).trim();
 
+async function exigirPerfisBloqueados(page, contexto) {
+  const bloqueios = await page.locator(".profile-trigger").evaluateAll((buttons) => (
+    buttons.map((button) => button.getAttribute("aria-disabled"))
+  ));
+  if (bloqueios.length !== 4 || bloqueios.some((value) => value !== "true")) {
+    throw new Error(`${contexto}: os perfis não herdaram o bloqueio da rodada pendente (${bloqueios.join(", ")})`);
+  }
+  const perfil = page.locator(".profile-trigger").first();
+  await perfil.focus();
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(50);
+  if (await page.locator("#modal").evaluate((dialog) => dialog.open)) {
+    throw new Error(`${contexto}: um perfil abriu durante a recuperação da escolha pendente`);
+  }
+}
+
 async function novaSessao(browser, servidor, { chaveInicial = null } = {}) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
   const page = await context.newPage();
@@ -460,6 +476,7 @@ try {
     if (!await page.locator(".candidate-card").evaluateAll((cards) => cards.every((card) => card.getAttribute("aria-disabled") === "true" && !card.disabled))) {
       throw new Error("o 200 truncado deixou a rodada pendente editável");
     }
+    await exigirPerfisBloqueados(page, "200 truncado");
     const pedidosAntesDoCliqueBloqueado = servidor.requests.length;
     await page.locator(".candidate-card").nth(1).evaluate((card) => card.click());
     await page.waitForTimeout(100);

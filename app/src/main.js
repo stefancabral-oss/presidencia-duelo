@@ -84,7 +84,8 @@ let resultTimer;
 let roundAdvanceTimer;
 let retryEnableTimer;
 let refs;
-let modalSilentClose = false;
+let profileReturnTarget = null;
+let profileReturnCandidateId = "";
 
 function clearVoteTimers() {
   clearTimeout(resultTimer);
@@ -187,8 +188,8 @@ function portrait(candidate) {
 }
 
 function candidateSlot(index) {
-  return `<div class="candidate-wrap" data-candidate-slot="${index}" hidden>
-    <button class="candidate-card basic-card" type="button" aria-disabled="true">
+  return `<article class="candidate-wrap" data-candidate-slot="${index}" hidden>
+    <button class="candidate-card basic-card vote-target" type="button" aria-disabled="true">
       <span class="card-material" aria-hidden="true"></span>
       <span class="card-facets" aria-hidden="true"></span>
       <span class="card-brand" aria-hidden="true">${brandSymbol("card-brand-symbol")}<b>PoliMatch</b></span>
@@ -198,12 +199,13 @@ function candidateSlot(index) {
         <span class="candidate-affiliation"></span>
         <span class="candidate-office"></span>
         <small class="candidate-summary"></small>
-        <small class="candidate-profile-hint"></small>
+        <small class="candidate-profile-hint" hidden></small>
         <span class="card-outcome" hidden><b></b><small></small></span>
       </span>
       <span class="card-corners" aria-hidden="true"></span>
     </button>
-  </div>`;
+    <button class="profile-trigger" type="button" aria-disabled="true" hidden><span aria-hidden="true">ⓘ</span><span>Conhecer perfil</span></button>
+  </article>`;
 }
 
 function headerMarkup() {
@@ -222,7 +224,8 @@ function candidateSlotModel(candidate, { actionMode = "vote" } = {}) {
     actionMode,
     accessibleName: prediction
       ? `${candidate.name}, carta básica. Toque para apostar.`
-      : `${candidate.name}, carta básica. Toque para escolher; segure para saber quem é.`,
+      : `Escolher ${candidate.name}`,
+    profileAccessibleName: `Conhecer ${candidate.name}`,
     initials: initials(candidate.name),
     photo: candidatePhoto(candidate),
     photoAlt: `Foto de ${candidate.name}`,
@@ -230,7 +233,8 @@ function candidateSlotModel(candidate, { actionMode = "vote" } = {}) {
     affiliation: candidateAffiliation(candidate),
     office: candidate.office || candidateRole(candidate),
     summary: candidateCardSummary(candidate),
-    interactionHint: prediction ? "Toque para apostar" : "ⓘ Segure para conhecer",
+    interactionHint: prediction ? "Toque para apostar" : "",
+    profileEnabled: !prediction,
     locked,
     busy: prediction ? state.predictionBusy : state.busy,
     classes: [
@@ -315,7 +319,7 @@ function topicsContent() {
         <div><p class="eyebrow">Edição disponível</p><h2 id="home-topic-title">Eleições 2026</h2></div>
         <span class="home-live"><i aria-hidden="true"></i> no ar</span>
       </div>
-      <p>Dez escolhas fixas, iguais para todo mundo, fechadas à meia-noite de São Paulo. Segure qualquer carta para conhecer o perfil antes de escolher.</p>
+      <p>Dez escolhas fixas, iguais para todo mundo, fechadas à meia-noite de São Paulo. Use Conhecer perfil em qualquer carta antes de escolher.</p>
       <button class="home-topic-cta" type="button" id="start-election-secondary"><span>${dailyAction}</span><b aria-hidden="true">→</b></button>
     </section>
 
@@ -510,7 +514,7 @@ function duelMarkup() {
   return `<div data-duel-main>
       <div class="duel-head"><div><p class="eyebrow" data-duel-eyebrow>Escolha uma entre quatro</p><h1 data-duel-heading>Quem você prefere?</h1></div><span class="progress-pill"></span></div>
       <section class="prediction-baseline" data-prediction-baseline aria-label="Linha de base da aposta" hidden><strong>25%</strong><span>é a chance de acertar ao acaso entre quatro cartas</span></section>
-      <p class="round-instruction">Toque na sua preferida. Segure para conhecer o perfil.</p>
+      <p class="round-instruction">Escolha uma pessoa ou use Conhecer perfil antes de decidir.</p>
       <section class="round-feedback" data-feedback-channels aria-label="Resultado da escolha" hidden>
         <p class="feedback-channel feedback-personal"><strong>No seu ranking</strong><span data-personal-feedback></span></p>
         <p class="feedback-channel feedback-global" data-global-feedback-band hidden><strong>No placar do público</strong><span data-global-feedback></span></p>
@@ -539,16 +543,11 @@ function appMarkup() {
       ${navMarkup()}
     </div>
     <dialog id="modal"></dialog>
+    <dialog class="coach-dialog" id="coach-dialog" aria-labelledby="coach-title">
+      <section class="coach-card"><span class="coach-icon" aria-hidden="true">${brandSymbol("coach-symbol")}</span><p class="eyebrow">Primeira rodada</p><h2 id="coach-title">Escolha uma entre quatro.</h2><p data-coach-description></p><button class="primary" id="dismiss-coach" type="button">Começar rodada</button></section>
+    </dialog>
     <div data-overlay-root></div>
     <p class="app-live-region visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>`;
-}
-
-function coachOverlay() {
-  if (!state.showCoach) return "";
-  const finalInstruction = state.gameMode === "daily"
-    ? "Esta combinação é fixa e igual para todos: não há troca no modo diário."
-    : "Se nenhuma fizer sentido, troque as quatro.";
-  return `<div class="coach-overlay" role="dialog" aria-modal="true" aria-labelledby="coach-title"><section class="coach-card"><span class="coach-icon" aria-hidden="true">${brandSymbol("coach-symbol")}</span><p class="eyebrow">Primeira rodada</p><h2 id="coach-title">Escolha uma entre quatro.</h2><p>Toque na sua preferida. Segure qualquer carta para conhecer a pessoa. ${finalInstruction}</p><button class="primary" id="dismiss-coach" type="button">Começar rodada</button></section></div>`;
 }
 
 function captureCandidateSlot(root) {
@@ -557,6 +556,7 @@ function captureCandidateSlot(root) {
   return {
     root,
     button,
+    profileButton: root.querySelector(".profile-trigger"),
     fallback: root.querySelector(".portrait-fallback"),
     image: root.querySelector(".portrait img"),
     name: root.querySelector(".candidate-name"),
@@ -614,6 +614,9 @@ function captureRefs() {
     rankingSearch: app.querySelector("#ranking-search"),
     revealRanking: app.querySelector("#reveal-ranking"),
     modal: app.querySelector("#modal"),
+    coachDialog: app.querySelector("#coach-dialog"),
+    coachStart: app.querySelector("#dismiss-coach"),
+    coachDescription: app.querySelector("[data-coach-description]"),
     overlays: app.querySelector("[data-overlay-root]"),
     liveRegion: app.querySelector(".app-live-region"),
     connectionMarkup: "<p>Preparando o duelo…</p>",
@@ -701,7 +704,7 @@ function renderDuel() {
     : `${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}`);
   refs.instruction.textContent = predictionPresentation?.instruction
     || state.result
-    || "Toque na sua preferida. Segure para conhecer o perfil.";
+    || "Escolha uma pessoa ou use Conhecer perfil antes de decidir.";
   refs.instruction.classList.toggle("is-result", !prediction && Boolean(state.result));
   refs.instruction.classList.toggle("is-error", predictionPresentation?.error || state.resultTone === "erro");
   refs.instruction.hidden = !prediction && Boolean(state.personalFeedbackMessage);
@@ -783,14 +786,29 @@ function renderNavigation() {
 }
 
 function renderOverlays() {
-  const markup = `${coachOverlay()}${authOverlay()}`;
+  const markup = authOverlay();
   if (markup === refs.overlayMarkup) return;
-  const coachOpening = state.showCoach && !refs.overlays.querySelector(".coach-overlay");
   refs.overlays.innerHTML = markup;
   refs.overlayMarkup = markup;
-  if (coachOpening) queueMicrotask(() => refs.overlays.querySelector("#dismiss-coach")?.focus());
   if (state.authOpen) queueMicrotask(() => refs.overlays.querySelector("#close-auth")?.focus());
   if (state.authOpen && !state.account && !state.authBusy && state.authErrorKind !== "provider") queueMicrotask(mountAuthButton);
+}
+
+function renderCoach() {
+  if (!state.showCoach) {
+    if (refs.coachDialog.open) refs.coachDialog.close();
+    return;
+  }
+  const finalInstruction = state.gameMode === "daily"
+    ? "Esta combinação é fixa e igual para todos: não há troca no modo diário."
+    : "Se nenhuma fizer sentido, troque as quatro.";
+  refs.coachDescription.textContent = `Cada carta tem dois controles: escolha uma pessoa quando decidir ou abra Conhecer perfil antes de votar. ${finalInstruction}`;
+  if (refs.coachDialog.open) return;
+  queueMicrotask(() => {
+    if (!state.showCoach || refs.coachDialog.open) return;
+    refs.coachDialog.showModal();
+    refs.coachStart.focus();
+  });
 }
 
 function render() {
@@ -807,6 +825,7 @@ function render() {
     if (state.screen === "prediction-results") renderPredictionResults();
   }
   renderNavigation();
+  renderCoach();
   renderOverlays();
 }
 
@@ -814,10 +833,11 @@ function announceStatus(message) {
   refs.liveRegion.textContent = message;
 }
 
-function showProfile(id) {
+function showProfile(id, trigger = document.activeElement) {
+  if (state.busy || state.pendingWinnerId || state.predictionBusy || state.pendingPredictionAction) return false;
   const person = state.dailyCandidates.find((candidate) => candidate.id === id)
     || state.candidates.find((candidate) => candidate.id === id);
-  if (!person) return;
+  if (!person) return false;
   sound.play("profile");
   const modal = refs.modal;
   const metadata = [person.office, person.party, person.location].filter(Boolean);
@@ -827,12 +847,14 @@ function showProfile(id) {
     const label = typeof source === "string" ? "Fonte" : source.label || source.publisher || "Fonte";
     return href ? `<li><a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a></li>` : "";
   }).join("");
-  const canVote = state.screen === "duel" && !(state.gameMode === "daily" && state.dailySession?.pendingPrediction)
-    && state.round.some((candidate) => candidate.id === person.id) && !state.busy && !state.pendingWinnerId;
-  modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar resumo">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2>${escapeHtml(person.name)}</h2><p class="profile-role"><strong>${escapeHtml(candidateRole(person))}</strong></p>${metadata.length ? `<p class="profile-meta">${metadata.map(escapeHtml).join(" · ")}</p>` : ""}${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions">${canVote ? `<button class="primary" id="vote-from-profile" data-candidate="${escapeHtml(person.id)}" type="button">Escolher esta pessoa</button>` : ""}<button class="secondary" id="close-modal" type="button">Voltar ao duelo</button></div>`;
-  modalSilentClose = false;
+  profileReturnTarget = trigger instanceof HTMLElement && trigger.matches("button") ? trigger : null;
+  profileReturnCandidateId = id;
+  const returnLabel = state.screen === "duel" ? "Voltar à rodada" : "Voltar ao ranking";
+  modal.setAttribute("aria-labelledby", "profile-title");
+  modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar perfil de ${escapeHtml(person.name)}">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2 id="profile-title">${escapeHtml(person.name)}</h2><p class="profile-role"><strong>${escapeHtml(candidateRole(person))}</strong></p>${metadata.length ? `<p class="profile-meta">${metadata.map(escapeHtml).join(" · ")}</p>` : ""}${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions"><button class="secondary" id="close-modal" type="button">${returnLabel}</button></div>`;
   modal.showModal();
   modal.querySelector("#close-modal-top").focus();
+  return true;
 }
 
 function chooseNextRound() {
@@ -1372,13 +1394,6 @@ function handleAppClick(event) {
     refs.modal.close();
     return;
   }
-  if (button.id === "vote-from-profile") {
-    const candidateId = button.dataset.candidate;
-    modalSilentClose = true;
-    refs.modal.close();
-    vote(candidateId);
-    return;
-  }
   if (button.id === "account-button") {
     sound.play("navigation");
     state.authOpen = true;
@@ -1507,7 +1522,7 @@ function handleAppClick(event) {
     sound.play("navigation");
     localStorage.setItem("polimatch:v4:round-coach", "seen");
     state.showCoach = false;
-    render();
+    refs.coachDialog.close();
     return;
   }
   if (button.id === "reveal-ranking") {
@@ -1531,7 +1546,8 @@ function handleAppClick(event) {
     return;
   }
   if (button.dataset.profile) {
-    showProfile(button.dataset.profile);
+    if (state.busy || state.pendingWinnerId || button.getAttribute("aria-disabled") === "true") return;
+    showProfile(button.dataset.profile, button);
     return;
   }
   if (button.dataset.screen) {
@@ -1571,9 +1587,21 @@ function installEvents() {
     if (event.target.matches?.(".candidate-card .portrait img")) markPortraitLoaded(event.target);
   }, true);
   refs.modal.addEventListener("close", () => {
-    if (!modalSilentClose) sound.play("dismiss");
-    modalSilentClose = false;
+    sound.play("dismiss");
     refs.slots.forEach(({ button }) => button.classList.remove("is-peeking"));
+    const returnTarget = profileReturnTarget;
+    const returnCandidateId = profileReturnCandidateId;
+    profileReturnTarget = null;
+    profileReturnCandidateId = "";
+    setTimeout(() => {
+      const currentCandidateId = returnTarget?.dataset.profile || returnTarget?.dataset.vote || "";
+      if (returnTarget?.isConnected && currentCandidateId === returnCandidateId) returnTarget.focus();
+    }, 0);
+  });
+  refs.coachDialog.addEventListener("close", () => {
+    localStorage.setItem("polimatch:v4:round-coach", "seen");
+    state.showCoach = false;
+    setTimeout(() => refs.slots[0]?.button.focus(), 0);
   });
   refs.slots.forEach(({ button }) => installPressGesture(button, {
     onTap: () => {
@@ -1582,10 +1610,10 @@ function installEvents() {
       else if (button.dataset.vote) vote(button.dataset.vote);
     },
     onHold: () => {
-      if (button.getAttribute("aria-disabled") === "true" || !button.dataset.vote) return;
+      if (state.busy || state.pendingWinnerId || button.getAttribute("aria-disabled") === "true" || !button.dataset.vote) return;
       button.classList.add("is-peeking");
       try { navigator.vibrate?.(18); } catch {}
-      showProfile(button.dataset.vote);
+      showProfile(button.dataset.vote, button);
     },
   }));
 }

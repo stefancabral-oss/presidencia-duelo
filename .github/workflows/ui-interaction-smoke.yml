@@ -10,6 +10,15 @@ on:
       # propósito: o servidor aqui é simulado, e incluí-lo daria a impressão de
       # uma cobertura de back que estes testes não têm.
       - 'shared/**'
+      - 'docs/design/CARD_ART_NEUTRALITY_GUIDE.md'
+      - 'stages/12_quality_gate_main/evidence/card-art-pilot-176/**'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-176.*'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-generation-contract.schema.json'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-receipt-registry.schema.json'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-recognition-rules.schema.json'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-response-bundle.schema.json'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-results.schema.json'
       - '.github/workflows/ui-interaction-smoke.yml'
   workflow_dispatch:
 
@@ -28,17 +37,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
 
       - name: Install app
         run: npm ci --prefix app
 
-      - name: Install Playwright
-        run: npm install --no-save playwright@1.55.1 --prefix app
-
       - name: Install browser
-        run: npx --prefix app playwright install --with-deps ${{ matrix.browser }}
+        run: node app/node_modules/playwright/cli.js install --with-deps ${{ matrix.browser }}
 
-      - name: Build app
+      - name: Build app and verify pilot evidence isolation
         env:
           VITE_GOOGLE_CLIENT_ID: e2e-client.apps.googleusercontent.com
         run: npm run build --prefix app
@@ -96,6 +104,10 @@ jobs:
         env:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
         run: node app/e2e/editorial-gate.mjs
+      - name: Validate blocked pilot form against canonical card geometry
+        env:
+          POLIMATCH_PILOT_BROWSER: ${{ matrix.browser }}
+        run: npm run test:card-art-pilot-form --prefix app
 
       - name: Validate responsive layout
         env:

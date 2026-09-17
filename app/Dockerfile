@@ -6,6 +6,10 @@ RUN npm ci --prefix app
 
 COPY app app
 COPY shared shared
+# O build pós-Vite compara o dist com o manifesto de evidência. O contexto
+# canônico é a raiz do repositório (README); o arquivo entra só no estágio de
+# build e nunca é copiado para a imagem final do nginx.
+COPY stages/12_quality_gate_main/evidence/card-art-pilot-176/manifest.json stages/12_quality_gate_main/evidence/card-art-pilot-176/manifest.json
 
 ARG VITE_API_URL
 ARG VITE_GOOGLE_CLIENT_ID

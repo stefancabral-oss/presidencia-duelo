@@ -1,0 +1,754 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://polimatch.com.br/schemas/card-art-pilot-176-results.schema.json",
+  "title": "Resultado consolidado do piloto de arte de carta #176",
+  "$comment": "Este schema valida a estrutura sem narrativa publica livre: governanca usa IDs opacos, outcomes e reasonCodes fechados; eventual narrativa fica em artefato privado referenciado apenas por ID e SHA-256. Cobertura, aritmetica e gates de decisao sao obrigatoriamente verificados por app/scripts/validate-card-art-pilot-results.mjs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "issue",
+    "batch",
+    "custody",
+    "generatedAt",
+    "sample",
+    "assets",
+    "decision"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "card-art-pilot-176-v2"
+    },
+    "issue": {
+      "const": 176
+    },
+    "batch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "manifestSha256",
+        "assets"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^batch-[1-9][0-9]*-(?:ready|invalidated)$"
+        },
+        "manifestSha256": {
+          "description": "SHA-256 do JSON canônico do manifesto completo usado na coleta.",
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "assets": {
+          "type": "array",
+          "minItems": 8,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/batchAsset"
+          }
+        }
+      }
+    },
+    "custody": {
+      "$ref": "#/$defs/custody"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sample": {
+      "$ref": "#/$defs/sample"
+    },
+    "assets": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "$ref": "#/$defs/assetResult"
+      }
+    },
+    "decision": {
+      "$ref": "#/$defs/decision"
+    }
+  },
+  "$defs": {
+    "custody": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "receiptRegistrySha256",
+        "responseCount",
+        "firstCollectedAt",
+        "lastCollectedAt",
+        "entries",
+        "responseSetRootSha256"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "card-art-pilot-176-v2-custody"
+        },
+        "receiptRegistrySha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "responseCount": {
+          "type": "integer",
+          "minimum": 40
+        },
+        "firstCollectedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastCollectedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 40,
+          "items": {
+            "$ref": "#/$defs/custodyEntry"
+          }
+        },
+        "responseSetRootSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "custodyEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "responseId",
+        "receiptSha256",
+        "responseSha256"
+      ],
+      "properties": {
+        "responseId": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$"
+        },
+        "receiptSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "responseSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "batchAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blindCode",
+        "sha256"
+      ],
+      "properties": {
+        "blindCode": {
+          "enum": [
+            "P01",
+            "P02",
+            "P03",
+            "P04",
+            "P05",
+            "P06",
+            "P07",
+            "P08"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "participantCount",
+        "displayScenarios",
+        "externalRecruitment",
+        "privacy",
+        "strata"
+      ],
+      "properties": {
+        "participantCount": {
+          "type": "integer",
+          "minimum": 40
+        },
+        "displayScenarios": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mobile-390x844",
+            "desktop-1000x800"
+          ],
+          "properties": {
+            "mobile-390x844": {
+              "type": "integer",
+              "minimum": 20
+            },
+            "desktop-1000x800": {
+              "type": "integer",
+              "minimum": 20
+            }
+          }
+        },
+        "externalRecruitment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "externalParticipantsOnly",
+            "productionTeamExcluded",
+            "attestedBy",
+            "attestedAt"
+          ],
+          "properties": {
+            "externalParticipantsOnly": {
+              "const": true
+            },
+            "productionTeamExcluded": {
+              "const": true
+            },
+            "attestedBy": {
+              "$ref": "#/$defs/governanceActorId"
+            },
+            "attestedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "privateEvidence": {
+              "$ref": "#/$defs/privateEvidenceRef"
+            }
+          }
+        },
+        "privacy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "containsParticipantRecords",
+            "minimumPublishedCellSize",
+            "crossTabsPublished",
+            "rawExportsDeletedAfterConsolidation"
+          ],
+          "properties": {
+            "containsParticipantRecords": {
+              "const": false
+            },
+            "minimumPublishedCellSize": {
+              "const": 5
+            },
+            "crossTabsPublished": {
+              "const": false
+            },
+            "rawExportsDeletedAfterConsolidation": {
+              "const": true
+            }
+          }
+        },
+        "strata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "regional",
+            "familiarity"
+          ],
+          "properties": {
+            "regional": {
+              "$ref": "#/$defs/regionalStrata"
+            },
+            "familiarity": {
+              "$ref": "#/$defs/familiarityStrata"
+            }
+          }
+        }
+      }
+    },
+    "regionalStrata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "published",
+        "suppressedCount"
+      ],
+      "properties": {
+        "published": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "participantCount"
+            ],
+            "properties": {
+              "key": {
+                "enum": [
+                  "norte",
+                  "nordeste",
+                  "centro-oeste",
+                  "sudeste",
+                  "sul",
+                  "exterior",
+                  "prefiro-nao-informar"
+                ]
+              },
+              "participantCount": {
+                "type": "integer",
+                "minimum": 5
+              }
+            }
+          }
+        },
+        "suppressedCount": {
+          "description": "Soma sem rotulo das celulas regionais com menos de cinco participantes.",
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "familiarityStrata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "published",
+        "suppressedCount"
+      ],
+      "properties": {
+        "published": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "participantCount"
+            ],
+            "properties": {
+              "key": {
+                "enum": [
+                  "baixa",
+                  "media",
+                  "alta",
+                  "prefiro-nao-informar"
+                ]
+              },
+              "participantCount": {
+                "type": "integer",
+                "minimum": 5
+              }
+            }
+          }
+        },
+        "suppressedCount": {
+          "description": "Soma sem rotulo das celulas de familiaridade com menos de cinco participantes.",
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "metricCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "assetValidResponseCount": {
+      "type": "integer",
+      "minimum": 40
+    },
+    "scenarioValidResponseCount": {
+      "type": "integer",
+      "minimum": 20
+    },
+    "rate": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "assetResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blindCode",
+        "validResponses",
+        "recognition",
+        "neutrality",
+        "byDisplayScenario",
+        "identityReview",
+        "dignityReview"
+      ],
+      "properties": {
+        "blindCode": {
+          "pattern": "^P0[1-8]$",
+          "type": "string"
+        },
+        "validResponses": {
+          "$ref": "#/$defs/assetValidResponseCount"
+        },
+        "recognition": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "correct",
+            "incorrect",
+            "unknown",
+            "rate"
+          ],
+          "properties": {
+            "correct": {
+              "$ref": "#/$defs/metricCount"
+            },
+            "incorrect": {
+              "$ref": "#/$defs/metricCount"
+            },
+            "unknown": {
+              "$ref": "#/$defs/metricCount"
+            },
+            "rate": {
+              "$ref": "#/$defs/rate"
+            }
+          }
+        },
+        "neutrality": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "favorece",
+            "neutra",
+            "prejudica",
+            "favoreceRate",
+            "neutraRate",
+            "prejudicaRate",
+            "balancePercentagePoints"
+          ],
+          "properties": {
+            "favorece": {
+              "$ref": "#/$defs/metricCount"
+            },
+            "neutra": {
+              "$ref": "#/$defs/metricCount"
+            },
+            "prejudica": {
+              "$ref": "#/$defs/metricCount"
+            },
+            "favoreceRate": {
+              "$ref": "#/$defs/rate"
+            },
+            "neutraRate": {
+              "$ref": "#/$defs/rate"
+            },
+            "prejudicaRate": {
+              "$ref": "#/$defs/rate"
+            },
+            "balancePercentagePoints": {
+              "type": "number",
+              "minimum": -100,
+              "maximum": 100
+            }
+          }
+        },
+        "byDisplayScenario": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mobile-390x844",
+            "desktop-1000x800"
+          ],
+          "properties": {
+            "mobile-390x844": {
+              "$ref": "#/$defs/scenarioMetrics"
+            },
+            "desktop-1000x800": {
+              "$ref": "#/$defs/scenarioMetrics"
+            }
+          }
+        },
+        "identityReview": {
+          "$ref": "#/$defs/identityReview"
+        },
+        "dignityReview": {
+          "$ref": "#/$defs/dignityReview"
+        }
+      }
+    },
+    "scenarioMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validResponses",
+        "recognized",
+        "recognitionRate",
+        "favorece",
+        "neutra",
+        "prejudica",
+        "favoreceRate",
+        "neutraRate",
+        "prejudicaRate"
+      ],
+      "properties": {
+        "validResponses": {
+          "$ref": "#/$defs/scenarioValidResponseCount"
+        },
+        "recognized": {
+          "$ref": "#/$defs/metricCount"
+        },
+        "recognitionRate": {
+          "$ref": "#/$defs/rate"
+        },
+        "favorece": {
+          "$ref": "#/$defs/metricCount"
+        },
+        "neutra": {
+          "$ref": "#/$defs/metricCount"
+        },
+        "prejudica": {
+          "$ref": "#/$defs/metricCount"
+        },
+        "favoreceRate": {
+          "$ref": "#/$defs/rate"
+        },
+        "neutraRate": {
+          "$ref": "#/$defs/rate"
+        },
+        "prejudicaRate": {
+          "$ref": "#/$defs/rate"
+        }
+      }
+    },
+    "governanceActorId": {
+      "description": "Identificador opaco de governança. Não é nome, e-mail nem identificador de participante; a vinculação ao responsável fica em registro privado de acesso controlado.",
+      "type": "string",
+      "pattern": "^gov_[a-f0-9]{32}$"
+    },
+    "privateEvidenceRef": {
+      "description": "Referência opaca e hash de eventual narrativa humana mantida fora do consolidado e do bundle públicos.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactId",
+        "sha256",
+        "handling"
+      ],
+      "properties": {
+        "artifactId": {
+          "type": "string",
+          "pattern": "^private-governance-[a-f0-9]{32}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "handling": {
+          "const": "restricted-redacted-excluded-from-public-bundle"
+        }
+      }
+    },
+    "identityReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reviewedBy",
+        "reviewedAt",
+        "outcomeCode"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ]
+        },
+        "reviewedBy": {
+          "$ref": "#/$defs/governanceActorId"
+        },
+        "reviewedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "outcomeCode": {
+          "enum": [
+            "identity-review-pending",
+            "identity-confirmed",
+            "identity-not-confirmed"
+          ]
+        },
+        "privateEvidence": {
+          "$ref": "#/$defs/privateEvidenceRef"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "pending" } }, "required": ["status"] },
+          "then": { "properties": { "outcomeCode": { "const": "identity-review-pending" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "approved" } }, "required": ["status"] },
+          "then": { "properties": { "outcomeCode": { "const": "identity-confirmed" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "rejected" } }, "required": ["status"] },
+          "then": { "properties": { "outcomeCode": { "const": "identity-not-confirmed" } } }
+        }
+      ]
+    },
+    "dignityReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reviewedBy",
+        "reviewedAt",
+        "outcomeCode"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ]
+        },
+        "reviewedBy": {
+          "$ref": "#/$defs/governanceActorId"
+        },
+        "reviewedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "outcomeCode": {
+          "enum": [
+            "dignity-review-pending",
+            "dignity-preserved",
+            "dignity-concern-detected"
+          ]
+        },
+        "privateEvidence": {
+          "$ref": "#/$defs/privateEvidenceRef"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "pending" } }, "required": ["status"] },
+          "then": { "properties": { "outcomeCode": { "const": "dignity-review-pending" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "approved" } }, "required": ["status"] },
+          "then": { "properties": { "outcomeCode": { "const": "dignity-preserved" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "rejected" } }, "required": ["status"] },
+          "then": { "properties": { "outcomeCode": { "const": "dignity-concern-detected" } } }
+        }
+      ]
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "decidedBy",
+        "decidedAt",
+        "reasonCodes"
+      ],
+      "properties": {
+        "value": {
+          "enum": [
+            "seguir",
+            "iterar",
+            "abandonar"
+          ]
+        },
+        "decidedBy": {
+          "$ref": "#/$defs/governanceActorId"
+        },
+        "decidedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reasonCodes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "all-gates-passed",
+              "quantitative-threshold-missed",
+              "identity-rework-required",
+              "dignity-rework-required",
+              "provenance-remediation-required",
+              "additional-evidence-required",
+              "pilot-not-viable",
+              "unresolvable-provenance",
+              "unacceptable-identity-risk",
+              "unacceptable-dignity-risk"
+            ]
+          }
+        },
+        "privateEvidence": {
+          "$ref": "#/$defs/privateEvidenceRef"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "value": { "const": "seguir" } }, "required": ["value"] },
+          "then": {
+            "properties": {
+              "reasonCodes": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1,
+                "items": { "const": "all-gates-passed" }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "value": { "const": "iterar" } }, "required": ["value"] },
+          "then": {
+            "properties": {
+              "reasonCodes": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "quantitative-threshold-missed",
+                    "identity-rework-required",
+                    "dignity-rework-required",
+                    "provenance-remediation-required",
+                    "additional-evidence-required"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "value": { "const": "abandonar" } }, "required": ["value"] },
+          "then": {
+            "properties": {
+              "reasonCodes": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "pilot-not-viable",
+                    "unresolvable-provenance",
+                    "unacceptable-identity-risk",
+                    "unacceptable-dignity-risk"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

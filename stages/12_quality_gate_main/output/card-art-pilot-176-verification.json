@@ -1,0 +1,58 @@
+{
+  "status": "pilot-invalidated-regeneration-required",
+  "issue": 176,
+  "validatedBase": "f86aec40ba4770fc71de6deca55175e356ac942d",
+  "checks": [
+    {
+      "name": "style-guide-before-assets",
+      "result": "failed; pilot-1 required a uniform background, the generated batch used gradients, and pilot-2 admitted that gradient only after the batch was observed; P01-P08 cannot be tested or support a scale decision"
+    },
+    {
+      "name": "pilot-evidence-isolation",
+      "command": "npm run build --prefix app",
+      "result": "passed; all eight PNGs and the manifest are outside app/public; post-build verification scanned 157 dist files and found no pilot SHA-256 or evidence path"
+    },
+    {
+      "name": "docker-build-context",
+      "command": "npm run test:card-art-pilot-contract --prefix app; docker build --file app/Dockerfile --tag polimatch-app:pilot-176 .",
+      "result": "static contract passed locally; app/Dockerfile copies the manifest from the documented repository-root context before npm run build, .dockerignore excludes the pilot arts while readmitting only manifest.json, and only app/dist reaches nginx; Docker CLI was unavailable locally, but the actual root-context image build is mandatory in design-validator.yml and remains unobserved until remote CI runs"
+    },
+    {
+      "name": "pilot-asset-and-reference-integrity",
+      "command": "npm test",
+      "result": "passed; 207 of 207 unit tests (4 shared, 58 backend, 145 app), including the integrated daily session and prediction contracts plus canonical pilot derivation, ambiguous or post-hoc aliases, commits outside real HEAD, encoded and symlink path escapes, opaque governance IDs, no unrestricted public string slots, removal of public narratives, all reported trivial PII examples, empty or renamed bundles, reused receipts, detached custody roots, geometry and chronology"
+    },
+    {
+      "name": "reference-provenance",
+      "result": "partial by design; 3 references have documented source, author and license; 5 user-edited references are explicitly license-pending and block production approval"
+    },
+    {
+      "name": "blind-form-breakpoints",
+      "command": "npm run test:card-art-pilot-form --prefix app",
+      "result": "passed in Chromium and WebKit; the smoke derived expected geometry from app/src/styles.css and matched both scenarios, while the semantic contract checks every viewport/card/art-window/image/blind-plate dimension within 0.2 CSS px; collection and export require collectionAllowed, the immutable batch and membership in the pre-issued receipt registry, independently of scaleDecisionAllowed"
+    },
+    {
+      "name": "result-governance-schema",
+      "command": "npm run test:card-art-pilot-contract --prefix app",
+      "result": "64 contract tests passed; locked Ajv 8.20.0 plus ajv-formats 3.0.1 validates generation plan/receipt, receipt registry, deterministic recognition rules, non-empty response bundle, each individual response and the result against Draft 2020-12 before semantics. The public result has no notes/rationale/free narrative or unrestricted string slots: governance actors are opaque IDs, outcomes and reasonCodes are closed, and optional private narrative is represented only by an opaque artifact reference plus SHA-256; this does not by itself approve an operational result"
+    },
+    {
+      "name": "result-derived-validator",
+      "command": "npm run card-art-pilot:validate-results --prefix app -- <result.json> <response-bundle.json>",
+      "result": "contract fixtures recompute participant/scenario counts, published and suppressed strata, recognition from pre-versioned deterministic aliases, every tone/count/rate/balance per art and scenario, plus custody from the non-empty bundle; canonical comparison rejects edited aggregates. No operational result is reported as passed: the current batch is invalid, and any future collection remains fail-closed until an external temporal anchor on a protected branch is verifiable"
+    },
+    {
+      "name": "continuous-integration-enforcement",
+      "command": "design-validator.yml and ui-interaction-smoke.yml",
+      "result": "configured; path triggers cover app, shared, .dockerignore, credits, the style guide, protocol, result, all six schemas, manifest and evidence; the local workflow-equivalent matrix passed the eight integrated app flows and the blocked pilot form in Chromium and WebKit, while CI remains responsible for the real repository-root Docker image build"
+    },
+    {
+      "name": "blind-recognition-test",
+      "result": "blocked; P01-P08 are nonconforming and no external participant may be recruited before a new batch is generated under the already-versioned guide"
+    },
+    {
+      "name": "neutrality-and-dignity-test",
+      "result": "blocked; human review starts only after regeneration, provenance review and an explicit technical unlock"
+    }
+  ]
+}

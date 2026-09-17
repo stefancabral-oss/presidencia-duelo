@@ -4,13 +4,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run editorial-assets:check && npm run portraits:check && vite build",
+    "build": "npm run editorial-assets:check && npm run portraits:check && vite build && node scripts/verify-card-art-pilot-excluded.mjs",
     "editorial-assets:check": "node scripts/validate-editorial-assets.mjs",
+    "card-art-pilot:validate-participants": "node scripts/validate-card-art-pilot-participants.mjs",
+    "card-art-pilot:validate-results": "node scripts/validate-card-art-pilot-results.mjs",
     "portraits:check": "node scripts/validate-portrait-slots.mjs",
     "test": "node --test src/*.test.js",
+    "test:card-art-pilot-contract": "node --test src/card-art-pilot.test.js src/card-art-pilot-validation.test.js src/card-art-pilot-participant-validation.test.js src/card-art-pilot-manifest-provenance.test.js src/card-art-pilot-repo-path.test.js src/card-art-pilot-docker-context.test.js",
+    "test:card-art-pilot-form": "node scripts/card-art-pilot-form-smoke.mjs",
     "preview": "vite preview"
   },
   "devDependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
     "playwright": "1.55.1",
     "vite": "^6.3.5"
   }

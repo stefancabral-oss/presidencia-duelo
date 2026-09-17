@@ -24,6 +24,27 @@ function fakeStore(overrides = {}) {
 
 const googleIdentity = { configured: false, verify: async () => ({ subject: "test" }) };
 
+test("retired binary vote route is absent and cannot write a vote", async () => {
+  let writes = 0;
+  const app = createHttpApp({
+    store: fakeStore({
+      vote: async () => { writes += 1; },
+      roundVote: async () => { writes += 1; },
+    }),
+    googleIdentity,
+    env: {},
+  });
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer obsolete-client" },
+      body: JSON.stringify({ winnerId: "lula", loserId: "jair-bolsonaro" }),
+    });
+    assert.equal(response.status, 404);
+    assert.equal(writes, 0);
+  });
+});
+
 async function withServer(app, run) {
   const server = app.listen(0, "127.0.0.1");
   await new Promise((resolve, reject) => {

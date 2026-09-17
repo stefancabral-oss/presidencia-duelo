@@ -102,7 +102,6 @@ O contrato de `role`, `party`, `primaryArea`, `contextAffiliation` e da proveni�
 | `POST` | `/api/auth/logout` | revoga a sessão própria atual |
 | `POST` | `/api/daily-vote` | confirma o próximo slot diário por `editionId`, `slot`, `winnerId` e `answerId`; a ordem das cartas nunca vem do cliente |
 | `POST` | `/api/round-vote` | confirma uma escolha entre quatro pessoas numa transação; exige `roundId`, `winnerId`, quatro `candidateIds` únicos e `playerVersion` |
-| `POST` | `/api/vote` | endpoint binário aposentado; responde `410 ROUND_V4_REQUIRED` para impedir contagem incompatível por clientes antigos |
 
 Exemplo do corpo atual:
 

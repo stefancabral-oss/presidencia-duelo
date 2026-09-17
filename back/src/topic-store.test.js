@@ -19,7 +19,6 @@ import {
   recoveryKeyHash,
   validateTopic,
   validateRoundVote,
-  validateVote,
   validateMaterializedDailyEdition,
   validateDailyCutRecord,
   validateDailyCutResults,
@@ -145,9 +144,6 @@ const candidateRegistry = createApprovedTestRegistry();
 test("only active curated topics accept votes", () => {
   assert.equal(validateTopic("eleicoes-2026", candidateRegistry), "eleicoes-2026");
   assert.throws(() => validateTopic("influenciadores", candidateRegistry), /indisponível/);
-  assert.throws(() => validateVote("eleicoes-2026", "lula", "lula", candidateRegistry), /voto inválido/);
-  assert.throws(() => validateVote("eleicoes-2026", "lula", "acm-neto", candidateRegistry), /voto inválido/);
-  assert.doesNotThrow(() => validateVote("eleicoes-2026", "lula", "jair-bolsonaro", candidateRegistry));
 });
 
 test("four-card rounds require four unique playable candidates and the winner", () => {

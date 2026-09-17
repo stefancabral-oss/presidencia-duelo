@@ -303,13 +303,6 @@ export function createHttpApp({
     }
   });
 
-  app.post("/api/vote", (_req, res) => {
-    res.status(410).json({
-      error: "duelos binários foram substituídos por rodadas de quatro; atualize o aplicativo",
-      code: "ROUND_V4_REQUIRED",
-    });
-  });
-
   app.post("/api/round-vote", async (req, res) => {
     const { roundId, winnerId, candidateIds, topicId, playerVersion } = req.body || {};
     try {

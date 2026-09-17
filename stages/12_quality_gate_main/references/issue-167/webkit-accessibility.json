@@ -1,0 +1,177 @@
+{
+  "browser": "webkit",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "entry": {
+    "dailyFirstFallbackToFree": true
+  },
+  "coach": {
+    "tag": "DIALOG",
+    "open": true,
+    "modal": true,
+    "labelledBy": "coach-title",
+    "activeId": "dismiss-coach",
+    "closedWith": "Escape"
+  },
+  "slots": [
+    {
+      "tag": "ARTICLE",
+      "directButtons": 2,
+      "nestedButtons": 0,
+      "voteName": "Escolher Tarcísio de Freitas",
+      "profileName": "Conhecer Tarcísio de Freitas",
+      "profileText": "ⓘConhecer perfil",
+      "profileHeight": 44
+    },
+    {
+      "tag": "ARTICLE",
+      "directButtons": 2,
+      "nestedButtons": 0,
+      "voteName": "Escolher Ronaldo Caiado",
+      "profileName": "Conhecer Ronaldo Caiado",
+      "profileText": "ⓘConhecer perfil",
+      "profileHeight": 44
+    },
+    {
+      "tag": "ARTICLE",
+      "directButtons": 2,
+      "nestedButtons": 0,
+      "voteName": "Escolher Augusto Cury",
+      "profileName": "Conhecer Augusto Cury",
+      "profileText": "ⓘConhecer perfil",
+      "profileHeight": 44
+    },
+    {
+      "tag": "ARTICLE",
+      "directButtons": 2,
+      "nestedButtons": 0,
+      "voteName": "Escolher Luiz Inácio Lula da Silva (Lula)",
+      "profileName": "Conhecer Luiz Inácio Lula da Silva (Lula)",
+      "profileText": "ⓘConhecer perfil",
+      "profileHeight": 44
+    }
+  ],
+  "focusReturns": [
+    {
+      "index": 0,
+      "expectedName": "Conhecer Tarcísio de Freitas",
+      "returned": true
+    },
+    {
+      "index": 1,
+      "expectedName": "Conhecer Ronaldo Caiado",
+      "returned": true
+    },
+    {
+      "index": 2,
+      "expectedName": "Conhecer Augusto Cury",
+      "returned": true
+    },
+    {
+      "index": 3,
+      "expectedName": "Conhecer Luiz Inácio Lula da Silva (Lula)",
+      "returned": true
+    }
+  ],
+  "accessibilityTree": "- article:\n  - button \"Escolher Tarcísio de Freitas\":\n    - text: TD\n    - img \"Foto de Tarcísio de Freitas\"\n    - strong: Tarcísio de Freitas\n    - text: Republicanos Governador de São Paulo; candidato à reeleição\n  - button \"Conhecer Tarcísio de Freitas\": Conhecer perfil\n- article:\n  - button \"Escolher Ronaldo Caiado\":\n    - text: RC\n    - img \"Foto de Ronaldo Caiado\"\n    - strong: Ronaldo Caiado\n    - text: PSD Ex-governador de Goiás; candidato à Presidência\n  - button \"Conhecer Ronaldo Caiado\": Conhecer perfil\n- article:\n  - button \"Escolher Augusto Cury\":\n    - text: AC\n    - img \"Foto de Augusto Cury\"\n    - strong: Augusto Cury\n    - text: Avante Escritor e psiquiatra; candidato à Presidência\n  - button \"Conhecer Augusto Cury\": Conhecer perfil\n- article:\n  - button \"Escolher Luiz Inácio Lula da Silva (Lula)\":\n    - text: LI\n    - img \"Foto de Luiz Inácio Lula da Silva (Lula)\"\n    - strong: Lula\n    - text: PT Presidente da República (candidato à reeleição)\n  - button \"Conhecer Luiz Inácio Lula da Silva (Lula)\": Conhecer perfil",
+  "keyboard": {
+    "profileActivationKeys": [
+      "Enter",
+      "Space",
+      "Shift+Enter",
+      "Enter"
+    ],
+    "longPressFollowUpKey": "Enter",
+    "voteActivationKey": "Shift+Enter"
+  },
+  "contextualReturnLabels": {
+    "duel": "Voltar à rodada",
+    "ranking": "Voltar ao ranking"
+  },
+  "longPressRegression": {
+    "winnerId": "tarcisio-de-freitas",
+    "pointerVotesBeforeEscape": 0,
+    "keyboardVotesAfterEscape": 1
+  },
+  "pendingProfileLock": {
+    "ariaDisabled": [
+      "true",
+      "true",
+      "true",
+      "true"
+    ],
+    "pendingRace": {
+      "modalOpen": false,
+      "candidateIds": [
+        "tarcisio-de-freitas",
+        "ronaldo-caiado",
+        "augusto-cury",
+        "lula"
+      ]
+    }
+  },
+  "negativeState": {
+    "before": {
+      "progress": "0 escolhas",
+      "candidateIds": [
+        "tarcisio-de-freitas",
+        "ronaldo-caiado",
+        "augusto-cury",
+        "lula"
+      ],
+      "generatedRoundIds": [
+        "00000000-0000-4000-8000-000000000001"
+      ]
+    },
+    "after": {
+      "progress": "0 escolhas",
+      "candidateIds": [
+        "tarcisio-de-freitas",
+        "ronaldo-caiado",
+        "augusto-cury",
+        "lula"
+      ],
+      "generatedRoundIds": [
+        "00000000-0000-4000-8000-000000000001"
+      ]
+    },
+    "voteRequestsBeforeChoice": 0,
+    "rankingReads": 1,
+    "personalRankingEmpty": true
+  },
+  "completedRounds": [
+    {
+      "roundId": "00000000-0000-4000-8000-000000000001",
+      "before": [
+        "tarcisio-de-freitas",
+        "ronaldo-caiado",
+        "augusto-cury",
+        "lula"
+      ],
+      "after": [
+        "romeu-zema",
+        "flavio-bolsonaro",
+        "renan-santos",
+        "pablo-marcal"
+      ]
+    },
+    {
+      "roundId": "00000000-0000-4000-8000-000000000002",
+      "before": [
+        "romeu-zema",
+        "flavio-bolsonaro",
+        "renan-santos",
+        "pablo-marcal"
+      ],
+      "after": [
+        "lula",
+        "augusto-cury",
+        "ronaldo-caiado",
+        "tarcisio-de-freitas"
+      ]
+    }
+  ],
+  "pageErrors": []
+}

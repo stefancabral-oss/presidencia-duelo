@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { PRIMARY_AREA_INFERENCE_SOURCE, TAXONOMY_SOURCE_POINTERS } from "../../shared/catalog-taxonomy.js";
 import { buildContentCatalog, displayName, normalizePersonName } from "./content-import.js";
 
 const profile = (name) => ({
   nome_exibicao: name,
   ocupacao_atual: "Cargo atual",
-  partido_ou_area: "Área",
+  partido_ou_area: "PT",
   frase_card: "Frase curta",
   resumo_30s: "Resumo",
   relevancia_2026: "Relevância",
@@ -31,6 +32,18 @@ const chromas = (name) => Array.from({ length: 12 }, (_, index) => ({
   riscos_contexto: "Risco",
 }));
 
+const taxonomy = (name) => ({
+  name,
+  party: "PT",
+  primaryArea: "Política institucional",
+  contextAffiliation: null,
+  taxonomyProvenance: {
+    party: { status: "extracted", source: TAXONOMY_SOURCE_POINTERS.profilePartyOrArea },
+    primaryArea: { status: "inferred", source: PRIMARY_AREA_INFERENCE_SOURCE },
+    contextAffiliation: { status: "ambiguous", source: TAXONOMY_SOURCE_POINTERS.profilePartyOrArea },
+  },
+});
+
 test("normalizes names across accents and parenthetical aliases", () => {
   assert.equal(normalizePersonName("Popó (Acelino Freitas)"), "popo");
   assert.equal(displayName("Luiz Inácio Lula da Silva (Lula)"), "Lula");
@@ -39,8 +52,16 @@ test("normalizes names across accents and parenthetical aliases", () => {
 
 test("builds separate candidate and draft Chroma catalogs", () => {
   const name = "Luiz Inácio Lula da Silva (Lula)";
-  const result = buildContentCatalog([{ nome: name, grupo: "politica" }], [profile(name)], chromas(name));
+  const result = buildContentCatalog([{ nome: name, grupo: "politica" }], [profile(name)], [taxonomy(name)], chromas(name));
   assert.equal(result.candidates[0].id, "lula");
+  assert.equal(result.candidates[0].role, "Cargo atual");
+  assert.equal(result.candidates[0].party, "PT");
+  assert.equal(result.candidates[0].primaryArea, "Política institucional");
+  assert.equal(result.candidates[0].contextAffiliation, null);
+  assert.equal(result.candidates[0].taxonomyProvenance.contextAffiliation.status, "ambiguous");
+  assert.equal("affiliation" in result.candidates[0], false);
+  assert.equal("area" in result.candidates[0], false);
+  assert.equal("office" in result.candidates[0], false);
   assert.equal(result.candidates[0].sources.length, 1);
   assert.equal(result.chromas.length, 12);
   assert.equal(result.chromas[0].sourceReviewStatus, "url-provided");
@@ -51,7 +72,25 @@ test("builds separate candidate and draft Chroma catalogs", () => {
 test("refuses an incomplete Chroma set", () => {
   const name = "Pessoa Exemplo";
   assert.throws(
-    () => buildContentCatalog([{ nome: name, grupo: "politica" }], [profile(name)], chromas(name).slice(0, 11)),
+    () => buildContentCatalog([{ nome: name, grupo: "politica" }], [profile(name)], [taxonomy(name)], chromas(name).slice(0, 11)),
     /possui 11 Chromas/,
+  );
+});
+
+test("refuses taxonomy prose in the party slot", () => {
+  const name = "Pessoa Exemplo";
+  const invalid = { ...taxonomy(name), party: "PT / Executivo" };
+  assert.throws(
+    () => buildContentCatalog([{ nome: name, grupo: "politica" }], [profile(name)], [invalid], chromas(name)),
+    /sigla fora do vocabulário/,
+  );
+});
+
+test("refuses an extracted party that is absent from the real source field", () => {
+  const name = "Luiz Inácio Lula da Silva (Lula)";
+  const tampered = { ...taxonomy(name), party: "PL" };
+  assert.throws(
+    () => buildContentCatalog([{ nome: name, grupo: "politica" }], [profile(name)], [tampered], chromas(name)),
+    /party: valor extracted não tem relação semântica válida com a fonte/,
   );
 });

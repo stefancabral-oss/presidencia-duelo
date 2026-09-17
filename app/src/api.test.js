@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ApiError, loadDailyPredictionResults, requestJson, submitDailyPrediction, submitDailyVote } from "./api.js";
+import { ApiError, loadDailyPredictionResults, requestJson, submitDailyPrediction, submitDailyVote, submitRoundVote } from "./api.js";
 
 async function withFetch(fakeFetch, callback) {
   const originalFetch = globalThis.fetch;
@@ -123,31 +123,59 @@ test("an aborted response body remains a timeout, not BAD_PAYLOAD", async () => 
   }
 });
 
-test("daily vote requests never send a client candidate list", async () => {
-  let request;
+test("a supplied round id survives every retry request", async () => {
+  const payloads = [];
+  await withFetch(async (_url, options) => {
+    payloads.push(JSON.parse(options.body));
+    return { ok: true, status: 200, json: async () => ({ ok: true }) };
+  }, async () => {
+    const player = { recoveryKey: "pm2_test", version: 4 };
+    await submitRoundVote("stable-round-id", "winner", ["winner", "b", "c", "d"], "eleicoes-2026", player);
+    await submitRoundVote("stable-round-id", "winner", ["winner", "b", "c", "d"], "eleicoes-2026", player);
+  });
+
+  assert.equal(payloads.length, 2);
+  assert.deepEqual(payloads.map(({ roundId }) => roundId), ["stable-round-id", "stable-round-id"]);
+  assert.deepEqual(payloads.map(({ playerVersion }) => playerVersion), [4, 4]);
+});
+
+test("daily vote requests omit prediction capability by default and never send a client candidate list", async () => {
+  const requests = [];
   await withFetch(
     async (_url, options) => {
-      request = options;
+      requests.push(options);
       return { ok: true, status: 200, json: async () => ({ ok: true }) };
     },
-    async () => submitDailyVote(
-      "550e8400-e29b-41d4-a716-446655440000",
-      "edition-1",
-      4,
-      "lula",
-      "eleicoes-2026",
-      { recoveryKey: "pm2_player", version: 3 },
-    ),
+    async () => {
+      await submitDailyVote(
+        "550e8400-e29b-41d4-a716-446655440000",
+        "edition-1",
+        4,
+        "lula",
+        "eleicoes-2026",
+        { recoveryKey: "pm2_player", version: 3 },
+      );
+      await submitDailyVote(
+        "550e8400-e29b-41d4-a716-446655440001",
+        "edition-1",
+        5,
+        "lula",
+        "eleicoes-2026",
+        { recoveryKey: "pm2_player", version: 4, predictionEnabled: true },
+      );
+    },
   );
-  assert.deepEqual(JSON.parse(request.body), {
+  assert.deepEqual(JSON.parse(requests[0].body), {
     answerId: "550e8400-e29b-41d4-a716-446655440000",
     editionId: "edition-1",
     slot: 4,
     winnerId: "lula",
     topicId: "eleicoes-2026",
     playerVersion: 3,
-    predictionContractVersion: 1,
   });
+  assert.equal(JSON.parse(requests[1].body).predictionContractVersion, 1);
+  assert.equal(Object.hasOwn(JSON.parse(requests[0].body), "candidateIds"), false);
+  assert.equal(Object.hasOwn(JSON.parse(requests[1].body), "candidateIds"), false);
 });
 
 test("daily predictions have a separate idempotent contract and explicit skip", async () => {

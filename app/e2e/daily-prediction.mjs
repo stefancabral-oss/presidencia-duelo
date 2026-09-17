@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium, webkit } from "playwright";
+import { capabilityFixture, voteResponseV2 } from "./aggregate-fixture.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -205,6 +206,7 @@ async function installApi(page, server) {
   await page.route((url) => url.pathname.startsWith("/api/"), async (route) => {
     const request = route.request();
     const { pathname } = new URL(request.url());
+    if (pathname === "/api/capabilities") return route.fulfill({ status: 200, json: capabilityFixture() });
     if (pathname === "/api/candidates") return route.fulfill({ status: 200, json: { candidates: catalog } });
     if (pathname === "/api/ranking") return route.fulfill({ status: 200, json: { duels: server.version, ranking: ranking() } });
     if (pathname === "/api/player" && request.method() === "POST") return route.fulfill({ status: 201, json: { recoveryKey: `pm2_${"p".repeat(43)}` } });
@@ -230,7 +232,7 @@ async function installApi(page, server) {
         answeredAt: `2026-09-16T${String(payload.slot + 11).padStart(2, "0")}:00:00.000Z`,
       });
       server.version += 1;
-      return route.fulfill({ status: 200, json: voteResponse(server, payload) });
+      return route.fulfill({ status: 200, json: voteResponseV2(voteResponse(server, payload)) });
     }
     if (pathname === "/api/daily-prediction" && request.method() === "POST") {
       server.predictionRequestCount += 1;

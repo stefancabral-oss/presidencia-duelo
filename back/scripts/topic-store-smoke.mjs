@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import pg from "pg";
+import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import { createTopicStore, recoveryKeyHash } from "../src/topic-store.js";
-import { candidatesForTopic } from "../src/candidates.js";
+import { createApprovedTestRegistry } from "../test-support/editorial-fixtures.js";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL é obrigatória para o smoke de integração");
+const candidateRegistry = createApprovedTestRegistry();
 
 const seed = new pg.Pool({ connectionString });
 await seed.query(`
@@ -18,13 +20,13 @@ await seed.query(`
 `);
 await seed.end();
 
-const firstStore = createTopicStore(connectionString);
+const firstStore = createTopicStore(connectionString, { candidateRegistry });
 const firstMigration = await firstStore.init();
 assert.equal(firstMigration.resetApplied, true);
 
 const initial = await firstStore.ranking("eleicoes-2026");
 assert.equal(initial.duels, 0);
-assert.equal(initial.ranking.length, 54);
+assert.equal(initial.ranking.length, 5);
 
 const { recoveryKey } = await firstStore.createPlayer({ networkHash: "a".repeat(64) });
 const personalBefore = await firstStore.playerRanking(recoveryKey, "eleicoes-2026");
@@ -62,7 +64,7 @@ const legacyPlayer = new pg.Pool({ connectionString });
 await legacyPlayer.query("DELETE FROM player_stats WHERE candidate_id IN ('anitta', 'neymar-jr')");
 await legacyPlayer.end();
 
-const restartedStore = createTopicStore(connectionString);
+const restartedStore = createTopicStore(connectionString, { candidateRegistry });
 const secondMigration = await restartedStore.init();
 assert.equal(secondMigration.resetApplied, false);
 const afterRestart = await restartedStore.ranking("eleicoes-2026");
@@ -77,7 +79,7 @@ const influencerVote = await restartedStore.vote({
 });
 assert.equal(influencerVote.vote.status, "created");
 assert.equal(influencerVote.player.version, 2);
-assert.equal(influencerVote.player.ranking.length, 54);
+assert.equal(influencerVote.player.ranking.length, 5);
 
 const roundId = randomUUID();
 const round = await restartedStore.roundVote({
@@ -179,7 +181,7 @@ await precedingRelease.query(`ALTER TABLE choice_rounds
 await precedingRelease.query("DELETE FROM schema_migrations WHERE id = '2026-09-15-link-four-card-comparisons'");
 await precedingRelease.end();
 
-const upgradedStore = createTopicStore(connectionString);
+const upgradedStore = createTopicStore(connectionString, { candidateRegistry });
 await upgradedStore.init();
 const upgradedAuditPool = new pg.Pool({ connectionString });
 const upgradedAudit = await upgradedAuditPool.query("SELECT count(*) AS linked_comparisons FROM votes WHERE round_id = $1", [roundId]);
@@ -214,10 +216,24 @@ await upgradedStore.close();
 // aplicação recebeu. A limpeza abaixo atinge somente a cota por minuto para o
 // smoke conseguir percorrer 10 slots sem esperar fisicamente dois minutos.
 let dailyNow = new Date("2026-09-16T12:00:00.000Z");
-let mutableCatalog = candidatesForTopic("eleicoes-2026").map((candidate) => structuredClone(candidate));
+const completeCandidateRegistry = createApprovedTestRegistry(CATALOG.map(({ id }) => id));
+let mutableCatalog = completeCandidateRegistry
+  .candidatesForTopic("eleicoes-2026")
+  .map((candidate) => structuredClone(candidate));
+const currentCandidatesForTopic = (topicId) => {
+  if (!completeCandidateRegistry.topicsById.get(topicId)?.active) return Object.freeze([]);
+  return Object.freeze(mutableCatalog.filter((candidate) => candidate.topicIds.includes(topicId)));
+};
+const mutableCandidateRegistry = Object.freeze({
+  ...completeCandidateRegistry,
+  candidatesForTopic: currentCandidatesForTopic,
+  candidateBelongsToTopic(candidateId, topicId) {
+    return currentCandidatesForTopic(topicId).some(({ id }) => id === candidateId);
+  },
+});
 const dailyStore = createTopicStore(connectionString, {
   clock: () => dailyNow,
-  candidateCatalog: () => mutableCatalog.map((candidate) => structuredClone(candidate)),
+  candidateRegistry: mutableCandidateRegistry,
 });
 await dailyStore.init();
 const firstDailyPlayer = await dailyStore.createPlayer({ networkHash: "b".repeat(64) });
@@ -783,7 +799,7 @@ assert.equal(legacyTailResults.sessions[0].rounds.filter(({ preference }) => pre
 assert.equal(legacyTailResults.sessions[0].rounds.filter(({ prediction }) => prediction).length, 2);
 const cutReaderStore = createTopicStore(connectionString, {
   clock: () => dailyNow,
-  candidateCatalog: () => mutableCatalog.map((candidate) => structuredClone(candidate)),
+  candidateRegistry: mutableCandidateRegistry,
 });
 await cutReaderStore.init();
 const repeatedCut = await cutReaderStore.dailyCut("eleicoes-2026", "2026-09-16");
@@ -813,7 +829,7 @@ const predictionCommitGate = new Promise((resolve) => { releasePredictionCommit 
 const predictionReachedCommit = new Promise((resolve) => { announcePredictionReachedCommit = resolve; });
 const crossingStore = createTopicStore(connectionString, {
   clock: () => afterMidnight,
-  candidateCatalog: () => mutableCatalog.map((candidate) => structuredClone(candidate)),
+  candidateRegistry: mutableCandidateRegistry,
   hooks: {
     async afterDailyVoteAdmission({ answerId, slot }) {
       if (slot !== 10 || !barrierAnswerIds.has(answerId)) return;

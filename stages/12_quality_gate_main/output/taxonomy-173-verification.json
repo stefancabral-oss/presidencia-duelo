@@ -1,0 +1,83 @@
+{
+  "status": "local-checks-passed-ci-pending",
+  "issue": 173,
+  "macroIssue": 175,
+  "branch": "icm/12-u04-taxonomy-173",
+  "baseCommit": "f86aec40ba4770fc71de6deca55175e356ac942d",
+  "implementationCommit": "e8a8534f4f3b065401f6f33752d0c61de8b5774f",
+  "adversarialReviewCommit": "60357ff39a5bff20087de62e6fa407f6ba19a426",
+  "semanticReviewCommit": "8116ebf255b0939058616d8567246f5e884e3ca5",
+  "parityValidationCommit": "88d9ea957c7e221a63d004631055def5778331bd",
+  "generatedAt": "2026-09-16T08:56:18-03:00",
+  "catalog": {
+    "records": 125,
+    "schemaVersion": 2,
+    "normalizationVersion": 1,
+    "partyVocabularySize": 16,
+    "primaryAreaVocabularySize": 11,
+    "provenance": {
+      "role": { "extracted": 125, "inferred": 0, "ambiguous": 0 },
+      "party": { "extracted": 85, "inferred": 0, "ambiguous": 40 },
+      "primaryArea": { "extracted": 14, "inferred": 111, "ambiguous": 0 },
+      "contextAffiliation": { "extracted": 18, "inferred": 1, "ambiguous": 106 }
+    }
+  },
+  "checks": [
+    {
+      "name": "shared-taxonomy",
+      "command": "npm run test:shared",
+      "result": "passed; 16 of 16 tests, all four 125-record sources have bidirectional membership and unique normalized names, source pointers resolve, and extracted values have field-specific semantic relationships with real evidence"
+    },
+    {
+      "name": "root-unit",
+      "command": "npm test",
+      "result": "passed; 163 of 163 tests (16 shared, 63 back, 84 app), including source-parity negatives, candidate-public-v1 golden bytes, fail-closed missing legacy fields, persisted v1 replay, new v2 materialization, sealed predictions and real 125-record API serialization"
+    },
+    {
+      "name": "app-build",
+      "command": "npm run build",
+      "result": "passed with the CI Google client fixture; portrait validator found 99 of 125 ready and Vite produced the production bundle"
+    },
+    {
+      "name": "catalog-determinism",
+      "command": "npm run build:catalog --prefix back; compare SHA-256 before and after",
+      "result": "passed; elections-2026.json F9A666ABAE8F62FE675734EAF08B8B8B551839560DEBA005FD9BB0432879B897 and chromas-catalog-draft.json 0DAAE462C7E010FCCB5375855FE0A867E7F8F92CABBDF1CE9808B36D6DF707E0 remained identical across consecutive rebuilds"
+    },
+    {
+      "name": "browser-matrix",
+      "command": "POLIMATCH_E2E_BROWSER=chromium|webkit; run all eight UI workflow scripts",
+      "result": "passed in Chromium and WebKit on an isolated 127.0.0.1:4178 preview with strictPort and verified worktree PID; interaction, Google login/logout, persisted v1 to new v2 daily transition, prediction and sealed reveal, identity switch, 3 screens across 16 viewports, vote recovery and trust states verified"
+    },
+    {
+      "name": "vote-integrity-regression",
+      "command": "POLIMATCH_E2E_BROWSER=chromium|webkit node app/e2e/vote-recovery.mjs && node app/e2e/vote-trust-states.mjs",
+      "result": "passed in Chromium and WebKit; timeout, 503, 401, 409, idempotency, truncated 200 and legacy replay recovery stayed valid, as did sending, 401, 429 and 5xx trust states"
+    },
+    {
+      "name": "taxonomy-screenshot",
+      "command": "POLIMATCH_E2E_TAXONOMY_SCREENSHOT=stages/12_quality_gate_main/references/taxonomy-comparison.png",
+      "result": "passed; regenerated from real records and displays PT and REPUBLICANOS beside the area fallbacks Justiça and Economia, while Paulo Guedes remains without a guessed PL despite the legacy text órbita PL"
+    },
+    {
+      "name": "workflow-yaml",
+      "command": "python -c yaml.safe_load(.github/workflows/back-shared.yml)",
+      "result": "passed; actionlint was unavailable on this host"
+    },
+    {
+      "name": "production-audit",
+      "command": "npm audit --omit=dev --prefix app; npm audit --omit=dev --prefix back",
+      "result": "passed; 0 production vulnerabilities in both workspaces"
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "pending": [
+    "human review of 111 inferred primary areas and the one inferred context affiliation",
+    "attribute-level editorial research for 40 ambiguous parties and 106 ambiguous context affiliations",
+    "automatic GitHub Actions rerun for the updated pull request, including PostgreSQL integration",
+    "human gate"
+  ]
+}

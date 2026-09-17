@@ -1,17 +1,18 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import pg from "pg";
+import { AGGREGATE_PUBLIC_COPY_POLICY } from "../../shared/aggregate-publication-copy.js";
 import { eloTier, isZebra, ratingDeltas } from "../../shared/elo.js";
 import {
   CANDIDATES,
-  TOPICS_BY_ID,
-  candidateBelongsToTopic,
-  candidateProjectorBySchema,
+  PRODUCTION_CANDIDATE_REGISTRY,
   candidatesForTopic,
 } from "./candidates.js";
+import { candidatePublicProjectorBySchema as candidateProjectorBySchema } from "./candidate-public.js";
 import {
   DAILY_SESSION_RULESET,
   buildDailyEdition,
   dailyCutMethodology,
+  dailyCutSampleNotice,
   dailyRulesetByIdentity,
   editionWindow,
   editorialDateKey,
@@ -19,7 +20,6 @@ import {
   validateEditionDate,
 } from "./daily-session.js";
 import { personalRankingFromRows } from "./personal-ranking.js";
-
 const { Pool } = pg;
 const RESET_MIGRATION_ID = "20260913_eleicoes_2026_clean_start";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -30,10 +30,11 @@ const NETWORK_HASH_PATTERN = /^[a-f0-9]{64}$/;
 const FEEDBACK_SCOPE_PERSONAL = "personal";
 const FEEDBACK_SCOPE_LEGACY_GLOBAL = "legacy-global";
 const DAILY_CUT_MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;
+const PUBLIC_RANKING_COPY = AGGREGATE_PUBLIC_COPY_POLICY.scopes["global-ranking"].copy;
 const GLOBAL_RANKING_POLICY = Object.freeze({
   id: "elo-v1",
-  label: "Elo do placar público",
-  explanation: "A ordem pública usa Elo, vitórias e nome como critérios sucessivos.",
+  label: PUBLIC_RANKING_COPY.rankingPolicyLabel,
+  explanation: PUBLIC_RANKING_COPY.rankingPolicyExplanation,
 });
 
 export const VOTE_ABUSE_LIMITS = Object.freeze({
@@ -144,8 +145,8 @@ async function consumePlayerRoundQuota(client, playerId, mode = "free", editoria
   });
 }
 
-export function validateTopic(topicId) {
-  const topic = TOPICS_BY_ID.get(String(topicId || ""));
+export function validateTopic(topicId, candidateRegistry = PRODUCTION_CANDIDATE_REGISTRY) {
+  const topic = candidateRegistry.topicsById.get(String(topicId || ""));
   if (!topic?.active) {
     const error = new Error("assunto inválido ou indisponível");
     error.status = 400;
@@ -154,12 +155,12 @@ export function validateTopic(topicId) {
   return topic.id;
 }
 
-export function validateVote(topicId, winnerId, loserId) {
-  const normalizedTopic = validateTopic(topicId);
+export function validateVote(topicId, winnerId, loserId, candidateRegistry = PRODUCTION_CANDIDATE_REGISTRY) {
+  const normalizedTopic = validateTopic(topicId, candidateRegistry);
   if (
     winnerId === loserId
-    || !candidateBelongsToTopic(winnerId, normalizedTopic)
-    || !candidateBelongsToTopic(loserId, normalizedTopic)
+    || !candidateRegistry.candidateBelongsToTopic(winnerId, normalizedTopic)
+    || !candidateRegistry.candidateBelongsToTopic(loserId, normalizedTopic)
   ) {
     const error = new Error("voto inválido para este assunto");
     error.status = 400;
@@ -168,15 +169,15 @@ export function validateVote(topicId, winnerId, loserId) {
   return normalizedTopic;
 }
 
-export function validateRoundVote(topicId, winnerId, candidateIds) {
-  const normalizedTopic = validateTopic(topicId);
+export function validateRoundVote(topicId, winnerId, candidateIds, candidateRegistry = PRODUCTION_CANDIDATE_REGISTRY) {
+  const normalizedTopic = validateTopic(topicId, candidateRegistry);
   const ids = Array.isArray(candidateIds) ? candidateIds.map(String) : [];
   const unique = new Set(ids);
   if (
     ids.length !== 4
     || unique.size !== 4
     || !unique.has(winnerId)
-    || ids.some((candidateId) => !candidateBelongsToTopic(candidateId, normalizedTopic))
+    || ids.some((candidateId) => !candidateRegistry.candidateBelongsToTopic(candidateId, normalizedTopic))
   ) {
     const error = new Error("rodada inválida para este assunto");
     error.status = 400;
@@ -256,8 +257,11 @@ function withRankingPositions(ranking) {
   });
 }
 
-export function rankingFromRows(topicId, duels, rows, catalog = candidatesForTopic(topicId)) {
+export function rankingFromRows(topicId, duels, rows, candidateRegistry = PRODUCTION_CANDIDATE_REGISTRY) {
   const stats = new Map(rows.map((row) => [row.candidate_id, row]));
+  const catalog = Array.isArray(candidateRegistry)
+    ? candidateRegistry
+    : candidateRegistry.candidatesForTopic(topicId);
   const ranking = catalog.map((candidate) => {
     const row = stats.get(candidate.id) || {};
     const wins = Number(row.wins) || 0;
@@ -268,7 +272,8 @@ export function rankingFromRows(topicId, duels, rows, catalog = candidatesForTop
       id: candidate.id,
       name: candidate.name,
       displayName: candidate.displayName,
-      affiliation: candidate.affiliation,
+      party: candidate.party,
+      primaryArea: candidate.primaryArea,
       photo: candidate.photo,
       elo: Number(row.rating) || 1000,
       wins,
@@ -440,7 +445,7 @@ export function persistedRoundChannels(row) {
   };
 }
 
-async function createCleanSchema(client, { candidateCatalog = candidatesForTopic } = {}) {
+async function createCleanSchema(client, candidateRegistry) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       id text PRIMARY KEY,
@@ -892,9 +897,9 @@ async function createCleanSchema(client, { candidateCatalog = candidatesForTopic
       FOR EACH ROW EXECUTE FUNCTION reject_vote_mutation();
   `);
 
-  for (const topic of TOPICS_BY_ID.values()) {
+  for (const topic of candidateRegistry.topicsById.values()) {
     if (!topic.active) continue;
-    const playableCandidates = candidateCatalog(topic.id);
+    const playableCandidates = candidateRegistry.candidatesForTopic(topic.id);
     await client.query("INSERT INTO ranking_pools (topic_id) VALUES ($1) ON CONFLICT DO NOTHING", [topic.id]);
     for (const candidate of playableCandidates) {
       await client.query(
@@ -923,14 +928,14 @@ async function createCleanSchema(client, { candidateCatalog = candidatesForTopic
 async function selectRanking(queryable, topicId, {
   playerId,
   pendingComparisons = [],
-  catalog = candidatesForTopic(topicId),
+  candidateRegistry = PRODUCTION_CANDIDATE_REGISTRY,
+  catalog = candidateRegistry.candidatesForTopic(topicId),
 } = {}) {
   if (!playerId) {
-    const pool = await queryable.query("SELECT duels FROM ranking_pools WHERE topic_id = $1", [topicId]);
-    const stats = await queryable.query(
-      "SELECT candidate_id, rating, wins, losses, zebras FROM ranking_stats WHERE topic_id = $1",
-      [topicId],
-    );
+    const [pool, stats] = await Promise.all([
+      queryable.query("SELECT duels FROM ranking_pools WHERE topic_id = $1", [topicId]),
+      queryable.query("SELECT candidate_id, rating, wins, losses, zebras FROM ranking_stats WHERE topic_id = $1", [topicId]),
+    ]);
     return rankingFromRows(topicId, pool.rows[0]?.duels, stats.rows, catalog);
   }
 
@@ -981,12 +986,12 @@ async function findPlayer(queryable, accessToken) {
   return result.rows[0];
 }
 
-async function createPlayerRecords(client, playerId, recoveryHash, candidateCatalog = candidatesForTopic) {
+async function createPlayerRecords(client, playerId, recoveryHash, candidateRegistry) {
   await client.query("INSERT INTO anonymous_players (id, recovery_hash) VALUES ($1, $2)", [playerId, recoveryHash]);
-  for (const topic of TOPICS_BY_ID.values()) {
+  for (const topic of candidateRegistry.topicsById.values()) {
     if (!topic.active) continue;
     await client.query("INSERT INTO player_pools (player_id, topic_id) VALUES ($1, $2)", [playerId, topic.id]);
-    for (const candidate of candidateCatalog(topic.id)) {
+    for (const candidate of candidateRegistry.candidatesForTopic(topic.id)) {
       await client.query(
         "INSERT INTO player_stats (player_id, topic_id, candidate_id) VALUES ($1, $2, $3)",
         [playerId, topic.id, candidate.id],
@@ -1687,18 +1692,26 @@ async function applyFourCardRound(client, {
 
 export function createTopicStore(connectionString = process.env.DATABASE_URL, {
   clock = () => new Date(),
-  candidateCatalog = candidatesForTopic,
+  candidateRegistry = PRODUCTION_CANDIDATE_REGISTRY,
   hooks = {},
 } = {}) {
   if (!connectionString) throw new Error("DATABASE_URL é obrigatória");
+  if (!candidateRegistry?.topicsById || typeof candidateRegistry.candidatesForTopic !== "function") {
+    throw new Error("candidateRegistry é obrigatório");
+  }
   const pool = new Pool({ connectionString, max: Number(process.env.PG_POOL_MAX) || 10 });
+  const candidateCatalog = (topicId) => candidateRegistry.candidatesForTopic(topicId);
+  const registryRanking = (queryable, topicId, options = {}) => selectRanking(queryable, topicId, {
+    ...options,
+    candidateRegistry,
+  });
 
   const store = {
     async init() {
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
-        const migration = await createCleanSchema(client, { candidateCatalog });
+        const migration = await createCleanSchema(client, candidateRegistry);
         await client.query("COMMIT");
         return migration;
       } catch (error) {
@@ -1734,7 +1747,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           message: "limite diário de novos jogadores nesta rede atingido",
           retryAfterSeconds: 86400,
         });
-        await createPlayerRecords(client, playerId, recoveryKeyHash(recoveryKey), candidateCatalog);
+        await createPlayerRecords(client, playerId, recoveryKeyHash(recoveryKey), candidateRegistry);
         await client.query("COMMIT");
         return { recoveryKey };
       } catch (error) {
@@ -1746,23 +1759,19 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
     },
 
     async ranking(topicId) {
-      const topic = validateTopic(topicId);
-      return selectRanking(pool, topic, { catalog: candidateCatalog(topic) });
+      return registryRanking(pool, validateTopic(topicId, candidateRegistry));
     },
 
     async playerRanking(recoveryKey, topicId) {
-      const normalizedTopic = validateTopic(topicId);
+      const normalizedTopic = validateTopic(topicId, candidateRegistry);
       const player = await findPlayer(pool, recoveryKey);
-      const ranking = await selectRanking(pool, normalizedTopic, {
-        playerId: player.id,
-        catalog: candidateCatalog(normalizedTopic),
-      });
+      const ranking = await registryRanking(pool, normalizedTopic, { playerId: player.id });
       ranking.account = await accountForPlayer(pool, player.id);
       return ranking;
     },
 
     async signInWithGoogle({ identity, currentToken, topicId }) {
-      const normalizedTopic = validateTopic(topicId);
+      const normalizedTopic = validateTopic(topicId, candidateRegistry);
       const subject = String(identity?.subject || "").trim();
       if (!subject) {
         const error = new Error("identidade Google inválida");
@@ -1779,7 +1788,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
         if (!playerId && currentToken) playerId = (await findPlayer(client, currentToken)).id;
         if (!playerId) {
           playerId = randomUUID();
-          await createPlayerRecords(client, playerId, recoveryKeyHash(createRecoveryKey()), candidateCatalog);
+          await createPlayerRecords(client, playerId, recoveryKeyHash(createRecoveryKey()), candidateRegistry);
         }
         await client.query(
           `INSERT INTO player_identities (provider, subject, player_id, display_name, avatar_url)
@@ -1801,10 +1810,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           [accessTokenHash(sessionToken), playerId, SESSION_TTL_DAYS],
         );
         await client.query("DELETE FROM player_sessions WHERE expires_at <= now()");
-        const personal = await selectRanking(client, normalizedTopic, {
-          playerId,
-          catalog: candidateCatalog(normalizedTopic),
-        });
+        const personal = await registryRanking(client, normalizedTopic, { playerId });
         const account = { displayName: String(identity.displayName || "Jogador"), avatarUrl: String(identity.avatarUrl || "") };
         await client.query("COMMIT");
         return { sessionToken, account, player: { ...personal, account } };
@@ -2291,11 +2297,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
             methodology: record.methodology,
             completedPlayers: record.completedPlayers,
             completedAnswers: record.completedAnswers,
-            sampleNotice: record.completedPlayers === 0
-              ? "Nenhuma sessão concluída; não há resultado a interpretar."
-              : record.completedPlayers < 30
-                ? "Recorte de baixa participação; apresente contagens, não uma conclusão populacional."
-                : null,
+            sampleNotice: dailyCutSampleNotice(record.completedPlayers),
             catalogSnapshotHash: record.results.catalogSnapshotHash,
             catalog: record.results.catalog,
             rounds: record.results.rounds,
@@ -2372,11 +2374,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           methodology: record.methodology,
           completedPlayers: record.completedPlayers,
           completedAnswers: record.completedAnswers,
-          sampleNotice: record.completedPlayers === 0
-            ? "Nenhuma sessão concluída; não há resultado a interpretar."
-            : record.completedPlayers < 30
-              ? "Recorte de baixa participação; apresente contagens, não uma conclusão populacional."
-              : null,
+          sampleNotice: dailyCutSampleNotice(record.completedPlayers),
           catalogSnapshotHash: record.results.catalogSnapshotHash,
           catalog: record.results.catalog,
           rounds: record.results.rounds,
@@ -2554,7 +2552,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
     },
 
     async vote({ topicId, winnerId, loserId, voteId: requestedVoteId, recoveryKey, playerVersion }) {
-      const topic = validateVote(topicId, winnerId, loserId);
+      const topic = validateVote(topicId, winnerId, loserId, candidateRegistry);
       const voteId = normalizeVoteId(requestedVoteId);
       const publicCatalog = candidateCatalog(topic);
       const client = await pool.connect();
@@ -2570,8 +2568,8 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
             error.status = 409;
             throw error;
           }
-          const global = await selectRanking(client, topic, { catalog: publicCatalog });
-          const personal = player ? await selectRanking(client, topic, { playerId: player.id, catalog: publicCatalog }) : null;
+          const global = await registryRanking(client, topic);
+          const personal = player ? await registryRanking(client, topic, { playerId: player.id }) : null;
           await client.query("COMMIT");
           return {
             ...global,
@@ -2623,8 +2621,8 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
           [voteId, player?.id || null, topic, winnerId, loserId, winnerRating, loserRating, deltas.winnerDelta, deltas.loserDelta, zebra],
         );
-        const global = await selectRanking(client, topic, { catalog: publicCatalog });
-        const personal = player ? await selectRanking(client, topic, { playerId: player.id, catalog: publicCatalog }) : null;
+        const global = await registryRanking(client, topic);
+        const personal = player ? await registryRanking(client, topic, { playerId: player.id }) : null;
         await client.query("COMMIT");
         return {
           ...global,
@@ -2646,7 +2644,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
     },
 
     async roundVote({ topicId, winnerId, candidateIds, roundId: requestedRoundId, recoveryKey, playerVersion, now }) {
-      const validated = validateRoundVote(topicId, winnerId, candidateIds);
+      const validated = validateRoundVote(topicId, winnerId, candidateIds, candidateRegistry);
       const topic = validated.topic;
       const roundCandidates = validated.candidateIds;
       const roundId = normalizeVoteId(requestedRoundId);

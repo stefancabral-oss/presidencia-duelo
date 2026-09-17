@@ -6,6 +6,10 @@ on:
     paths:
       - 'back/**'
       - 'shared/**'
+      - 'stages/10_rebuild_eleicoes_2026/input/polimatch-catalogo-125.json'
+      - 'stages/10_rebuild_eleicoes_2026/input/polimatch-perfis-editoriais-125.json'
+      - 'stages/10_rebuild_eleicoes_2026/input/polimatch-taxonomia-125.json'
+      - 'docs/editorial/**'
       - 'package.json'
       - '.github/workflows/back-shared.yml'
   workflow_dispatch:
@@ -21,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -29,6 +35,13 @@ jobs:
           cache-dependency-path: back/package-lock.json
       - name: Install backend
         run: npm ci --prefix back
+      - name: Verify editorial attestations and reviewed commits
+        run: npm run editorial:verify --prefix back
+        env:
+          EDITORIAL_AUTHORITY_PUBLIC_JWK: ${{ secrets.EDITORIAL_AUTHORITY_PUBLIC_JWK }}
+          EDITORIAL_AUTHORITY_ISSUER: ${{ secrets.EDITORIAL_AUTHORITY_ISSUER }}
+          EDITORIAL_AUTHORITY_KEY_ID: ${{ secrets.EDITORIAL_AUTHORITY_KEY_ID }}
+          EDITORIAL_AUTHORITY_RECEIPTS: ${{ secrets.EDITORIAL_AUTHORITY_RECEIPTS }}
       - name: Test backend
         run: npm test --prefix back
 
@@ -43,7 +56,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Test shared domain
+      - name: Test shared domain and catalog taxonomy
         run: npm run test:shared
 
   back-integration-postgres:

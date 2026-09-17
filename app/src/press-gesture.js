@@ -40,12 +40,16 @@ export function createPressGesture({
       start = null;
     },
     click(event) {
-      if (held) {
+      // Pointer-generated clicks have a positive detail. A keyboard or AT
+      // activation has detail === 0 and may be the first click we receive
+      // after showModal() swallowed the pointer gesture's own click.
+      if (held && event.detail !== 0) {
         held = false;
         event.preventDefault?.();
         event.stopPropagation?.();
         return "hold";
       }
+      held = false;
       onTap?.(event);
       return "tap";
     },

@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { chromium, webkit } from "playwright";
+import { capabilityFixture, voteResponseV2 } from "./aggregate-fixture.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
 const browserType = { chromium, webkit }[browserName];
 if (!browserType) throw new Error(`Navegador não suportado: ${browserName}`);
 
-const RULESET = {
+const RULESET_V1 = {
   id: "daily-four-card-v1",
   version: 1,
   timeZone: "America/Sao_Paulo",
@@ -17,24 +18,42 @@ const RULESET = {
   quota: { id: "editorial-day-v2", totalChoices: 30, dailyChoices: 10, freeChoices: 20 },
 };
 
-function candidate(index) {
-  return {
+const RULESET_V2 = {
+  ...RULESET_V1,
+  id: "daily-four-card-v2",
+  version: 2,
+  catalogSchema: "candidate-public-v2",
+};
+
+function candidate(index, { historical = false } = {}) {
+  const shared = {
     personId: index,
     id: `candidate-${index}`,
     name: `Pessoa Histórica ${index}`,
     displayName: `Pessoa ${index}`,
-    affiliation: "E2E",
     party: "E2E",
     role: "Perfil de teste",
-    office: "Perfil de teste",
     summary: `Snapshot editorial ${index}`,
     bio: `Biografia preservada no snapshot ${index}.`,
     facts: [],
     sources: [],
   };
+  return historical
+    ? { ...shared, affiliation: "E2E", office: "Perfil de teste" }
+    : {
+      ...shared,
+      primaryArea: "Política institucional",
+      contextAffiliation: null,
+      taxonomyProvenance: {
+        role: { status: "extracted", source: "e2e#role" },
+        party: { status: "extracted", source: "e2e#party" },
+        primaryArea: { status: "inferred", source: "e2e#primaryArea" },
+        contextAffiliation: { status: "ambiguous", source: "e2e#contextAffiliation" },
+      },
+    };
 }
 
-const dayOneCatalog = Array.from({ length: 40 }, (_, index) => candidate(index + 1));
+const dayOneCatalog = Array.from({ length: 40 }, (_, index) => candidate(index + 1, { historical: true }));
 const dayTwoCatalog = Array.from({ length: 40 }, (_, index) => candidate(index + 2));
 // candidate-1 foi retirado depois da materialização; candidate-41 só entra no
 // catálogo corrente e na edição seguinte.
@@ -43,13 +62,14 @@ const currentCatalog = dayTwoCatalog;
 function edition(day) {
   const date = day === 1 ? "2026-09-16" : "2026-09-17";
   const nextDate = day === 1 ? "2026-09-17" : "2026-09-18";
+  const ruleset = day === 1 ? RULESET_V1 : RULESET_V2;
   return {
-    id: `daily-four-card-v1:v1:eleicoes-2026:${date}:e2e-day-${day}`,
+    id: `${ruleset.id}:v${ruleset.version}:eleicoes-2026:${date}:e2e-day-${day}`,
     date,
     topicId: "eleicoes-2026",
-    rulesetId: RULESET.id,
-    rulesetVersion: RULESET.version,
-    catalogSchema: RULESET.catalogSchema,
+    rulesetId: ruleset.id,
+    rulesetVersion: ruleset.version,
+    catalogSchema: ruleset.catalogSchema,
     catalogHash: String(day).repeat(64),
     snapshotHash: String(day + 2).repeat(64),
     candidateCount: 40,
@@ -62,7 +82,15 @@ function edition(day) {
 
 function createDailyState(day) {
   const catalog = day === 1 ? dayOneCatalog : dayTwoCatalog;
-  return { day, edition: edition(day), catalog, answers: [], predictions: [], completion: null };
+  return {
+    day,
+    ruleset: day === 1 ? RULESET_V1 : RULESET_V2,
+    edition: edition(day),
+    catalog,
+    answers: [],
+    predictions: [],
+    completion: null,
+  };
 }
 
 function publicSession(state) {
@@ -71,7 +99,7 @@ function publicSession(state) {
   const completed = answered === 10;
   const [, month, day] = state.edition.date.split("-");
   return {
-    ruleset: RULESET,
+    ruleset: state.ruleset,
     edition: state.edition,
     status: completed ? "completed" : "active",
     progress: { answered, total: 10 },
@@ -182,6 +210,7 @@ async function installApi(page, server) {
   await page.route((url) => url.pathname.startsWith("/api/"), async (route) => {
     const request = route.request();
     const { pathname } = new URL(request.url());
+    if (pathname === "/api/capabilities") return route.fulfill({ status: 200, json: capabilityFixture() });
     if (pathname === "/api/candidates") return route.fulfill({ status: 200, json: { candidates: currentCatalog } });
     if (pathname === "/api/ranking") return route.fulfill({ status: 200, json: { duels: server.duels, ranking: ranking() } });
     if (pathname === "/api/player" && request.method() === "POST") {
@@ -209,7 +238,7 @@ async function installApi(page, server) {
         const body = structuredClone(replay);
         body.round.status = "alreadyProcessed";
         body.vote.status = "alreadyProcessed";
-        return route.fulfill({ status: 200, json: body });
+        return route.fulfill({ status: 200, json: voteResponseV2(body) });
       }
       const dailyState = [...server.days.values()].find(({ edition: value }) => value.id === payload.editionId);
       if (!dailyState) return route.fulfill({ status: 409, json: { code: "DAILY_EDITION_CLOSED", error: "edição fechada" } });
@@ -235,7 +264,7 @@ async function installApi(page, server) {
         server.loseNextResponse = false;
         return route.abort("failed");
       }
-      return route.fulfill({ status: 200, json: body });
+      return route.fulfill({ status: 200, json: voteResponseV2(body) });
     }
     if (pathname === "/api/daily-prediction" && request.method() === "POST") {
       const payload = request.postDataJSON();

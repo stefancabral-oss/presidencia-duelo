@@ -1,6 +1,6 @@
 # PoliMatch
 
-PoliMatch é um jogo web casual de comparação entre personalidades públicas. A pessoa escolhe sua preferida entre quatro cartas, recebe uma nova rodada imediatamente e acompanha rankings geral e pessoal. É entretenimento: **não constitui pesquisa eleitoral**.
+PoliMatch é um jogo web casual de comparação entre personalidades públicas. A pessoa escolhe sua preferida entre quatro cartas, recebe uma nova rodada imediatamente e acompanha seu ranking pessoal. Superfícies agregadas permanecem retidas por padrão enquanto a decisão humana da issue #177 estiver pendente.
 
 ## Produto atual
 
@@ -81,18 +81,23 @@ Saídas:
 
 Não edite essas saídas manualmente. Corrija a entrada e execute o importador novamente.
 
+O contrato de `role`, `party`, `primaryArea`, `contextAffiliation` e da proveniência por atributo está em `docs/data/CATALOG_TAXONOMY.md`. `npm run test:shared` valida a fonte e confirma que o artefato gerado continua sincronizado.
+
 ## API
 
 | Método | Rota | Função |
 |---|---|---|
 | `GET` | `/api/health` | saúde da API e do PostgreSQL |
+| `GET` | `/api/capabilities` | estado fail-closed dos quatro escopos de publicação agregada; sempre `no-store` |
 | `GET` | `/api/topics` | assuntos ativos e anunciados |
 | `GET` | `/api/candidates?topic=eleicoes-2026` | pessoas da curadoria |
-| `GET` | `/api/ranking?topic=eleicoes-2026` | ranking agregado |
+| `GET` | `/api/ranking?topic=eleicoes-2026` | ranking agregado; exige receipt válida de `global-ranking` |
 | `POST` | `/api/player` | cria identidade anônima e chave de recuperação |
 | `GET` | `/api/player/state?topic=eleicoes-2026` | ranking pessoal; exige chave Bearer |
 | `GET` | `/api/daily-session?topic=eleicoes-2026` | edição diária e progresso autoritativo do jogador; exige chave Bearer |
-| `GET` | `/api/daily-cut?topic=eleicoes-2026&date=AAAA-MM-DD` | recorte público imutável de uma edição já fechada, com as 40 fichas históricas |
+| `GET` | `/api/daily-cut?topic=eleicoes-2026&date=AAAA-MM-DD` | recorte agregado imutável; exige receipt válida de `daily-distribution` |
+| `POST` | `/api/daily-prediction` | registra previsão separada; exige receipt válida de `prediction-reveal` |
+| `GET` | `/api/daily-prediction-results?topic=eleicoes-2026` | revela apuração fechada; exige Bearer e receipt válida de `prediction-reveal` |
 | `POST` | `/api/auth/google` | valida a credencial Google no servidor, liga a conta ao jogador atual e emite uma sessão própria |
 | `POST` | `/api/auth/logout` | revoga a sessão própria atual |
 | `POST` | `/api/daily-vote` | confirma o próximo slot diário por `editionId`, `slot`, `winnerId` e `answerId`; a ordem das cartas nunca vem do cliente |
@@ -113,7 +118,9 @@ Exemplo do corpo atual:
 
 O PostgreSQL guarda somente hashes das chaves de recuperação e sessões. O token de identidade do Google não é persistido; a ligação usa o `sub` validado pelo servidor. A rodada é idempotente e imutável; ela avança a escolha uma vez e mantém três comparações Elo vinculadas ao mesmo `roundId`. Escritas exigem sessão emitida pelo servidor e seguem a [política de integridade do voto](docs/security/VOTE_ABUSE_POLICY.md).
 
-A edição diária persiste ruleset, versão da ficha pública (`catalogSchema`), janela, dez slots e o snapshot editorial completo antes do primeiro jogador. Retirar uma pessoa ou ampliar a projeção da API corrente não reescreve a edição aberta nem seu recorte: sessões históricas e cortes publicados continuam autoexplicativos pelo snapshot e seus hashes. Um schema novo só estreia junto de um ruleset novo, numa data ainda não materializada. Somente sessões concluídas em `10/10` entram no recorte público.
+Respostas de voto usam o contrato V2: o canal pessoal fica em `player`/`round`/`vote`; qualquer publicação autorizada fica exclusivamente em `publicAggregate`. Não há fallback V1. O gate completo, o formato de autoridade externa e o limite jurídico do mecanismo estão em [Gate de publicação agregada](docs/legal/AGGREGATE_PUBLICATION_GATE.md).
+
+A edição diária persiste ruleset, versão da ficha pública (`catalogSchema`), janela, dez slots e o snapshot editorial completo antes do primeiro jogador. Retirar uma pessoa ou ampliar a projeção da API corrente não reescreve a edição aberta nem seu recorte: sessões históricas e cortes publicados continuam autoexplicativos pelo snapshot e seus hashes. `daily-four-card-v1@1` permanece selado com `candidate-public-v1`; datas ainda não materializadas usam `daily-four-card-v2@2` com `candidate-public-v2`. Somente sessões concluídas em `10/10` entram no recorte público.
 
 ## Deploy no Dokploy
 
@@ -126,8 +133,12 @@ API:
 - segredo obrigatório de produção: `VOTER_NETWORK_SECRET=<valor aleatório com ao menos 32 caracteres>`;
 - topologia obrigatória de produção: `TRUST_PROXY_HOPS=<quantidade exata de proxies confiáveis até a API>`;
 - para ativar o login: `GOOGLE_CLIENT_ID=<OAuth Web Client ID>`;
+- enquanto o ledger editorial estiver vazio, a autoridade editorial externa permanece ausente e o catálogo fica fechado;
+- antes de publicar qualquer decisão editorial, injetar `EDITORIAL_AUTHORITY_PUBLIC_JWK`, `EDITORIAL_AUTHORITY_ISSUER`, `EDITORIAL_AUTHORITY_KEY_ID` e `EDITORIAL_AUTHORITY_RECEIPTS`; recibos inválidos ou ausentes mantêm default-deny;
 - origem padrão de produção: somente `https://polimatch.com.br`; ambientes adicionais exigem `APP_ORIGINS=https://polimatch.com.br,https://staging.exemplo`;
 - healthcheck: `GET /api/health`.
+- revisão do release: construa a imagem da API com `--build-arg SOURCE_COMMIT=<SHA completo do checkout>`; o Dockerfile grava a revisão no artefato e a receipt deve conter o mesmo `releaseRevision`;
+- publicação agregada: `AGGREGATE_AUTHORITY_RECEIPTS=<array JSON>` é a única entrada operacional. JWK, emissor e `keyId` precisam estar previamente pinados no artefato versionado; enquanto o keyring estiver vazio ou qualquer vínculo falhar, todos os escopos permanecem bloqueados.
 
 App:
 
@@ -138,6 +149,8 @@ App:
 - para ativar o botão oficial: `VITE_GOOGLE_CLIENT_ID=<mesmo OAuth Web Client ID>`.
 
 No Google Cloud, o cliente OAuth deve ser do tipo aplicação Web e autorizar a origem JavaScript `https://polimatch.com.br`. Se as duas variáveis de Google estiverem ausentes, o jogo anônimo continua funcionando e nenhuma entrada quebrada é exibida.
+
+O contrato de voto V2 é incompatível com frontend/backend antigos em rolling mix. Faça deploy coordenado do par construído do mesmo commit e rollback também coordenado; a ordem, os smokes e a proibição de fallback V1 estão documentados no [gate de publicação agregada](docs/legal/AGGREGATE_PUBLICATION_GATE.md#deploy-coordenado-do-contrato-v2).
 
 O domínio público `polimatch.com.br` aponta para o app; `api.polimatch.com.br`, para a API. HTTPS é obrigatório para o PWA. A publicação só deve ocorrer depois do gate visual e fotográfico.
 

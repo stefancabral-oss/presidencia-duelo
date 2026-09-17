@@ -1,7 +1,17 @@
 import { createHash } from "node:crypto";
-import { PUBLIC_CANDIDATE_SCHEMA_V1 } from "./candidates.js";
+import { AGGREGATE_PUBLIC_COPY_POLICY, formatAggregateCopy } from "../../shared/aggregate-publication-copy.js";
+import { PUBLIC_CANDIDATE_SCHEMA_V1, PUBLIC_CANDIDATE_SCHEMA_V2 } from "./candidates.js";
 
-export const DAILY_SESSION_RULESET = Object.freeze({
+const DAILY_DISTRIBUTION_COPY = AGGREGATE_PUBLIC_COPY_POLICY.scopes["daily-distribution"].copy;
+
+const DAILY_QUOTA = Object.freeze({
+  id: "editorial-day-v2",
+  totalChoices: 30,
+  dailyChoices: 10,
+  freeChoices: 20,
+});
+
+export const DAILY_SESSION_RULESET_V1 = Object.freeze({
   id: "daily-four-card-v1",
   version: 1,
   timeZone: "America/Sao_Paulo",
@@ -9,19 +19,28 @@ export const DAILY_SESSION_RULESET = Object.freeze({
   cardsPerRound: 4,
   selection: "sha256-ranked-catalog-v1",
   catalogSchema: PUBLIC_CANDIDATE_SCHEMA_V1,
-  quota: Object.freeze({
-    id: "editorial-day-v2",
-    totalChoices: 30,
-    dailyChoices: 10,
-    freeChoices: 20,
-  }),
+  quota: DAILY_QUOTA,
 });
 
-// Edições persistidas nunca são reinterpretadas pelo ruleset ativo. Uma futura
-// v2 deve ser acrescentada a este registro e só então promovida como ativa;
-// replay e corte continuam resolvendo v1 pela identidade gravada no banco.
+export const DAILY_SESSION_RULESET_V2 = Object.freeze({
+  id: "daily-four-card-v2",
+  version: 2,
+  timeZone: "America/Sao_Paulo",
+  rounds: 10,
+  cardsPerRound: 4,
+  selection: "sha256-ranked-catalog-v1",
+  catalogSchema: PUBLIC_CANDIDATE_SCHEMA_V2,
+  quota: DAILY_QUOTA,
+});
+
+// O catálogo corrente já usa a taxonomia v2. Edições ainda não materializadas
+// usam o ruleset v2; linhas v1 persistidas continuam resolvidas pela identidade
+// gravada e nunca são reprojetadas com o catálogo corrente.
+export const DAILY_SESSION_RULESET = DAILY_SESSION_RULESET_V2;
+
 const DAILY_RULESET_REGISTRY = new Map([
-  [`${DAILY_SESSION_RULESET.id}@${DAILY_SESSION_RULESET.version}`, DAILY_SESSION_RULESET],
+  [`${DAILY_SESSION_RULESET_V1.id}@${DAILY_SESSION_RULESET_V1.version}`, DAILY_SESSION_RULESET_V1],
+  [`${DAILY_SESSION_RULESET_V2.id}@${DAILY_SESSION_RULESET_V2.version}`, DAILY_SESSION_RULESET_V2],
 ]);
 
 export function dailyRulesetByIdentity(id, version) {
@@ -116,7 +135,13 @@ export function editionWindow(dateKey, timeZone = DAILY_SESSION_RULESET.timeZone
 export function dailyCutMethodology(dateKey) {
   const normalized = validateEditionDate(dateKey);
   const [, month, day] = normalized.split("-");
-  return `entre quem concluiu a rodada de ${day}/${month}`;
+  return formatAggregateCopy(DAILY_DISTRIBUTION_COPY.methodologyTemplate, { day, month });
+}
+
+export function dailyCutSampleNotice(completedPlayers) {
+  if (completedPlayers === 0) return DAILY_DISTRIBUTION_COPY.noCompletedSessions;
+  if (completedPlayers < 30) return DAILY_DISTRIBUTION_COPY.lowParticipation;
+  return null;
 }
 
 export function buildDailyEdition({ topicId, candidateIds, dateKey, ruleset = DAILY_SESSION_RULESET }) {

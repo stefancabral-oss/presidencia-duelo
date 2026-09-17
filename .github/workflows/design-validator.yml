@@ -5,7 +5,20 @@ on:
     branches: [main]
     paths:
       - 'app/**'
+      - 'shared/**'
+      - '.dockerignore'
+      - 'CREDITS.md'
       - 'docs/design/**'
+      - 'stages/12_quality_gate_main/evidence/card-art-pilot-176/**'
+      - 'stages/12_quality_gate_main/output/card-art-pilot-176*'
+      - 'stages/12_quality_gate_main/output/card-art-pilot-results.json'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-176.*'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-generation-contract.schema.json'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-participant-response.schema.json'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-receipt-registry.schema.json'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-recognition-rules.schema.json'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-response-bundle.schema.json'
+      - 'stages/12_quality_gate_main/references/card-art-pilot-results.schema.json'
       - '.github/workflows/design-validator.yml'
   workflow_dispatch:
 
@@ -15,6 +28,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -25,5 +40,9 @@ jobs:
         run: npm ci --prefix app
       - name: Test app
         run: npm test --prefix app
-      - name: Build app
+      - name: Validate card-art pilot schema, semantics and Docker context
+        run: npm run test:card-art-pilot-contract --prefix app
+      - name: Build app and verify pilot evidence isolation
         run: npm run build --prefix app
+      - name: Build production PWA image from repository-root context
+        run: docker build --file app/Dockerfile --tag polimatch-app:pilot-176 .

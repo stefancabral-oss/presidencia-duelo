@@ -1,7 +1,12 @@
 import { confirmedVoteData } from "./vote-response.js";
+import { DAILY_DISTRIBUTION_COPY, formatAggregateCopy } from "./aggregate-copy.js";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DAILY_RULESET_SCHEMAS = new Map([
+  ["daily-four-card-v1@1", "candidate-public-v1"],
+  ["daily-four-card-v2@2", "candidate-public-v2"],
+]);
 
 function fail(field) {
   throw new TypeError(`sessão diária inválida: ${field}`);
@@ -15,7 +20,11 @@ function integer(value, field) {
 export function dailyMethodologyForDate(date) {
   if (!DATE_PATTERN.test(String(date || ""))) fail("edition.date");
   const [, month, day] = date.split("-");
-  return `entre quem concluiu a rodada de ${day}/${month}`;
+  return formatAggregateCopy(DAILY_DISTRIBUTION_COPY.methodologyTemplate, { day, month });
+}
+
+export function isSupportedDailyRulesetIdentity({ id, version, catalogSchema } = {}) {
+  return DAILY_RULESET_SCHEMAS.get(`${String(id || "")}@${Number(version)}`) === catalogSchema;
 }
 
 export function validateDailySession(payload) {
@@ -24,10 +33,9 @@ export function validateDailySession(payload) {
   const catalogIds = payload.catalog.map(({ id }) => String(id || ""));
   const catalog = new Set(catalogIds);
   const { ruleset, edition, progress } = payload;
-  if (ruleset.id !== "daily-four-card-v1" || ruleset.version !== 1
+  if (!isSupportedDailyRulesetIdentity(ruleset)
     || ruleset.timeZone !== "America/Sao_Paulo" || ruleset.rounds !== 10
     || ruleset.cardsPerRound !== 4 || ruleset.selection !== "sha256-ranked-catalog-v1"
-    || ruleset.catalogSchema !== "candidate-public-v1"
     || ruleset.quota?.id !== "editorial-day-v2" || ruleset.quota.totalChoices !== 30
     || ruleset.quota.dailyChoices !== 10 || ruleset.quota.freeChoices !== 20) fail("ruleset");
   if (!String(edition.id || "").trim() || !DATE_PATTERN.test(String(edition.date || ""))

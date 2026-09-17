@@ -71,11 +71,34 @@ function activeSession(answered = 0, predictionResponded = answered) {
   };
 }
 
+function currentSession(answered = 0, predictionResponded = answered) {
+  const session = activeSession(answered, predictionResponded);
+  session.ruleset.id = "daily-four-card-v2";
+  session.ruleset.version = 2;
+  session.ruleset.catalogSchema = "candidate-public-v2";
+  session.edition.id = "daily-four-card-v2:v2:eleicoes-2026:2026-09-16:abcdef0123456789";
+  session.edition.rulesetId = session.ruleset.id;
+  session.edition.rulesetVersion = session.ruleset.version;
+  session.edition.catalogSchema = session.ruleset.catalogSchema;
+  return session;
+}
+
 test("a reloaded player resumes the exact authoritative slot", () => {
   const session = activeSession(4);
   assert.equal(validateDailySession(session, candidates), session);
   assert.equal(session.round.slot, 5);
   assert.deepEqual(dailyRoundCandidates(session, candidates).map(({ id }) => id), session.round.candidateIds);
+});
+
+test("the client accepts both sealed v1 replays and current v2 editions without mixing identities", () => {
+  const historical = activeSession(2);
+  assert.equal(validateDailySession(historical), historical);
+  const current = currentSession(2);
+  assert.equal(validateDailySession(current), current);
+
+  const mixed = currentSession(2);
+  mixed.edition.rulesetId = "daily-four-card-v1";
+  assert.throws(() => validateDailySession(mixed), /edition/);
 });
 
 test("ten answers close the daily session and preserve the declared cut", () => {
@@ -185,8 +208,13 @@ test("a daily confirmation advances only the authoritative edition and slot", ()
     personalFeedback: feedback,
   };
   const response = {
-    duels: 1,
-    ranking,
+    contractVersion: 2,
+    publicAggregate: {
+      status: "available",
+      scope: "global-ranking",
+      snapshot: { topicId: "eleicoes-2026", duels: 1, rankingPolicy: { id: "elo-v1" }, ranking },
+      event: null,
+    },
     player: { duels: 1, version: 1, ranking },
     round,
     vote: { ...round },
@@ -219,7 +247,7 @@ test("a daily confirmation advances only the authoritative edition and slot", ()
   );
 
   const multiTab = structuredClone(response);
-  multiTab.duels = 2;
+  multiTab.publicAggregate.snapshot.duels = 2;
   multiTab.player.version = 2;
   multiTab.player.duels = 2;
   multiTab.dailySession = activeSession(2, 1);

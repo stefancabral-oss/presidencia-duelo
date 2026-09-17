@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://polimatch.com.br/schemas/card-art-pilot-176-receipt-registry.schema.json",
+  "title": "Registro de receipts não identificadores do piloto #176",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "batchVersion",
+    "assets",
+    "receiptDomain",
+    "issuedAt",
+    "receiptHashes"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "card-art-pilot-176-receipts-v1"
+    },
+    "batchVersion": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "assets": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "$ref": "#/$defs/batchAsset"
+      }
+    },
+    "receiptDomain": {
+      "description": "Domínio público aleatório do lote; não é segredo nem identificador de participante.",
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "issuedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "receiptHashes": {
+      "type": "array",
+      "minItems": 40,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    }
+  },
+  "$defs": {
+    "batchAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blindCode",
+        "sha256"
+      ],
+      "properties": {
+        "blindCode": {
+          "enum": [
+            "P01",
+            "P02",
+            "P03",
+            "P04",
+            "P05",
+            "P06",
+            "P07",
+            "P08"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    }
+  }
+}

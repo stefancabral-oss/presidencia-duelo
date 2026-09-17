@@ -3,6 +3,8 @@ import path from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
 import { completedDailySession } from "./daily-fixture.mjs";
+import { capabilityFixture, voteResponseV2 } from "./aggregate-fixture.mjs";
+import { approvedEditorialCandidates } from "./editorial-fixtures.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -16,7 +18,7 @@ const POLICY = {
   label: "maioria nos confrontos observados",
   explanation: "A ordem usa confrontos diretos e mantém empates não resolvidos.",
 };
-const candidates = ["lula", "anitta", "neymar-jr", "renan-santos"].map((id, index) => ({
+const candidates = approvedEditorialCandidates(["lula", "anitta", "neymar-jr", "renan-santos"].map((id, index) => ({
   personId: index + 1,
   id,
   name: `Pessoa De Teste ${index + 1}`,
@@ -26,7 +28,7 @@ const candidates = ["lula", "anitta", "neymar-jr", "renan-santos"].map((id, inde
   office: "Cargo de teste",
   summary: "Resumo de teste.",
   bio: "Perfil editorial de teste.",
-}));
+})));
 
 function createServer() {
   return {
@@ -98,6 +100,7 @@ async function installApi(page, server) {
   await page.route((url) => url.pathname.startsWith("/api/"), async (route) => {
     const request = route.request();
     const { pathname } = new URL(request.url());
+    if (pathname === "/api/capabilities") return route.fulfill({ status: 200, json: capabilityFixture() });
     if (pathname === "/api/candidates") return route.fulfill({ status: 200, json: { candidates } });
     if (pathname === "/api/ranking") return route.fulfill({ status: 200, json: { duels: server.duels, ranking: server.ranking() } });
     if (pathname === "/api/player" && request.method() === "POST") {
@@ -134,7 +137,7 @@ async function installApi(page, server) {
           json: failure.body,
         });
       }
-      return route.fulfill({ status: 200, json: roundResponse(server, payload) });
+      return route.fulfill({ status: 200, json: voteResponseV2(roundResponse(server, payload)) });
     }
     return route.fulfill({ status: 404, json: { error: "rota não encontrada" } });
   });
@@ -172,7 +175,7 @@ async function snapshot(page, name, evidence, { screenshot = true } = {}) {
     phase: document.querySelector(".duel-screen")?.dataset.votePhase || "",
     instruction: document.querySelector(".round-instruction")?.textContent?.trim() || "",
     progress: document.querySelector(".progress-pill")?.textContent?.trim() || "",
-    cardsDisabled: [...document.querySelectorAll(".candidate-card")].map((card) => card.disabled),
+    cardsDisabled: [...document.querySelectorAll(".candidate-card")].map((card) => card.disabled || card.getAttribute("aria-disabled") === "true"),
     candidateIds: [...document.querySelectorAll(".candidate-card")].map((card) => card.dataset.vote),
     skipDisabled: document.querySelector("#skip-round")?.disabled,
     recovery: document.querySelector(".retry-vote")?.textContent?.trim() || "",
@@ -212,7 +215,7 @@ try {
     assert.equal(server.issuances, 1, "restauração deveria emitir exatamente uma sessão");
     assert.equal(server.dailyRequests, dailyRequestsBeforeRestore, "restauração livre consultou o serviço diário indisponível");
     await page.getByRole("button", { name: "Tentar novamente" }).click();
-    await page.locator(".feedback-channel").waitFor();
+    await page.locator(".feedback-channel:visible").first().waitFor();
     assert.equal(server.duels, 1);
     assert.equal(server.requests.length, 2);
     assert.deepEqual(server.requests[0].payload, server.requests[1].payload);
@@ -231,13 +234,13 @@ try {
       body: { error: "limite interno", code: "VOTE_RATE_LIMITED", retryAfterSeconds: 2 },
     };
     await page.locator(".candidate-card").first().click();
-    await page.getByText("Muitas tentativas. Tente novamente em 2 segundos.", { exact: true }).waitFor();
+    await page.locator(".round-instruction", { hasText: "Muitas tentativas. Tente novamente em 2 segundos." }).waitFor();
     const failed = await snapshot(page, "429-rate-limited", evidence);
     assertFrozen(before, failed, "429");
     assert.equal(failed.recoveryDisabled, true);
     await page.waitForTimeout(2100);
     await page.locator("#retry-vote").click();
-    await page.locator(".feedback-channel").waitFor();
+    await page.locator(".feedback-channel:visible").first().waitFor();
     assert.equal(server.duels, 1);
     assert.equal(server.requests.length, 2);
     assert.deepEqual(server.requests[0].payload, server.requests[1].payload);
@@ -252,12 +255,12 @@ try {
     const secret = "postgres://admin:segredo@db/internal";
     server.nextFailure = { status: 503, body: { error: secret, code: "INTERNAL_ERROR", requestId: "req-secret" } };
     await page.locator(".candidate-card").first().click();
-    await page.getByText("Não foi possível confirmar agora.", { exact: true }).waitFor();
+    await page.locator(".round-instruction", { hasText: "Não foi possível confirmar agora." }).waitFor();
     const failed = await snapshot(page, "503-server-error", evidence);
     assertFrozen(before, failed, "503");
     assert.equal((await page.locator("body").innerText()).includes(secret), false, "5xx vazou detalhe interno");
     await page.locator("#retry-vote").click();
-    await page.locator(".feedback-channel").waitFor();
+    await page.locator(".feedback-channel:visible").first().waitFor();
     assert.equal(server.duels, 1);
     assert.equal(server.requests.length, 2);
     assert.deepEqual(server.requests[0].payload, server.requests[1].payload);

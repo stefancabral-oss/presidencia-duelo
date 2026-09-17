@@ -1,3 +1,10 @@
+import {
+  assertValidCatalogTaxonomy,
+  assertValidCatalogTaxonomyEvidence,
+  assertValidCatalogTaxonomySources,
+  materializeCandidateTaxonomy,
+} from "../../shared/catalog-taxonomy.js";
+
 export const CHROMAS_PER_PERSON = 12;
 
 export function normalizePersonName(value = "") {
@@ -58,11 +65,12 @@ function indexedByName(records, field) {
   return result;
 }
 
-export function buildContentCatalog(master, profiles, rawChromas) {
-  if (!Array.isArray(master) || !Array.isArray(profiles) || !Array.isArray(rawChromas)) {
+export function buildContentCatalog(master, profiles, taxonomy, rawChromas) {
+  if (!Array.isArray(master) || !Array.isArray(profiles) || !Array.isArray(taxonomy) || !Array.isArray(rawChromas)) {
     throw new Error("catálogos de entrada devem ser listas");
   }
   const profilesByName = indexedByName(profiles, "nome_exibicao");
+  const taxonomyByName = indexedByName(taxonomy, "name");
   const chromasByName = Map.groupBy(rawChromas, ({ pessoa }) => normalizePersonName(pessoa));
   const usedIds = new Set();
 
@@ -70,6 +78,8 @@ export function buildContentCatalog(master, profiles, rawChromas) {
     const key = normalizePersonName(entry.nome);
     const profile = profilesByName.get(key);
     if (!profile) throw new Error(`perfil não encontrado: ${entry.nome}`);
+    const editorialTaxonomy = taxonomyByName.get(key);
+    if (!editorialTaxonomy) throw new Error(`taxonomia não encontrada: ${entry.nome}`);
     const personChromas = chromasByName.get(key) || [];
     if (personChromas.length !== CHROMAS_PER_PERSON) {
       throw new Error(`${entry.nome} possui ${personChromas.length} Chromas; esperado: ${CHROMAS_PER_PERSON}`);
@@ -77,7 +87,6 @@ export function buildContentCatalog(master, profiles, rawChromas) {
     const id = slugify(displayName(entry.nome));
     if (!id || usedIds.has(id)) throw new Error(`id ausente ou duplicado: ${id || entry.nome}`);
     usedIds.add(id);
-    const political = entry.grupo === "politica";
     const sources = uniqueBy(
       (profile.fontes || []).filter(validHttpUrl).map((url) => ({ label: sourceLabel(url), url })),
       ({ url }) => url,
@@ -88,11 +97,7 @@ export function buildContentCatalog(master, profiles, rawChromas) {
       name: profile.nome_exibicao,
       displayName: displayName(profile.nome_exibicao),
       group: entry.grupo,
-      role: profile.partido_ou_area,
-      affiliation: profile.partido_ou_area,
-      office: profile.ocupacao_atual,
-      party: political ? profile.partido_ou_area : "",
-      area: political ? "Política" : profile.partido_ou_area,
+      ...materializeCandidateTaxonomy(profile, editorialTaxonomy),
       location: "Brasil",
       summary: profile.frase_card,
       bio: profile.resumo_30s,
@@ -106,6 +111,10 @@ export function buildContentCatalog(master, profiles, rawChromas) {
       photo: "",
     };
   });
+
+  assertValidCatalogTaxonomySources(candidates, { profiles, master, taxonomy });
+  assertValidCatalogTaxonomy(candidates, { expectedCount: master.length });
+  assertValidCatalogTaxonomyEvidence(candidates, { profiles, master });
 
   const candidateByName = new Map(master.map((entry, index) => [normalizePersonName(entry.nome), candidates[index]]));
   const chromas = rawChromas.map((raw) => {
@@ -141,8 +150,11 @@ export function buildContentCatalog(master, profiles, rawChromas) {
   if (new Set(chromaIds).size !== chromaIds.length) throw new Error("há IDs de Chroma duplicados");
   const masterKeys = new Set(master.map(({ nome }) => normalizePersonName(nome)));
   const profilesOutsideMaster = [...profilesByName.keys()].filter((key) => !masterKeys.has(key));
+  const taxonomyOutsideMaster = [...taxonomyByName.keys()].filter((key) => !masterKeys.has(key));
   const chromasOutsideMaster = [...chromasByName.keys()].filter((key) => !masterKeys.has(key));
-  if (profilesOutsideMaster.length || chromasOutsideMaster.length) throw new Error("há pessoas fora do catálogo mestre");
+  if (profilesOutsideMaster.length || taxonomyOutsideMaster.length || chromasOutsideMaster.length) {
+    throw new Error("há pessoas fora do catálogo mestre");
+  }
 
   return {
     candidates,

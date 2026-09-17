@@ -93,31 +93,60 @@ function requireMatchingRound(response, { roundId, winnerId, candidateIds }) {
 }
 
 export function confirmedVoteData(response, candidates, attempt, current = {}, { feedbackCandidates = candidates } = {}) {
-  if (!response || !Array.isArray(response.ranking) || !Array.isArray(response.player?.ranking)) {
+  if (!response || response.contractVersion !== 2 || !Array.isArray(response.player?.ranking)
+    || Object.hasOwn(response, "ranking") || Object.hasOwn(response, "duels") || Object.hasOwn(response, "rankingPolicy")
+    || Object.hasOwn(response.round || {}, "globalEvent") || Object.hasOwn(response.vote || {}, "globalEvent")) {
     throw new TypeError("resposta de voto inválida: rankings");
   }
-  requireCompleteRanking(response.ranking, candidates, "ranking");
   requireCompleteRanking(response.player.ranking, candidates, "player.ranking");
   const { legacyReplay } = requireMatchingRound(response, attempt);
 
-  const globalDuels = nonNegativeInteger(response.duels, "duels");
   const personalDuels = nonNegativeInteger(response.player.duels, "player.duels");
   const playerVersion = nonNegativeInteger(response.player.version, "player.version");
-  if (globalDuels <= Number(current.globalDuels || 0)
-    || personalDuels <= Number(current.personalDuels || 0)
+  if (personalDuels <= Number(current.personalDuels || 0)
     || playerVersion <= Number(current.playerVersion || 0)) {
     throw new TypeError("resposta de voto inválida: progresso sem avanço");
   }
 
-  const channels = roundFeedbackChannels(response.vote, feedbackCandidates, attempt.winnerId);
+  const publication = response.publicAggregate;
+  if (!publication || publication.scope !== "global-ranking") {
+    throw new TypeError("resposta de voto inválida: publicação agregada");
+  }
+  let aggregateAvailable = false;
+  let ranking = Array.isArray(current.ranking) ? current.ranking : [];
+  let globalDuels = nonNegativeInteger(Number(current.globalDuels || 0), "current.globalDuels");
+  let globalEvent = null;
+  if (publication.status === "withheld") {
+    if (Object.keys(publication).sort().join(",") !== "scope,status") {
+      throw new TypeError("resposta de voto inválida: publicação agregada");
+    }
+  } else if (publication.status === "available") {
+    if (Object.keys(publication).sort().join(",") !== "event,scope,snapshot,status"
+      || !publication.snapshot || !Array.isArray(publication.snapshot.ranking)) {
+      throw new TypeError("resposta de voto inválida: publicação agregada");
+    }
+    requireCompleteRanking(publication.snapshot.ranking, candidates, "ranking");
+    globalDuels = nonNegativeInteger(publication.snapshot.duels, "duels");
+    if (globalDuels <= Number(current.globalDuels || 0)) {
+      throw new TypeError("resposta de voto inválida: progresso sem avanço");
+    }
+    ranking = rankingForCatalog(publication.snapshot, candidates);
+    globalEvent = publication.event;
+    aggregateAvailable = true;
+  } else {
+    throw new TypeError("resposta de voto inválida: publicação agregada");
+  }
+
+  const channels = roundFeedbackChannels({ ...response.vote, globalEvent }, feedbackCandidates, attempt.winnerId);
   if (legacyReplay) channels.personal.message = LEGACY_REPLAY_MESSAGE;
   return {
-    ranking: rankingForCatalog(response, candidates),
+    ranking,
     personalRanking: rankingForCatalog(response.player, candidates),
     personalRankingPolicy: response.player.rankingPolicy || current.personalRankingPolicy || null,
     globalDuels,
     personalDuels,
     playerVersion,
+    aggregateAvailable,
     channels,
   };
 }

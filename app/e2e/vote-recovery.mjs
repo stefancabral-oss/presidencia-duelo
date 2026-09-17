@@ -25,6 +25,8 @@
  */
 import { chromium, webkit } from "playwright";
 import { completedDailySession } from "./daily-fixture.mjs";
+import { capabilityFixture, voteResponseV2 } from "./aggregate-fixture.mjs";
+import { approvedEditorialCandidates } from "./editorial-fixtures.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -40,7 +42,7 @@ const personalRankingPolicy = {
   explanation: "A ordem usa os confrontos diretos e mantém empates sem usar exposição.",
 };
 
-const candidates = ["lula", "jair-bolsonaro", "anitta", "neymar-jr"].map((id, index) => ({
+const candidates = approvedEditorialCandidates(["lula", "jair-bolsonaro", "anitta", "neymar-jr"].map((id, index) => ({
   personId: index + 1,
   id,
   name: `Pessoa De Teste ${index + 1}`,
@@ -50,7 +52,7 @@ const candidates = ["lula", "jair-bolsonaro", "anitta", "neymar-jr"].map((id, in
   office: "Cargo de teste",
   summary: "Resumo de teste.",
   bio: "Perfil editorial de teste.",
-}));
+})));
 
 /** Servidor falso com estado — é o estado que torna os cenários observáveis. */
 function criarServidor() {
@@ -142,6 +144,7 @@ async function instalarServidor(page, servidor) {
     const request = route.request();
     const { pathname } = new URL(request.url());
 
+    if (pathname === "/api/capabilities") return route.fulfill({ status: 200, json: capabilityFixture() });
     if (pathname === "/api/candidates") return route.fulfill({ status: 200, json: { candidates } });
     if (pathname === "/api/ranking") {
       return route.fulfill({ status: 200, json: { topicId: "eleicoes-2026", duels: servidor.duels, ranking: servidor.ranking() } });
@@ -187,7 +190,7 @@ async function instalarServidor(page, servidor) {
         const repetida = structuredClone(guardada);
         repetida.round.status = "alreadyProcessed";
         repetida.vote.status = "alreadyProcessed";
-        return route.fulfill({ status: 200, json: repetida });
+        return route.fulfill({ status: 200, json: voteResponseV2(repetida) });
       }
 
       if (Number(playerVersion) !== servidor.version) {
@@ -208,7 +211,7 @@ async function instalarServidor(page, servidor) {
         // em que dizer "seu voto não foi contado" seria mentira.
         await new Promise((resolve) => setTimeout(resolve, ALEM_DO_TEMPO_LIMITE));
       }
-      return route.fulfill({ status: 200, json: corpo });
+      return route.fulfill({ status: 200, json: voteResponseV2(corpo) });
     }
 
     return route.fulfill({ status: 404, json: { error: "rota não encontrada" } });
@@ -222,11 +225,32 @@ async function abrirDuelo(page) {
   await page.getByRole("heading", { name: "Quem você prefere?" }).waitFor();
   const coach = page.getByRole("button", { name: "Começar rodada" });
   if (await coach.count()) await coach.click();
+  const retry = page.locator("#retry-vote");
+  if (await retry.count() !== 1 || !await retry.isHidden()) {
+    throw new Error("o controle persistente de repetição deveria existir oculto antes de uma falha");
+  }
+  await retry.evaluate((node) => { window.__polimatchRetryNode = node; });
 }
 
 const votar = (page) => page.locator(".candidate-card").first().click();
 const chaveGuardada = (page) => page.evaluate(() => localStorage.getItem("polimatch:v3:recovery-key"));
 const instrucao = async (page) => (await page.locator(".round-instruction").innerText()).trim();
+
+async function exigirPerfisBloqueados(page, contexto) {
+  const bloqueios = await page.locator(".profile-trigger").evaluateAll((buttons) => (
+    buttons.map((button) => button.getAttribute("aria-disabled"))
+  ));
+  if (bloqueios.length !== 4 || bloqueios.some((value) => value !== "true")) {
+    throw new Error(`${contexto}: os perfis não herdaram o bloqueio da rodada pendente (${bloqueios.join(", ")})`);
+  }
+  const perfil = page.locator(".profile-trigger").first();
+  await perfil.focus();
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(50);
+  if (await page.locator("#modal").evaluate((dialog) => dialog.open)) {
+    throw new Error(`${contexto}: um perfil abriu durante a recuperação da escolha pendente`);
+  }
+}
 
 async function novaSessao(browser, servidor, { chaveInicial = null } = {}) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
@@ -265,13 +289,19 @@ try {
     if (await page.locator(".round-instruction.is-error").count() !== 1) {
       throw new Error("a falha do voto não recebeu grafia de erro");
     }
-    if (await page.locator("#retry-vote").count() !== 1) {
+    if (!await page.locator("#retry-vote").isVisible()) {
       throw new Error("a falha do voto não ofereceu Tentar de novo");
+    }
+    if (!await page.evaluate(() => window.__polimatchRetryNode === document.querySelector("#retry-vote"))) {
+      throw new Error("a falha substituiu o controle persistente Tentar de novo");
     }
 
     // O ponto central: o app precisa voltar a votar sem recarregar a página.
     await page.locator("#retry-vote").click();
     await page.waitForTimeout(2200);
+    if (!await page.locator("#retry-vote").isHidden()) {
+      throw new Error("Tentar de novo continuou exposto depois de a repetição ser confirmada");
+    }
     for (let rodada = 0; rodada < 3; rodada += 1) {
       const antes = servidor.duels;
       await votar(page);
@@ -378,11 +408,21 @@ try {
     await abrirDuelo(page);
 
     servidor.atrasarProximaRodada = true;
+    const candidataPendente = page.locator(".candidate-card").first();
+    await candidataPendente.evaluate((node) => { window.__polimatchPendingCandidateNode = node; });
     await votar(page);
     await page.waitForTimeout(ALEM_DO_TEMPO_LIMITE + 1500);
     const duelsDepoisDaPrimeira = servidor.duels;
 
-    await page.locator("#retry-vote").click();
+    const retry = page.locator("#retry-vote");
+    await retry.focus();
+    if (!await retry.evaluate((node) => document.activeElement === node)) {
+      throw new Error("Tentar de novo não recebeu foco antes da repetição por teclado");
+    }
+    await page.keyboard.press("Enter");
+    if (!await page.evaluate(() => document.activeElement === window.__polimatchPendingCandidateNode)) {
+      throw new Error("o retry ocultou o botão focado antes de transferir o foco para a carta pendente");
+    }
     await page.waitForTimeout(2200);
 
     if (servidor.duels !== duelsDepoisDaPrimeira) {
@@ -393,6 +433,17 @@ try {
     }
     if (servidor.rounds.size !== 1) {
       throw new Error(`a repetição criou ${servidor.rounds.size} rodadas no servidor; deveria reaproveitar a mesma`);
+    }
+    const focoDepoisDaNovaRodada = await page.evaluate(() => ({
+      preservouNo: document.activeElement === window.__polimatchPendingCandidateNode,
+      classe: document.activeElement?.className || "",
+      voto: document.activeElement?.dataset?.vote || "",
+    }));
+    if (!focoDepoisDaNovaRodada.preservouNo) {
+      throw new Error(
+        "Tentar de novo foi ocultado sem preservar o foco na carta persistente "
+        + `(foco final: ${focoDepoisDaNovaRodada.classe || "nenhum"}, voto: ${focoDepoisDaNovaRodada.voto || "nenhum"})`,
+      );
     }
     if (pageErrors.length) throw new Error(`erros na página: ${pageErrors.join(" | ")}`);
     await context.close();
@@ -422,11 +473,18 @@ try {
     if (JSON.stringify(rodadaDepois) !== JSON.stringify(rodadaAntes) || progressoDepois !== progressoAntes) {
       throw new Error("o 200 truncado alterou cartas ou progresso sem confirmação íntegra");
     }
-    if (await page.locator(".card-outcome").count()) {
+    if (await page.locator(".card-outcome:visible").count()) {
       throw new Error("o 200 truncado produziu feedback visual de confirmação");
     }
-    if (!await page.locator(".candidate-card").evaluateAll((cards) => cards.every((card) => card.disabled))) {
+    if (!await page.locator(".candidate-card").evaluateAll((cards) => cards.every((card) => card.getAttribute("aria-disabled") === "true" && !card.disabled))) {
       throw new Error("o 200 truncado deixou a rodada pendente editável");
+    }
+    await exigirPerfisBloqueados(page, "200 truncado");
+    const pedidosAntesDoCliqueBloqueado = servidor.requests.length;
+    await page.locator(".candidate-card").nth(1).evaluate((card) => card.click());
+    await page.waitForTimeout(100);
+    if (servidor.requests.length !== pedidosAntesDoCliqueBloqueado) {
+      throw new Error("uma carta aria-disabled enviou outro voto enquanto a rodada estava pendente");
     }
     if (servidor.duels !== 0) throw new Error("o mock truncado não deveria gravar progresso");
 
@@ -483,7 +541,7 @@ try {
             feedback: globalFeedback,
           },
         });
-        return replay;
+        return voteResponseV2(replay);
       },
     };
 

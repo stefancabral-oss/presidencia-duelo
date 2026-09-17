@@ -1,5 +1,14 @@
 # PoliMatch — Contexto global ICM
 
+## Integração autorizada em 17/09/2026
+
+O responsável solicitou mesclar as PRs pendentes #191, #194, #195, #199, #200 e
+#201. A combinação é documentada em `stages/14_aggregate_publication/CONTEXT.md`.
+O código inclui DOM persistente, perfil acessível, taxonomia, gate editorial,
+piloto de arte bloqueado e controle de publicação agregada. A mescla não encerra
+as validações humanas das issues #166, #167, #171, #173, #176 e #177.
+Conteúdo sem aprovação externa e agregados sem autoridade continuam retidos.
+
 ## Norte do produto
 
 PoliMatch é um jogo casual de comparação entre personalidades públicas. Não é pesquisa eleitoral. O produto deve ser simples de jogar, visualmente próprio, colecionável e agradável no celular.

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://polimatch.com.br/schemas/card-art-pilot-176-recognition-rules.schema.json",
+  "title": "Regras determinísticas de reconhecimento do piloto #176",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "batchVersion",
+    "normalization",
+    "unknownAnswers",
+    "assets"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "card-art-pilot-176-recognition-rules-v1"
+    },
+    "batchVersion": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "normalization": {
+      "const": "pt-BR-nfkc-casefold-alnum-v1"
+    },
+    "unknownAnswers": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[\\p{L}\\p{N}]+(?: [\\p{L}\\p{N}]+)*$"
+      }
+    },
+    "assets": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "$ref": "#/$defs/assetRules"
+      }
+    }
+  },
+  "$defs": {
+    "assetRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blindCode",
+        "aliases"
+      ],
+      "properties": {
+        "blindCode": {
+          "enum": [
+            "P01",
+            "P02",
+            "P03",
+            "P04",
+            "P05",
+            "P06",
+            "P07",
+            "P08"
+          ]
+        },
+        "aliases": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[\\p{L}\\p{N}]+(?: [\\p{L}\\p{N}]+)*$"
+          }
+        }
+      }
+    }
+  }
+}

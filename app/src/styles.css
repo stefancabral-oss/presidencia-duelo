@@ -322,6 +322,10 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 .ranking-search input { width: 100%; min-height: 46px; padding: 10px 14px; border: 1px solid rgb(231 199 98 / 30%); border-radius: 14px; outline: 0; background: rgb(2 39 30 / 78%); color: white; font: inherit; text-transform: none; letter-spacing: 0; }
 .ranking-search input::placeholder { color: #81958b; }
 .ranking-search input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgb(231 199 98 / 12%); }
+.ranking-filters { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.ranking-filters label { display: grid; gap: 6px; color: var(--gold); font-size: .68rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.ranking-filters select { width: 100%; min-height: 46px; padding: 10px 36px 10px 12px; border: 1px solid rgb(231 199 98 / 30%); border-radius: 14px; outline: 0; background: rgb(2 39 30 / 78%); color: white; font: inherit; text-transform: none; letter-spacing: 0; }
+.ranking-filters select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgb(231 199 98 / 12%); }
 .reveal-ranking { width: 100%; border-color: rgb(231 199 98 / 35%); background: rgb(3 52 40 / 76%); color: var(--gold); }
 .continue-duels { width: 100%; min-height: 52px; }
 .empty { padding: 34px 16px; color: var(--muted); text-align: center; }
@@ -342,6 +346,13 @@ dialog::backdrop { background: rgb(4 24 17 / 68%); backdrop-filter: blur(5px); }
 .dialog-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .profile-preview { width: min(100%, 360px); margin: 0 auto; padding: 12px 12px 0; }
 .profile-preview .portrait { max-height: 42dvh; border-radius: 18px; border: 1px solid rgb(231 199 98 / 55%); }
+.profile-photo-placeholder { min-height: 220px; display: grid; align-content: center; justify-items: center; gap: 12px; padding: 28px; border: 1px dashed rgb(125 97 29 / 50%); border-radius: 18px; background: linear-gradient(145deg, #f7f3e8, #e6dfcd); color: #665a3e; text-align: center; }
+.profile-photo-placeholder span { font-size: 2.4rem; color: #9d8751; }
+.profile-photo-placeholder strong { max-width: 230px; font-size: .9rem; line-height: 1.4; }
+.profile-documentary-photo .profile-photo-placeholder { position: absolute; inset: 0; min-height: 0; border: 0; border-radius: inherit; }
+.profile-provenance { display: grid; gap: 7px; }
+.profile-provenance p { margin: 0; color: #48574f; font-size: .78rem; line-height: 1.45; }
+.profile-provenance .content-provenance { color: #075f4b; font-weight: 850; }
 .dialog-body { padding: 22px; }
 .dialog-body h2 { margin-bottom: 7px; font-size: 1.65rem; }
 .dialog-body p { color: #48574f; line-height: 1.5; }
@@ -350,8 +361,9 @@ dialog::backdrop { background: rgb(4 24 17 / 68%); backdrop-filter: blur(5px); }
 .profile-copy h3 { margin-bottom: 7px; color: #7d611d; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; }
 .profile-copy ul { margin: 0 0 16px; padding-left: 20px; color: #48574f; line-height: 1.5; }
 .profile-copy a { color: #0d5c4b; font-weight: 800; }
-.profile-role { margin-bottom: 4px; }
-.profile-meta { margin-bottom: 18px; color: #7d611d !important; font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.profile-taxonomy { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 12px 0 18px; }
+.profile-taxonomy section { min-width: 0; padding: 10px 12px; border: 1px solid #e3dccb; border-radius: 12px; background: #f8f4e9; }
+.profile-taxonomy section p { margin: 0; color: #283b32; font-weight: 750; }
 .review-note { font-size: .82rem; }
 .dialog-actions { position: relative; z-index: 3; display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid #ddd5c4; background: rgb(247 244 236 / 97%); box-shadow: 0 -10px 24px rgb(20 35 28 / 8%); }
 .dialog-actions > button { flex: 1 1 0; }
@@ -455,6 +467,9 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
 /* 320–699: anatomia móvel compartilhada. As duas faixas abaixo controlam
    somente gutter e altura confortável, sem mudar a ordem da informação. */
 @media (min-width: 320px) and (max-width: 699px) {
+  .ranking-filters { grid-template-columns: 1fr 1fr; }
+  .ranking-filters .ranking-search { grid-column: 1 / -1; }
+  .profile-taxonomy { grid-template-columns: 1fr; }
   .edition { display: none; }
   .account-button span { display: none; }
   .account-button { width: 42px; height: 42px; justify-content: center; padding: 5px; }

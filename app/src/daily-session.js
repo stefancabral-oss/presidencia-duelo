@@ -3,6 +3,10 @@ import { DAILY_DISTRIBUTION_COPY, formatAggregateCopy } from "./aggregate-copy.j
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DAILY_RULESET_SCHEMAS = new Map([
+  ["daily-four-card-v1@1", "candidate-public-v1"],
+  ["daily-four-card-v2@2", "candidate-public-v2"],
+]);
 
 function fail(field) {
   throw new TypeError(`sessão diária inválida: ${field}`);
@@ -19,16 +23,19 @@ export function dailyMethodologyForDate(date) {
   return formatAggregateCopy(DAILY_DISTRIBUTION_COPY.methodologyTemplate, { day, month });
 }
 
+export function isSupportedDailyRulesetIdentity({ id, version, catalogSchema } = {}) {
+  return DAILY_RULESET_SCHEMAS.get(`${String(id || "")}@${Number(version)}`) === catalogSchema;
+}
+
 export function validateDailySession(payload) {
   if (!payload || !payload.ruleset || !payload.edition || !payload.progress || !payload.cut
     || !Array.isArray(payload.catalog) || !Array.isArray(payload.rounds)) fail("estrutura");
   const catalogIds = payload.catalog.map(({ id }) => String(id || ""));
   const catalog = new Set(catalogIds);
   const { ruleset, edition, progress } = payload;
-  if (ruleset.id !== "daily-four-card-v1" || ruleset.version !== 1
+  if (!isSupportedDailyRulesetIdentity(ruleset)
     || ruleset.timeZone !== "America/Sao_Paulo" || ruleset.rounds !== 10
     || ruleset.cardsPerRound !== 4 || ruleset.selection !== "sha256-ranked-catalog-v1"
-    || ruleset.catalogSchema !== "candidate-public-v1"
     || ruleset.quota?.id !== "editorial-day-v2" || ruleset.quota.totalChoices !== 30
     || ruleset.quota.dailyChoices !== 10 || ruleset.quota.freeChoices !== 20) fail("ruleset");
   if (!String(edition.id || "").trim() || !DATE_PATTERN.test(String(edition.date || ""))

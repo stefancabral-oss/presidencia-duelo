@@ -1,67 +1,93 @@
-# HANDOFF — ICM 12 · U05
+# HANDOFF — ICM 12 · U06
 
 ## Status
 
-- Estado: `implementação, CI e human gate aprovados; pronta para merge`
-- Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/170
+- Estado: `implementação local concluída; gate humano de publicação pendente`
+- Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/171
 - Macro: https://github.com/stefancabral-oss/presidencia-duelo/issues/175
-- Branch: `icm/12-u05-vote-abuse-170-v2`
-- Base: `main@dbf55ca`
-- PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/192
+- Branch: `icm/12-u06-editorial-gate-171-v2`
+- Base: `icm/12-u04-taxonomy-173@b9009233fc3b1461840b3eb082ac2e28623eed0d`
+- PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/200 (`draft`; merge não faz parte desta unidade)
 
 ## Entregue
 
-- Política normativa de integridade escrita antes do código em `docs/security/VOTE_ABUSE_POLICY.md`.
-- Token opaco emitido pelo servidor obrigatório para qualquer escrita no ranking.
-- Cotas persistentes e atômicas no PostgreSQL: 8 rodadas/minuto e 30/dia por jogador; 3 emissões anônimas/dia por pseudônimo de rede.
-- Replay idempotente verificado antes da cobrança de cota.
-- Pseudônimo de rede por HMAC-SHA-256, normalização IPv4 e prefixo IPv6 `/64`, sem guardar token ou IP bruto.
-- CORS exato, com padrão de produção limitado a `https://polimatch.com.br`; `www`, origem hostil e origens locais em produção ficam bloqueados.
-- Inicialização de produção falha sem `VOTER_NETWORK_SECRET` adequado e `TRUST_PROXY_HOPS` explícito.
-- Resposta `5xx` genérica com `requestId`; detalhe estruturado permanece no log sem cabeçalho, corpo, token ou IP.
-- Fluxo de voto congelado até confirmação completa, com recuperação explícita de `401`, espera de `429`, repetição idempotente de `5xx` e incerteza de rede declarada.
-- Página pública `integridade.html` e sinal de confiança no ranking, sem apresentar o placar como pesquisa eleitoral.
-- Evidência visual e automatizada dos quatro estados de confiança em Chromium e WebKit.
+- Ledger de decisões editoriais e registro de assets versionados separados do catálogo.
+- Estados independentes para conteúdo, arte da carta e foto documental.
+- Elegibilidade calculada somente por conteúdo aprovado + arte aprovada; foto ausente não bloqueia.
+- Fingerprints SHA-256 que invalidam decisões quando conteúdo, bytes, caminho, versão ou procedência de asset muda.
+- Fingerprint de conteúdo sobre o JSON público exato e fingerprint separado de roteamento, sem equivalência entre ausente, `undefined` e `null`.
+- Policy local versionada por dimensão apenas para coerência do revisor declarado; ela não autentica identidade nem concede autoridade.
+- Autorização de produção exclusivamente por recibo Ed25519 emitido fora do repositório e injetado no processo; ausência, erro ou assinatura divergente mantêm default-deny.
+- Gate aceita somente verifier/receipt com marcas privadas atribuídas após validação Ed25519; `true`, callback, objeto sintático, clone e wrapper falham fechados. Fixtures usam assinaturas efêmeras reais.
+- Atestação vinculada ao ledger e `review.json` estruturado por candidato/dimensão/decisão, com itens obrigatórios e capturas verificadas por SHA-256, OID Git e commit revisado.
+- Verificador local/CI reproduz conteúdo, roteamento, evidências e assets a partir do commit atestado; URLs sem captura e arquivos fora do escopo não liberam decisão.
+- Subprocessos Git usam ambiente saneado e `GIT_NO_REPLACE_OBJECTS=1`; teste em repositório real cobre `git replace` e injeções de diretório/configuração.
+- Arquivos atuais precisam ser regulares e blobs históricos precisam ter modo `100644`/`100755`; symlinks atuais e modo Git `120000` falham.
+- `candidate-public-v1` histórico congelado byte a byte e `candidate-public-v2` separado para a taxonomia da #173.
+- Registry, API e CLI correntes usam explicitamente `candidate-public-v2`; snapshots diários continuam escolhendo o projector pelo ruleset persistido e preservam o v1 histórico.
+- Locks da sessão diária e da aposta da #178 foram preservados, inclusive reload, meia-noite, troca de identidade e replay.
+- Schema recursivo estrito: `facts` somente strings, `sources` somente `{label,url}` e proveniência v2 somente `{status,source}`.
+- Snapshots profundos e imutáveis de catálogo, tópicos, ledger, assets, auditoria e payload público; mapas expostos são somente leitura.
+- Tópicos inativos/desconhecidos permanecem fechados no registry e na API.
+- Falha fechada para dados desconhecidos, duplicados, malformados, sem evidência visível ou com referência/caminho inseguro.
+- Clock injetável com limite de data civil em `America/Sao_Paulo`; decisões futuras são recusadas.
+- Login declarado do revisor e metadados de versão/procedência rejeitam controles e caracteres invisíveis.
+- Campo novo no catálogo é recusado até ser classificado explicitamente na política editorial.
+- Registry injetável no domínio, API e store; produção não aceita fixture nem variável de bypass.
+- API exclui pendentes/rejeitados e não expõe fingerprints ou auditoria privada.
+- UI usa arte aprovada na carta, foto documental aprovada no perfil e placeholder neutro quando ela falta.
+- Home conta perfis realmente disponíveis; procedência só declara revisão quando o conteúdo está aprovado.
+- Governança com responsáveis, evidência mínima e mutação exata dos dados.
+- Matriz automatizada das 27 combinações e smoke visual com e sem foto em Chromium/WebKit.
 
-## Fora desta unidade
+## Estado editorial real
 
-- Revisão editorial e portão de publicação: #171.
-- Controle separado para abrir perfil: #167.
-- Unicidade civil, CAPTCHA obrigatório ou autenticação Google obrigatória.
-- Qualquer mudança de catálogo, áudio ou deploy além das variáveis exigidas pela política.
+- Catálogo: 125 pessoas.
+- Elegíveis/publicáveis: 0.
+- Conteúdo efetivamente `pending`: 125.
+- Arte da carta efetivamente `missing`: 125.
+- Foto documental efetivamente `missing`: 125.
+- Decisões humanas concedidas por esta unidade: nenhuma.
+
+Esse estado é intencional. Assets existentes, nomes legados contendo `approved` e o piloto da #176 não foram promovidos automaticamente.
+
+Portanto, **0 publicáveis é o resultado correto do default-deny sem decisões, atestações e recibos externos válidos; não é falha do build nem da integração**.
 
 ## Validação local
 
-- Suite consolidada: 101/101 testes aprovados (4 shared, 39 back, 58 app).
-- `npm run build --prefix app`: aprovado; 99/125 slots de retrato presentes.
-- `interaction-smoke.mjs`: aprovado em Chromium e WebKit.
-- `responsive-layout.mjs`: 3 telas × 16 viewports aprovados em Chromium e WebKit.
-- `vote-recovery.mjs`: aprovado em Chromium e WebKit.
-- `vote-trust-states.mjs`: `sending`, `401`, `429` e `5xx` aprovados em Chromium e WebKit.
-- Back, shared, integração PostgreSQL 16 e prova `vote-abuse-smoke.mjs`: aprovados no run [35061796786](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35061796786).
-- Design Validator: aprovado no run [35061796548](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35061796548).
-- UI Interaction Smoke: Chromium e WebKit aprovados no run [35061796801](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35061796801).
+- `npm run editorial:verify --prefix back`: aprovado com 0 decisões reais e 0 publicáveis.
+- Suite consolidada: 223/223 testes aprovados (16 shared, 119 back, 88 app).
+- `npm run build --prefix app`: aprovado com client ID de E2E; 0 assets no registro editorial real, 99/125 retratos legados inventariados e bundle Vite gerado.
+- Matriz E2E Chromium e WebKit: nove cenários por navegador aprovados — interação, sessão diária, aposta diária, identidade da aposta, gate editorial, responsividade em 3 telas × 16 viewports, recuperação de voto, estados de confiança e Google simulado.
+- `npm audit --omit=dev --prefix app`: 0 vulnerabilidades.
+- `npm audit --omit=dev --prefix back`: 0 vulnerabilidades.
+- CLI de fingerprint de conteúdo e asset: aprovada.
+- `git diff --check`: aprovado.
+- CI remoto no commit `551db3f20a88bee8420080e1405f893d68450384`: `back-unit`, `shared-data`, PostgreSQL 16 + prova de abuso, `validate`, Chromium e WebKit aprovados.
 
 ## Evidência
 
-- Matriz técnica e visual: `references/issue-170/EVIDENCE.md`.
-- `references/issue-170/chromium-{sending,401-session-required,429-rate-limited,503-server-error}.png`.
-- `references/issue-170/webkit-{sending,401-session-required,429-rate-limited,503-server-error}.png`.
-- Estados capturados: `references/issue-170/{chromium,webkit}-states.json`.
+- Governança: `docs/editorial/PUBLICATION_GOVERNANCE.md`.
+- Matriz técnica: `references/issue-171/EVIDENCE.md`.
+- Capturas: `references/issue-171/chromium-home.png`, `chromium-profile-with-photo.png` e `chromium-profile-without-photo.png`.
 
-## Riscos conhecidos
+## Pendências externas
 
-- A política reduz automação oportunista, mas não garante uma pessoa civil por voto; ataques distribuídos ainda exigiriam outra decisão de identidade e privacidade.
-- `TRUST_PROXY_HOPS` só é seguro se o container não estiver publicamente acessível e o proxy sobrescrever `X-Forwarded-For`; essa topologia deve ser confirmada no deploy.
-- A nova configuração falha fechada em produção. O ambiente precisa receber `VOTER_NETWORK_SECRET` e `TRUST_PROXY_HOPS` antes de publicar a versão.
+- Esta estação continua sem Docker, `psql`, serviço PostgreSQL ou `DATABASE_URL`; a lacuna local foi coberta pelo [workflow remoto PostgreSQL 16](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35098290836), inclusive a prova de abuso.
+- A integração sobre a #173 está concluída: o registry corrente usa `candidate-public-v2`, com `primaryArea`, `contextAffiliation` e as quatro entradas estritas de `taxonomyProvenance`.
+- A integração com a #179 está concluída: o projector `candidate-public-v1` histórico permanece byte a byte e snapshots usam `candidatePublicSnapshot(schema)`, enquanto a API corrente usa `candidatePublicPayload` v2. Nenhum fluxo copia metadados internos do registry.
+- Policy, ledger, Git e hashes não autenticam o humano declarado. A autoridade externa é responsável por identidade/competência e emite o recibo Ed25519; o CI apenas verifica esse recibo, integridade e reprodução no commit.
+- Cada aprovação real requer a revisão humana individual prevista na governança. Não deve haver preenchimento em massa do ledger.
+- O gate visual da #176 é uma evidência necessária para decidir arte, mas não substitui a decisão `cardArt.approved` por pessoa.
 
 ## Próximo passo exato
 
-1. Mesclar a PR #192 pela autorização permanente e verificar o fechamento da #170.
-2. Iniciar #171 somente a partir da nova `main`.
+1. Revisar a PR draft #200 sem alterar a base encadeada nem fazer merge antes da #173.
+2. Depois da aprovação técnica, iniciar PRs editoriais pequenas: uma decisão humana, uma pessoa, uma base de evidência auditável e o recibo externo correspondente por vez.
+3. Só considerar o app com elenco público quando ao menos quatro pessoas tiverem conteúdo e arte aprovados; foto documental continua opcional.
 
 ## Human gate
 
-- Decisão: `autorização permanente concedida para merge quando isolada e verde`
-- Responsável: Stefan Cabral
-- Observação: não usar essa autorização para misturar a #171.
+- Implementação do mecanismo: pronta para revisão.
+- Publicação dos 125 perfis: bloqueada por decisão humana, por desenho.
+- Responsável final: a autoridade externa configurada no ambiente; `stefancabral-oss` é apenas o revisor inicialmente declarado na policy versionada.

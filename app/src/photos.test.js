@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { PHOTO_SLOT_COUNT, candidatePhoto, portraitSlot } from "./photos.js";
+import { PHOTO_SLOT_COUNT, candidateCardArt, candidateDocumentaryPhoto, portraitSlot } from "./photos.js";
 
 test("all 125 people have a stable replaceable portrait slot", () => {
   assert.equal(PHOTO_SLOT_COUNT, 125);
@@ -10,8 +10,22 @@ test("all 125 people have a stable replaceable portrait slot", () => {
   assert.equal(portraitSlot(126), "");
 });
 
-test("only a portrait explicitly supplied by the curator is shown", () => {
-  assert.equal(candidatePhoto({ personId: 55, photo: "https://cdn.example/carmen.jpg" }), "");
-  assert.equal(candidatePhoto({ personId: 1, photo: "/candidates/legacy.jpg" }), "/chromas/approved/001_luiz-inacio-lula-da-silva.jpg?v=test");
-  assert.equal(candidatePhoto({ personId: 101 }), "/portraits/101.jpg?v=test");
+test("files and legacy fields never bypass explicit editorial asset approval", () => {
+  assert.equal(candidateCardArt({ personId: 1, cardArt: "/chromas/approved/001.jpg" }), "");
+  assert.equal(candidateDocumentaryPhoto({ personId: 101, photo: "/portraits/101.jpg" }), "");
+  assert.equal(candidateDocumentaryPhoto({ publication: { documentaryPhoto: { status: "rejected", image: "/portraits/101.jpg" } } }), "");
+});
+
+test("approved card art and documentary photos remain independent", () => {
+  const candidate = {
+    publication: {
+      cardArt: { status: "approved", image: "/chromas/fixture.jpg" },
+      documentaryPhoto: { status: "approved", image: "/portraits/fixture.jpg" },
+    },
+  };
+  assert.equal(candidateCardArt(candidate), "/chromas/fixture.jpg?v=test");
+  assert.equal(candidateDocumentaryPhoto(candidate), "/portraits/fixture.jpg?v=test");
+  assert.equal(candidateCardArt({ publication: { cardArt: { status: "approved", image: "https://cdn.example/card.jpg" } } }), "");
+  assert.equal(candidateCardArt({ publication: { cardArt: { status: "approved", image: "//cdn.example/card.jpg" } } }), "");
+  assert.equal(candidateCardArt({ publication: { cardArt: { status: "approved", image: "/chromas/%2e%2e/card.jpg" } } }), "");
 });

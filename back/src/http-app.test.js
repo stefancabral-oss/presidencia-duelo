@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { authorizedAggregatePublication } from "../test-support/aggregate-publication-fixtures.js";
 import { createHttpApp, configuredAppOrigins, isAllowedBrowserOrigin, networkPseudonym, normalizedNetworkIdentity } from "./http-app.js";
+import { createEditorialTestRegistry } from "../test-support/editorial-fixtures.js";
 
 function fakeStore(overrides = {}) {
   return {
@@ -124,36 +125,45 @@ test("allowed player issuance receives only a network pseudonym", async () => {
   });
 });
 
-test("candidate responses use the same public projection as historical daily snapshots", async () => {
-  const app = createHttpApp({
-    store: fakeStore(),
-    googleIdentity,
-    env: {},
-    candidateCatalog: () => [{
-      personId: 1,
-      id: "public-person",
-      name: "Pessoa Pública",
-      bio: "Ficha pública",
-      photoApproved: true,
-      secret: "internal",
-      fingerprint: "internal-hash",
-      publication: { audit: { reviewer: "internal-reviewer" } },
-      reviewStatus: "published",
-      topicIds: ["eleicoes-2026"],
-    }],
+test("the public API never leaks pending candidates or private approval evidence", async () => {
+  const candidateRegistry = createEditorialTestRegistry({
+    candidateIds: ["lula", "jair-bolsonaro"],
+    approvedCandidateIds: ["lula"],
   });
+  const app = createHttpApp({ store: fakeStore(), googleIdentity, candidateRegistry, env: {} });
   await withServer(app, async (baseUrl) => {
-    const response = await fetch(`${baseUrl}/api/candidates`);
+    const response = await fetch(`${baseUrl}/api/candidates?topic=eleicoes-2026`);
     const body = await response.json();
     assert.equal(response.status, 200);
-    assert.deepEqual(body.candidates, [{
-      personId: 1,
-      id: "public-person",
-      name: "Pessoa Pública",
-      bio: "Ficha pública",
-      reviewStatus: "published",
-      topicIds: ["eleicoes-2026"],
-    }]);
+    assert.deepEqual(body.candidates.map(({ id }) => id), ["lula"]);
+    assert.equal(body.candidates[0].publication.content.status, "approved");
+    assert.equal(body.candidates[0].publication.cardArt.status, "approved");
+    assert.equal(body.candidates[0].publication.documentaryPhoto.status, "missing");
+    assert.equal(body.candidates[0].photo, "");
+    assert.equal(JSON.stringify(body).includes("jair-bolsonaro"), false);
+    assert.equal(JSON.stringify(body).includes("fingerprint"), false);
+    assert.equal(JSON.stringify(body).includes("decidedBy"), false);
+
+    const health = await (await fetch(`${baseUrl}/api/health`)).json();
+    assert.equal(health.candidates, 2);
+    assert.equal(health.playableCandidates, 1);
+  });
+});
+
+test("the candidate API stays closed for inactive and unknown topics", async () => {
+  const candidateRegistry = createEditorialTestRegistry({
+    candidateIds: ["anitta"],
+    approvedCandidateIds: ["anitta"],
+  });
+  const app = createHttpApp({ store: fakeStore(), googleIdentity, candidateRegistry, env: {} });
+  await withServer(app, async (baseUrl) => {
+    for (const topic of ["influenciadores", "desconhecido"]) {
+      const response = await fetch(`${baseUrl}/api/candidates?topic=${topic}`);
+      const body = await response.json();
+      assert.equal(response.status, 200);
+      assert.equal(body.topicId, topic);
+      assert.deepEqual(body.candidates, []);
+    }
   });
 });
 

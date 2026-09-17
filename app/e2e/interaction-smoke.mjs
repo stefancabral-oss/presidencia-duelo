@@ -2,8 +2,10 @@ import { chromium, webkit } from "playwright";
 import { writeFile } from "node:fs/promises";
 import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import { hasCuratedPortrait } from "../../shared/curated-portraits.js";
+import { compactTaxonomyLabel } from "../../shared/catalog-taxonomy.js";
 import { completedDailySession } from "./daily-fixture.mjs";
 import { capabilityFixture, voteResponseV2 } from "./aggregate-fixture.mjs";
+import { approvedEditorialCandidates } from "./editorial-fixtures.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -119,7 +121,8 @@ function assertOutcomeSemantics(outcomes, viewportLabel) {
 }
 
 const smokeCandidateIds = new Set([46, 48, 95, 125, 1, 2, 3, 4]);
-const candidates = CATALOG.filter(({ personId }) => smokeCandidateIds.has(personId));
+const candidates = approvedEditorialCandidates(CATALOG.filter(({ personId }) => smokeCandidateIds.has(personId)));
+const firstCandidate = candidates[0];
 
 function ranking(decisions = 0, winnerId = "", comparedIds = []) {
   const compared = new Set(comparedIds);
@@ -574,7 +577,7 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => window.scrollTo(0, 0));
 
-  const firstCard = page.locator(".candidate-card").first();
+  const firstCard = page.locator(`[data-vote="${firstCandidate.id}"]`);
   const box = await firstCard.boundingBox();
   if (!box) throw new Error("Carta de duelo não foi renderizada");
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -582,6 +585,15 @@ try {
   await page.waitForTimeout(520);
   await page.mouse.up();
   await page.locator("dialog[open]").waitFor();
+  const taxonomy = page.locator(".profile-taxonomy");
+  if (!await taxonomy.getByText("Cargo/função", { exact: true }).isVisible()
+    || !await taxonomy.getByText("Partido", { exact: true }).isVisible()
+    || !await taxonomy.getByText("Área de atuação", { exact: true }).isVisible()
+    || !await taxonomy.getByText(firstCandidate.role, { exact: true }).isVisible()
+    || !await taxonomy.getByText(firstCandidate.party || "Não informado", { exact: true }).isVisible()
+    || !await taxonomy.getByText(firstCandidate.primaryArea || "Não informado", { exact: true }).isVisible()) {
+    throw new Error("O perfil não separou cargo, partido e área estruturada");
+  }
   const closeSummary = page.getByRole("button", { name: /^Fechar perfil de / });
   await closeSummary.waitFor();
   if (!await closeSummary.isVisible()) throw new Error("O fechamento do resumo não está visível");
@@ -796,12 +808,34 @@ try {
   await page.getByRole("heading", { name: "Ranking" }).waitFor();
   await page.getByText(`${successfulRoundVotes} ${successfulRoundVotes === 1 ? "escolha confirmada" : "escolhas confirmadas"}`, { exact: true }).waitFor();
   await page.getByText("Mais derrotas").waitFor();
+  if (!await page.getByPlaceholder("Buscar por nome, partido ou área").isVisible()) throw new Error("A busca não descreve os campos estruturados");
+  if (!await page.getByLabel("Partido").isVisible() || !await page.getByLabel("Área").isVisible()) throw new Error("Filtros estruturados ausentes");
+  const rankingLabels = await page.locator(".ranking-list .rank-person > small").allTextContents();
+  for (const expected of candidates.map((candidate) => compactTaxonomyLabel(candidate) || "Pessoa pública")) {
+    if (!rankingLabels.includes(expected)) throw new Error(`Ranking não exibiu o rótulo taxonômico ${expected}`);
+  }
+  if (process.env.POLIMATCH_E2E_TAXONOMY_SCREENSHOT) {
+    await page.locator(".bottom-nav").evaluate((nav) => { nav.style.visibility = "hidden"; });
+    await page.locator(".ranking-screen").screenshot({ path: process.env.POLIMATCH_E2E_TAXONOMY_SCREENSHOT });
+    await page.locator(".bottom-nav").evaluate((nav) => { nav.style.visibility = ""; });
+  }
   const rejected = await page.locator(".ranking-highlight-rejected").innerText();
   const expectedRejected = candidates.filter(({ id }) => selectedRoundIds.includes(id) && id !== selectedWinnerId).map(({ displayName }) => displayName);
   if (!expectedRejected.every((name) => rejected.includes(name)) || !rejected.includes("−1")) {
     throw new Error("As três comparações negativas não apareceram no resumo do ranking");
   }
-  await page.getByRole("button", { name: "Seu ranking" }).click();
+  await page.locator("#ranking-search").fill(firstCandidate.displayName || firstCandidate.name);
+  await page.locator("#ranking-party").selectOption(firstCandidate.party);
+  await page.locator("#ranking-area").selectOption(firstCandidate.primaryArea);
+  await page.getByRole("button", { name: "Seu ranking", exact: true }).click();
+  const normalizedFilters = await Promise.all([
+    page.locator("#ranking-search").inputValue(),
+    page.locator("#ranking-party").inputValue(),
+    page.locator("#ranking-area").inputValue(),
+  ]);
+  if (normalizedFilters.some(Boolean)) {
+    throw new Error("A troca entre ranking geral e pessoal preservou filtros incompatíveis");
+  }
   await page.getByText("Ordenado por maioria nos confrontos observados").waitFor();
   if (process.env.POLIMATCH_E2E_PERSONAL_RANKING_SCREENSHOT) {
     await page.evaluate(() => {

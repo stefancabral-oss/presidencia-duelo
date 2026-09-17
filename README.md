@@ -81,6 +81,8 @@ Saídas:
 
 Não edite essas saídas manualmente. Corrija a entrada e execute o importador novamente.
 
+O contrato de `role`, `party`, `primaryArea`, `contextAffiliation` e da proveniência por atributo está em `docs/data/CATALOG_TAXONOMY.md`. `npm run test:shared` valida a fonte e confirma que o artefato gerado continua sincronizado.
+
 ## API
 
 | Método | Rota | Função |
@@ -118,7 +120,7 @@ O PostgreSQL guarda somente hashes das chaves de recuperação e sessões. O tok
 
 Respostas de voto usam o contrato V2: o canal pessoal fica em `player`/`round`/`vote`; qualquer publicação autorizada fica exclusivamente em `publicAggregate`. Não há fallback V1. O gate completo, o formato de autoridade externa e o limite jurídico do mecanismo estão em [Gate de publicação agregada](docs/legal/AGGREGATE_PUBLICATION_GATE.md).
 
-A edição diária persiste ruleset, versão da ficha pública (`catalogSchema`), janela, dez slots e o snapshot editorial completo antes do primeiro jogador. Retirar uma pessoa ou ampliar a projeção da API corrente não reescreve a edição aberta nem seu recorte: sessões históricas e cortes publicados continuam autoexplicativos pelo snapshot e seus hashes. Um schema novo só estreia junto de um ruleset novo, numa data ainda não materializada. Somente sessões concluídas em `10/10` entram no recorte público.
+A edição diária persiste ruleset, versão da ficha pública (`catalogSchema`), janela, dez slots e o snapshot editorial completo antes do primeiro jogador. Retirar uma pessoa ou ampliar a projeção da API corrente não reescreve a edição aberta nem seu recorte: sessões históricas e cortes publicados continuam autoexplicativos pelo snapshot e seus hashes. `daily-four-card-v1@1` permanece selado com `candidate-public-v1`; datas ainda não materializadas usam `daily-four-card-v2@2` com `candidate-public-v2`. Somente sessões concluídas em `10/10` entram no recorte público.
 
 ## Deploy no Dokploy
 
@@ -131,6 +133,8 @@ API:
 - segredo obrigatório de produção: `VOTER_NETWORK_SECRET=<valor aleatório com ao menos 32 caracteres>`;
 - topologia obrigatória de produção: `TRUST_PROXY_HOPS=<quantidade exata de proxies confiáveis até a API>`;
 - para ativar o login: `GOOGLE_CLIENT_ID=<OAuth Web Client ID>`;
+- enquanto o ledger editorial estiver vazio, a autoridade editorial externa permanece ausente e o catálogo fica fechado;
+- antes de publicar qualquer decisão editorial, injetar `EDITORIAL_AUTHORITY_PUBLIC_JWK`, `EDITORIAL_AUTHORITY_ISSUER`, `EDITORIAL_AUTHORITY_KEY_ID` e `EDITORIAL_AUTHORITY_RECEIPTS`; recibos inválidos ou ausentes mantêm default-deny;
 - origem padrão de produção: somente `https://polimatch.com.br`; ambientes adicionais exigem `APP_ORIGINS=https://polimatch.com.br,https://staging.exemplo`;
 - healthcheck: `GET /api/health`.
 - revisão do release: construa a imagem da API com `--build-arg SOURCE_COMMIT=<SHA completo do checkout>`; o Dockerfile grava a revisão no artefato e a receipt deve conter o mesmo `releaseRevision`;

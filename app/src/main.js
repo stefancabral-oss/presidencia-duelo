@@ -5,7 +5,8 @@ import { confirmedDailyVoteData, dailyPendingPredictionCandidates, dailyRoundCan
 import { confirmedDailyPredictionData, validateDailyPredictionResults } from "./daily-prediction.js";
 import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, rankingPodium, shortName } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
-import { candidatePhoto } from "./photos.js";
+import { candidateCardArt, candidateDocumentaryPhoto } from "./photos.js";
+import { profileProvenance } from "./editorial-presentation.js";
 import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
 import { approvedBasicCards } from "./approved-chromas.js";
 import { createSoundController } from "./sound.js";
@@ -15,6 +16,7 @@ import { VOTE_ACTIONS, VOTE_PHASES, voteFailureState, voteRecoveryControl } from
 import { confirmedVoteData } from "./vote-response.js";
 import { formatAggregateCopy, PREDICTION_REVEAL_COPY, PUBLIC_RANKING_COPY, WITHHELD_COPY } from "./aggregate-copy.js";
 import { markPortraitFailed, markPortraitLoaded, patchCandidateSlot, showPersistentPanel } from "./persistent-dom.js";
+import { compactTaxonomyLabel } from "../../shared/catalog-taxonomy.js";
 
 const app = document.querySelector("#app");
 const sound = createSoundController();
@@ -47,6 +49,8 @@ const state = {
   personalDuels: 0,
   rankingView: "personal",
   rankingQuery: "",
+  rankingParty: "",
+  rankingArea: "",
   rankingExpanded: false,
   chromaBatchExpanded: false,
   recoveryKey: "",
@@ -203,7 +207,7 @@ function brandSymbol(className = "brand-symbol") {
 }
 
 function candidateRole(candidate) {
-  return candidate.role || candidate.area || candidate.affiliation || candidate.party || "Pessoa pública";
+  return candidate.role || "Pessoa pública";
 }
 
 function candidateSummary(candidate) {
@@ -214,8 +218,8 @@ function candidateCardSummary(candidate) {
   return candidate.summary || candidate.relevance2026 || "Perfil em revisão editorial.";
 }
 
-function candidateAffiliation(candidate) {
-  return candidate.party || candidate.affiliation || candidate.area || "Pessoa pública";
+function candidateTaxonomy(candidate) {
+  return compactTaxonomyLabel(candidate) || "Pessoa pública";
 }
 
 function safeUrl(value = "") {
@@ -232,12 +236,26 @@ function profileSection(title, content, className = "") {
   return `<section${className ? ` class="${className}"` : ""}><h3>${escapeHtml(title)}</h3><p>${escapeHtml(content)}</p></section>`;
 }
 
-function portrait(candidate) {
-  const photo = candidatePhoto(candidate);
+function cardPortrait(candidate) {
+  const art = candidateCardArt(candidate);
   return `<div class="portrait">
     <span class="portrait-fallback">${escapeHtml(initials(candidate.name))}</span>
-    ${photo ? `<img src="${escapeHtml(photo)}" alt="Foto de ${escapeHtml(candidate.name)}" onerror="this.remove()">` : ""}
+    ${art ? `<img src="${escapeHtml(art)}" alt="Ilustração editorial de ${escapeHtml(candidate.name)}" onerror="this.remove()">` : ""}
   </div>`;
+}
+
+function profilePortrait(candidate) {
+  const photo = candidateDocumentaryPhoto(candidate);
+  const placeholder = '<div class="profile-photo-placeholder" role="img" aria-label="Foto documental ainda não disponível"><span aria-hidden="true">▧</span><strong>Foto documental ainda não disponível</strong></div>';
+  if (!photo) {
+    return placeholder;
+  }
+  return `<div class="portrait profile-documentary-photo">${placeholder}<img src="${escapeHtml(photo)}" alt="Foto documental de ${escapeHtml(candidate.name)}" onload="this.previousElementSibling?.remove()" onerror="this.remove()"></div>`;
+}
+
+function profileProvenanceMarkup(candidate) {
+  const provenance = profileProvenance(candidate);
+  return `<section class="profile-provenance" aria-labelledby="profile-provenance-title"><h3 id="profile-provenance-title">Procedência</h3>${provenance.content ? `<p class="content-provenance">${escapeHtml(provenance.content)}</p>` : ""}<p class="photo-provenance">${escapeHtml(provenance.photo)}</p>${provenance.cardArt ? `<p class="card-art-provenance">${escapeHtml(provenance.cardArt)}</p>` : ""}</section>`;
 }
 
 function candidateSlot(index) {
@@ -276,17 +294,17 @@ function candidateSlotModel(candidate, { actionMode = "vote" } = {}) {
     id: candidate.id,
     actionMode,
     accessibleName: prediction
-      ? `${candidate.name}, carta básica. Toque para apostar.`
+      ? `${candidate.name}, carta básica. ${PREDICTION_REVEAL_COPY.cardAria}`
       : `Escolher ${candidate.name}`,
     profileAccessibleName: `Conhecer ${candidate.name}`,
     initials: initials(candidate.name),
-    photo: candidatePhoto(candidate),
+    photo: candidateCardArt(candidate),
     photoAlt: `Foto de ${candidate.name}`,
     name: candidate.displayName || shortName(candidate.name),
-    affiliation: candidateAffiliation(candidate),
-    office: candidate.office || candidateRole(candidate),
+    affiliation: candidateTaxonomy(candidate),
+    office: candidateRole(candidate),
     summary: candidateCardSummary(candidate),
-    interactionHint: prediction ? "Toque para apostar" : "",
+    interactionHint: prediction ? PREDICTION_REVEAL_COPY.cardHint : "",
     profileEnabled: !prediction,
     locked,
     busy: prediction ? state.predictionBusy : state.busy,
@@ -328,17 +346,17 @@ function authOverlay() {
 }
 
 function topicsContent() {
-  const approvedCandidates = state.candidates.filter((candidate) => candidatePhoto(candidate));
+  const availableCandidates = state.candidates;
   const featuredSlots = [47, 28, 1, 63];
-  const featuredCandidates = featuredSlots.map((personId) => approvedCandidates.find((candidate) => Number(candidate.personId) === personId)).filter(Boolean);
+  const featuredCandidates = featuredSlots.map((personId) => availableCandidates.find((candidate) => Number(candidate.personId) === personId)).filter(Boolean);
   const preview = featuredCandidates.map((candidate, index) => {
-    const photo = candidatePhoto(candidate);
+    const art = candidateCardArt(candidate);
     return `<article class="home-preview-card home-preview-card-${index + 1}" aria-hidden="true">
-      ${photo ? `<img src="${escapeHtml(photo)}" alt="" width="240" height="300">` : ""}
-      <span><strong>${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong><small>${escapeHtml(candidateAffiliation(candidate))}</small></span>
+      ${art ? `<img src="${escapeHtml(art)}" alt="" width="240" height="300">` : ""}
+      <span><strong>${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong><small>${escapeHtml(candidateTaxonomy(candidate))}</small></span>
     </article>`;
   }).join("");
-  const approvedCount = approvedCandidates.length;
+  const availableCount = availableCandidates.length;
   const dailyAnswered = Number(state.dailySession?.progress?.answered) || 0;
   const dailyTotal = Number(state.dailySession?.progress?.total) || 10;
   const dailyComplete = state.dailySession?.status === "completed";
@@ -356,11 +374,12 @@ function topicsContent() {
         <p class="lead">Escolha entre pessoas públicas, conheça cada perfil e veja seu ranking ganhar forma — uma decisão por vez.</p>
         <div class="home-actions">
           <button class="primary home-primary" type="button" id="start-election"><span data-home-start-label>${dailyAction}</span><span class="home-primary-arrow" aria-hidden="true">→</span></button>
-          <button class="home-ranking-link" type="button" id="open-ranking">Ver ranking do público</button>
-          <button class="home-ranking-link" type="button" id="open-prediction-results">Meu placar de apostas</button>
+          <button class="home-ranking-link" type="button" id="open-ranking">${PUBLIC_RANKING_COPY.homeCta}</button>
+          <button class="home-ranking-link" type="button" id="open-prediction-results">${PREDICTION_REVEAL_COPY.homeCta}</button>
         </div>
         <div class="home-trust" aria-label="Informações da edição">
           <span><strong data-daily-progress>${dailyAnswered}/${dailyTotal}</strong> rodada do dia</span>
+          <span><strong>${availableCount}</strong> perfis disponíveis nesta edição</span>
           <span><strong data-global-duels>${state.globalDuels}</strong> escolhas confirmadas</span>
         </div>
       </div>
@@ -373,10 +392,10 @@ function topicsContent() {
 
     <section class="home-topic" aria-labelledby="home-topic-title">
       <div class="home-topic-heading">
-        <div><p class="eyebrow">Edição disponível</p><h2 id="home-topic-title">Eleições 2026</h2></div>
+        <div><p class="eyebrow">Edição disponível</p><h2 id="home-topic-title">${PUBLIC_RANKING_COPY.topicEyebrow}</h2></div>
         <span class="home-live"><i aria-hidden="true"></i> no ar</span>
       </div>
-      <p>Dez escolhas fixas, iguais para todo mundo, fechadas à meia-noite de São Paulo. Use Conhecer perfil em qualquer carta antes de escolher.</p>
+      <p>Dez escolhas fixas, iguais para todo mundo, fechadas à meia-noite de São Paulo, usando apenas conteúdo revisado e arte de carta aprovada. Use Conhecer perfil em qualquer carta antes de escolher.</p>
       <button class="home-topic-cta" type="button" id="start-election-secondary"><span>${dailyAction}</span><b aria-hidden="true">→</b></button>
     </section>
 
@@ -391,7 +410,7 @@ function topicsContent() {
 
     <section class="home-next" aria-label="Perfis disponíveis nesta edição">
       <p class="eyebrow">Todos no ar</p>
-      <div><strong>Políticos + influenciadores</strong><span>${approvedCount} perfis com foto aprovada</span><small>Disponível</small></div>
+      <div><strong>Políticos + influenciadores</strong><span>${availableCount} perfis disponíveis nesta edição</span><small>Disponível</small></div>
     </section>
     <p class="legal-note home-legal" data-withheld-home>${WITHHELD_COPY.comparisonUnavailable} ${WITHHELD_COPY.homeSuffix}</p>
   `;
@@ -440,15 +459,15 @@ function dailyPredictionExtras() {
   const pending = state.dailySession.pendingPrediction;
   const failed = Boolean(state.pendingPredictionAction && state.predictionError);
   return {
-    eyebrow: `Aposta opcional · slot ${pending.slot}`,
-    heading: "E o Brasil, escolhe quem?",
+    eyebrow: formatAggregateCopy(PREDICTION_REVEAL_COPY.promptEyebrowTemplate, { slot: pending.slot }),
+    heading: PREDICTION_REVEAL_COPY.promptHeading,
     progress: `${pending.slot}/${state.dailySession.progress.total}`,
     instruction: state.predictionBusy
-      ? "Guardando sua aposta…"
-      : state.predictionError || "Aposte em quem será a pessoa mais escolhida neste slot.",
+      ? PREDICTION_REVEAL_COPY.promptBusy
+      : state.predictionError || PREDICTION_REVEAL_COPY.promptInstruction,
     error: Boolean(state.predictionError),
-    extras: `<section class="prediction-baseline" aria-label="Linha de base da aposta"><strong>25%</strong><span>é a chance de acertar ao acaso entre quatro cartas</span></section>${failed ? '<button class="retry-vote" id="retry-prediction" type="button">Tentar a mesma aposta novamente</button><button class="secondary prediction-refresh" id="refresh-prediction" type="button">Atualizar estado</button>' : ""}`,
-    footer: `<button class="skip-button" type="button" id="skip-prediction" ${state.predictionBusy || state.pendingPredictionAction ? "disabled" : ""}>Pular esta aposta</button><p class="daily-fixed-note">Sua preferência já foi confirmada. A aposta é separada, opcional e não altera ranking nem progresso.</p><p class="prediction-sealed">O resultado só aparece depois do fechamento do recorte diário — nunca ao vivo.</p>`,
+    extras: `<section class="prediction-baseline" aria-label="${PREDICTION_REVEAL_COPY.baselineAria}"><strong>${PREDICTION_REVEAL_COPY.baselinePercent}</strong><span>${PREDICTION_REVEAL_COPY.baselineDetail}</span></section>${failed ? '<button class="retry-vote" id="retry-prediction" type="button">${PREDICTION_REVEAL_COPY.retrySame}</button><button class="secondary prediction-refresh" id="refresh-prediction" type="button">${PREDICTION_REVEAL_COPY.refreshState}</button>' : ""}`,
+    footer: `<button class="skip-button" type="button" id="skip-prediction" ${state.predictionBusy || state.pendingPredictionAction ? "disabled" : ""}>${PREDICTION_REVEAL_COPY.skip}</button><p class="daily-fixed-note">${PREDICTION_REVEAL_COPY.fixedPreference}</p><p class="prediction-sealed">${PREDICTION_REVEAL_COPY.sealed}</p>`,
   };
 }
 
@@ -515,7 +534,7 @@ function dailyPredictionResultsScreen() {
 function dailyLoadingContent() {
   if (state.gameMode === "daily" && (state.dailyLoading || state.dailyLoadError)) {
     const error = state.dailyLoadError
-      ? `<p>${escapeHtml(state.dailyLoadError)}</p><button class="primary" id="retry-daily" type="button">Tentar novamente</button><button class="secondary" id="daily-loading-free" type="button">Ir para o modo livre</button>`
+      ? `<p>${escapeHtml(state.dailyLoadError)}</p><button class="primary" id="retry-daily" type="button">${PREDICTION_REVEAL_COPY.retry}</button><button class="secondary" id="daily-loading-free" type="button">Ir para o modo livre</button>`
       : '<p>Atualizando o baralho do dia…</p>';
     return `<section class="panel"><p class="eyebrow">Rodada do dia</p><h1>${state.dailyLoadError ? "Não conseguimos atualizar a rodada." : "Buscando a edição vigente…"}</h1>${error}</section>`;
   }
@@ -526,8 +545,9 @@ function rankingPresentation() {
   const publicRankingAvailable = aggregateAvailable("global-ranking");
   const personal = !publicRankingAvailable || state.rankingView === "personal";
   const ranking = displayRanking(personal ? state.personalRanking : state.ranking, { personal });
-  const filtered = filterRanking(ranking, state.rankingQuery);
-  const visible = state.rankingExpanded || state.rankingQuery ? filtered : filtered.slice(0, 25);
+  const filtered = filterRanking(ranking, state.rankingQuery, { party: state.rankingParty, primaryArea: state.rankingArea });
+  const filtersActive = Boolean(state.rankingQuery || state.rankingParty || state.rankingArea);
+  const visible = state.rankingExpanded || filtersActive ? filtered : filtered.slice(0, 25);
   const podium = publicRankingAvailable ? rankingPodium(ranking) : [];
   const highlights = publicRankingAvailable ? rankingHighlights(ranking) : { chosen: [], rejected: [] };
   const totalDuels = personal ? state.personalDuels : state.globalDuels;
@@ -540,15 +560,18 @@ function rankingPresentation() {
       : person.losses === 1 ? PUBLIC_RANKING_COPY.rowLossOne : PUBLIC_RANKING_COPY.rowLossMany;
     const unplayed = personal ? "Ainda sem comparações" : PUBLIC_RANKING_COPY.rowUnplayed;
     const eloSuffix = personal ? "Elo" : PUBLIC_RANKING_COPY.eloSuffix;
-    return `<button class="ranking-row" type="button" data-profile="${escapeHtml(person.id)}"><strong class="rank-position">${person.displayRank ?? "—"}</strong><span class="rank-person">${escapeHtml(person.displayName || shortName(person.name))}<small>${escapeHtml(person.affiliation || person.party || candidateRole(person))}</small>${person.decisions ? `<span class="vote-counts"><b class="vote-positive">+ ${person.wins} ${winNoun}</b><b class="vote-negative">− ${person.losses} ${lossNoun}</b></span>` : `<span class="not-played">${unplayed}</span>`}</span><strong class="rank-score">${person.decisions ? `${person.winRate}%<small>${person.elo} ${eloSuffix}</small>` : "—"}</strong></button>`;
+    return `<button class="ranking-row" type="button" data-profile="${escapeHtml(person.id)}"><strong class="rank-position">${person.displayRank ?? "—"}</strong><span class="rank-person">${escapeHtml(person.displayName || shortName(person.name))}<small>${escapeHtml(candidateTaxonomy(person))}</small>${person.decisions ? `<span class="vote-counts"><b class="vote-positive">+ ${person.wins} ${winNoun}</b><b class="vote-negative">− ${person.losses} ${lossNoun}</b></span>` : `<span class="not-played">${unplayed}</span>`}</span><strong class="rank-score">${person.decisions ? `${person.winRate}%<small>${person.elo} ${eloSuffix}</small>` : "—"}</strong></button>`;
   }).join("");
+  const parties = [...new Set(ranking.map(({ party }) => party).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const areas = [...new Set(ranking.map(({ primaryArea }) => primaryArea).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const options = (values, selected) => values.map((value) => `<option value="${escapeHtml(value)}"${value === selected ? " selected" : ""}>${escapeHtml(value)}</option>`).join("");
   const podiumCards = podium.map((person) => `<button class="podium-card podium-${Math.min(person.displayRank, 3)}" type="button" data-profile="${escapeHtml(person.id)}"><span>${person.displayRank}º</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><small>${person.winRate}%</small></button>`).join("");
   const highlightColumn = (title, type, people) => `<section class="ranking-highlight ranking-highlight-${type}"><p>${title}</p>${people.length ? people.map((person, index) => `<button type="button" data-profile="${escapeHtml(person.id)}"><span>${index + 1}</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><b>${type === "chosen" ? `+${person.wins}` : `−${person.losses}`}</b></button>`).join("") : `<small>${PUBLIC_RANKING_COPY.awaitingDuels}</small>`}</section>`;
   const publicPulse = !personal && (highlights.chosen.length || highlights.rejected.length) ? `<section class="public-pulse" aria-label="${PUBLIC_RANKING_COPY.pulseAria}"><div class="section-title"><span>${PUBLIC_RANKING_COPY.pulse}</span><small>${PUBLIC_RANKING_COPY.pulseDetail}</small></div><div class="pulse-grid">${highlightColumn(PUBLIC_RANKING_COPY.mostWins, "chosen", highlights.chosen)}${highlightColumn(PUBLIC_RANKING_COPY.mostLosses, "rejected", highlights.rejected)}</div></section>` : "";
   const empty = state.rankingQuery
     ? personal ? "Nenhum nome encontrado." : PUBLIC_RANKING_COPY.searchEmpty
     : personal ? "Faça uma escolha para começar seu ranking pessoal." : PUBLIC_RANKING_COPY.empty;
-  const reveal = !state.rankingQuery && !state.rankingExpanded && filtered.length > visible.length
+  const reveal = !filtersActive && !state.rankingExpanded && filtered.length > visible.length
     ? `<button class="secondary reveal-ranking" id="reveal-ranking" type="button">${personal ? `Ver ranking completo (${filtered.length})` : formatAggregateCopy(PUBLIC_RANKING_COPY.revealTemplate, { count: filtered.length })}</button>`
     : "";
   const policy = personal && state.personalRankingPolicy
@@ -565,21 +588,21 @@ function rankingPresentation() {
   const searchLabel = personal ? "Todos os nomes" : PUBLIC_RANKING_COPY.searchLabel;
   const searchPlaceholder = personal ? "Buscar nome ou partido" : PUBLIC_RANKING_COPY.searchPlaceholder;
   const backToChoices = personal ? "Voltar às escolhas" : PUBLIC_RANKING_COPY.backToChoices;
-  return { personal, totalDuels, rows, podiumCards, publicPulse, empty, revealCount: !state.rankingQuery && !state.rankingExpanded && filtered.length > visible.length ? filtered.length : 0, publicRankingAvailable, trust, selector, countNoun, topicEyebrow, searchLabel, searchPlaceholder, backToChoices };
+  return { personal, totalDuels, rows, podiumCards, publicPulse, empty, revealCount: !filtersActive && !state.rankingExpanded && filtered.length > visible.length ? filtered.length : 0, publicRankingAvailable, parties, areas, options, trust, selector, countNoun, topicEyebrow, searchLabel, searchPlaceholder, backToChoices };
 }
 
 function rankingMarkup() {
-  return `<header class="ranking-heading"><p class="eyebrow">Eleições 2026</p><h1>Ranking</h1><p data-ranking-description></p><strong data-ranking-total></strong></header>
+  return `<header class="ranking-heading"><p class="eyebrow">${PUBLIC_RANKING_COPY.topicEyebrow}</p><h1>${PUBLIC_RANKING_COPY.heading}</h1><p data-ranking-description></p><strong data-ranking-total></strong></header>
     <div class="result-banner" data-ranking-result hidden></div>
-    <div class="segmented" aria-label="Tipo de ranking"><button type="button" data-ranking-view="general">Geral</button><button type="button" data-ranking-view="personal">Seu ranking</button></div>
-    <p class="ranking-trust" data-ranking-integrity>Escolhas confirmadas pelo servidor. <a href="/integridade.html">Como o placar é protegido</a></p>
+    <div class="segmented" aria-label="Tipo de ranking"><button type="button" data-ranking-view="general">${PUBLIC_RANKING_COPY.selector}</button><button type="button" data-ranking-view="personal">${PUBLIC_RANKING_COPY.personalSelector}</button></div>
+    <p class="ranking-trust" data-ranking-integrity>Escolhas confirmadas pelo servidor. <a href="/integridade.html">${PUBLIC_RANKING_COPY.integrityLink}</a></p>
     <p class="ranking-policy" data-ranking-policy hidden><strong></strong><span></span></p>
     <div data-ranking-pulse></div>
     <section class="podium" data-ranking-podium aria-label="Pódio" hidden></section>
-    <label class="ranking-search"><span>Todos os nomes</span><input id="ranking-search" type="search" placeholder="Buscar nome ou partido" autocomplete="off"></label>
+    <label class="ranking-search"><span>${PUBLIC_RANKING_COPY.searchLabel}</span><input id="ranking-search" type="search" placeholder="Buscar nome ou partido" autocomplete="off"></label>
     <section class="panel ranking-list" data-ranking-list></section>
     <button class="secondary reveal-ranking" id="reveal-ranking" type="button" hidden></button>
-    <button class="primary continue-duels" id="continue-duels" type="button">Voltar às escolhas</button>`;
+    <button class="primary continue-duels" id="continue-duels" type="button">${PUBLIC_RANKING_COPY.backToChoices}</button>`;
 }
 
 function collectionContent() {
@@ -602,7 +625,7 @@ function collectionContent() {
   return `<div><p class="eyebrow">Laboratório de Chromas</p><h1>Coleção</h1><p class="lead">Mova o dedo sobre cada carta. No celular, ative a inclinação para o reflexo acompanhar o aparelho.</p><button class="motion-button" id="enable-chroma-motion" type="button">Ativar efeito ao inclinar</button><p class="motion-status" id="motion-status"></p></div>
     <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Suprema</p><h2>Três estrelas douradas</h2></div><span class="tier-symbol gold-stars">★★★</span></div><p>Ouro em relevo, feixes direcionais e dois desenhos holográficos exclusivos.</p><div class="chroma-gallery">${supreme}</div></section>
     <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Comemorativa</p><h2>Estrela prismática</h2></div><span class="tier-symbol prism-star">★</span></div><p>Cristal óptico, espectro colorido e refração diferente em cada pessoa.</p><div class="chroma-gallery">${commemorative}</div></section>
-    <section class="chroma-tier approved-batch"><div class="chroma-tier-heading"><div><p class="eyebrow">Cartas básicas</p><h2>35 acabamentos aprovados</h2></div><span class="tier-symbol batch-count">35</span></div><p>São as cartas básicas atuais. As futuras Chromas serão colecionáveis e sempre usarão outra fotografia da pessoa.</p><div class="chroma-gallery approved-chroma-gallery">${approved}</div><button class="primary batch-toggle" id="expand-chroma-batch" type="button">Ver as 35 cartas básicas</button><button class="secondary batch-toggle" id="collapse-chroma-batch" type="button" hidden>Mostrar apenas os primeiros</button><p class="batch-disclosure">Imagens tratadas para compor a edição básica do PoliMatch.</p></section>
+    <section class="chroma-tier approved-batch"><div class="chroma-tier-heading"><div><p class="eyebrow">Cartas básicas</p><h2>35 acabamentos do lote piloto</h2></div><span class="tier-symbol batch-count">35</span></div><p>São estudos visuais do lote piloto. Cada arte só entra na edição depois de uma decisão humana individual no portão editorial.</p><div class="chroma-gallery approved-chroma-gallery">${approved}</div><button class="primary batch-toggle" id="expand-chroma-batch" type="button">Ver as 35 cartas básicas</button><button class="secondary batch-toggle" id="collapse-chroma-batch" type="button" hidden>Mostrar apenas os primeiros</button><p class="batch-disclosure">Imagens tratadas para avaliação da edição básica do PoliMatch.</p></section>
     <section><p class="eyebrow">Sua coleção</p><section class="panel ranking-list">${cards || '<p class="empty">Demonstração visual: estas Chromas ainda não foram adicionadas ao seu inventário.</p>'}</section></section>`;
 }
 
@@ -610,32 +633,32 @@ function navMarkup() {
   return `<nav class="bottom-nav" aria-label="Navegação principal" hidden>
     <button class="nav-button" type="button" data-screen="topics">Início</button>
     <button class="nav-button" type="button" data-screen="duel">Duelo</button>
-    <button class="nav-button" type="button" data-screen="ranking">Ranking</button>
+    <button class="nav-button" type="button" data-screen="ranking">${PUBLIC_RANKING_COPY.heading}</button>
   </nav>`;
 }
 
 function connectionContent() {
   if (!state.error) return "<p>Preparando o duelo…</p>";
-  return `<section class="panel"><p class="eyebrow">Conexão necessária</p><h1>Não conseguimos falar com o servidor.</h1><p>${escapeHtml(state.error)}. Nenhuma escolha será registrada enquanto a conexão não voltar.</p><button class="primary" id="retry" type="button">Tentar novamente</button></section>`;
+  return `<section class="panel"><p class="eyebrow">Conexão necessária</p><h1>Não conseguimos falar com o servidor.</h1><p>${escapeHtml(state.error)}. Nenhuma escolha será registrada enquanto a conexão não voltar.</p><button class="primary" id="retry" type="button">${PREDICTION_REVEAL_COPY.retry}</button></section>`;
 }
 
 function duelMarkup() {
   return `<div data-duel-main>
       <div class="duel-head"><div><p class="eyebrow" data-duel-eyebrow>Escolha uma entre quatro</p><h1 data-duel-heading>Quem você prefere?</h1></div><span class="progress-pill"></span></div>
-      <section class="prediction-baseline" data-prediction-baseline aria-label="Linha de base da aposta" hidden><strong>25%</strong><span>é a chance de acertar ao acaso entre quatro cartas</span></section>
+      <section class="prediction-baseline" data-prediction-baseline aria-label="${PREDICTION_REVEAL_COPY.baselineAria}" hidden><strong>${PREDICTION_REVEAL_COPY.baselinePercent}</strong><span>${PREDICTION_REVEAL_COPY.baselineDetail}</span></section>
       <p class="round-instruction">Escolha uma pessoa ou use Conhecer perfil antes de decidir.</p>
       <section class="round-feedback" data-feedback-channels aria-label="Resultado da escolha" hidden>
         <p class="feedback-channel feedback-personal"><strong>No seu ranking</strong><span data-personal-feedback></span></p>
-        <p class="feedback-channel feedback-global" data-global-feedback-band hidden><strong>No placar do público</strong><span data-global-feedback></span></p>
+        <p class="feedback-channel feedback-global" data-global-feedback-band hidden><strong>${PUBLIC_RANKING_COPY.feedbackChannel}</strong><span data-global-feedback></span></p>
       </section>
       <button class="retry-vote" type="button" id="retry-vote" hidden>Tentar de novo</button>
-      <button class="retry-vote" type="button" id="retry-prediction" hidden>Tentar a mesma aposta novamente</button>
-      <button class="secondary prediction-refresh" id="refresh-prediction" type="button" hidden>Atualizar estado</button>
+      <button class="retry-vote" type="button" id="retry-prediction" hidden>${PREDICTION_REVEAL_COPY.retrySame}</button>
+      <button class="secondary prediction-refresh" id="refresh-prediction" type="button" hidden>${PREDICTION_REVEAL_COPY.refreshState}</button>
       <div class="arena arena-four" data-duel-arena>${Array.from({ length: 4 }, (_, index) => candidateSlot(index)).join("")}</div>
       <button class="skip-button" type="button" id="skip-round" data-free-skip>Nenhuma destas · trocar as quatro</button>
-      <button class="skip-button" type="button" id="skip-prediction" data-prediction-skip hidden>Pular esta aposta</button>
+      <button class="skip-button" type="button" id="skip-prediction" data-prediction-skip hidden>${PREDICTION_REVEAL_COPY.skip}</button>
       <p class="daily-fixed-note" data-daily-note hidden></p>
-      <p class="prediction-sealed" data-prediction-sealed hidden>O resultado só aparece depois do fechamento do recorte diário — nunca ao vivo.</p>
+      <p class="prediction-sealed" data-prediction-sealed hidden>${PREDICTION_REVEAL_COPY.sealed}</p>
     </div>
     <section data-duel-aux hidden></section>`;
 }
@@ -832,7 +855,7 @@ function renderDuel() {
   refs.retryVote.hidden = prediction || !recovery.visible;
   refs.retryVote.disabled = recovery.disabled;
   refs.retryVote.id = recovery.visible ? recovery.id : "retry-vote";
-  refs.retryVote.textContent = recovery.label || "Tentar novamente";
+  refs.retryVote.textContent = recovery.label || PREDICTION_REVEAL_COPY.retry;
   const predictionFailed = prediction && Boolean(state.pendingPredictionAction && state.predictionError);
   refs.retryPrediction.hidden = !predictionFailed;
   refs.refreshPrediction.hidden = !predictionFailed;
@@ -851,7 +874,7 @@ function renderDuel() {
   refs.predictionSkip.disabled = state.predictionBusy || Boolean(state.pendingPredictionAction);
   refs.dailyNote.hidden = !daily;
   refs.dailyNote.textContent = prediction
-    ? "Sua preferência já foi confirmada. A aposta é separada, opcional e não altera ranking nem progresso."
+    ? PREDICTION_REVEAL_COPY.fixedPreference
     : "Este slot é igual para todos e não pode ser trocado.";
   refs.predictionSealed.hidden = !prediction;
 }
@@ -962,7 +985,6 @@ function showProfile(id, trigger = document.activeElement) {
   if (!person) return false;
   sound.play("profile");
   const modal = refs.modal;
-  const metadata = [person.office, person.party, person.location].filter(Boolean);
   const facts = (person.facts || []).map((fact) => `<li>${escapeHtml(fact)}</li>`).join("");
   const sources = (person.sources || []).map((source) => {
     const href = safeUrl(typeof source === "string" ? source : source.url);
@@ -973,7 +995,7 @@ function showProfile(id, trigger = document.activeElement) {
   profileReturnCandidateId = id;
   const returnLabel = state.screen === "duel" ? "Voltar à rodada" : "Voltar ao ranking";
   modal.setAttribute("aria-labelledby", "profile-title");
-  modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar perfil de ${escapeHtml(person.name)}">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2 id="profile-title">${escapeHtml(person.name)}</h2><p class="profile-role"><strong>${escapeHtml(candidateRole(person))}</strong></p>${metadata.length ? `<p class="profile-meta">${metadata.map(escapeHtml).join(" · ")}</p>` : ""}${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions"><button class="secondary" id="close-modal" type="button">${returnLabel}</button></div>`;
+  modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar perfil de ${escapeHtml(person.name)}">×</button><div class="profile-scroll"><div class="profile-preview">${profilePortrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2 id="profile-title">${escapeHtml(person.name)}</h2><div class="profile-taxonomy">${profileSection("Cargo/função", candidateRole(person))}${profileSection("Partido", person.party || person.affiliation || "Não informado")}${profileSection("Área de atuação", person.primaryArea || person.area || "Não informado")}${person.contextAffiliation || person.office ? profileSection("Contexto/afiliação", person.contextAffiliation || person.office) : ""}</div>${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>` : '<p class="review-note">Nenhuma fonte pública foi fornecida.</p>'}</section>${profileProvenanceMarkup(person)}</div></div><div class="dialog-actions"><button class="secondary" id="close-modal" type="button">${returnLabel}</button></div>`;
   modal.showModal();
   modal.querySelector("#close-modal-top").focus();
   return true;
@@ -1551,7 +1573,7 @@ async function refreshPredictionState() {
   const resynced = await resyncDailyState(identity);
   if (!isCurrentVoteIdentity(state, identity)) return;
   state.predictionBusy = false;
-  if (!resynced) state.predictionError = "Não conseguimos atualizar o estado. Tente novamente.";
+  if (!resynced) state.predictionError = PREDICTION_REVEAL_COPY.refreshFailed;
   render();
 }
 
@@ -1754,6 +1776,16 @@ function installEvents() {
     if (event.target.id !== "ranking-search") return;
     state.rankingQuery = event.target.value;
     renderRanking();
+  });
+  document.querySelector("#ranking-party")?.addEventListener("change", (event) => {
+    state.rankingParty = event.target.value;
+    state.rankingExpanded = false;
+    render();
+  });
+  document.querySelector("#ranking-area")?.addEventListener("change", (event) => {
+    state.rankingArea = event.target.value;
+    state.rankingExpanded = false;
+    render();
   });
   app.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && state.authOpen) closeAuth();

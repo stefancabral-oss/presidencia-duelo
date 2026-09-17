@@ -92,6 +92,10 @@ jobs:
         env:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
         run: node app/e2e/accessible-profile.mjs
+      - name: Validate editorial publication UI
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/editorial-gate.mjs
 
       - name: Validate responsive layout
         env:

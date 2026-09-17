@@ -25,31 +25,71 @@ import {
   validateDailyCutResults,
   materializeDailyEdition,
 } from "./topic-store.js";
-import { buildDailyEdition, DAILY_SESSION_RULESET } from "./daily-session.js";
-import { PUBLIC_CANDIDATE_SCHEMA_V1, candidateProjectorBySchema } from "./candidates.js";
+import {
+  DAILY_SESSION_RULESET,
+  DAILY_SESSION_RULESET_V1,
+  DAILY_SESSION_RULESET_V2,
+  buildDailyEdition,
+} from "./daily-session.js";
+import { PUBLIC_CANDIDATE_SCHEMA_V1, PUBLIC_CANDIDATE_SCHEMA_V2 } from "./candidates.js";
+import { createApprovedTestRegistry } from "../test-support/editorial-fixtures.js";
 
-const FUTURE_CANDIDATE_SCHEMA = "candidate-public-v2";
-
-const FUTURE_DAILY_RULESET = Object.freeze({
-  ...DAILY_SESSION_RULESET,
-  id: "daily-four-card-v2",
-  version: 2,
-  catalogSchema: FUTURE_CANDIDATE_SCHEMA,
-});
-
-function resolveTestDailyRuleset(id, version) {
-  if (id === DAILY_SESSION_RULESET.id && Number(version) === DAILY_SESSION_RULESET.version) return DAILY_SESSION_RULESET;
-  if (id === FUTURE_DAILY_RULESET.id && Number(version) === FUTURE_DAILY_RULESET.version) return FUTURE_DAILY_RULESET;
-  throw new Error(`ruleset de teste desconhecido: ${id}@${version}`);
+function historicalCandidate(id, index = 0, overrides = {}) {
+  return {
+    personId: index + 1,
+    id,
+    name: `Pessoa histórica ${index + 1}`,
+    displayName: `Histórica ${index + 1}`,
+    affiliation: "PARTIDO",
+    photo: `/historica-${index + 1}.webp`,
+    role: "PARTIDO",
+    summary: `Resumo histórico ${index + 1}`,
+    office: `Cargo histórico ${index + 1}`,
+    party: "PARTIDO",
+    location: "Brasil",
+    bio: `Biografia histórica ${index + 1}`,
+    relevance2026: `Relevância histórica ${index + 1}`,
+    facts: [`Fato histórico ${index + 1}`],
+    highlight: `Destaque histórico ${index + 1}`,
+    controversy: `Ponto de atenção histórico ${index + 1}`,
+    sources: [{ label: "Fonte", url: `https://example.test/historica-${index + 1}` }],
+    reviewedAt: "2026-09-13",
+    reviewStatus: "pending",
+    topicIds: ["eleicoes-2026"],
+    ...overrides,
+  };
 }
 
-function resolveTestCandidateProjector(schema) {
-  if (schema === PUBLIC_CANDIDATE_SCHEMA_V1) return candidateProjectorBySchema(schema);
-  if (schema === FUTURE_CANDIDATE_SCHEMA) {
-    const v1 = candidateProjectorBySchema(PUBLIC_CANDIDATE_SCHEMA_V1);
-    return (candidate) => ({ ...v1(candidate), taxonomy: candidate.taxonomy || { schema: "v2" } });
-  }
-  throw new Error(`schema público de teste desconhecido: ${schema}`);
+function currentCandidate(id, index = 0, overrides = {}) {
+  return {
+    personId: index + 1,
+    id,
+    name: `Pessoa atual ${index + 1}`,
+    displayName: `Atual ${index + 1}`,
+    photo: `/atual-${index + 1}.webp`,
+    role: `Cargo atual ${index + 1}`,
+    party: "PARTIDO",
+    primaryArea: "Política institucional",
+    contextAffiliation: null,
+    taxonomyProvenance: {
+      role: { status: "extracted", source: "fonte#role" },
+      party: { status: "extracted", source: "fonte#party" },
+      primaryArea: { status: "inferred", source: "fonte#primaryArea" },
+      contextAffiliation: { status: "ambiguous", source: "fonte#contextAffiliation" },
+    },
+    summary: `Resumo atual ${index + 1}`,
+    location: "Brasil",
+    bio: `Biografia atual ${index + 1}`,
+    relevance2026: `Relevância atual ${index + 1}`,
+    facts: [`Fato atual ${index + 1}`],
+    highlight: `Destaque atual ${index + 1}`,
+    controversy: `Ponto de atenção atual ${index + 1}`,
+    sources: [{ label: "Fonte", url: `https://example.test/atual-${index + 1}` }],
+    reviewedAt: "2026-09-16",
+    reviewStatus: "pending",
+    topicIds: ["eleicoes-2026"],
+    ...overrides,
+  };
 }
 
 test("daily prediction input distinguishes an explicit skip from a candidate", () => {
@@ -100,22 +140,24 @@ test("prediction scoring is neutral for skips, ties and an empty sample", () => 
   assert.equal(scoreDailyPrediction({ predictedCandidateId: "a" }, empty), "no-sample");
 });
 
+const candidateRegistry = createApprovedTestRegistry();
+
 test("only active curated topics accept votes", () => {
-  assert.equal(validateTopic("eleicoes-2026"), "eleicoes-2026");
-  assert.throws(() => validateTopic("influenciadores"), /indisponível/);
-  assert.throws(() => validateVote("eleicoes-2026", "lula", "lula"), /voto inválido/);
-  assert.throws(() => validateVote("eleicoes-2026", "lula", "acm-neto"), /voto inválido/);
-  assert.doesNotThrow(() => validateVote("eleicoes-2026", "lula", "jair-bolsonaro"));
+  assert.equal(validateTopic("eleicoes-2026", candidateRegistry), "eleicoes-2026");
+  assert.throws(() => validateTopic("influenciadores", candidateRegistry), /indisponível/);
+  assert.throws(() => validateVote("eleicoes-2026", "lula", "lula", candidateRegistry), /voto inválido/);
+  assert.throws(() => validateVote("eleicoes-2026", "lula", "acm-neto", candidateRegistry), /voto inválido/);
+  assert.doesNotThrow(() => validateVote("eleicoes-2026", "lula", "jair-bolsonaro", candidateRegistry));
 });
 
 test("four-card rounds require four unique playable candidates and the winner", () => {
   assert.deepEqual(
-    validateRoundVote("eleicoes-2026", "lula", ["lula", "jair-bolsonaro", "anitta", "neymar-jr"]),
+    validateRoundVote("eleicoes-2026", "lula", ["lula", "jair-bolsonaro", "anitta", "neymar-jr"], candidateRegistry),
     { topic: "eleicoes-2026", candidateIds: ["lula", "jair-bolsonaro", "anitta", "neymar-jr"] },
   );
-  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["lula", "lula", "anitta", "neymar-jr"]), /rodada inválida/);
-  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["jair-bolsonaro", "anitta", "neymar-jr", "ludmilla"]), /rodada inválida/);
-  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["lula", "jair-bolsonaro", "anitta", "acm-neto"]), /rodada inválida/);
+  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["lula", "lula", "anitta", "neymar-jr"], candidateRegistry), /rodada inválida/);
+  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["jair-bolsonaro", "anitta", "neymar-jr", "ludmilla"], candidateRegistry), /rodada inválida/);
+  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["lula", "jair-bolsonaro", "anitta", "acm-neto"], candidateRegistry), /rodada inválida/);
 });
 
 test("daily choices persist the authoritative candidate order while free choices are canonical", () => {
@@ -125,12 +167,24 @@ test("daily choices persist the authoritative candidate order while free choices
   assert.deepEqual(candidateIds, ["zeta", "alpha", "delta", "beta"]);
 });
 
+test("a v1 snapshot fails closed instead of omitting retired fields from a v2 candidate", () => {
+  assert.throws(
+    () => buildDailyCatalogSnapshot([currentCandidate("current-only")], {
+      catalogSchema: PUBLIC_CANDIDATE_SCHEMA_V1,
+    }),
+    /candidate-public-v1; campos ausentes: affiliation, office/,
+  );
+});
+
 test("materialized daily editions validate ruleset, catalog hash and every ordered slot", () => {
   const definition = buildDailyEdition({
     topicId: "eleicoes-2026",
     candidateIds: Array.from({ length: 40 }, (_, index) => `candidate-${String(index + 1).padStart(2, "0")}`),
     dateKey: "2026-09-16",
   });
+  const snapshot = buildDailyCatalogSnapshot(
+    definition.catalogIds.map((id, index) => currentCandidate(id, index)),
+  );
   const row = {
     id: definition.id,
     edition_date: definition.date,
@@ -140,8 +194,8 @@ test("materialized daily editions validate ruleset, catalog hash and every order
     catalog_schema: definition.catalogSchema,
     catalog_hash: definition.catalogHash,
     catalog_ids: definition.catalogIds,
-    catalog_snapshot: buildDailyCatalogSnapshot(definition.catalogIds.map((id) => ({ id, name: id }))).candidates,
-    catalog_snapshot_hash: buildDailyCatalogSnapshot(definition.catalogIds.map((id) => ({ id, name: id }))).hash,
+    catalog_snapshot: snapshot.candidates,
+    catalog_snapshot_hash: snapshot.hash,
     candidate_count: definition.candidateCount,
     total_rounds: definition.totalRounds,
     cards_per_round: definition.cardsPerRound,
@@ -165,18 +219,20 @@ test("materialized daily editions validate ruleset, catalog hash and every order
 });
 
 test("published daily cuts carry and validate their own selected public snapshot", () => {
-  const candidates = Array.from({ length: 40 }, (_, index) => ({
-    id: `cut-${String(index + 1).padStart(2, "0")}`,
-    name: `Pessoa ${index + 1}`,
-    summary: `Metadado histórico ${index + 1}`,
-    ...(index === 0 ? {
+  const candidates = Array.from({ length: 40 }, (_, index) => currentCandidate(
+    `cut-${String(index + 1).padStart(2, "0")}`,
+    index,
+    {
+      summary: `Metadado histórico ${index + 1}`,
+      ...(index === 0 ? {
       secret: "não persistir",
       fingerprint: "internal-only",
       photoApproved: true,
       topicIds: ["eleicoes-2026"],
       publication: { audit: { reviewer: "interno", decidedBy: "editor", basis: "rascunho" } },
-    } : {}),
-  }));
+      } : {}),
+    },
+  ));
   const definition = buildDailyEdition({
     topicId: "eleicoes-2026",
     candidateIds: candidates.map(({ id }) => id),
@@ -288,7 +344,12 @@ test("an existing edition remains available when the current editorial catalog s
     topicId: "eleicoes-2026",
     candidateIds: Array.from({ length: 40 }, (_, index) => `snapshot-${String(index + 1).padStart(2, "0")}`),
     dateKey: "2026-09-16",
+    ruleset: DAILY_SESSION_RULESET_V1,
   });
+  const historicalSnapshot = buildDailyCatalogSnapshot(
+    definition.catalogIds.map((id, index) => historicalCandidate(id, index)),
+    { catalogSchema: PUBLIC_CANDIDATE_SCHEMA_V1 },
+  );
   const row = {
     id: definition.id,
     edition_date: definition.date,
@@ -298,8 +359,8 @@ test("an existing edition remains available when the current editorial catalog s
     catalog_schema: definition.catalogSchema,
     catalog_hash: definition.catalogHash,
     catalog_ids: definition.catalogIds,
-    catalog_snapshot: buildDailyCatalogSnapshot(definition.catalogIds.map((id) => ({ id, name: id }))).candidates,
-    catalog_snapshot_hash: buildDailyCatalogSnapshot(definition.catalogIds.map((id) => ({ id, name: id }))).hash,
+    catalog_snapshot: historicalSnapshot.candidates,
+    catalog_snapshot_hash: historicalSnapshot.hash,
     candidate_count: definition.candidateCount,
     total_rounds: definition.totalRounds,
     cards_per_round: definition.cardsPerRound,
@@ -321,9 +382,7 @@ test("an existing edition remains available when the current editorial catalog s
   };
   let catalogReads = 0;
   const materialized = await materializeDailyEdition(fakeClient, "eleicoes-2026", "2026-09-16", {
-    ruleset: FUTURE_DAILY_RULESET,
-    rulesetResolver: resolveTestDailyRuleset,
-    projectorResolver: resolveTestCandidateProjector,
+    ruleset: DAILY_SESSION_RULESET_V2,
     candidateCatalog: () => {
       catalogReads += 1;
       return [];
@@ -331,7 +390,7 @@ test("an existing edition remains available when the current editorial catalog s
   });
   assert.equal(catalogReads, 0);
   assert.equal(materialized.edition.catalogHash, definition.catalogHash);
-  assert.equal(materialized.edition.rulesetId, DAILY_SESSION_RULESET.id);
+  assert.equal(materialized.edition.rulesetId, DAILY_SESSION_RULESET_V1.id);
   assert.equal(materialized.edition.catalogSchema, PUBLIC_CANDIDATE_SCHEMA_V1);
   assert.deepEqual(materialized.catalog, row.catalog_snapshot);
   assert.equal(materialized.catalog.some((candidate) => Object.hasOwn(candidate, "taxonomy")), false);
@@ -348,7 +407,6 @@ test("an existing edition remains available when the current editorial catalog s
   }, {
     completedPlayers: 0,
     completedAnswers: 0,
-    projectorResolver: resolveTestCandidateProjector,
   });
   assert.deepEqual(historicalCut.catalog, row.catalog_snapshot);
   assert.equal(historicalCut.catalog.some((candidate) => Object.hasOwn(candidate, "taxonomy")), false);
@@ -405,30 +463,25 @@ test("a new editorial date adopts the active ruleset only when no edition exists
       throw new Error(`consulta inesperada: ${sql}`);
     },
   };
-  const candidateCatalog = () => Array.from({ length: 40 }, (_, index) => ({
-    id: `v2-${String(index + 1).padStart(2, "0")}`,
-    name: `V2 Candidate ${index + 1}`,
-    taxonomy: { schema: "v2", position: index + 1 },
-  }));
+  const candidateCatalog = () => Array.from({ length: 40 }, (_, index) => currentCandidate(
+    `v2-${String(index + 1).padStart(2, "0")}`,
+    index,
+  ));
   const created = await materializeDailyEdition(fakeClient, "eleicoes-2026", "2026-09-17", {
     candidateCatalog,
-    ruleset: FUTURE_DAILY_RULESET,
-    rulesetResolver: resolveTestDailyRuleset,
-    projectorResolver: resolveTestCandidateProjector,
   });
-  assert.equal(created.edition.rulesetId, FUTURE_DAILY_RULESET.id);
+  assert.equal(created.edition.rulesetId, DAILY_SESSION_RULESET_V2.id);
   assert.equal(created.edition.rulesetVersion, 2);
-  assert.equal(created.edition.catalogSchema, FUTURE_CANDIDATE_SCHEMA);
-  assert.deepEqual(created.catalog[0].taxonomy, { schema: "v2", position: 1 });
+  assert.equal(created.edition.catalogSchema, PUBLIC_CANDIDATE_SCHEMA_V2);
+  assert.equal(created.catalog[0].primaryArea, "Política institucional");
+  assert.equal(Object.hasOwn(created.catalog[0], "affiliation"), false);
 
   const reloaded = await materializeDailyEdition(fakeClient, "eleicoes-2026", "2026-09-17", {
     candidateCatalog: () => { throw new Error("catálogo ativo não deveria ser relido"); },
-    ruleset: DAILY_SESSION_RULESET,
-    rulesetResolver: resolveTestDailyRuleset,
-    projectorResolver: resolveTestCandidateProjector,
+    ruleset: DAILY_SESSION_RULESET_V1,
   });
   assert.equal(reloaded.edition.id, created.edition.id);
-  assert.equal(reloaded.edition.rulesetId, FUTURE_DAILY_RULESET.id);
+  assert.equal(reloaded.edition.rulesetId, DAILY_SESSION_RULESET_V2.id);
 });
 
 test("vote ids remain idempotent UUIDs", () => {
@@ -457,10 +510,13 @@ test("topic ranking exposes only candidates from that curation", () => {
     { candidate_id: "lula", rating: 1016, wins: 1, losses: 0, zebras: 0 },
     { candidate_id: "jair-bolsonaro", rating: 984, wins: 0, losses: 1, zebras: 0 },
     { candidate_id: "not-in-topic", rating: 4000, wins: 999, losses: 0, zebras: 0 },
-  ]);
+  ], candidateRegistry);
   assert.equal(result.topicId, "eleicoes-2026");
-  assert.equal(result.ranking.length, 54);
+  assert.equal(result.ranking.length, 5);
   assert.equal(result.ranking[0].id, "lula");
+  assert.equal(result.ranking[0].party, "PT");
+  assert.equal(result.ranking[0].primaryArea, "Política institucional");
+  assert.equal("affiliation" in result.ranking[0], false);
   assert.equal(result.ranking[0].decisions, 1);
   assert.equal(result.ranking.find(({ id }) => id === "tarcisio-de-freitas").decisions, 0);
 });
@@ -469,7 +525,7 @@ test("unplayed candidates have no rank and do not consume competition positions"
   const result = rankingFromRows("eleicoes-2026", 2, [
     { candidate_id: "lula", rating: 1016, wins: 1, losses: 0, zebras: 0 },
     { candidate_id: "jair-bolsonaro", rating: 984, wins: 0, losses: 1, zebras: 0 },
-  ]);
+  ], candidateRegistry);
   const played = result.ranking.slice(0, 2);
   const unplayed = result.ranking.slice(2);
 
@@ -477,7 +533,7 @@ test("unplayed candidates have no rank and do not consume competition positions"
     ["lula", 1],
     ["jair-bolsonaro", 2],
   ]);
-  assert.equal(unplayed.length, 52);
+  assert.equal(unplayed.length, 3);
   assert.equal(unplayed.every(({ decisions, elo, rank }) => decisions === 0 && elo === 1000 && rank === null), true);
 });
 

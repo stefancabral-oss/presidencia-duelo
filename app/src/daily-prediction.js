@@ -1,4 +1,8 @@
-import { dailyMethodologyForDate, validateDailySession } from "./daily-session.js";
+import {
+  dailyMethodologyForDate,
+  isSupportedDailyRulesetIdentity,
+  validateDailySession,
+} from "./daily-session.js";
 import { DAILY_DISTRIBUTION_COPY } from "./aggregate-copy.js";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -7,9 +11,6 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const RESULT_TYPES = new Set(["correct", "incorrect", "tie", "no-sample", "skipped", "not-answered"]);
 const PREDICTION_STATUSES = new Set(["created", "alreadyProcessed"]);
 const DAILY_TOPIC = "eleicoes-2026";
-const DAILY_RULESET_ID = "daily-four-card-v1";
-const DAILY_RULESET_VERSION = 1;
-const DAILY_CATALOG_SCHEMA = "candidate-public-v1";
 const DAILY_ROUNDS = 10;
 const DAILY_CARDS = 4;
 const SELECTED_CANDIDATES = DAILY_ROUNDS * DAILY_CARDS;
@@ -152,11 +153,14 @@ export function validateDailyPredictionResults(payload) {
   for (const session of payload.sessions) {
     const { edition } = session || {};
     if (!edition || !DATE_PATTERN.test(String(edition.date || ""))
-      || edition.topicId !== DAILY_TOPIC || edition.rulesetId !== DAILY_RULESET_ID
-      || edition.rulesetVersion !== DAILY_RULESET_VERSION || edition.catalogSchema !== DAILY_CATALOG_SCHEMA
+      || edition.topicId !== DAILY_TOPIC || !isSupportedDailyRulesetIdentity({
+        id: edition.rulesetId,
+        version: edition.rulesetVersion,
+        catalogSchema: edition.catalogSchema,
+      })
       || !HASH_PATTERN.test(String(edition.catalogHash || ""))
       || !HASH_PATTERN.test(String(edition.snapshotHash || ""))
-      || edition.id !== `${DAILY_RULESET_ID}:v${DAILY_RULESET_VERSION}:${DAILY_TOPIC}:${edition.date}:${edition.catalogHash.slice(0, 16)}`
+      || edition.id !== `${edition.rulesetId}:v${edition.rulesetVersion}:${DAILY_TOPIC}:${edition.date}:${edition.catalogHash.slice(0, 16)}`
       || !Number.isSafeInteger(edition.candidateCount) || edition.candidateCount < SELECTED_CANDIDATES
       || edition.totalRounds !== DAILY_ROUNDS || edition.cardsPerRound !== DAILY_CARDS
       || editionIds.has(edition.id) || editionDates.has(edition.date)

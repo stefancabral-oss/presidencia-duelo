@@ -107,13 +107,26 @@ test("untested people have no false ordinal position in the general ranking", ()
   assert.equal(displayRanking(ranking)[0].displayRank, null);
 });
 
-test("ranking search ignores accents and includes affiliation", () => {
+test("ranking search indexes only name, party and closed primary area", () => {
   const ranking = [
-    { name: "João Exemplo", affiliation: "Partido Um" },
-    { name: "Maria Teste", affiliation: "União Brasil" },
+    { name: "João Exemplo", party: "PT", primaryArea: "Política institucional", role: "Economista" },
+    { name: "Maria Teste", party: null, primaryArea: "Mídia e jornalismo", contextAffiliation: "União Brasil" },
   ];
   assert.deepEqual(filterRanking(ranking, "joao"), [ranking[0]]);
-  assert.deepEqual(filterRanking(ranking, "uniao"), [ranking[1]]);
+  assert.deepEqual(filterRanking(ranking, "midia"), [ranking[1]]);
+  assert.deepEqual(filterRanking(ranking, "uniao"), []);
+  assert.deepEqual(filterRanking(ranking, "economista"), []);
+});
+
+test("ranking party and area filters compose with structured search", () => {
+  const ranking = [
+    { name: "Ana", party: "PT", primaryArea: "Política institucional" },
+    { name: "Bia", party: "PT", primaryArea: "Mídia e jornalismo" },
+    { name: "Caio", party: null, primaryArea: "Mídia e jornalismo" },
+  ];
+  assert.deepEqual(filterRanking(ranking, "", { party: "PT" }), [ranking[0], ranking[1]]);
+  assert.deepEqual(filterRanking(ranking, "", { primaryArea: "Mídia e jornalismo" }), [ranking[1], ranking[2]]);
+  assert.deepEqual(filterRanking(ranking, "bia", { party: "PT", primaryArea: "Mídia e jornalismo" }), [ranking[1]]);
 });
 
 test("ranking highlights make both positive and negative choices visible", () => {

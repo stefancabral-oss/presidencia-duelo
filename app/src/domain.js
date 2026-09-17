@@ -75,12 +75,16 @@ export function rankingPodium(ranking, maximumRank = 3) {
   ));
 }
 
-export function filterRanking(ranking, query = "") {
+export function filterRanking(ranking, query = "", { party = "", primaryArea = "" } = {}) {
   const normalized = String(query).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-  if (!normalized) return ranking;
-  return ranking.filter((person) => [person.name, person.displayName, person.affiliation, person.party]
-    .filter(Boolean)
-    .some((value) => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalized)));
+  return ranking.filter((person) => {
+    if (party && person.party !== party) return false;
+    if (primaryArea && person.primaryArea !== primaryArea) return false;
+    if (!normalized) return true;
+    return [person.name, person.displayName, person.party, person.primaryArea]
+      .filter(Boolean)
+      .some((value) => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalized));
+  });
 }
 
 export function rankingHighlights(ranking, limit = 3) {

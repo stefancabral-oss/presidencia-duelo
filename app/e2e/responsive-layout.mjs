@@ -4,6 +4,7 @@ import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import { curatedPortraitPath, hasCuratedPortrait } from "../../shared/curated-portraits.js";
 import { completedDailySession } from "./daily-fixture.mjs";
 import { capabilityFixture } from "./aggregate-fixture.mjs";
+import { approvedEditorialCandidates } from "./editorial-fixtures.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -31,8 +32,8 @@ const viewports = [
   { width: 1920, height: 1080 },
 ];
 const screenshotViewports = new Set(["768x900", "1000x900", "1440x640"]);
-const candidates = CATALOG
-  .filter(({ personId }) => hasCuratedPortrait(personId))
+const candidates = approvedEditorialCandidates(CATALOG
+  .filter(({ personId }) => hasCuratedPortrait(personId)))
   .map((candidate, index) => ({
     ...candidate,
     photo: curatedPortraitPath(candidate.personId),

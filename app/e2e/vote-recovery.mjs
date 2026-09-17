@@ -26,6 +26,7 @@
 import { chromium, webkit } from "playwright";
 import { completedDailySession } from "./daily-fixture.mjs";
 import { capabilityFixture, voteResponseV2 } from "./aggregate-fixture.mjs";
+import { approvedEditorialCandidates } from "./editorial-fixtures.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -41,7 +42,7 @@ const personalRankingPolicy = {
   explanation: "A ordem usa os confrontos diretos e mantém empates sem usar exposição.",
 };
 
-const candidates = ["lula", "jair-bolsonaro", "anitta", "neymar-jr"].map((id, index) => ({
+const candidates = approvedEditorialCandidates(["lula", "jair-bolsonaro", "anitta", "neymar-jr"].map((id, index) => ({
   personId: index + 1,
   id,
   name: `Pessoa De Teste ${index + 1}`,
@@ -51,7 +52,7 @@ const candidates = ["lula", "jair-bolsonaro", "anitta", "neymar-jr"].map((id, in
   office: "Cargo de teste",
   summary: "Resumo de teste.",
   bio: "Perfil editorial de teste.",
-}));
+})));
 
 /** Servidor falso com estado — é o estado que torna os cenários observáveis. */
 function criarServidor() {

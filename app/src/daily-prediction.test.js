@@ -85,6 +85,16 @@ function closedPayload() {
   };
 }
 
+function currentClosedPayload() {
+  const payload = closedPayload();
+  const current = payload.sessions[0].edition;
+  current.rulesetId = "daily-four-card-v2";
+  current.rulesetVersion = 2;
+  current.catalogSchema = "candidate-public-v2";
+  current.id = `daily-four-card-v2:v2:eleicoes-2026:${current.date}:${current.catalogHash.slice(0, 16)}`;
+  return payload;
+}
+
 function pendingSession() {
   return {
     ruleset,
@@ -152,6 +162,13 @@ const attempt = {
 test("closed prediction results validate the complete sealed cut contract", () => {
   const valid = closedPayload();
   assert.equal(validateDailyPredictionResults(valid), valid);
+});
+
+test("prediction history accepts current v2 editions while retaining sealed v1 results", () => {
+  const historical = closedPayload();
+  const current = currentClosedPayload();
+  assert.equal(validateDailyPredictionResults(historical), historical);
+  assert.equal(validateDailyPredictionResults(current), current);
 });
 
 test("ties are disclosed and excluded from accuracy", () => {

@@ -55,6 +55,8 @@ try {
     }
   }
   assert.equal((await store.pairRound(player.recoveryKey, "eleicoes-2026", "warmup")).status, "completed");
+  const quota = await audit.query("SELECT used FROM abuse_quota_counters WHERE scope='player-free-editorial-day-v2' AND subject_hash=(SELECT player_id::text FROM choice_rounds WHERE round_id=$1)", [first.round.id]);
+  assert.deepEqual(quota.rows.map(row => Number(row.used)), [3], "three warmup votes, including retries, consume exactly three of the twenty shared non-daily choices");
   assert.deepEqual(await store.discardMetrics(player.recoveryKey), { editionId: null, rounds: 3, completed: 1, skipped: 1, pending: 1, completionRate: 1 / 3 });
   assert.equal((await store.discardMetrics(other.recoveryKey)).rounds, 0);
   assert.equal((await store.collection(player.recoveryKey)).items.length, 0);

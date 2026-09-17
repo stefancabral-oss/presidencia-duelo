@@ -143,7 +143,7 @@ async function consumePlayerRoundQuota(client, playerId, mode = "free", editoria
     windowStart: editorialWindow.opensAt,
     limit: daily ? VOTE_ABUSE_LIMITS.dailyChoicesPerPlayerPerDay : VOTE_ABUSE_LIMITS.freeChoicesPerPlayerPerDay,
     code: daily ? "DAILY_CHOICE_LIMIT" : "FREE_CHOICE_LIMIT",
-    message: daily ? "as dez escolhas da rodada do dia já foram usadas" : "as vinte escolhas do modo livre já foram usadas",
+    message: daily ? "as dez escolhas da rodada do dia já foram usadas" : "as vinte escolhas compartilhadas entre modo livre, aquecimento e desempate já foram usadas",
     retryAfterSeconds: 86400,
   });
 }

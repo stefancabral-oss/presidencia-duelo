@@ -7,7 +7,7 @@ const browser = await ({ chromium, webkit }[process.env.POLIMATCH_E2E_BROWSER ||
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, serviceWorkers: "block" });
 const base = completedDailySession(Array.from({ length: 4 }, (_, id) => ({ id: `p${id}`, name: `Pessoa ${id}`, role: "Pessoa pública" })));
 const catalog = base.catalog;
-let version = 0, pairCount = 0, keyNumber = 0, pendingPair, releaseVote, releaseDiscard, failDiscard = true;
+let version = 0, pairCount = 0, keyNumber = 0, pendingPair, releaseVote, releaseDiscard, failDiscard = true, discardFailure = null;
 const discards = [], votes = [], errors = [];
 page.on("pageerror", error => errors.push(error.message));
 const ranking = () => catalog.map(person => ({ ...person, elo: 1000, wins: version, losses: 0, decisions: version, winRate: version ? 100 : 0, rank: version ? 1 : null }));
@@ -41,6 +41,8 @@ await page.route("**/api/**", async route => {
   }
   if (path === "/api/round-discard") {
     discards.push(route.request().postDataJSON());
+    if (discardFailure === "unavailable") return send({ error: "Descarte indisponível" }, 503);
+    if (discardFailure === "malformed") return send({ status: "created" });
     if (failDiscard) { await new Promise(resolve => { releaseDiscard = resolve; }); failDiscard = false; return send({ error: "Rede indisponível. Repita a mesma decisão." }, 503); }
     return send({ ...discards.at(-1), status: "created", rankingEffect: "none" });
   }
@@ -66,12 +68,19 @@ try {
   releaseDiscard();
   await page.getByText('Rede indisponível. Repita a mesma decisão.').waitFor();
   assert.equal(await discard.evaluate(button => button === document.activeElement), true);
+  assert.equal(await page.getByRole('button', { name: 'Continuar sem confirmar descarte' }).isVisible(), true, 'optional discard failure must offer progression without a successful retry');
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => document.querySelector('[data-vote]') === document.activeElement);
   assert.deepEqual(discards[0], discards[1]);
   for (let i = 0; i < 2; i++) {
+    discardFailure = i === 0 ? "unavailable" : "malformed";
     await page.locator('[data-vote]:visible').first().click();
     await page.getByRole('button', { name: 'Pular descarte' }).click();
+    const continueButton = page.getByRole('button', { name: 'Continuar sem confirmar descarte' });
+    await continueButton.waitFor();
+    const attempts = discards.length;
+    await continueButton.click();
+    assert.equal(discards.length, attempts, 'continuing must not submit a conflicting skip after an uncertain discard');
   }
   await page.getByText('Aquecimento concluído. Agora vêm as dez escolhas do dia.').waitFor();
   await page.locator('#leave-pair-status').click();

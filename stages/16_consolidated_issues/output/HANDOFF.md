@@ -45,6 +45,16 @@ modo livre e nas dez escolhas diárias.
 
 ## Verificação observada
 
+- Follow-up da revisão automática da PR: a falha persistente ou resposta incompleta
+  do descarte permite continuar sem confirmar, conservando repetição idempotente
+  enquanto a pessoa permanece nessa decisão. Continuar não envia uma segunda
+  decisão nem alega que o descarte não foi salvo. O E2E falhou no runtime anterior
+  por ausência dessa saída e passou após a correção, cobrindo 503 e HTTP 200 incompleto.
+- CONTEXT da raiz explicita que a #183 autorizada substitui a suspensão temporária
+  da entrada Coleção. A política de cotas explicita as vinte escolhas compartilhadas
+  entre livre/aquecimento/desempate, sem aumentar os limites ou alterar snapshots.
+  PostgreSQL verifica que três votos de aquecimento consomem três unidades, mesmo
+  com replays, e que as dez escolhas diárias continuam disponíveis.
 - 331 testes unitários passaram localmente; build e validação de assets passaram.
 - PostgreSQL no CI passou após corrigir a comparação entre hash da edição inteira
   e hash das quarenta cartas selecionadas (universos diferentes).

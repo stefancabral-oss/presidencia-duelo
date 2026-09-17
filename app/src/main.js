@@ -1630,6 +1630,12 @@ function handleAppClick(event) {
   if (button.id === "start-tiebreak") { enterPairMode("tiebreak"); return; }
   if (button.id === "retry-collection" || button.dataset.screen === "collection") { loadCollection(); return; }
   if (button.hasAttribute("data-discard")) { confirmDiscard(button.dataset.discard || null); return; }
+  if (button.hasAttribute("data-discard-continue")) {
+    if (state.pendingDiscard && state.discardError && !state.discardBusy) {
+      finishDiscard("Sua escolha está confirmada. Não foi possível confirmar o descarte; ele pode ter sido registrado.");
+    }
+    return;
+  }
   if (button.id === "account-button") {
     sound.play("navigation");
     state.authOpen = true;
@@ -2070,13 +2076,28 @@ function renderDiscard() {
     // Recording an offer must not block the person's confirmed primary choice.
     gameRequest("/api/discard-offer", state.recoveryKey, { roundId: pending.roundId }).catch(() => {});
     const button = (id, label) => '<button type="button" data-discard="' + escapeHtml(id || "") + '">' + escapeHtml(label) + '</button>';
-    panel.innerHTML = '<h2>Quem você tira da mesa?</h2><p>Opcional. O descarte é registrado à parte e não muda o ranking.</p><p class="discard-status" role="status"></p><div class="discard-actions">' + pending.candidates.map(person => button(person.id, 'Descartar ' + (person.displayName || person.name))).join('') + button(null, 'Pular descarte') + '</div>';
+    panel.innerHTML = '<h2>Quem você tira da mesa?</h2><p>Opcional. O descarte é registrado à parte e não muda o ranking.</p><p class="discard-status" role="status"></p><div class="discard-actions">' + pending.candidates.map(person => button(person.id, 'Descartar ' + (person.displayName || person.name))).join('') + button(null, 'Pular descarte') + '<button type="button" data-discard-continue hidden>Continuar sem confirmar descarte</button></div>';
   }
   panel.querySelector('.discard-status').textContent = state.discardError || (state.discardBusy ? 'Confirmando descarte…' : '');
+  panel.querySelector('[data-discard-continue]').hidden = !state.discardError || state.discardBusy;
   for (const button of panel.querySelectorAll('[data-discard]')) {
     const same = (button.dataset.discard || null) === pending.attempted;
     button.setAttribute('aria-disabled', String(state.discardBusy || (Object.hasOwn(pending, 'attempted') && !same)));
   }
+}
+
+async function finishDiscard(message) {
+  const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+  const advance = advanceAfterDiscard;
+  advanceAfterDiscard = null;
+  state.pendingDiscard = null; state.discardBusy = false; state.discardError = "";
+  renderDiscard();
+  await advance?.();
+  if (!isCurrentVoteIdentity(state, identity)) return;
+  const visible = selector => [...refs.panels.duel.querySelectorAll(selector)].find(element => element.getClientRects().length > 0);
+  const target = visible("[data-vote]") || visible("h1");
+  if (target) { if (!target.matches("button")) target.tabIndex = -1; target.focus(); }
+  announceStatus(message);
 }
 
 async function confirmDiscard(candidateId) {
@@ -2090,14 +2111,7 @@ async function confirmDiscard(candidateId) {
     const result = await gameRequest("/api/round-discard", identity.recoveryKey, { roundId: pending.roundId, candidateId });
     if (!isCurrentVoteIdentity(state, identity) || state.pendingDiscard !== pending) return;
     if (result.roundId !== pending.roundId || result.candidateId !== candidateId || result.rankingEffect !== "none") throw new Error("Confirmação incompleta; repita a mesma decisão.");
-    state.pendingDiscard = null; state.discardBusy = false; renderDiscard();
-    const advance = advanceAfterDiscard; advanceAfterDiscard = null;
-    await advance?.();
-    if (!isCurrentVoteIdentity(state, identity)) return;
-    const visible = selector => [...refs.panels.duel.querySelectorAll(selector)].find(element => element.getClientRects().length > 0);
-    const target = visible("[data-vote]") || visible("h1");
-    if (target) { if (!target.matches("button")) target.tabIndex = -1; target.focus(); }
-    announceStatus(candidateId ? "Descarte registrado separadamente. Seu ranking foi preservado." : "Descarte pulado. Sua escolha está confirmada.");
+    await finishDiscard(candidateId ? "Descarte registrado separadamente. Seu ranking foi preservado." : "Descarte pulado. Sua escolha está confirmada.");
   } catch (error) {
     if (!isCurrentVoteIdentity(state, identity) || state.pendingDiscard !== pending) return;
     state.discardBusy = false; state.discardError = error.message; renderDiscard();

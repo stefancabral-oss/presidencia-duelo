@@ -19,11 +19,16 @@ serão preservadas e verificadas; arte nova está adiada conforme #202.
   de demonstração confundida com inventário. A política comercial não é parecer
   jurídico. Sem transação comercial ou associação a políticos, a coleção gratuita
   integra o escopo autorizado; COLLECTION_ENABLED=false permite rollback operacional.
+  A entrada Coleção na navegação, exigida pela #183, substitui a suspensão
+  temporária do menu de 15/09/2026; a autorização é a entrega de todas as issues.
 - Descarte opcional é dado separado e não altera Elo nem soma derrotas. Somente
   a escolha principal influencia o ranking; completude é medida por sessão.
 - Duas cartas são modos explícitos de aquecimento e desempate, com rodada
   emitida pelo servidor, ID persistente e migração declarada. Quatro continuam
   sendo o núcleo; nenhum endpoint binário legado é ressuscitado.
+  Aquecimento, desempate e modo livre compartilham as vinte escolhas não diárias
+  do dia editorial. Três votos no aquecimento deixam dezessete nesse conjunto;
+  nenhum modo ganha cota adicional ou impede as dez escolhas diárias reservadas.
 - Espelho usa somente dados estruturados e comportamento observado na sessão,
   sem inferir ideologia, gênero ou outros atributos sensíveis. Comparação com
   terceiros só pode usar corte fechado e autoridade de publicação existente.

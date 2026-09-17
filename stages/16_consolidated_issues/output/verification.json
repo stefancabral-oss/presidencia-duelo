@@ -2,6 +2,14 @@
   "schemaVersion": 1,
   "status": "technical-delivery-verified-human-criteria-pending",
   "fullRequestComplete": false,
+  "reviewFollowup": {
+    "baseline": "1406c045033702c8b519b5d2dfaa1c10f9fbf12b",
+    "reviewComments": [4033488626, 4033488638, 4033488641],
+    "changes": ["explicit collection navigation supersession", "document shared non-daily quota and clarify limit message", "allow advancing after uncertain optional discard without submitting a divergent decision"],
+    "regressionBeforeFix": "game-progress failed: optional discard failure must offer progression without a successful retry",
+    "localAfterFix": { "unitPassed": 331, "build": "passed", "gameProgressChromium": "passed", "gameProgressWebkit": "passed", "gameRecoveryChromium": "7/7" },
+    "ciEvidence": "The CI block below records the prior runtime. Follow-up head checks are linked in the PR after completion."
+  },
   "pullRequest": "https://github.com/stefancabral-oss/presidencia-duelo/pull/205",
   "verifiedRuntimeCommit": "7e7491bfc875664cf88c3b830e6f22f5b55f7ee4",
   "baseCommit": "8d7a46db4c5eceb3179cf0add0ba6634397d1c66",

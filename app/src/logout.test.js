@@ -55,6 +55,16 @@ test("login and logout rotate the round and abandon a pending vote from the prev
       resultTone: "erro",
       personalFeedbackMessage: "Lula subiu no seu ranking",
       globalFeedbackMessage: "Lula entrou no Top 10 público",
+      pendingDiscard: { roundId: "old-round" },
+      discardBusy: true,
+      discardError: "old discard error",
+      collection: [{ id: "old-finish" }],
+      collectionLoading: true,
+      collectionError: "old collection error",
+      pairLoading: true,
+      pairError: "old pair error",
+      pairRemaining: 2,
+      warmupSkipped: true,
     };
 
     resetPendingVoteForIdentityChange(state, () => `${transition}-new-round`);
@@ -89,6 +99,16 @@ test("login and logout rotate the round and abandon a pending vote from the prev
       resultTone: "",
       personalFeedbackMessage: "",
       globalFeedbackMessage: "",
+      pendingDiscard: null,
+      discardBusy: false,
+      discardError: "",
+      collection: [],
+      collectionLoading: false,
+      collectionError: "",
+      pairLoading: false,
+      pairError: "",
+      pairRemaining: 0,
+      warmupSkipped: false,
     });
   }
 });

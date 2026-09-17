@@ -471,7 +471,7 @@ test("a new editorial date adopts the active ruleset only when no edition exists
     candidateCatalog,
   });
   assert.equal(created.edition.rulesetId, DAILY_SESSION_RULESET.id);
-  assert.equal(created.edition.rulesetVersion, 3);
+  assert.equal(created.edition.rulesetVersion, 4);
   assert.equal(created.edition.catalogSchema, DAILY_SESSION_RULESET.catalogSchema);
   assert.equal(created.catalog[0].primaryArea, "Política institucional");
   assert.equal(Object.hasOwn(created.catalog[0], "affiliation"), false);

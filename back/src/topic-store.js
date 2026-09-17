@@ -1,5 +1,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import pg from "pg";
+import { isRoundZebra } from "../../shared/player-feedback.js";
+import { gameProgressStore, installGameSchema } from "./game-progress.js";
 import { AGGREGATE_PUBLIC_COPY_POLICY } from "../../shared/aggregate-publication-copy.js";
 import { eloTier, isZebra, ratingDeltas } from "../../shared/elo.js";
 import {
@@ -567,7 +569,7 @@ async function createCleanSchema(client, candidateRegistry) {
       global_ranking_event text,
       global_feedback jsonb,
       created_at timestamptz NOT NULL DEFAULT now(),
-      CHECK (array_length(candidate_ids, 1) = 4)
+      CHECK (cardinality(candidate_ids) IN (2, 4))
     );
 
     ALTER TABLE choice_rounds
@@ -602,7 +604,7 @@ async function createCleanSchema(client, candidateRegistry) {
 
     ALTER TABLE choice_rounds
       ADD CONSTRAINT choice_rounds_mode_check CHECK (
-        (choice_mode = 'free' AND daily_edition_id IS NULL AND daily_slot IS NULL)
+        (choice_mode IN ('free', 'warmup', 'tiebreak') AND daily_edition_id IS NULL AND daily_slot IS NULL)
         OR (choice_mode = 'daily' AND daily_edition_id IS NOT NULL AND daily_slot BETWEEN 1 AND 10)
       );
 
@@ -1544,7 +1546,7 @@ async function applyFourCardRound(client, {
       winnerDelta: Number(row.winner_delta),
       zebra: Boolean(row.zebra),
       ...channels,
-      comparisons: 3,
+      comparisons: loserIds.length,
     };
     return { payload: { ...global, round, vote: round, player: personal }, created: false };
   }
@@ -1559,7 +1561,7 @@ async function applyFourCardRound(client, {
   const globalRatings = new Map(globalRows.rows.map((row) => [row.candidate_id, Number(row.rating)]));
   if (roundCandidates.some((candidateId) => !Number.isFinite(globalRatings.get(candidateId)))) throw new Error("ranking não inicializado");
 
-  let zebra = false;
+  let zebra = isRoundZebra(globalRatings.get(winnerId), loserIds.map(id => globalRatings.get(id)));
   const comparisons = [];
   const winnerRatingBeforeRound = globalRatings.get(winnerId);
   for (const loserId of loserIds) {
@@ -1567,7 +1569,7 @@ async function applyFourCardRound(client, {
     const loserRating = globalRatings.get(loserId);
     const deltas = ratingDeltas(winnerRating, loserRating);
     const pairZebra = isZebra(winnerRating, loserRating);
-    zebra ||= pairZebra;
+    // Pair flags remain audit data; the round event uses the strongest opponent.
     comparisons.push({ loserId, winnerRating, loserRating, ...deltas, zebra: pairZebra });
     await client.query("UPDATE ranking_stats SET rating = rating + $3, wins = wins + 1, zebras = zebras + $4 WHERE topic_id = $1 AND candidate_id = $2", [topic, winnerId, deltas.winnerDelta, pairZebra ? 1 : 0]);
     await client.query("UPDATE ranking_stats SET rating = rating + $3, losses = losses + 1 WHERE topic_id = $1 AND candidate_id = $2", [topic, loserId, deltas.loserDelta]);
@@ -1584,13 +1586,13 @@ async function applyFourCardRound(client, {
   );
   const personalRatings = new Map(personalRows.rows.map((row) => [row.candidate_id, Number(row.rating)]));
   if (roundCandidates.some((candidateId) => !Number.isFinite(personalRatings.get(candidateId)))) throw new Error("ranking pessoal não inicializado");
-  let personalZebra = false;
+  let personalZebra = isRoundZebra(personalRatings.get(winnerId), loserIds.map(id => personalRatings.get(id)));
   const personalWinnerRatingBeforeRound = personalRatings.get(winnerId);
   for (const loserId of loserIds) {
     const personalWinnerRating = personalWinnerRatingBeforeRound;
     const personalLoserRating = personalRatings.get(loserId);
     const personalDelta = ratingDeltas(personalWinnerRating, personalLoserRating);
-    personalZebra ||= isZebra(personalWinnerRating, personalLoserRating);
+    // Personal upset is also evaluated against the entire table.
     await client.query("UPDATE player_stats SET rating = rating + $4, wins = wins + 1 WHERE player_id = $1 AND topic_id = $2 AND candidate_id = $3", [player.id, topic, winnerId, personalDelta.winnerDelta]);
     await client.query("UPDATE player_stats SET rating = rating + $4, losses = losses + 1 WHERE player_id = $1 AND topic_id = $2 AND candidate_id = $3", [player.id, topic, loserId, personalDelta.loserDelta]);
   }
@@ -1671,7 +1673,7 @@ async function applyFourCardRound(client, {
     personalFeedback: feedback,
     feedbackScope: FEEDBACK_SCOPE_PERSONAL,
     globalEvent,
-    comparisons: 3,
+    comparisons: loserIds.length,
   };
   return { payload: { ...global, round, vote: round, player: personal }, created: true };
 }
@@ -1680,6 +1682,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
   clock = () => new Date(),
   candidateRegistry = PRODUCTION_CANDIDATE_REGISTRY,
   hooks = {},
+  collectionEnabled = process.env.COLLECTION_ENABLED !== "false",
 } = {}) {
   if (!connectionString) throw new Error("DATABASE_URL é obrigatória");
   if (!candidateRegistry?.topicsById || typeof candidateRegistry.candidatesForTopic !== "function") {
@@ -1698,6 +1701,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
       try {
         await client.query("BEGIN");
         const migration = await createCleanSchema(client, candidateRegistry);
+        await installGameSchema(client);
         await client.query("COMMIT");
         return migration;
       } catch (error) {
@@ -2575,6 +2579,10 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
       await pool.end();
     },
   };
+  Object.assign(store, gameProgressStore({ pool, findPlayer, candidateCatalog, ranking: registryRanking,
+    applyRound: applyFourCardRound, collectionEnabled,
+    quotaWindow: () => editionWindow(editorialDateKey(clockInstant(clock))),
+  }));
   return store;
 }
 

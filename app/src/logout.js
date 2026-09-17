@@ -34,6 +34,16 @@ export function resetPendingVoteForIdentityChange(state, createRoundId = () => c
   state.predictionResultsLoading = false;
   state.predictionResultsError = "";
   state.pendingWinnerId = "";
+  state.pendingDiscard = null;
+  state.discardBusy = false;
+  state.discardError = "";
+  state.collection = [];
+  state.collectionLoading = false;
+  state.collectionError = "";
+  state.pairLoading = false;
+  state.pairError = "";
+  state.pairRemaining = 0;
+  state.warmupSkipped = false;
   state.votePhase = "ready";
   state.voteAction = "";
   state.retryAfterSeconds = null;

@@ -58,7 +58,6 @@ export const AGGREGATE_PUBLIC_COPY_POLICY = deepFreeze({
         rowLossOne: "derrota",
         rowLossMany: "derrotas",
         rowUnplayed: "Ainda sem comparações",
-        eloSuffix: "Elo",
         backToChoices: "Voltar às escolhas",
         trust: "Escolhas confirmadas pelo servidor.",
         integrityLink: "Como o placar é protegido",

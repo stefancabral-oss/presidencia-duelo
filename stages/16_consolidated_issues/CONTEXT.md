@@ -17,7 +17,8 @@ serão preservadas e verificadas; arte nova está adiada conforme #202.
 - Coleção gratuita: uma recompensa por sessão diária concluída, persistida
   idempotentemente. Sem pagamento, patrocínio, raridade de político ou galeria
   de demonstração confundida com inventário. A política comercial não é parecer
-  jurídico e sua ativação pública depende do gate da #183.
+  jurídico. Sem transação comercial ou associação a políticos, a coleção gratuita
+  integra o escopo autorizado; COLLECTION_ENABLED=false permite rollback operacional.
 - Descarte opcional é dado separado e não altera Elo nem soma derrotas. Somente
   a escolha principal influencia o ranking; completude é medida por sessão.
 - Duas cartas são modos explícitos de aquecimento e desempate, com rodada

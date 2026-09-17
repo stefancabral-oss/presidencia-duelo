@@ -8,5 +8,18 @@ Integração solicitada pelo responsável em 17/09/2026. Validações humanas da
 unidades integradas continuam abertas. Keyring produtivo continua vazio.
 O gate editorial deve continuar retendo registros sem aprovação externa.
 
-Ver verification.json para os testes desta revisão. CI final e testes de
-integração da combinação serão registrados após resolver eventuais conflitos.
+As PRs #195 e #200 foram mescladas primeiro nas bases #191 e #194. A PR #201
+contém os commits dessas bases e da #199; a mescla final por merge commit preserva
+essa ancestralidade para integrar todas na main.
+
+Conflitos resolvidos preservando os slots de DOM, retorno de foco sem timer que
+interrompa Tab, taxonomia e filtros, fotos documentais separadas da arte editorial,
+votos V2, autorização após I/O e todos os workflows. O texto da busca no artefato
+de copy foi atualizado para refletir nome, partido e área.
+
+A geometria móvel do formulário bloqueado do piloto agora segue a carta acessível
+de 236 px, com placa de 88 px. Fixtures sintéticas acompanham a geometria; nenhum
+resultado real, licença ou decisão de aprovação foi criado ou revalidado.
+
+Ver verification.json. O CI da PR executa também PostgreSQL, prova de abuso,
+Chromium, WebKit e build Docker. Gates humanos continuam pendentes.

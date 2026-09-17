@@ -34,10 +34,10 @@ const CARD_ART_PILOT_FAMILIARITY_ORDER = Object.freeze(["baixa", "media", "alta"
 export const CARD_ART_PILOT_SCENARIO_GEOMETRY = Object.freeze({
   "mobile-390x844": Object.freeze({
     viewport: Object.freeze({ width: 390, height: 844 }),
-    card: Object.freeze({ width: 183.5, height: 280 }),
-    artWindow: Object.freeze({ width: 169.5, height: 162 }),
-    image: Object.freeze({ width: 167.5, height: 160 }),
-    blindPlate: Object.freeze({ width: 169.5, height: 105 })
+    card: Object.freeze({ width: 183.5, height: 236 }),
+    artWindow: Object.freeze({ width: 169.5, height: 134 }),
+    image: Object.freeze({ width: 167.5, height: 132 }),
+    blindPlate: Object.freeze({ width: 169.5, height: 89 })
   }),
   "desktop-1000x800": Object.freeze({
     viewport: Object.freeze({ width: 1000, height: 800 }),

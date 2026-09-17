@@ -207,12 +207,12 @@ export function validParticipantResponseFixture(
     displayScenario: {
       id: scenarioId,
       viewport: mobile ? { width: 390, height: 844 } : { width: 1000, height: 800 },
-      card: mobile ? { width: 183.5, height: 280 } : { width: 226, height: 316.4 },
-      artWindow: mobile ? { width: 169.5, height: 162 } : { width: 206, height: 189.4 },
+      card: mobile ? { width: 183.5, height: 236 } : { width: 226, height: 316.4 },
+      artWindow: mobile ? { width: 169.5, height: 134 } : { width: 206, height: 189.4 },
       image: mobile
-        ? { width: 167.5, height: 160, objectFit: "cover", objectPosition: "50% 0%" }
+        ? { width: 167.5, height: 132, objectFit: "cover", objectPosition: "50% 0%" }
         : { width: 204, height: 187.4, objectFit: "cover", objectPosition: "50% 0%" },
-      blindPlate: mobile ? { width: 169.5, height: 105 } : { width: 206, height: 109 }
+      blindPlate: mobile ? { width: 169.5, height: 89 } : { width: 206, height: 109 }
     },
     strata: {
       familiarity: "media",

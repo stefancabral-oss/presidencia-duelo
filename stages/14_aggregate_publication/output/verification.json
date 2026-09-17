@@ -2,9 +2,11 @@
   "date": "2026-09-17",
   "issue": 177,
   "pullRequest": 201,
-  "backendUnit": { "passed": 76, "failed": 0 },
-  "appAndSharedUnit": { "passed": 91, "failed": 0 },
+  "combinedUnit": { "command": "node --test app/src/*.test.js back/src/*.test.js shared/*.test.js", "passed": 320, "failed": 0 },
   "viteBuild": "passed",
-  "integrationCi": "pending",
+  "editorialAssets": 0,
+  "pilotExclusion": { "distFilesChecked": 157, "pilotAssetsPackaged": 0 },
+  "chromium": ["interaction-smoke", "accessible-profile", "aggregate-publication-gate", "editorial-gate", "daily-session", "daily-prediction", "prediction-identity", "responsive-layout", "vote-recovery", "vote-trust-states", "card-art-pilot-form"],
+  "integrationCi": "Required on the final PR revision; see GitHub checks",
   "humanValidation": "pending"
 }

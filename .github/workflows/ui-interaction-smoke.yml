@@ -104,6 +104,10 @@ jobs:
         env:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
         run: node app/e2e/editorial-gate.mjs
+      - name: Validate recovered photos in current daily cards
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/photo-recovery.mjs
       - name: Validate blocked pilot form against canonical card geometry
         env:
           POLIMATCH_PILOT_BROWSER: ${{ matrix.browser }}

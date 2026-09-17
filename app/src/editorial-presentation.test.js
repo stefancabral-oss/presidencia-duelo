@@ -12,8 +12,8 @@ test("review is claimed only for approved content", () => {
   const pending = profileProvenance({ publication: { content: { status: "pending", reviewedAt: "2026-09-16" } } });
   const rejected = profileProvenance({ publication: { content: { status: "rejected", reviewedAt: "2026-09-16" } } });
   const approved = profileProvenance({ publication: { content: { status: "approved", reviewedAt: "2026-09-16" } } });
-  assert.equal(pending.content, "");
-  assert.equal(rejected.content, "");
+  assert.match(pending.content, /Perfil editorial em revisão/);
+  assert.match(rejected.content, /Perfil editorial em revisão/);
   assert.equal(approved.content, "Conteúdo revisado em 16 set 2026");
 });
 

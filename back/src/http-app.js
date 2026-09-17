@@ -10,6 +10,8 @@ import {
 } from "./aggregate-publication.js";
 import { PRODUCTION_CANDIDATE_REGISTRY } from "./candidates.js";
 import { candidatePublicPayload } from "./editorial-gate.js";
+import { EMBEDDED_RELEASE_REVISION } from "./release-identity.js";
+import { DAILY_SESSION_RULESET } from "./daily-session.js";
 
 const WITHHELD_COPY = AGGREGATE_PUBLIC_COPY_POLICY.withheld.copy;
 
@@ -174,9 +176,12 @@ export function createHttpApp({
   app.get("/api/health", async (req, res) => {
     try {
       await store.health();
-      res.json({
+      noStore(res).json({
         ok: true,
         service: "polimatch-api",
+        revision: EMBEDDED_RELEASE_REVISION || null,
+        dailyRuleset: DAILY_SESSION_RULESET.id,
+        photoRecovery: candidateRegistry.recovery || null,
         database: "postgresql",
         candidates: candidateRegistry.candidates.length,
         playableCandidates: candidateRegistry.topics.filter(({ active }) => active).reduce(

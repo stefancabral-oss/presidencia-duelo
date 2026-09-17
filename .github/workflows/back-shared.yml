@@ -44,6 +44,10 @@ jobs:
           EDITORIAL_AUTHORITY_RECEIPTS: ${{ secrets.EDITORIAL_AUTHORITY_RECEIPTS }}
       - name: Test backend
         run: npm test --prefix back
+      - name: Build API image and verify recovered photographs are packaged
+        run: |
+          docker build --file back/Dockerfile --build-arg SOURCE_COMMIT="$GITHUB_SHA" --tag polimatch-api:recovery .
+          docker run --rm --entrypoint node polimatch-api:recovery --input-type=module -e 'import assert from "node:assert/strict"; import {PRODUCTION_CANDIDATE_REGISTRY as registry} from "./src/candidates.js"; import {EMBEDDED_RELEASE_REVISION} from "./src/release-identity.js"; assert.equal(registry.candidatesForTopic("eleicoes-2026").length,54); assert.match(EMBEDDED_RELEASE_REVISION,/^[a-f0-9]{40}$/); console.log("54 verified photographs and release identity packaged");'
 
   shared-data:
     name: shared-data

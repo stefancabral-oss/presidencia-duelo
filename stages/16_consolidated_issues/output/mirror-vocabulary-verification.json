@@ -1,0 +1,12 @@
+{
+  "issue": 180,
+  "base": "f99ac18c1db5d296d6ed49edcaca21239b260205",
+  "scope": "closed vocabulary in mirror snapshot consumer",
+  "regressionBefore": "failed: noncanonical area values included",
+  "unitAfter": { "passed": 332, "failed": 0 },
+  "build": "passed",
+  "chromiumGameProgress": "passed",
+  "ci": "pending at commit creation; authoritative results on pull request",
+  "editorialApprovalsCreated": 0,
+  "fullIssueComplete": false
+}

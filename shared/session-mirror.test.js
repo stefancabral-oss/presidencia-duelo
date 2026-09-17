@@ -7,7 +7,7 @@ test("mirror counts only known structured snapshot fields of the completed sessi
   const person = (id, party, area, status = "extracted") => ({ id, party, primaryArea: area, mirrorGroup: "politica",
     taxonomyProvenance: { party: { status }, primaryArea: { status } }, publication: { content: { status: "approved" } } });
   const session = { status: "completed", edition: { id: "today" }, progress: { total: 3 },
-    catalog: [person("a", "PT", "Executivo"), person("b", "PL", "Legislativo"), person("c", "inventado", "inventada", "inferred")],
+    catalog: [person("a", "PT", "Política institucional"), person("b", "PL", "Música"), person("c", "inventado", "inventada", "inferred")],
     answers: [{ winnerId: "a" }, { winnerId: "b" }, { winnerId: "c" }] };
   const mirror = sessionMirror(session);
   assert.equal(mirror.axes.length, 3);
@@ -18,6 +18,23 @@ test("mirror counts only known structured snapshot fields of the completed sessi
   assert.equal(sessionMirror({ ...session, status: "active" }), null);
   const unreviewed = sessionMirror({ ...session, catalog: session.catalog.map(person => ({ ...person, publication: { content: { status: "pending" } } })) });
   assert.ok(unreviewed.axes.every(axis => axis.known === 0 && axis.unknown === 3));
+});
+
+test("mirror excludes noncanonical snapshot values even when marked approved and extracted", () => {
+  const catalog = [
+    { id: "known", party: "PT", primaryArea: "Política institucional", mirrorGroup: "politica" },
+    { id: "prose", party: "Economia / órbita PL", primaryArea: "PSD", mirrorGroup: "politica" },
+    { id: "lowercase", party: "pt", primaryArea: "politica institucional", mirrorGroup: "outro" },
+  ].map(person => ({ ...person, publication: { content: { status: "approved" } },
+    taxonomyProvenance: { party: { status: "extracted" }, primaryArea: { status: "extracted" } } }));
+  const mirror = sessionMirror({ status: "completed", edition: { id: "closed-vocabulary" },
+    progress: { total: 3 }, catalog, answers: catalog.map(person => ({ winnerId: person.id })) });
+  assert.deepEqual(mirror.axes[0].values, [{ value: "Política institucional", count: 1 }]);
+  assert.deepEqual(mirror.axes[1].values, [{ value: "PT", count: 1 }]);
+  assert.equal(mirror.axes[0].unknown, 2);
+  assert.equal(mirror.axes[1].unknown, 2);
+  assert.equal(mirror.axes[2].unknown, 1);
+  assert.equal(JSON.stringify(mirror).includes("órbita"), false);
 });
 test("a round upset needs low round probability, not simply one stronger opponent", () => {
   assert.equal(isRoundZebra(1000, [1060, 950, 900]), false);

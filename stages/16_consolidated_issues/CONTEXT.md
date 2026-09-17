@@ -1,5 +1,13 @@
 # ICM 16 — entrega consolidada das issues abertas
 
+## Continuação após merge da #205
+
+Em 17/09/2026 Stefan pediu para seguir construindo. A continuação da #180
+reforça o contrato de vocabulário fechado no consumidor dos snapshots: partido
+e área fora dos conjuntos canônicos permanecem desconhecidos, mesmo com flags
+de aprovação/proveniência. A correção não reprojeta snapshots históricos nem
+substitui aprovação editorial. Evidência própria em `output/mirror-vocabulary-HANDOFF.md`.
+
 Em 17/09/2026 Stefan solicitou: “Me entregue uma PR sem conflitos com todas as
 issues prontas”. Esta autorização permite desenvolver as unidades dependentes
 na mesma branch e submetê-las em uma PR, substituindo a sequência de PRs

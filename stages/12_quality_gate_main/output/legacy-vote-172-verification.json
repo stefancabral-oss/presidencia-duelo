@@ -1,0 +1,14 @@
+{
+  "issue": 172,
+  "date": "2026-09-17",
+  "base": "68c1c80",
+  "decision": "remove-legacy-binary-path",
+  "node": "24.19.0",
+  "unit": { "command": "node --test back/src/*.test.js shared/*.test.js app/src/*.test.js", "passed": 321, "failed": 0 },
+  "regression": { "test": "retired binary vote route is absent and cannot write a vote", "before": "failed: 410 !== 404", "after": "passed" },
+  "catalogTaxonomy": { "passed": true, "records": 125 },
+  "editorialAttestations": { "passed": true, "publishableCandidates": 0 },
+  "build": { "passed": true, "method": "four package build steps invoked directly with node", "distFilesChecked": 157 },
+  "postgres": { "local": "not available", "requiredWorkflow": "Backend and Shared / back-integration-postgres" },
+  "humanGatesForOtherIssues": "not approved"
+}

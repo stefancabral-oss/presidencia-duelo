@@ -4,6 +4,21 @@
 
 Fazer cada mudança chegar à `main` com evidência automática da camada que ela altera, sem misturar unidades independentes.
 
+## Unidade isolada — retirada do voto binário legado (#172)
+
+Decisão registrada na issue antes do commit: alternativa **Remover**. O formato
+vigente continua sendo a rodada de quatro. A proposta de abertura/desempate de
+duas cartas permanece na #182 e deverá usar o contrato idempotente de rodadas.
+
+Escopo: remover `submitVote`, `store.vote`, seu validador exclusivo e a rota 410;
+atualizar documentação e migrar o smoke PostgreSQL para rodadas válidas. Não há
+alteração do banco, de votos históricos, de ranking ou de política editorial.
+
+Aceite: rota antiga retorna 404 sem escrita; suíte completa e build passam;
+smoke PostgreSQL preserva replay, reinício, integração de influenciadores e
+migrações históricas usando três rodadas e nove comparações. Registrar evidência
+antes/depois e CI no handoff. Nenhuma aprovação humana de outra issue é inferida.
+
 ## Macro e unidade ativa
 
 - Macro: [#175 — Portão de qualidade para main](https://github.com/stefancabral-oss/presidencia-duelo/issues/175).

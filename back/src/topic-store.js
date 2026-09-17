@@ -155,20 +155,6 @@ export function validateTopic(topicId, candidateRegistry = PRODUCTION_CANDIDATE_
   return topic.id;
 }
 
-export function validateVote(topicId, winnerId, loserId, candidateRegistry = PRODUCTION_CANDIDATE_REGISTRY) {
-  const normalizedTopic = validateTopic(topicId, candidateRegistry);
-  if (
-    winnerId === loserId
-    || !candidateRegistry.candidateBelongsToTopic(winnerId, normalizedTopic)
-    || !candidateRegistry.candidateBelongsToTopic(loserId, normalizedTopic)
-  ) {
-    const error = new Error("voto inválido para este assunto");
-    error.status = 400;
-    throw error;
-  }
-  return normalizedTopic;
-}
-
 export function validateRoundVote(topicId, winnerId, candidateIds, candidateRegistry = PRODUCTION_CANDIDATE_REGISTRY) {
   const normalizedTopic = validateTopic(topicId, candidateRegistry);
   const ids = Array.isArray(candidateIds) ? candidateIds.map(String) : [];
@@ -2548,98 +2534,6 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
         throw error;
       } finally {
         reader.release();
-      }
-    },
-
-    async vote({ topicId, winnerId, loserId, voteId: requestedVoteId, recoveryKey, playerVersion }) {
-      const topic = validateVote(topicId, winnerId, loserId, candidateRegistry);
-      const voteId = normalizeVoteId(requestedVoteId);
-      const publicCatalog = candidateCatalog(topic);
-      const client = await pool.connect();
-      try {
-        await client.query("BEGIN");
-        const player = recoveryKey ? await findPlayer(client, recoveryKey) : null;
-        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [voteId]);
-        const previous = await client.query("SELECT topic_id, winner_id, loser_id, player_id, winner_delta, loser_delta, zebra FROM votes WHERE vote_id = $1", [voteId]);
-        if (previous.rowCount) {
-          const row = previous.rows[0];
-          if (row.topic_id !== topic || row.winner_id !== winnerId || row.loser_id !== loserId || (row.player_id || null) !== (player?.id || null)) {
-            const error = new Error("voteId já utilizado com outra escolha");
-            error.status = 409;
-            throw error;
-          }
-          const global = await registryRanking(client, topic);
-          const personal = player ? await registryRanking(client, topic, { playerId: player.id }) : null;
-          await client.query("COMMIT");
-          return {
-            ...global,
-            vote: {
-              id: voteId,
-              status: "alreadyProcessed",
-              winnerDelta: Number(row.winner_delta),
-              loserDelta: Number(row.loser_delta),
-              zebra: Boolean(row.zebra),
-            },
-            player: personal,
-          };
-        }
-
-        await client.query("SELECT duels FROM ranking_pools WHERE topic_id = $1 FOR UPDATE", [topic]);
-        const globalRows = await client.query(
-          "SELECT candidate_id, rating FROM ranking_stats WHERE topic_id = $1 AND candidate_id = ANY($2::text[]) FOR UPDATE",
-          [topic, [winnerId, loserId]],
-        );
-        const globalRatings = new Map(globalRows.rows.map((row) => [row.candidate_id, Number(row.rating)]));
-        const winnerRating = globalRatings.get(winnerId);
-        const loserRating = globalRatings.get(loserId);
-        if (!Number.isFinite(winnerRating) || !Number.isFinite(loserRating)) throw new Error("ranking não inicializado");
-        const deltas = ratingDeltas(winnerRating, loserRating);
-        const zebra = isZebra(winnerRating, loserRating);
-
-        await client.query("UPDATE ranking_stats SET rating = rating + $3, wins = wins + 1, zebras = zebras + $4 WHERE topic_id = $1 AND candidate_id = $2", [topic, winnerId, deltas.winnerDelta, zebra ? 1 : 0]);
-        await client.query("UPDATE ranking_stats SET rating = rating + $3, losses = losses + 1 WHERE topic_id = $1 AND candidate_id = $2", [topic, loserId, deltas.loserDelta]);
-        await client.query("UPDATE ranking_pools SET duels = duels + 1 WHERE topic_id = $1", [topic]);
-
-        if (player) {
-          const personalPool = await client.query("SELECT version FROM player_pools WHERE player_id = $1 AND topic_id = $2 FOR UPDATE", [player.id, topic]);
-          const currentVersion = Number(personalPool.rows[0]?.version) || 0;
-          assertPlayerVersion(playerVersion, currentVersion);
-          const personalRows = await client.query(
-            "SELECT candidate_id, rating FROM player_stats WHERE player_id = $1 AND topic_id = $2 AND candidate_id = ANY($3::text[]) FOR UPDATE",
-            [player.id, topic, [winnerId, loserId]],
-          );
-          const personalRatings = new Map(personalRows.rows.map((row) => [row.candidate_id, Number(row.rating)]));
-          const personalDelta = ratingDeltas(personalRatings.get(winnerId), personalRatings.get(loserId));
-          await client.query("UPDATE player_stats SET rating = rating + $4, wins = wins + 1 WHERE player_id = $1 AND topic_id = $2 AND candidate_id = $3", [player.id, topic, winnerId, personalDelta.winnerDelta]);
-          await client.query("UPDATE player_stats SET rating = rating + $4, losses = losses + 1 WHERE player_id = $1 AND topic_id = $2 AND candidate_id = $3", [player.id, topic, loserId, personalDelta.loserDelta]);
-          await client.query("UPDATE player_pools SET version = version + 1, duels = duels + 1 WHERE player_id = $1 AND topic_id = $2", [player.id, topic]);
-          await client.query("UPDATE anonymous_players SET last_seen_at = now() WHERE id = $1", [player.id]);
-        }
-
-        await client.query(
-          `INSERT INTO votes (vote_id, player_id, topic_id, winner_id, loser_id, winner_rating_before, loser_rating_before, winner_delta, loser_delta, zebra)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-          [voteId, player?.id || null, topic, winnerId, loserId, winnerRating, loserRating, deltas.winnerDelta, deltas.loserDelta, zebra],
-        );
-        const global = await registryRanking(client, topic);
-        const personal = player ? await registryRanking(client, topic, { playerId: player.id }) : null;
-        await client.query("COMMIT");
-        return {
-          ...global,
-          vote: {
-            id: voteId,
-            status: "created",
-            winnerDelta: deltas.winnerDelta,
-            loserDelta: deltas.loserDelta,
-            zebra,
-          },
-          player: personal,
-        };
-      } catch (error) {
-        await client.query("ROLLBACK");
-        throw error;
-      } finally {
-        client.release();
       }
     },
 

@@ -34,29 +34,29 @@ assert.equal(personalBefore.version, 0);
 assert.equal(personalBefore.duels, 0);
 assert.equal(personalBefore.rankingPolicy.id, "pairwise-majority-scc-v1");
 
-const voteId = randomUUID();
-const created = await firstStore.vote({
+const initialRoundId = randomUUID();
+const created = await firstStore.roundVote({
   topicId: "eleicoes-2026",
   winnerId: "lula",
-  loserId: "jair-bolsonaro",
-  voteId,
+  candidateIds: ["lula", "jair-bolsonaro", "anitta", "neymar-jr"],
+  roundId: initialRoundId,
   recoveryKey,
   playerVersion: 0,
 });
-assert.equal(created.vote.status, "created");
+assert.equal(created.round.status, "created");
 assert.equal(created.duels, 1);
 assert.equal(created.player.version, 1);
 assert.equal(created.player.duels, 1);
 
-const repeated = await firstStore.vote({
+const repeated = await firstStore.roundVote({
   topicId: "eleicoes-2026",
   winnerId: "lula",
-  loserId: "jair-bolsonaro",
-  voteId,
+  candidateIds: ["lula", "jair-bolsonaro", "anitta", "neymar-jr"],
+  roundId: initialRoundId,
   recoveryKey,
   playerVersion: 0,
 });
-assert.equal(repeated.vote.status, "alreadyProcessed");
+assert.equal(repeated.round.status, "alreadyProcessed");
 assert.equal(repeated.duels, 1);
 await firstStore.close();
 
@@ -69,15 +69,15 @@ const secondMigration = await restartedStore.init();
 assert.equal(secondMigration.resetApplied, false);
 const afterRestart = await restartedStore.ranking("eleicoes-2026");
 assert.equal(afterRestart.duels, 1);
-const influencerVote = await restartedStore.vote({
+const influencerVote = await restartedStore.roundVote({
   topicId: "eleicoes-2026",
   winnerId: "anitta",
-  loserId: "neymar-jr",
-  voteId: randomUUID(),
+  candidateIds: ["lula", "jair-bolsonaro", "anitta", "neymar-jr"],
+  roundId: randomUUID(),
   recoveryKey,
   playerVersion: 1,
 });
-assert.equal(influencerVote.vote.status, "created");
+assert.equal(influencerVote.round.status, "created");
 assert.equal(influencerVote.player.version, 2);
 assert.equal(influencerVote.player.ranking.length, 5);
 
@@ -98,7 +98,7 @@ assert.equal(round.duels, 3);
 assert.equal(round.player.version, 3);
 assert.equal(round.player.duels, 3);
 assert.equal(round.player.rankingPolicy.id, "pairwise-majority-scc-v1");
-assert.equal(round.ranking.find(({ id }) => id === "anitta").wins, 4);
+assert.equal(round.ranking.find(({ id }) => id === "anitta").wins, 6);
 assert.equal(round.round.feedbackScope, "personal");
 assert.deepEqual(round.round.personalFeedback, round.round.feedback);
 assert.equal(round.round.feedback.outcomes.length, 4);
@@ -159,8 +159,8 @@ const audit = await auditPool.query(
     (SELECT count(*) FROM player_sessions) AS active_sessions`,
   [roundId],
 );
-assert.equal(Number(audit.rows[0].comparisons), 5);
-assert.equal(Number(audit.rows[0].rounds), 1);
+assert.equal(Number(audit.rows[0].comparisons), 9);
+assert.equal(Number(audit.rows[0].rounds), 3);
 assert.equal(Number(audit.rows[0].linked_comparisons), 3);
 assert.equal(Number(audit.rows[0].winner_snapshots), 1);
 assert.equal(Number(audit.rows[0].feedback_outcomes), 4);

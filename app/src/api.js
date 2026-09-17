@@ -141,23 +141,6 @@ export function endSession(accessToken) {
   });
 }
 
-export function submitVote(winnerId, loserId, topicId = "eleicoes-2026", player = {}) {
-  return requestJson("/api/vote", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(player.recoveryKey ? { Authorization: `Bearer ${player.recoveryKey}` } : {}),
-    },
-    body: JSON.stringify({
-      voteId: crypto.randomUUID(),
-      winnerId,
-      loserId,
-      topicId,
-      playerVersion: player.version,
-    }),
-  });
-}
-
 /**
  * O `roundId` vem de quem chama, nunca daqui.
  *

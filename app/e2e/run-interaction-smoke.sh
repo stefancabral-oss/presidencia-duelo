@@ -21,4 +21,5 @@ done
 
 for browser in chromium webkit; do
   POLIMATCH_E2E_URL="$preview_url" POLIMATCH_E2E_BROWSER="$browser" node app/e2e/interaction-smoke.mjs
+  POLIMATCH_E2E_URL="$preview_url" POLIMATCH_E2E_BROWSER="$browser" node app/e2e/accessible-profile.mjs
 done

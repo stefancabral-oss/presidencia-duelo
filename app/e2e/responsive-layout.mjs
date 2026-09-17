@@ -71,7 +71,7 @@ async function screenMetrics(page, screen) {
       shell: readBox(".app-shell"),
       topbar: readBox(".topbar"),
       brand: readBox(".brand"),
-      main: readBox("main.screen"),
+      main: readBox("main.screen:not([hidden])"),
     };
 
     if (currentScreen === "home") {
@@ -80,10 +80,11 @@ async function screenMetrics(page, screen) {
 
     if (currentScreen === "duel") {
       const arena = document.querySelector(".arena-four");
-      const cards = [...document.querySelectorAll(".candidate-card")];
+      const cards = [...document.querySelectorAll(".candidate-wrap")];
       result.arena = readBox(".arena-four");
       result.gridColumns = arena ? getComputedStyle(arena).gridTemplateColumns.split(" ").filter(Boolean).length : 0;
-      result.cards = cards.map((card) => readBox(`[data-vote="${CSS.escape(card.dataset.vote)}"]`));
+      result.cards = cards.map((card) => card.getBoundingClientRect().toJSON());
+      result.profileTriggers = [...document.querySelectorAll(".profile-trigger")].map((button) => button.getBoundingClientRect().toJSON());
       result.skip = readBox("#skip-round");
       result.navigation = readBox(".bottom-nav");
       const nameElement = document.querySelector(".candidate-name, .candidate-copy > strong");
@@ -115,6 +116,28 @@ async function screenMetrics(page, screen) {
   }, { currentScreen: screen, names: playableNames });
 }
 
+async function compactDuelScrollMetrics(page) {
+  const maxScroll = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+  if (maxScroll <= 0) return null;
+
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await page.waitForFunction(() => Math.abs(
+    scrollY - (document.documentElement.scrollHeight - innerHeight),
+  ) <= 1);
+  const metrics = await page.evaluate(() => {
+    const readBox = (element) => element?.getBoundingClientRect().toJSON() || null;
+    return {
+      scrollY,
+      maxScroll: document.documentElement.scrollHeight - innerHeight,
+      secondRow: [...document.querySelectorAll(".candidate-wrap")].slice(2).map(readBox),
+      skip: readBox(document.querySelector("#skip-round")),
+      navigation: readBox(document.querySelector(".bottom-nav")),
+    };
+  });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  return metrics;
+}
+
 const browser = await browserType.launch();
 const context = await browser.newContext({ viewport: viewports[0], serviceWorkers: "block" });
 const page = await context.newPage();
@@ -142,7 +165,7 @@ async function goTo(screen) {
   };
   await page.getByRole("button", { name: labels[screen] }).click();
   if (screen === "duel") {
-    await page.locator("#start-free-mode, .candidate-card").first().waitFor();
+    await page.locator("#start-free-mode:visible, .candidate-card:visible").first().waitFor();
     if (await page.getByRole("button", { name: "Continuar no modo livre" }).count()) {
       await page.getByRole("button", { name: "Continuar no modo livre" }).click();
     }
@@ -164,6 +187,9 @@ function assertResponsiveLayout(evidence) {
     screens.push(measurement);
     byViewport.set(viewportKey, screens);
     if (measurement.document.horizontalOverflow) problems.push(`${viewportKey}/${measurement.screen}: overflow horizontal`);
+    if (!measurement.main || measurement.main.width <= 0 || measurement.main.height <= 0) {
+      problems.push(`${viewportKey}/${measurement.screen}: painel ativo sem geometria mensurável`);
+    }
   }
 
   for (const [viewportKey, screens] of byViewport) {
@@ -177,7 +203,32 @@ function assertResponsiveLayout(evidence) {
     if (duel.gridColumns !== expectedColumns) problems.push(`${viewportKey}/duel: ${duel.gridColumns} colunas; esperado ${expectedColumns}`);
     for (const card of duel.cards) {
       if (card.left < -1 || card.right > duel.viewport.width + 1) problems.push(`${viewportKey}/duel: carta fora da largura visível`);
-      if (card.bottom > duel.navigation.top + 1) problems.push(`${viewportKey}/duel: carta coberta pela navegação`);
+    }
+    if (duel.profileTriggers.length !== 4 || duel.profileTriggers.some(({ width, height }) => width <= 0 || height < 44)) {
+      problems.push(`${viewportKey}/duel: rodapé Conhecer perfil ausente ou abaixo de 44px`);
+    }
+    if (duel.compactScroll) {
+      for (const card of duel.cards.slice(0, 2)) {
+        if (card.top < -1 || card.bottom > duel.navigation.top + 1) {
+          problems.push(`${viewportKey}/duel: primeira linha coberta pela navegação`);
+        }
+      }
+      const { compactScroll } = duel;
+      if (compactScroll.scrollY < compactScroll.maxScroll - 1) {
+        problems.push(`${viewportKey}/duel: fim da rodada não foi alcançado pela rolagem`);
+      }
+      if (compactScroll.secondRow.length !== 2 || compactScroll.secondRow.some((card) => (
+        card.top < -1 || card.bottom > compactScroll.navigation.top + 1
+      ))) {
+        problems.push(`${viewportKey}/duel: segunda linha coberta após a rolagem`);
+      }
+      if (!compactScroll.skip || compactScroll.skip.bottom > compactScroll.navigation.top + 1) {
+        problems.push(`${viewportKey}/duel: ação de pular coberta após a rolagem`);
+      }
+    } else {
+      for (const card of duel.cards) {
+        if (card.bottom > duel.navigation.top + 1) problems.push(`${viewportKey}/duel: carta coberta pela navegação`);
+      }
     }
     const clippedNames = duel.names.filter(({ overflow, clientHeight, scrollHeight }) => overflow !== "visible" || scrollHeight > clientHeight + 1);
     if (duel.names.length !== playableNames.length) problems.push(`${viewportKey}/duel: nomes não puderam ser medidos`);
@@ -209,7 +260,11 @@ try {
     const viewportKey = `${viewport.width}x${viewport.height}`;
     for (const screen of ["home", "duel", "ranking"]) {
       await goTo(screen);
-      evidence.push(await screenMetrics(page, screen));
+      const measurement = await screenMetrics(page, screen);
+      if (screen === "duel" && viewport.width < 480) {
+        measurement.compactScroll = await compactDuelScrollMetrics(page);
+      }
+      evidence.push(measurement);
       if (screenshotsDir && screenshotViewports.has(viewportKey)) {
         await page.screenshot({ path: `${screenshotsDir}/${viewportKey}-${screen}.png` });
       }

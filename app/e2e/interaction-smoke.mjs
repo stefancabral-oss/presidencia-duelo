@@ -33,9 +33,11 @@ async function measureCardHierarchy(page) {
     const nav = bounds(".bottom-nav");
     return {
       viewport: { width: innerWidth, height: innerHeight, scrollY, documentHeight: document.documentElement.scrollHeight },
+      wrap: bounds(".candidate-wrap"),
       card: bounds(".candidate-card"),
       portrait: bounds(".candidate-card .portrait"),
       copy: bounds(".candidate-card .candidate-copy"),
+      profile: bounds(".profile-trigger"),
       skipToNavGap: skip && nav ? nav.top - skip.bottom : null,
     };
   });
@@ -116,19 +118,23 @@ function assertOutcomeSemantics(outcomes, viewportLabel) {
   }
 }
 
-const shortViewportCandidateIds = new Set([46, 48, 95, 125]);
-const candidates = CATALOG.filter(({ personId }) => shortViewportCandidateIds.has(personId));
+const smokeCandidateIds = new Set([46, 48, 95, 125, 1, 2, 3, 4]);
+const candidates = CATALOG.filter(({ personId }) => smokeCandidateIds.has(personId));
 
-function ranking(decisions = 0, winnerId = "") {
-  return candidates.map((candidate) => ({
-    ...candidate,
-    elo: decisions ? (candidate.id === winnerId ? 1085 : 1025) : 1040,
-    wins: decisions && candidate.id === winnerId ? 3 : 0,
-    losses: decisions && candidate.id !== winnerId ? 1 : 0,
-    decisions: decisions ? (candidate.id === winnerId ? 3 : 1) : 0,
-    winRate: decisions && candidate.id === winnerId ? 100 : 0,
-    rank: decisions ? (candidate.id === winnerId ? 1 : 2) : null,
-  })).sort((left, right) => (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER) || left.id.localeCompare(right.id));
+function ranking(decisions = 0, winnerId = "", comparedIds = []) {
+  const compared = new Set(comparedIds);
+  return candidates.map((candidate) => {
+    const played = Boolean(decisions && compared.has(candidate.id));
+    return {
+      ...candidate,
+      elo: played ? (candidate.id === winnerId ? 1085 : 1025) : 1040,
+      wins: played && candidate.id === winnerId ? 3 : 0,
+      losses: played && candidate.id !== winnerId ? 1 : 0,
+      decisions: played ? (candidate.id === winnerId ? 3 : 1) : 0,
+      winRate: played && candidate.id === winnerId ? 100 : 0,
+      rank: played ? (candidate.id === winnerId ? 1 : 2) : null,
+    };
+  }).sort((left, right) => (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER) || left.id.localeCompare(right.id));
 }
 
 const browser = await browserType.launch();
@@ -140,6 +146,8 @@ const page = await context.newPage();
 const pageErrors = [];
 const roundVoteRequests = [];
 let failNextRoundVote = false;
+let failNextGoogleLogin = false;
+let failNextLogout = false;
 let failNextDailySession = false;
 let holdNextSuccessfulRoundVote = false;
 let successfulRoundVotes = 0;
@@ -167,8 +175,20 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
     }
     body = completedDailySession(candidates);
   }
-  else if (path === "/api/auth/google" && request.method() === "POST") body = { sessionToken: `pms_${"s".repeat(43)}`, account: { displayName: "Bia", avatarUrl: "" }, player: { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking(), account: { displayName: "Bia", avatarUrl: "" } } };
+  else if (path === "/api/auth/google" && request.method() === "POST") {
+    if (failNextGoogleLogin) {
+      failNextGoogleLogin = false;
+      await route.fulfill({ status: 503, json: { error: "falha passageira de login" } });
+      return;
+    }
+    body = { sessionToken: `pms_${"s".repeat(43)}`, account: { displayName: "Bia", avatarUrl: "" }, player: { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking(), account: { displayName: "Bia", avatarUrl: "" } } };
+  }
   else if (path === "/api/auth/logout" && request.method() === "POST") {
+    if (failNextLogout) {
+      failNextLogout = false;
+      await route.fulfill({ status: 503, json: { error: "falha passageira de logout" } });
+      return;
+    }
     await route.fulfill({ status: 204 });
     return;
   }
@@ -204,8 +224,8 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
     const globalFeedback = { ...feedback, primaryEvent: "top10", rankingEvent: "top10" };
     body = voteResponseV2({
       duels: successfulRoundVotes,
-      ranking: ranking(1, payload.winnerId),
-      player: { version: successfulRoundVotes, duels: successfulRoundVotes, rankingPolicy: personalRankingPolicy, ranking: ranking(1, payload.winnerId) },
+      ranking: ranking(1, payload.winnerId, payload.candidateIds),
+      player: { version: successfulRoundVotes, duels: successfulRoundVotes, rankingPolicy: personalRankingPolicy, ranking: ranking(1, payload.winnerId, payload.candidateIds) },
       round: {
         id: payload.roundId,
         status: "created",
@@ -264,6 +284,13 @@ try {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_AUTH_SCREENSHOT });
   }
   if (googleEnabled) {
+    failNextGoogleLogin = true;
+    await page.getByRole("button", { name: "Continuar com Google" }).click();
+    await page.getByRole("alert").waitFor();
+    if (!await page.locator(".auth-overlay").evaluate((dialog) => dialog.contains(document.activeElement))) {
+      throw new Error("A falha de login deixou o foco fora do diálogo de autenticação");
+    }
+    await page.getByRole("button", { name: "Continuar com Google" }).waitFor();
     failNextDailySession = true;
     await page.getByRole("button", { name: "Continuar com Google" }).click();
     await page.getByRole("heading", { name: "Tudo certo, Bia!" }).waitFor();
@@ -288,6 +315,12 @@ try {
     const roundBeforeLogout = roundVoteRequests.at(-1)?.roundId;
 
     await page.getByRole("button", { name: "Abrir sua conta" }).click();
+    failNextLogout = true;
+    await page.getByRole("button", { name: "Sair desta conta" }).click();
+    await page.getByRole("alert").waitFor();
+    if (!await page.locator(".auth-overlay").evaluate((dialog) => dialog.contains(document.activeElement))) {
+      throw new Error("A falha de logout deixou o foco fora do diálogo de autenticação");
+    }
     failNextDailySession = true;
     await page.getByRole("button", { name: "Sair desta conta" }).click();
     await page.getByRole("heading", { name: "Não conseguimos atualizar a rodada." }).waitFor();
@@ -297,7 +330,7 @@ try {
     if (await page.evaluate(() => localStorage.getItem("polimatch:v3:recovery-key")) !== "e2e-recovery-key") {
       throw new Error("A falha diária pós-logout restaurou o token revogado");
     }
-    if (await page.locator("#retry-vote").count()) throw new Error("O logout preservou um voto pendente da conta anterior");
+    if (await page.locator("#retry-vote").isVisible()) throw new Error("O logout preservou um voto pendente da conta anterior");
     await page.getByRole("button", { name: "Ir para o modo livre" }).click();
 
     failNextRoundVote = true;
@@ -317,11 +350,11 @@ try {
     if (!await page.getByRole("button", { name: "Abrir sua conta" }).isVisible()) {
       throw new Error("A falha diária pós-login desfez a identidade já confirmada");
     }
-    if (await page.locator("#retry-vote").count()) throw new Error("O login preservou um voto pendente do jogador anônimo");
+    if (await page.locator("#retry-vote").isVisible()) throw new Error("O login preservou um voto pendente do jogador anônimo");
     await page.getByRole("button", { name: "Ir para o modo livre" }).click();
 
     await page.locator(".candidate-card").first().click();
-    await page.getByText(/subiu de patente/i).waitFor();
+    await page.locator("[data-personal-feedback]", { hasText: /subiu de patente/i }).waitFor();
     const roundAfterLogin = roundVoteRequests.at(-1)?.roundId;
     if (!roundAfterLogin || roundAfterLogin === roundBeforeLogin) {
       throw new Error("O login não rotacionou o roundId ligado ao jogador anônimo");
@@ -329,9 +362,9 @@ try {
     await page.locator(".card-outcome").first().waitFor({ state: "hidden", timeout: 2500 });
     // A confirmação ainda agenda uma última renderização para limpar a mensagem.
     // Esperar por ela evita que o DOM seja trocado no meio dos gestos seguintes.
-    await page.getByText("Toque na sua preferida. Segure para conhecer o perfil.", { exact: true }).waitFor();
+    await page.getByText("Escolha uma pessoa ou use Conhecer perfil antes de decidir.", { exact: true }).waitFor();
   }
-  const mobileCards = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => {
+  const mobileCards = await page.locator(".candidate-wrap").evaluateAll((cards) => cards.map((card) => {
     const box = card.getBoundingClientRect();
     return { top: box.top, right: box.right, bottom: box.bottom, left: box.left };
   }));
@@ -355,8 +388,33 @@ try {
   if (await page.locator(".candidate-summary").count() !== 4) throw new Error("O resumo deixou de fazer parte da carta básica");
   if (await page.locator(".candidate-summary").first().isVisible()) throw new Error("O resumo extenso deveria ficar reservado ao perfil no celular");
   if (!await page.locator(".candidate-office").first().isVisible()) throw new Error("A função da pessoa precisa permanecer visível no celular");
-  if (await page.locator(".candidate-profile-hint").count() !== 4) throw new Error("A dica de segurar deixou de fazer parte da carta básica");
-  if (await page.locator(".profile-button").count()) throw new Error("Um botão externo voltou a ocupar espaço junto à carta");
+  const separatedActions = await page.locator(".candidate-wrap").evaluateAll((slots) => slots.map((slot) => {
+    const vote = slot.querySelector(":scope > button.vote-target");
+    const profile = slot.querySelector(":scope > button.profile-trigger");
+    const profileBox = profile?.getBoundingClientRect();
+    return {
+      tag: slot.tagName,
+      directButtons: slot.querySelectorAll(":scope > button").length,
+      nestedButtons: slot.querySelectorAll("button button").length,
+      voteName: vote?.getAttribute("aria-label") || "",
+      profileName: profile?.getAttribute("aria-label") || "",
+      profileText: profile?.textContent.trim() || "",
+      profileVisible: Boolean(profileBox?.width && profileBox?.height),
+      profileHeight: profileBox?.height || 0,
+    };
+  }));
+  if (separatedActions.length !== 4 || separatedActions.some((slot) => (
+    slot.tag !== "ARTICLE"
+      || slot.directButtons !== 2
+      || slot.nestedButtons !== 0
+      || !slot.voteName.startsWith("Escolher ")
+      || !slot.profileName.startsWith("Conhecer ")
+      || slot.profileText !== "ⓘConhecer perfil"
+      || !slot.profileVisible
+      || slot.profileHeight < 44
+  ))) {
+    throw new Error(`Escolher e conhecer não são dois controles irmãos inequívocos: ${JSON.stringify(separatedActions)}`);
+  }
   for (const layer of [".card-material", ".card-facets", ".card-corners"]) {
     if (await page.locator(`.candidate-card ${layer}`).count() !== 4) {
       throw new Error(`A camada premium ${layer} não foi renderizada nas quatro cartas`);
@@ -383,11 +441,13 @@ try {
     throw new Error(`Nomes com glifo ou linha cortada: ${clippedNames.map(({ name }) => name).join(", ")}`);
   }
   const portraitRatio = cardHierarchyEvidence.geometry.portrait.height / (cardHierarchyEvidence.geometry.card.height - 12);
-  if (cardHierarchyEvidence.geometry.card.height < 276
-    || cardHierarchyEvidence.geometry.card.height > 282
-    || portraitRatio < .6
-    || portraitRatio > .68) {
-    throw new Error("A anatomia móvel perdeu a carta de cerca de 280px com retrato dominante");
+  if (cardHierarchyEvidence.geometry.wrap.height < 276
+    || cardHierarchyEvidence.geometry.wrap.height > 282
+    || cardHierarchyEvidence.geometry.profile.height < 44
+    || cardHierarchyEvidence.geometry.card.bottom > cardHierarchyEvidence.geometry.profile.top + 2
+    || portraitRatio < .58
+    || portraitRatio > .66) {
+    throw new Error(`A anatomia móvel não reservou o rodapé fora do retrato: ${JSON.stringify(cardHierarchyEvidence.geometry)}`);
   }
   if (cardHierarchyEvidence.geometry.skipToNavGap < 12 || cardHierarchyEvidence.geometry.skipToNavGap > 40) {
     throw new Error(`O espaço entre a rodada e a navegação não foi redistribuído pela nova carta: ${cardHierarchyEvidence.geometry.skipToNavGap}px`);
@@ -404,13 +464,17 @@ try {
   await page.evaluate(() => window.scrollTo(0, 0));
   const shortMobile = await page.evaluate(() => {
     const navTop = document.querySelector(".bottom-nav").getBoundingClientRect().top;
-    const cards = [...document.querySelectorAll(".candidate-card")].map((card) => {
+    const cards = [...document.querySelectorAll(".candidate-wrap")].map((wrap) => {
+      const card = wrap.querySelector(".candidate-card");
+      const profile = wrap.querySelector(".profile-trigger");
       const portrait = card.querySelector(".portrait");
       const copy = card.querySelector(".candidate-copy");
       const name = card.querySelector(".candidate-title > strong");
       const affiliation = card.querySelector(".candidate-affiliation");
       const office = card.querySelector(".candidate-office");
-      const box = card.getBoundingClientRect();
+      const box = wrap.getBoundingClientRect();
+      const cardBox = card.getBoundingClientRect();
+      const profileBox = profile.getBoundingClientRect();
       const copyStyle = getComputedStyle(copy);
       const portraitHeight = portrait.getBoundingClientRect().height;
       const copyHeight = copy.getBoundingClientRect().height;
@@ -421,6 +485,10 @@ try {
         left: box.left,
         width: box.width,
         height: box.height,
+        cardHeight: cardBox.height,
+        profileHeight: profileBox.height,
+        profileTop: profileBox.top,
+        cardBottom: cardBox.bottom,
         portraitShare: portraitHeight / (portraitHeight + copyHeight),
         copyHeight,
         copyClientHeight: copy.clientHeight,
@@ -449,10 +517,13 @@ try {
   const shortWidths = shortMobile.cards.map(({ width }) => width);
   const shortHeights = shortMobile.cards.map(({ height }) => height);
   const invalidShortCards = shortMobile.cards.filter((card) => (
-    card.height < 276
-      || card.portraitShare < .6
-      || card.portraitShare > .68
-      || card.copyHeight < 104
+    card.height < 284
+      || card.cardHeight < 240
+      || card.profileHeight < 44
+      || card.profileTop < card.cardBottom - 2
+      || card.portraitShare < .55
+      || card.portraitShare > .66
+      || card.copyHeight < 88
       || card.copyScrollHeight > card.copyClientHeight
       || card.nameFontSize < 15
       || card.nameLineHeight < 18
@@ -460,7 +531,7 @@ try {
       || card.affiliationFontSize < 11
       || card.officeFontSize < 11
       || card.officeLineHeight < 14
-      || card.officeClientHeight + 1 < Math.min(card.officeScrollHeight, 28)
+      || card.officeClientHeight + 1 < Math.min(card.officeScrollHeight, 14)
       || card.officeBottom > card.copyBottom + 1
       || card.touchAction !== "manipulation"
   ));
@@ -498,7 +569,7 @@ try {
   await page.waitForTimeout(520);
   await page.mouse.up();
   await page.locator("dialog[open]").waitFor();
-  await page.getByRole("button", { name: "Fechar resumo" }).click();
+  await page.getByRole("button", { name: /^Fechar perfil de / }).click();
   await page.locator("dialog[open]").waitFor({ state: "hidden" });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.evaluate(() => window.scrollTo(0, 0));
@@ -511,7 +582,7 @@ try {
   await page.waitForTimeout(520);
   await page.mouse.up();
   await page.locator("dialog[open]").waitFor();
-  const closeSummary = page.getByRole("button", { name: "Fechar resumo" });
+  const closeSummary = page.getByRole("button", { name: /^Fechar perfil de / });
   await closeSummary.waitFor();
   if (!await closeSummary.isVisible()) throw new Error("O fechamento do resumo não está visível");
   if (process.env.POLIMATCH_E2E_PROFILE_SCREENSHOT) {
@@ -529,12 +600,66 @@ try {
   await page.locator("dialog[open]").waitFor();
   await page.keyboard.press("Escape");
   await page.locator("dialog[open]").waitFor({ state: "hidden" });
+  await page.waitForFunction(() => document.activeElement === document.querySelector(".candidate-card"));
 
-  const selectedWinnerId = await firstCard.getAttribute("data-vote");
+  if (await page.locator('[role="status"]').count() !== 1) throw new Error("O app deve manter uma única região viva persistente");
+  if (!googleEnabled && await page.locator(".app-live-region").innerText()) throw new Error("A região viva deveria nascer vazia antes do primeiro anúncio");
+  const selectedRoundIds = await page.locator(".candidate-card").evaluateAll((cards) => cards.map((card) => card.dataset.vote));
+  const votingCard = page.locator(".candidate-card").nth(1);
+  await page.keyboard.press("Tab");
+  if (!await page.locator(".profile-trigger").first().evaluate((button) => button === document.activeElement && button.matches(":focus-visible"))) {
+    throw new Error("A navegação de teclado não passou pelo perfil irmão da primeira carta");
+  }
+  await page.keyboard.press("Tab");
+  if (!await votingCard.evaluate((card) => card === document.activeElement && card.matches(":focus-visible"))) {
+    throw new Error("A carta de voto não recebeu foco visível pela navegação de teclado");
+  }
+  await page.evaluate(() => {
+    const tracked = {
+      topbar: document.querySelector(".topbar"),
+      nav: document.querySelector(".bottom-nav"),
+      instruction: document.querySelector(".round-instruction"),
+      retryVote: document.querySelector("#retry-vote"),
+      liveRegion: document.querySelector(".app-live-region"),
+      slots: [...document.querySelectorAll("[data-candidate-slot]")],
+      cards: [...document.querySelectorAll(".candidate-card")],
+      profiles: [...document.querySelectorAll(".profile-trigger")],
+    };
+    const trackedNodes = [tracked.topbar, tracked.nav, tracked.instruction, tracked.retryVote, tracked.liveRegion, ...tracked.slots, ...tracked.cards, ...tracked.profiles];
+    const announcements = [];
+    const substitutions = [];
+    const observer = new MutationObserver((records) => {
+      records.forEach((record) => {
+        if (record.type === "childList") {
+          record.removedNodes.forEach((removed) => {
+            trackedNodes.forEach((node) => {
+              if (removed === node || (removed.nodeType === Node.ELEMENT_NODE && removed.contains(node))) substitutions.push(node.className);
+            });
+          });
+        }
+        if (record.target === tracked.liveRegion || tracked.liveRegion.contains(record.target)) {
+          const message = tracked.liveRegion.textContent.trim();
+          if (message && announcements.at(-1) !== message) announcements.push(message);
+        }
+      });
+    });
+    observer.observe(document.querySelector("#app"), { childList: true, characterData: true, subtree: true });
+    window.__polimatchDomProbe = {
+      tracked,
+      focusedCard: document.activeElement,
+      observer,
+      announcements,
+      substitutions,
+      initialAccessibleName: document.activeElement.getAttribute("aria-label"),
+    };
+  });
+
+  const selectedWinnerId = await votingCard.getAttribute("data-vote");
   holdNextSuccessfulRoundVote = true;
-  await firstCard.click();
-  await page.locator(".candidate-card.is-selected:disabled").waitFor();
-  const pendingEvidence = await page.locator(".candidate-card.is-selected:disabled").evaluate((card) => {
+  await page.keyboard.press("Enter");
+  await page.locator(".round-instruction", { hasText: "Confirmando sua escolha…" }).waitFor();
+  if (await page.locator('.candidate-card[aria-disabled="true"]').count() !== 4) throw new Error("Os quatro votos não ficaram temporariamente indisponíveis durante a confirmação");
+  const pendingEvidence = await page.locator('.candidate-card.is-selected[aria-disabled="true"]').evaluate((card) => {
     const name = card.querySelector(".candidate-name");
     const office = card.querySelector(".candidate-office");
     return {
@@ -544,8 +669,8 @@ try {
       filter: getComputedStyle(card).filter,
     };
   });
-  await page.getByText(/subiu de patente/i).waitFor();
-  const feedbackChannels = page.locator(".feedback-channel");
+  await page.locator("[data-personal-feedback]", { hasText: /subiu de patente/i }).waitFor();
+  const feedbackChannels = page.locator(".feedback-channel:visible");
   if (await feedbackChannels.count() !== (includeGlobalEvent ? 2 : 1)) throw new Error("Os canais de feedback não respeitaram o contrato da resposta");
   if (!await feedbackChannels.nth(0).getByText("No seu ranking").isVisible()) throw new Error("O feedback pessoal não veio primeiro");
   if (includeGlobalEvent && !await feedbackChannels.nth(1).getByText("No placar do público").isVisible()) throw new Error("O evento público não veio rotulado como secundário");
@@ -555,6 +680,9 @@ try {
     throw new Error("Vitória e derrotas não receberam tratamentos visuais distintos");
   }
   if (!await page.locator(".candidate-card.is-round-winner").getByText("+45 Elo").isVisible()) throw new Error("O ganho real de Elo não apareceu na carta escolhida");
+  if (!await page.locator(".candidate-card.is-round-winner").getByText("Subiu · Em ascensão", { exact: true }).isVisible()) {
+    throw new Error("O teste deixou de exercitar a mensagem longa de mudança de patente");
+  }
   if (await page.locator(".candidate-card.is-round-loser").getByText("-15 Elo").count() !== 3) throw new Error("As perdas reais de Elo não apareceram nas outras cartas");
   const outcomeEvidence = await measureRoundOutcomes(page);
   assertOutcomeSemantics(outcomeEvidence, "390 × 844");
@@ -595,12 +723,12 @@ try {
   const invalidShortOutcomes = shortOutcome.cards.filter((card) => (
     Math.abs(card.width - shortOutcome.cards[0].width) > 2
       || Math.abs(card.height - shortOutcome.cards[0].height) > 2
-      || card.portraitShare < .6
+      || card.portraitShare < .55
       || card.portraitShare > .68
       || card.copyScrollHeight > card.copyClientHeight
       || card.outcomeScrollHeight > card.outcomeClientHeight
       || card.outcomeTop < card.nameBottom - 1
-      || card.outcomeBottom > card.copyBottom + 1
+      || card.outcomeBottom > card.copyBottom - 2
       || card.valueFontSize < 11
       || card.messageFontSize < 11
   ));
@@ -627,12 +755,49 @@ try {
     await page.screenshot({ path: process.env.POLIMATCH_E2E_OUTCOME_SCREENSHOT });
   }
   await page.locator(".card-outcome").first().waitFor({ state: "hidden", timeout: 2500 });
+  await page.locator(".round-instruction", { hasText: "Nova rodada disponível" }).waitFor();
+  const persistence = await page.evaluate(() => {
+    const probe = window.__polimatchDomProbe;
+    probe.observer.disconnect();
+    const currentCards = [...document.querySelectorAll(".candidate-card")];
+    return {
+      topbar: probe.tracked.topbar === document.querySelector(".topbar"),
+      nav: probe.tracked.nav === document.querySelector(".bottom-nav"),
+      instruction: probe.tracked.instruction === document.querySelector(".round-instruction"),
+      retryVote: probe.tracked.retryVote === document.querySelector("#retry-vote"),
+      liveRegion: probe.tracked.liveRegion === document.querySelector(".app-live-region"),
+      slots: probe.tracked.slots.every((slot, index) => slot === document.querySelectorAll("[data-candidate-slot]")[index]),
+      cards: probe.tracked.cards.every((card, index) => card === currentCards[index]),
+      profiles: probe.tracked.profiles.every((profile, index) => profile === document.querySelectorAll(".profile-trigger")[index]),
+      focused: document.activeElement === probe.focusedCard,
+      focusVisible: probe.focusedCard.matches(":focus-visible") && getComputedStyle(probe.focusedCard).outlineStyle !== "none",
+      accessibleNameChanged: probe.initialAccessibleName !== probe.focusedCard.getAttribute("aria-label"),
+      substitutions: probe.substitutions,
+      announcements: probe.announcements,
+      nextRoundIds: currentCards.map((card) => card.dataset.vote),
+      statusCount: document.querySelectorAll('[role="status"]').length,
+    };
+  });
+  if (!persistence.topbar || !persistence.nav || !persistence.instruction || !persistence.retryVote || !persistence.liveRegion || !persistence.slots || !persistence.cards || !persistence.profiles) {
+    throw new Error("Topbar, navegação, instrução, repetição, região viva ou controles dos slots foram substituídos durante o voto");
+  }
+  if (persistence.substitutions.length) throw new Error(`O MutationObserver detectou substituições persistentes: ${persistence.substitutions.join(", ")}`);
+  if (!persistence.focused || !persistence.focusVisible) throw new Error("O botão votado perdeu o foco ou o anel visível durante a nova rodada");
+  if (!persistence.accessibleNameChanged) throw new Error("O mesmo botão persistiu, mas seu nome acessível não acompanhou a nova pessoa");
+  if (persistence.statusCount !== 1) throw new Error("A região viva foi duplicada durante o voto");
+  if (persistence.nextRoundIds.some((id) => selectedRoundIds.includes(id))) throw new Error("O smoke não produziu conteúdo novo suficiente para provar a atualização granular dos slots");
+  const confirmingAnnouncement = persistence.announcements.findIndex((message) => message === "Confirmando sua escolha…");
+  const resultAnnouncement = persistence.announcements.findIndex((message, index) => index > confirmingAnnouncement && /subiu de patente/i.test(message));
+  const nextRoundAnnouncement = persistence.announcements.findIndex((message, index) => index > resultAnnouncement && message === "Nova rodada disponível");
+  if (confirmingAnnouncement < 0 || resultAnnouncement < 0 || nextRoundAnnouncement < 0) {
+    throw new Error(`A região viva não anunciou a sequência completa: ${persistence.announcements.join(" | ")}`);
+  }
   await page.getByRole("button", { name: "Ranking" }).click();
   await page.getByRole("heading", { name: "Ranking" }).waitFor();
-  await page.getByText(`${successfulRoundVotes} ${successfulRoundVotes === 1 ? "escolha confirmada" : "escolhas confirmadas"}`).waitFor();
+  await page.getByText(`${successfulRoundVotes} ${successfulRoundVotes === 1 ? "escolha confirmada" : "escolhas confirmadas"}`, { exact: true }).waitFor();
   await page.getByText("Mais derrotas").waitFor();
   const rejected = await page.locator(".ranking-highlight-rejected").innerText();
-  const expectedRejected = candidates.filter(({ id }) => id !== selectedWinnerId).map(({ displayName }) => displayName);
+  const expectedRejected = candidates.filter(({ id }) => selectedRoundIds.includes(id) && id !== selectedWinnerId).map(({ displayName }) => displayName);
   if (!expectedRejected.every((name) => rejected.includes(name)) || !rejected.includes("−1")) {
     throw new Error("As três comparações negativas não apareceram no resumo do ranking");
   }
@@ -688,7 +853,6 @@ try {
     ".candidate-affiliation",
     ".candidate-office",
     ".candidate-summary",
-    ".candidate-profile-hint",
   ].map((selector) => {
     const element = card.querySelector(selector);
     const style = getComputedStyle(element);
@@ -717,13 +881,13 @@ try {
   }
 
   await page.locator(".candidate-card").first().click();
-  await page.getByText(/subiu de patente/i).waitFor();
+  await page.locator("[data-personal-feedback]", { hasText: /subiu de patente/i }).waitFor();
   const desktopOutcomeEvidence = await measureRoundOutcomes(page);
   assertOutcomeSemantics(desktopOutcomeEvidence, "1440 × 900");
   await page.locator(".card-outcome").first().waitFor({ state: "hidden", timeout: 2500 });
 
   if (pageErrors.length) throw new Error(`Erros na página: ${pageErrors.join(" | ")}`);
-  console.log(`${browserName}: navegação Início/Duelo, rodada de quatro, pressão longa e ranking validados`);
+  console.log(`${browserName}: navegação, rodada de quatro, DOM/foco persistentes, pressão longa e ranking validados`);
 } catch (error) {
   console.error(await page.locator("body").innerText());
   console.error(`Erros capturados: ${pageErrors.join(" | ") || "nenhum"}`);

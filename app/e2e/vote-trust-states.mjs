@@ -174,7 +174,7 @@ async function snapshot(page, name, evidence, { screenshot = true } = {}) {
     phase: document.querySelector(".duel-screen")?.dataset.votePhase || "",
     instruction: document.querySelector(".round-instruction")?.textContent?.trim() || "",
     progress: document.querySelector(".progress-pill")?.textContent?.trim() || "",
-    cardsDisabled: [...document.querySelectorAll(".candidate-card")].map((card) => card.disabled),
+    cardsDisabled: [...document.querySelectorAll(".candidate-card")].map((card) => card.disabled || card.getAttribute("aria-disabled") === "true"),
     candidateIds: [...document.querySelectorAll(".candidate-card")].map((card) => card.dataset.vote),
     skipDisabled: document.querySelector("#skip-round")?.disabled,
     recovery: document.querySelector(".retry-vote")?.textContent?.trim() || "",
@@ -214,7 +214,7 @@ try {
     assert.equal(server.issuances, 1, "restauração deveria emitir exatamente uma sessão");
     assert.equal(server.dailyRequests, dailyRequestsBeforeRestore, "restauração livre consultou o serviço diário indisponível");
     await page.getByRole("button", { name: "Tentar novamente" }).click();
-    await page.locator(".feedback-channel").waitFor();
+    await page.locator(".feedback-channel:visible").first().waitFor();
     assert.equal(server.duels, 1);
     assert.equal(server.requests.length, 2);
     assert.deepEqual(server.requests[0].payload, server.requests[1].payload);
@@ -233,13 +233,13 @@ try {
       body: { error: "limite interno", code: "VOTE_RATE_LIMITED", retryAfterSeconds: 2 },
     };
     await page.locator(".candidate-card").first().click();
-    await page.getByText("Muitas tentativas. Tente novamente em 2 segundos.", { exact: true }).waitFor();
+    await page.locator(".round-instruction", { hasText: "Muitas tentativas. Tente novamente em 2 segundos." }).waitFor();
     const failed = await snapshot(page, "429-rate-limited", evidence);
     assertFrozen(before, failed, "429");
     assert.equal(failed.recoveryDisabled, true);
     await page.waitForTimeout(2100);
     await page.locator("#retry-vote").click();
-    await page.locator(".feedback-channel").waitFor();
+    await page.locator(".feedback-channel:visible").first().waitFor();
     assert.equal(server.duels, 1);
     assert.equal(server.requests.length, 2);
     assert.deepEqual(server.requests[0].payload, server.requests[1].payload);
@@ -254,12 +254,12 @@ try {
     const secret = "postgres://admin:segredo@db/internal";
     server.nextFailure = { status: 503, body: { error: secret, code: "INTERNAL_ERROR", requestId: "req-secret" } };
     await page.locator(".candidate-card").first().click();
-    await page.getByText("Não foi possível confirmar agora.", { exact: true }).waitFor();
+    await page.locator(".round-instruction", { hasText: "Não foi possível confirmar agora." }).waitFor();
     const failed = await snapshot(page, "503-server-error", evidence);
     assertFrozen(before, failed, "503");
     assert.equal((await page.locator("body").innerText()).includes(secret), false, "5xx vazou detalhe interno");
     await page.locator("#retry-vote").click();
-    await page.locator(".feedback-channel").waitFor();
+    await page.locator(".feedback-channel:visible").first().waitFor();
     assert.equal(server.duels, 1);
     assert.equal(server.requests.length, 2);
     assert.deepEqual(server.requests[0].payload, server.requests[1].payload);

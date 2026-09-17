@@ -1,0 +1,200 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { markPortraitFailed, markPortraitLoaded, patchCandidateSlot, showPersistentPanel } from "./persistent-dom.js";
+
+class FakeClassList {
+  constructor() { this.values = new Set(); }
+  toggle(name, force) {
+    if (force) this.values.add(name);
+    else this.values.delete(name);
+  }
+  contains(name) { return this.values.has(name); }
+}
+
+function fakeElement() {
+  const attributes = new Map();
+  return {
+    attributes,
+    classList: new FakeClassList(),
+    dataset: {},
+    hidden: false,
+    textContent: "",
+    setAttribute(name, value) { attributes.set(name, String(value)); },
+    getAttribute(name) { return attributes.get(name) ?? null; },
+    removeAttribute(name) { attributes.delete(name); },
+  };
+}
+
+function fakeSlot() {
+  return {
+    root: fakeElement(),
+    button: fakeElement(),
+    profileButton: fakeElement(),
+    fallback: fakeElement(),
+    image: fakeElement(),
+    name: fakeElement(),
+    affiliation: fakeElement(),
+    office: fakeElement(),
+    summary: fakeElement(),
+    interactionHint: fakeElement(),
+    outcome: fakeElement(),
+    outcomeValue: fakeElement(),
+    outcomeMessage: fakeElement(),
+  };
+}
+
+const firstCandidate = {
+  id: "primeira",
+  actionMode: "vote",
+  accessibleName: "Escolher Primeira Pessoa",
+  profileAccessibleName: "Conhecer Primeira Pessoa",
+  initials: "PP",
+  photo: "/portraits/001.jpg",
+  photoAlt: "Foto de Primeira Pessoa",
+  name: "Primeira Pessoa",
+  affiliation: "Partido A",
+  office: "Cargo A",
+  summary: "Resumo A",
+  interactionHint: "",
+  profileEnabled: true,
+  locked: true,
+  busy: true,
+  classes: ["is-selected"],
+  outcome: null,
+};
+
+test("candidate patches keep the four slot nodes and controls alive", () => {
+  const slots = Array.from({ length: 4 }, fakeSlot);
+  const originalRoots = slots.map(({ root }) => root);
+  const originalButtons = slots.map(({ button }) => button);
+  const originalProfileButtons = slots.map(({ profileButton }) => profileButton);
+
+  slots.forEach((slot, index) => patchCandidateSlot(slot, { ...firstCandidate, id: `primeira-${index}` }));
+  slots.forEach((slot, index) => patchCandidateSlot(slot, {
+    ...firstCandidate,
+    id: `nova-${index}`,
+    accessibleName: `Escolher Nova Pessoa ${index + 1}`,
+    profileAccessibleName: `Conhecer Nova Pessoa ${index + 1}`,
+    name: `Nova Pessoa ${index + 1}`,
+    locked: false,
+    busy: false,
+    classes: [],
+    outcome: { tone: "gain", value: "+45 Elo", message: "Subiu de patente" },
+  }));
+
+  assert.deepEqual(slots.map(({ root }) => root), originalRoots);
+  assert.deepEqual(slots.map(({ button }) => button), originalButtons);
+  assert.deepEqual(slots.map(({ profileButton }) => profileButton), originalProfileButtons);
+  assert.deepEqual(slots.map(({ button }) => button.dataset.vote), ["nova-0", "nova-1", "nova-2", "nova-3"]);
+  assert.deepEqual(slots.map(({ button }) => button.dataset.predict), [undefined, undefined, undefined, undefined]);
+  assert.deepEqual(slots.map(({ profileButton }) => profileButton.dataset.profile), ["nova-0", "nova-1", "nova-2", "nova-3"]);
+  assert.equal(slots[0].button.getAttribute("aria-disabled"), "false");
+  assert.equal(slots[0].button.getAttribute("aria-label"), "Escolher Nova Pessoa 1");
+  assert.equal(slots[0].profileButton.getAttribute("aria-label"), "Conhecer Nova Pessoa 1");
+  assert.equal(slots[0].profileButton.getAttribute("aria-disabled"), "false");
+  assert.equal(slots[0].name.textContent, "Nova Pessoa 1");
+  assert.equal(slots[0].outcome.hidden, false);
+  assert.equal(slots[0].outcome.classList.contains("gain"), true);
+});
+
+test("busy cards remain focusable DOM controls while their vote is unavailable", () => {
+  const slot = fakeSlot();
+  patchCandidateSlot(slot, firstCandidate);
+
+  assert.equal(slot.button.getAttribute("aria-disabled"), "true");
+  assert.equal(slot.button.getAttribute("aria-busy"), "true");
+  assert.equal(slot.button.getAttribute("disabled"), null);
+  assert.equal(slot.button.classList.contains("is-selected"), true);
+  assert.equal(slot.profileButton.getAttribute("aria-disabled"), "true");
+});
+
+test("persistent cards switch between preference, prediction, and sealed states", () => {
+  const slot = fakeSlot();
+  const originalButton = slot.button;
+
+  patchCandidateSlot(slot, firstCandidate);
+  assert.equal(slot.button.dataset.vote, "primeira");
+  assert.equal(slot.button.dataset.predict, undefined);
+
+  patchCandidateSlot(slot, {
+    ...firstCandidate,
+    actionMode: "prediction",
+    accessibleName: "Primeira Pessoa, carta básica. Toque para apostar.",
+    interactionHint: "Toque para apostar",
+    profileEnabled: false,
+  });
+  assert.equal(slot.button, originalButton);
+  assert.equal(slot.button.dataset.vote, undefined);
+  assert.equal(slot.button.dataset.predict, "primeira");
+  assert.equal(slot.interactionHint.textContent, "Toque para apostar");
+  assert.equal(slot.interactionHint.hidden, false);
+  assert.equal(slot.profileButton.hidden, true);
+  assert.equal(slot.profileButton.dataset.profile, undefined);
+
+  patchCandidateSlot(slot, null);
+  assert.equal(slot.button, originalButton);
+  assert.equal(slot.button.dataset.vote, undefined);
+  assert.equal(slot.button.dataset.predict, undefined);
+  assert.equal(slot.button.getAttribute("aria-label"), null);
+  assert.equal(slot.root.hidden, true);
+});
+
+test("pending candidate actions stay unavailable without being announced as busy", () => {
+  const slot = fakeSlot();
+  patchCandidateSlot(slot, { ...firstCandidate, locked: true, busy: false });
+
+  assert.equal(slot.button.getAttribute("aria-disabled"), "true");
+  assert.equal(slot.button.getAttribute("aria-busy"), null);
+  assert.equal(slot.button.getAttribute("disabled"), null);
+  assert.equal(slot.profileButton.getAttribute("aria-disabled"), "true");
+});
+
+test("an empty persistent slot removes both candidate actions", () => {
+  const slot = fakeSlot();
+  patchCandidateSlot(slot, firstCandidate);
+  patchCandidateSlot(slot, null);
+
+  assert.equal(slot.root.hidden, true);
+  assert.equal(slot.button.dataset.vote, undefined);
+  assert.equal(slot.button.dataset.predict, undefined);
+  assert.equal(slot.button.getAttribute("aria-disabled"), "true");
+  assert.equal(slot.profileButton.dataset.profile, undefined);
+  assert.equal(slot.profileButton.getAttribute("aria-disabled"), "true");
+});
+
+test("a failed portrait stays hidden until a different source loads", () => {
+  const slot = fakeSlot();
+  patchCandidateSlot(slot, firstCandidate);
+  assert.equal(slot.image.hidden, true);
+
+  markPortraitLoaded(slot.image);
+  assert.equal(slot.image.hidden, false);
+  markPortraitFailed(slot.image);
+  assert.equal(slot.image.hidden, true);
+  assert.equal(slot.image.dataset.failedSrc, firstCandidate.photo);
+
+  patchCandidateSlot(slot, { ...firstCandidate, name: "Mesmo retrato, novo render" });
+  assert.equal(slot.image.hidden, true);
+  assert.equal(slot.image.dataset.failedSrc, firstCandidate.photo);
+
+  patchCandidateSlot(slot, { ...firstCandidate, photo: "/portraits/002.jpg", photoAlt: "Foto nova" });
+  assert.equal(slot.image.hidden, true);
+  assert.equal(slot.image.dataset.failedSrc, undefined);
+  markPortraitLoaded(slot.image);
+  assert.equal(slot.image.hidden, false);
+});
+
+test("screen changes hide persistent panels without replacing them", () => {
+  const panels = { topics: fakeElement(), duel: fakeElement(), ranking: fakeElement() };
+  const identities = { ...panels };
+
+  showPersistentPanel(panels, "duel");
+  showPersistentPanel(panels, "ranking");
+
+  assert.equal(panels.topics, identities.topics);
+  assert.equal(panels.duel, identities.duel);
+  assert.equal(panels.ranking, identities.ranking);
+  assert.equal(panels.ranking.hidden, false);
+  assert.equal(panels.duel.hidden, true);
+  assert.equal(panels.duel.getAttribute("aria-hidden"), "true");
+});

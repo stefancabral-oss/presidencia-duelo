@@ -14,6 +14,7 @@ import { isCurrentVoteIdentity, resetPendingVoteForIdentityChange, revokeSession
 import { VOTE_ACTIONS, VOTE_PHASES, voteFailureState, voteRecoveryControl } from "./vote-flow.js";
 import { confirmedVoteData } from "./vote-response.js";
 import { formatAggregateCopy, PREDICTION_REVEAL_COPY, PUBLIC_RANKING_COPY, WITHHELD_COPY } from "./aggregate-copy.js";
+import { markPortraitFailed, markPortraitLoaded, patchCandidateSlot, showPersistentPanel } from "./persistent-dom.js";
 
 const app = document.querySelector("#app");
 const sound = createSoundController();
@@ -54,6 +55,7 @@ const state = {
   authOpen: false,
   authBusy: false,
   authError: "",
+  authErrorKind: "",
   collection: [],
   result: "",
   // "erro" faz a mensagem ser grafada como falha. Sem isso, "seu voto não foi
@@ -134,6 +136,9 @@ function installCapabilities(capabilities) {
   applyExpiredAggregateCapabilities(previous);
   scheduleAggregateCapabilityExpiry();
 }
+let refs;
+let profileReturnTarget = null;
+let profileReturnCandidateId = "";
 
 function clearVoteTimers() {
   clearTimeout(resultTimer);
@@ -235,47 +240,66 @@ function portrait(candidate) {
   </div>`;
 }
 
-function card(candidate, { mode = "vote" } = {}) {
-  const prediction = mode === "prediction";
-  const outcome = prediction ? null : state.roundOutcome?.outcomes.find(({ id }) => id === candidate.id);
-  const outcomeClass = outcome ? ` is-round-${outcome.winner ? "winner" : "loser"}` : "";
-  const delta = Number(outcome?.delta);
-  const outcomeStamp = outcome ? `<span class="card-outcome ${outcome.tone}" aria-live="polite"><b>${Number.isFinite(delta) ? `${delta > 0 ? "+" : ""}${delta} Elo` : outcome.winner ? "Escolhida" : "Não foi desta vez"}</b><small>${escapeHtml(outcome.shortMessage)}</small></span>` : "";
-  const locked = prediction
-    ? state.predictionBusy || Boolean(state.pendingPredictionAction)
-    : state.busy || Boolean(state.pendingWinnerId);
-  const dataAttribute = prediction ? "data-predict" : "data-vote";
-  const ariaInstruction = prediction
-    ? PREDICTION_REVEAL_COPY.cardAria
-    : "Toque para escolher; segure para saber quem é.";
-  const interactionHint = prediction
-    ? `<small class="candidate-profile-hint">${PREDICTION_REVEAL_COPY.cardHint}</small>`
-    : '<small class="candidate-profile-hint"><span aria-hidden="true">ⓘ</span> Segure para conhecer</small>';
-  const activelySending = prediction ? state.predictionBusy : state.busy;
-  return `<div class="candidate-wrap">
-    <button class="candidate-card basic-card${state.selectedId === candidate.id ? " is-selected" : ""}${outcomeClass}" type="button" ${dataAttribute}="${escapeHtml(candidate.id)}" ${locked ? `disabled${activelySending ? ' aria-busy="true"' : ""}` : ""} aria-label="${escapeHtml(candidate.name)}, carta básica. ${ariaInstruction}">
+function candidateSlot(index) {
+  return `<article class="candidate-wrap" data-candidate-slot="${index}" hidden>
+    <button class="candidate-card basic-card vote-target" type="button" aria-disabled="true">
       <span class="card-material" aria-hidden="true"></span>
       <span class="card-facets" aria-hidden="true"></span>
       <span class="card-brand" aria-hidden="true">${brandSymbol("card-brand-symbol")}<b>PoliMatch</b></span>
-      ${portrait(candidate)}
+      <span class="portrait"><span class="portrait-fallback"></span><img alt="" hidden></span>
       <span class="candidate-copy">
-        <span class="candidate-title"><strong class="candidate-name">${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong><span class="card-rarity" aria-hidden="true">●</span></span>
-        <span class="candidate-affiliation">${escapeHtml(candidateAffiliation(candidate))}</span>
-        <span class="candidate-office">${escapeHtml(candidate.office || candidateRole(candidate))}</span>
-        <small class="candidate-summary">${escapeHtml(candidateCardSummary(candidate))}</small>
-        ${interactionHint}
-        ${outcomeStamp}
+        <span class="candidate-title"><strong class="candidate-name"></strong><span class="card-rarity" aria-hidden="true">●</span></span>
+        <span class="candidate-affiliation"></span>
+        <span class="candidate-office"></span>
+        <small class="candidate-summary"></small>
+        <small class="candidate-profile-hint" hidden></small>
+        <span class="card-outcome" hidden><b></b><small></small></span>
       </span>
       <span class="card-corners" aria-hidden="true"></span>
     </button>
-  </div>`;
+    <button class="profile-trigger" type="button" aria-disabled="true" hidden><span aria-hidden="true">ⓘ</span><span>Conhecer perfil</span></button>
+  </article>`;
 }
 
-function header() {
-  const soundLabel = state.soundEnabled ? "Desativar efeitos sonoros" : "Ativar efeitos sonoros";
-  const accountLabel = state.account?.displayName ? `Olá, ${escapeHtml(state.account.displayName.split(" ")[0])}` : "Salvar jogo";
-  const avatar = safeUrl(state.account?.avatarUrl) ? `<img src="${escapeHtml(state.account.avatarUrl)}" alt="" referrerpolicy="no-referrer">` : brandSymbol("account-symbol");
-  return `<header class="topbar"><p class="brand">${brandSymbol()}<span>PoliMatch</span></p><div class="topbar-actions"><span class="edition">Malaquita 2026</span><button class="account-button${state.account ? " is-signed-in" : ""}" id="account-button" type="button" aria-label="${state.account ? "Abrir sua conta" : "Salvar seu jogo com Google"}">${avatar}<span>${accountLabel}</span></button><button class="sound-toggle${state.soundEnabled ? " is-on" : ""}" id="sound-toggle" type="button" aria-label="${soundLabel}" aria-pressed="${state.soundEnabled}"><span aria-hidden="true">${state.soundEnabled ? "♪" : "♪̸"}</span></button></div></header>`;
+function headerMarkup() {
+  return `<header class="topbar"><p class="brand">${brandSymbol()}<span>PoliMatch</span></p><div class="topbar-actions"><span class="edition">Malaquita 2026</span><button class="account-button" id="account-button" type="button" aria-label="Salvar seu jogo com Google"><span class="account-avatar"><img class="account-photo" alt="" referrerpolicy="no-referrer" hidden>${brandSymbol("account-symbol")}</span><span data-account-label>Salvar jogo</span></button><button class="sound-toggle" id="sound-toggle" type="button"><span aria-hidden="true"></span></button></div></header>`;
+}
+
+function candidateSlotModel(candidate, { actionMode = "vote" } = {}) {
+  const prediction = actionMode === "prediction";
+  const outcome = prediction ? null : state.roundOutcome?.outcomes.find(({ id }) => id === candidate.id);
+  const delta = Number(outcome?.delta);
+  const locked = prediction
+    ? state.predictionBusy || Boolean(state.pendingPredictionAction)
+    : state.busy || Boolean(state.pendingWinnerId);
+  return {
+    id: candidate.id,
+    actionMode,
+    accessibleName: prediction
+      ? `${candidate.name}, carta básica. Toque para apostar.`
+      : `Escolher ${candidate.name}`,
+    profileAccessibleName: `Conhecer ${candidate.name}`,
+    initials: initials(candidate.name),
+    photo: candidatePhoto(candidate),
+    photoAlt: `Foto de ${candidate.name}`,
+    name: candidate.displayName || shortName(candidate.name),
+    affiliation: candidateAffiliation(candidate),
+    office: candidate.office || candidateRole(candidate),
+    summary: candidateCardSummary(candidate),
+    interactionHint: prediction ? "Toque para apostar" : "",
+    profileEnabled: !prediction,
+    locked,
+    busy: prediction ? state.predictionBusy : state.busy,
+    classes: [
+      state.selectedId === candidate.id ? "is-selected" : "",
+      outcome ? `is-round-${outcome.winner ? "winner" : "loser"}` : "",
+    ].filter(Boolean),
+    outcome: outcome ? {
+      tone: outcome.tone,
+      value: Number.isFinite(delta) ? `${delta > 0 ? "+" : ""}${delta} Elo` : outcome.winner ? "Escolhida" : "Não foi desta vez",
+      message: outcome.shortMessage,
+    } : null,
+  };
 }
 
 function authOverlay() {
@@ -293,7 +317,9 @@ function authOverlay() {
       ${signedIn
         ? `<button class="auth-secondary" id="logout" type="button" ${state.authBusy ? "disabled" : ""}>Sair desta conta</button>`
         : configured
-          ? `<div class="google-button-wrap${state.authBusy ? " is-busy" : ""}" id="google-button"><span>${state.authBusy ? "Confirmando…" : "Carregando Google…"}</span></div>`
+          ? state.authErrorKind === "provider"
+            ? '<button class="auth-secondary" id="retry-google-provider" type="button">Tentar carregar o Google novamente</button>'
+            : `<div class="google-button-wrap${state.authBusy ? " is-busy" : ""}" id="google-button"><span>${state.authBusy ? "Confirmando…" : "Carregando Google…"}</span></div>`
           : `<p class="auth-config-note">O acesso com Google está sendo preparado. Você pode continuar jogando normalmente.</p>`}
       <button class="auth-continue" id="continue-anonymous" type="button">${signedIn ? "Voltar ao jogo" : "Continuar jogando"}</button>
       <small>O Google confirma sua identidade; sua senha nunca passa pelo PoliMatch.</small>
@@ -301,7 +327,7 @@ function authOverlay() {
   </div>`;
 }
 
-function topicsScreen() {
+function topicsContent() {
   const approvedCandidates = state.candidates.filter((candidate) => candidatePhoto(candidate));
   const featuredSlots = [47, 28, 1, 63];
   const featuredCandidates = featuredSlots.map((personId) => approvedCandidates.find((candidate) => Number(candidate.personId) === personId)).filter(Boolean);
@@ -323,20 +349,19 @@ function topicsScreen() {
   const aggregateTrust = aggregateAvailable("global-ranking")
     ? `<span>${formatAggregateCopy(PUBLIC_RANKING_COPY.homeCountTemplate, { count: `<strong>${state.globalDuels}</strong>` })}</span>`
     : `<span><strong>${state.personalDuels}</strong> escolhas no seu ranking</span>`;
-  return `<main class="screen home-screen">
-    <section class="home-hero">
+  return `<section class="home-hero">
       <div class="home-hero-copy">
         <p class="eyebrow">Sua opinião em movimento</p>
         <h1>Quem representa o Brasil que você imagina?</h1>
         <p class="lead">Escolha entre pessoas públicas, conheça cada perfil e veja seu ranking ganhar forma — uma decisão por vez.</p>
         <div class="home-actions">
-          <button class="primary home-primary" type="button" id="start-election">${dailyAction}<span aria-hidden="true">→</span></button>
-          <button class="home-ranking-link" type="button" id="open-ranking">${aggregateAvailable("global-ranking") ? PUBLIC_RANKING_COPY.homeCta : "Ver meu ranking"}</button>
-          ${predictionReveal ? `<button class="home-ranking-link" type="button" id="open-prediction-results">${PREDICTION_REVEAL_COPY.homeCta}</button>` : ""}
+          <button class="primary home-primary" type="button" id="start-election"><span data-home-start-label>${dailyAction}</span><span class="home-primary-arrow" aria-hidden="true">→</span></button>
+          <button class="home-ranking-link" type="button" id="open-ranking">Ver ranking do público</button>
+          <button class="home-ranking-link" type="button" id="open-prediction-results">Meu placar de apostas</button>
         </div>
         <div class="home-trust" aria-label="Informações da edição">
-          <span><strong>${dailyAnswered}/${dailyTotal}</strong> rodada do dia</span>
-          ${aggregateTrust}
+          <span><strong data-daily-progress>${dailyAnswered}/${dailyTotal}</strong> rodada do dia</span>
+          <span><strong data-global-duels>${state.globalDuels}</strong> escolhas confirmadas</span>
         </div>
       </div>
       <div class="home-deck" aria-label="Prévia das cartas básicas">
@@ -351,7 +376,7 @@ function topicsScreen() {
         <div><p class="eyebrow">Edição disponível</p><h2 id="home-topic-title">Eleições 2026</h2></div>
         <span class="home-live"><i aria-hidden="true"></i> no ar</span>
       </div>
-      <p>Dez escolhas fixas, iguais para todo mundo, fechadas à meia-noite de São Paulo. Segure qualquer carta para conhecer o perfil antes de escolher.</p>
+      <p>Dez escolhas fixas, iguais para todo mundo, fechadas à meia-noite de São Paulo. Use Conhecer perfil em qualquer carta antes de escolher.</p>
       <button class="home-topic-cta" type="button" id="start-election-secondary"><span>${dailyAction}</span><b aria-hidden="true">→</b></button>
     </section>
 
@@ -368,8 +393,8 @@ function topicsScreen() {
       <p class="eyebrow">Todos no ar</p>
       <div><strong>Políticos + influenciadores</strong><span>${approvedCount} perfis com foto aprovada</span><small>Disponível</small></div>
     </section>
-    ${aggregateAvailable("global-ranking") || aggregateAvailable("prediction-reveal") ? "" : `<p class="legal-note home-legal">${WITHHELD_COPY.comparisonUnavailable} ${WITHHELD_COPY.homeSuffix}</p>`}
-  </main>`;
+    <p class="legal-note home-legal" data-withheld-home>${WITHHELD_COPY.comparisonUnavailable} ${WITHHELD_COPY.homeSuffix}</p>
+  `;
 }
 
 function dailyClosingScreen() {
@@ -389,7 +414,7 @@ function dailyClosingScreen() {
       noun: session.predictionProgress.predicted === 1 ? PREDICTION_REVEAL_COPY.predictionNounOne : PREDICTION_REVEAL_COPY.predictionNounMany,
     })
     : "Suas dez preferências ficaram registradas.";
-  return `<main class="screen daily-close-screen">
+  return `<section class="daily-close-screen">
     <section class="daily-close-hero">
       <p class="eyebrow">Rodada do dia · 10/10</p>
       <span class="daily-close-mark" aria-hidden="true">✓</span>
@@ -408,25 +433,23 @@ function dailyClosingScreen() {
       <button class="secondary" id="daily-open-ranking" type="button">Ver meu ranking</button>
     </div>
     ${predictionReveal ? "" : `<p class="legal-note">${WITHHELD_COPY.comparisonUnavailable} ${WITHHELD_COPY.receiptSuffix}</p>`}
-  </main>`;
+  </section>`;
 }
 
-function dailyPredictionScreen() {
+function dailyPredictionExtras() {
   const pending = state.dailySession.pendingPrediction;
   const failed = Boolean(state.pendingPredictionAction && state.predictionError);
-  const instruction = state.predictionBusy
-    ? PREDICTION_REVEAL_COPY.promptBusy
-    : state.predictionError || PREDICTION_REVEAL_COPY.promptInstruction;
-  return `<main class="screen duel-screen prediction-screen" data-game-mode="daily-prediction" aria-busy="${state.predictionBusy ? "true" : "false"}">
-    <div class="duel-head"><div><p class="eyebrow">${formatAggregateCopy(PREDICTION_REVEAL_COPY.promptEyebrowTemplate, { slot: pending.slot })}</p><h1>${PREDICTION_REVEAL_COPY.promptHeading}</h1></div><span class="progress-pill">${pending.slot}/${state.dailySession.progress.total}</span></div>
-    <section class="prediction-baseline" aria-label="${PREDICTION_REVEAL_COPY.baselineAria}"><strong>${PREDICTION_REVEAL_COPY.baselinePercent}</strong><span>${PREDICTION_REVEAL_COPY.baselineDetail}</span></section>
-    <p class="round-instruction${state.predictionError ? " is-error" : ""}" role="${state.predictionError ? "alert" : "status"}">${escapeHtml(instruction)}</p>
-    ${failed ? `<button class="retry-vote" id="retry-prediction" type="button">${PREDICTION_REVEAL_COPY.retrySame}</button><button class="secondary prediction-refresh" id="refresh-prediction" type="button">${PREDICTION_REVEAL_COPY.refreshState}</button>` : ""}
-    <div class="arena arena-four prediction-arena">${state.round.map((candidate) => card(candidate, { mode: "prediction" })).join("")}</div>
-    <button class="skip-button" type="button" id="skip-prediction" ${state.predictionBusy || state.pendingPredictionAction ? "disabled" : ""}>${PREDICTION_REVEAL_COPY.skip}</button>
-    <p class="daily-fixed-note">${PREDICTION_REVEAL_COPY.fixedPreference}</p>
-    <p class="prediction-sealed">${PREDICTION_REVEAL_COPY.sealed}</p>
-  </main>`;
+  return {
+    eyebrow: `Aposta opcional · slot ${pending.slot}`,
+    heading: "E o Brasil, escolhe quem?",
+    progress: `${pending.slot}/${state.dailySession.progress.total}`,
+    instruction: state.predictionBusy
+      ? "Guardando sua aposta…"
+      : state.predictionError || "Aposte em quem será a pessoa mais escolhida neste slot.",
+    error: Boolean(state.predictionError),
+    extras: `<section class="prediction-baseline" aria-label="Linha de base da aposta"><strong>25%</strong><span>é a chance de acertar ao acaso entre quatro cartas</span></section>${failed ? '<button class="retry-vote" id="retry-prediction" type="button">Tentar a mesma aposta novamente</button><button class="secondary prediction-refresh" id="refresh-prediction" type="button">Atualizar estado</button>' : ""}`,
+    footer: `<button class="skip-button" type="button" id="skip-prediction" ${state.predictionBusy || state.pendingPredictionAction ? "disabled" : ""}>Pular esta aposta</button><p class="daily-fixed-note">Sua preferência já foi confirmada. A aposta é separada, opcional e não altera ranking nem progresso.</p><p class="prediction-sealed">O resultado só aparece depois do fechamento do recorte diário — nunca ao vivo.</p>`,
+  };
 }
 
 function predictionResultLabel(round, byId) {
@@ -447,11 +470,11 @@ function dailyPredictionResultsScreen() {
     return `<main class="screen connection prediction-results-state"><section class="panel"><p class="eyebrow">${PREDICTION_REVEAL_COPY.scoreboardEyebrow}</p><h1>${WITHHELD_COPY.comparisonHeading}</h1><p>${WITHHELD_COPY.comparisonUnavailable}</p><button class="secondary" id="prediction-results-home" type="button">${PREDICTION_REVEAL_COPY.backHome}</button></section></main>`;
   }
   if (state.predictionResultsLoading || state.predictionResultsError) {
-    return `<main class="screen connection prediction-results-state"><section class="panel"><p class="eyebrow">${PREDICTION_REVEAL_COPY.scoreboardEyebrow}</p><h1>${state.predictionResultsError ? PREDICTION_REVEAL_COPY.loadErrorHeading : PREDICTION_REVEAL_COPY.loadingHeading}</h1>${state.predictionResultsError ? `<p role="alert">${escapeHtml(state.predictionResultsError)}</p><button class="primary" id="retry-prediction-results" type="button">${PREDICTION_REVEAL_COPY.retry}</button>` : `<p role="status">${PREDICTION_REVEAL_COPY.loadingDetail}</p>`}<button class="secondary" id="prediction-results-home" type="button">${PREDICTION_REVEAL_COPY.backHome}</button></section></main>`;
+    return `<section class="connection prediction-results-state"><section class="panel"><p class="eyebrow">${PREDICTION_REVEAL_COPY.scoreboardEyebrow}</p><h1>${state.predictionResultsError ? PREDICTION_REVEAL_COPY.loadErrorHeading : PREDICTION_REVEAL_COPY.loadingHeading}</h1>${state.predictionResultsError ? `<p role="alert">${escapeHtml(state.predictionResultsError)}</p><button class="primary" id="retry-prediction-results" type="button">${PREDICTION_REVEAL_COPY.retry}</button>` : `<p role="status">${PREDICTION_REVEAL_COPY.loadingDetail}</p>`}<button class="secondary" id="prediction-results-home" type="button">${PREDICTION_REVEAL_COPY.backHome}</button></section></section>`;
   }
   const results = state.predictionResults;
   if (!results?.sessions.length) {
-    return `<main class="screen prediction-results-screen"><section class="prediction-score-card"><p class="eyebrow">${PREDICTION_REVEAL_COPY.scoreboardEyebrow}</p><h1>${PREDICTION_REVEAL_COPY.noCutHeading}</h1><p>${PREDICTION_REVEAL_COPY.noCutDetail}</p><strong class="prediction-baseline-copy">${formatAggregateCopy(PREDICTION_REVEAL_COPY.baselineLabelTemplate, { percent: PREDICTION_REVEAL_COPY.baselinePercent })}</strong></section><button class="primary" id="prediction-results-home" type="button">${PREDICTION_REVEAL_COPY.backHome}</button></main>`;
+    return `<section class="prediction-results-screen"><section class="prediction-score-card"><p class="eyebrow">${PREDICTION_REVEAL_COPY.scoreboardEyebrow}</p><h1>${PREDICTION_REVEAL_COPY.noCutHeading}</h1><p>${PREDICTION_REVEAL_COPY.noCutDetail}</p><strong class="prediction-baseline-copy">${formatAggregateCopy(PREDICTION_REVEAL_COPY.baselineLabelTemplate, { percent: PREDICTION_REVEAL_COPY.baselinePercent })}</strong></section><button class="primary" id="prediction-results-home" type="button">${PREDICTION_REVEAL_COPY.backHome}</button></section>`;
   }
   const score = results.score;
   const accuracy = score.accuracyPercent === null ? "—" : `${String(score.accuracyPercent).replace(".", ",")}%`;
@@ -481,41 +504,25 @@ function dailyPredictionResultsScreen() {
     );
     return `<details class="prediction-session"${results.sessions[0] === session ? " open" : ""}><summary><span><strong>${escapeHtml(date)}</strong><small>${escapeHtml(session.methodology)}</small></span><b>${completedSessions}</b></summary>${session.sampleNotice ? `<p class="prediction-sample-note">${escapeHtml(session.sampleNotice)}</p>` : ""}<ol>${rounds}</ol></details>`;
   }).join("");
-  return `<main class="screen prediction-results-screen">
+  return `<section class="prediction-results-screen">
     <section class="prediction-score-card"><p class="eyebrow">${PREDICTION_REVEAL_COPY.scoreboardEyebrow}</p><h1>${accuracy}</h1><p><strong>${formatAggregateCopy(PREDICTION_REVEAL_COPY.scoreTemplate, { correct: score.correct, scored: score.scored })}</strong> ${PREDICTION_REVEAL_COPY.scoreDetail}</p><span>${formatAggregateCopy(PREDICTION_REVEAL_COPY.baselineComparisonTemplate, { percent: `<b>${results.baselinePercent}</b>` })}</span><small>${PREDICTION_REVEAL_COPY.neutralResults}</small></section>
     <section class="prediction-history" aria-labelledby="prediction-history-title"><div><p class="eyebrow">${PREDICTION_REVEAL_COPY.historyEyebrow}</p><h2 id="prediction-history-title">${PREDICTION_REVEAL_COPY.historyHeading}</h2></div>${sessions}</section>
     <button class="primary" id="prediction-results-home" type="button">${PREDICTION_REVEAL_COPY.backHome}</button>
     <p class="legal-note">${PREDICTION_REVEAL_COPY.scoreLimit}</p>
-  </main>`;
+  </section>`;
 }
 
-function duelScreen() {
+function dailyLoadingContent() {
   if (state.gameMode === "daily" && (state.dailyLoading || state.dailyLoadError)) {
     const error = state.dailyLoadError
       ? `<p>${escapeHtml(state.dailyLoadError)}</p><button class="primary" id="retry-daily" type="button">Tentar novamente</button><button class="secondary" id="daily-loading-free" type="button">Ir para o modo livre</button>`
-      : '<p role="status">Atualizando o baralho do dia…</p>';
-    return `<main class="screen connection"><section class="panel"><p class="eyebrow">Rodada do dia</p><h1>${state.dailyLoadError ? "Não conseguimos atualizar a rodada." : "Buscando a edição vigente…"}</h1>${error}</section></main>`;
+      : '<p>Atualizando o baralho do dia…</p>';
+    return `<section class="panel"><p class="eyebrow">Rodada do dia</p><h1>${state.dailyLoadError ? "Não conseguimos atualizar a rodada." : "Buscando a edição vigente…"}</h1>${error}</section>`;
   }
-  if (state.gameMode === "daily" && aggregateAvailable("prediction-reveal") && state.dailySession?.pendingPrediction) return dailyPredictionScreen();
-  if (state.gameMode === "daily" && state.dailySession?.status === "completed") return dailyClosingScreen();
-  const recovery = voteRecoveryControl(state);
-  const feedback = state.personalFeedbackMessage
-    ? `<section class="round-feedback" aria-live="polite" aria-atomic="true"><p class="feedback-channel feedback-personal"><strong>No seu ranking</strong><span>${escapeHtml(state.personalFeedbackMessage)}</span></p>${state.globalFeedbackMessage ? `<p class="feedback-channel feedback-global"><strong>${PUBLIC_RANKING_COPY.feedbackChannel}</strong><span>${escapeHtml(state.globalFeedbackMessage)}</span></p>` : ""}</section>`
-    : `<p class="round-instruction${state.result ? " is-result" : ""}${state.resultTone === "erro" ? " is-error" : ""}" role="status">${escapeHtml(state.result || "Toque na sua preferida. Segure para conhecer o perfil.")}</p>`;
-  const daily = state.gameMode === "daily";
-  const progress = daily
-    ? `${state.dailySession.progress.answered + 1}/${state.dailySession.progress.total}`
-    : `${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}`;
-  return `<main class="screen duel-screen" data-game-mode="${daily ? "daily" : "free"}" data-vote-phase="${escapeHtml(state.votePhase)}" aria-busy="${state.busy ? "true" : "false"}">
-    <div class="duel-head"><div><p class="eyebrow">${daily ? "Rodada do dia" : "Modo livre"}</p><h1>Quem você prefere?</h1></div><span class="progress-pill">${progress}</span></div>
-    ${feedback}
-    ${recovery.visible ? `<button class="retry-vote" type="button" id="${recovery.id}" ${recovery.disabled ? "disabled" : ""}>${escapeHtml(recovery.label)}</button>` : ""}
-    <div class="arena arena-four">${state.round.map(card).join("")}</div>
-    ${daily ? '<p class="daily-fixed-note">Este slot é igual para todos e não pode ser trocado.</p>' : `<button class="skip-button" type="button" id="skip-round" ${state.busy || state.pendingWinnerId ? "disabled" : ""}>Nenhuma destas · trocar as quatro</button>`}
-  </main>`;
+  return "";
 }
 
-function rankingScreen() {
+function rankingPresentation() {
   const publicRankingAvailable = aggregateAvailable("global-ranking");
   const personal = !publicRankingAvailable || state.rankingView === "personal";
   const ranking = displayRanking(personal ? state.personalRanking : state.ranking, { personal });
@@ -558,17 +565,31 @@ function rankingScreen() {
   const searchLabel = personal ? "Todos os nomes" : PUBLIC_RANKING_COPY.searchLabel;
   const searchPlaceholder = personal ? "Buscar nome ou partido" : PUBLIC_RANKING_COPY.searchPlaceholder;
   const backToChoices = personal ? "Voltar às escolhas" : PUBLIC_RANKING_COPY.backToChoices;
-  return `<main class="screen ranking-screen">${state.result ? `<div class="result-banner" role="status">${escapeHtml(state.result)}</div>` : ""}<section class="ranking-overview"><header class="ranking-heading"><p class="eyebrow">${topicEyebrow}</p><h1>${publicRankingAvailable ? PUBLIC_RANKING_COPY.heading : "Seu ranking"}</h1><p>${personal ? "O retrato das comparações que você fez." : PUBLIC_RANKING_COPY.description}</p><strong>${totalDuels} ${countNoun}</strong>${trust}</header>${selector}${policy}${publicPulse}${podiumCards ? `<section class="podium" aria-label="${PUBLIC_RANKING_COPY.podiumAria}">${podiumCards}</section>` : ""}</section><section class="ranking-results"><label class="ranking-search"><span>${searchLabel}</span><input id="ranking-search" type="search" value="${escapeHtml(state.rankingQuery)}" placeholder="${searchPlaceholder}" autocomplete="off"></label><section class="panel ranking-list">${rows || `<p class="empty">${empty}</p>`}</section>${reveal}<button class="primary continue-duels" id="continue-duels" type="button">${backToChoices}</button></section></main>`;
+  return { personal, totalDuels, rows, podiumCards, publicPulse, empty, revealCount: !state.rankingQuery && !state.rankingExpanded && filtered.length > visible.length ? filtered.length : 0, publicRankingAvailable, trust, selector, countNoun, topicEyebrow, searchLabel, searchPlaceholder, backToChoices };
 }
 
-function collectionScreen() {
+function rankingMarkup() {
+  return `<header class="ranking-heading"><p class="eyebrow">Eleições 2026</p><h1>Ranking</h1><p data-ranking-description></p><strong data-ranking-total></strong></header>
+    <div class="result-banner" data-ranking-result hidden></div>
+    <div class="segmented" aria-label="Tipo de ranking"><button type="button" data-ranking-view="general">Geral</button><button type="button" data-ranking-view="personal">Seu ranking</button></div>
+    <p class="ranking-trust" data-ranking-integrity>Escolhas confirmadas pelo servidor. <a href="/integridade.html">Como o placar é protegido</a></p>
+    <p class="ranking-policy" data-ranking-policy hidden><strong></strong><span></span></p>
+    <div data-ranking-pulse></div>
+    <section class="podium" data-ranking-podium aria-label="Pódio" hidden></section>
+    <label class="ranking-search"><span>Todos os nomes</span><input id="ranking-search" type="search" placeholder="Buscar nome ou partido" autocomplete="off"></label>
+    <section class="panel ranking-list" data-ranking-list></section>
+    <button class="secondary reveal-ranking" id="reveal-ranking" type="button" hidden></button>
+    <button class="primary continue-duels" id="continue-duels" type="button">Voltar às escolhas</button>`;
+}
+
+function collectionContent() {
   const unique = [...new Map(state.collection.map((person) => [person.id, person])).values()];
   const cards = unique.map((person) => `<div class="ranking-row">${brandSymbol("collection-symbol")}<span>${escapeHtml(shortName(person.name))}<br><small>Chroma possuída</small></span><strong>×${state.collection.filter(({ id }) => id === person.id).length}</strong></div>`).join("");
   const previewCard = ({ person, role, image, variant }) => `<article class="chroma-card featured-chroma-card ${variant}" data-hologram tabindex="0" aria-label="${escapeHtml(person)}, ${escapeHtml(role)}. Mova o dedo ou incline o celular para ver o holograma.">
     <img class="chroma-art" src="${escapeHtml(image)}" alt="${escapeHtml(role)} de ${escapeHtml(person)}" width="530" height="742">
     <span class="holo-foil" aria-hidden="true"></span><span class="holo-pattern" aria-hidden="true"></span><span class="holo-glint" aria-hidden="true"></span>
   </article>`;
-  const batchCard = ({ personId, person, look, lookName, image }) => `<article class="chroma-card approved-chroma-card look-${look.toLowerCase()}" data-hologram tabindex="0" aria-label="${escapeHtml(person)}, carta básica com acabamento ${escapeHtml(lookName)}.">
+  const batchCard = ({ personId, person, look, lookName, image }, index) => `<article class="chroma-card approved-chroma-card look-${look.toLowerCase()}" data-hologram data-batch-card="${index}" tabindex="0" aria-label="${escapeHtml(person)}, carta básica com acabamento ${escapeHtml(lookName)}.">
     <img class="chroma-art approved-chroma-art" src="${escapeHtml(image)}" alt="Carta básica de ${escapeHtml(person)}" width="600" height="750" loading="lazy" decoding="async">
     <span class="approved-chroma-brand" aria-hidden="true">${brandSymbol("approved-brand-symbol")}<b>PoliMatch</b></span>
     <span class="approved-chroma-frame" aria-hidden="true"></span>
@@ -577,63 +598,370 @@ function collectionScreen() {
   </article>`;
   const supreme = chromaPreviews.filter(({ variant }) => variant.startsWith("supreme")).map(previewCard).join("");
   const commemorative = chromaPreviews.filter(({ variant }) => variant.startsWith("commemorative")).map(previewCard).join("");
-  const batchLimit = state.chromaBatchExpanded ? approvedBasicCards.length : 6;
-  const approved = approvedBasicCards.slice(0, batchLimit).map(batchCard).join("");
-  const batchButton = state.chromaBatchExpanded
-    ? `<button class="secondary batch-toggle" id="collapse-chroma-batch" type="button">Mostrar apenas os primeiros</button>`
-    : `<button class="primary batch-toggle" id="expand-chroma-batch" type="button">Ver as 35 cartas básicas</button>`;
-  return `<main class="screen collection-screen"><div><p class="eyebrow">Laboratório de Chromas</p><h1>Coleção</h1><p class="lead">Mova o dedo sobre cada carta. No celular, ative a inclinação para o reflexo acompanhar o aparelho.</p><button class="motion-button" id="enable-chroma-motion" type="button">Ativar efeito ao inclinar</button><p class="motion-status" id="motion-status" role="status"></p></div>
+  const approved = approvedBasicCards.map(batchCard).join("");
+  return `<div><p class="eyebrow">Laboratório de Chromas</p><h1>Coleção</h1><p class="lead">Mova o dedo sobre cada carta. No celular, ative a inclinação para o reflexo acompanhar o aparelho.</p><button class="motion-button" id="enable-chroma-motion" type="button">Ativar efeito ao inclinar</button><p class="motion-status" id="motion-status"></p></div>
     <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Suprema</p><h2>Três estrelas douradas</h2></div><span class="tier-symbol gold-stars">★★★</span></div><p>Ouro em relevo, feixes direcionais e dois desenhos holográficos exclusivos.</p><div class="chroma-gallery">${supreme}</div></section>
     <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Comemorativa</p><h2>Estrela prismática</h2></div><span class="tier-symbol prism-star">★</span></div><p>Cristal óptico, espectro colorido e refração diferente em cada pessoa.</p><div class="chroma-gallery">${commemorative}</div></section>
-    <section class="chroma-tier approved-batch"><div class="chroma-tier-heading"><div><p class="eyebrow">Cartas básicas</p><h2>35 acabamentos aprovados</h2></div><span class="tier-symbol batch-count">35</span></div><p>São as cartas básicas atuais. As futuras Chromas serão colecionáveis e sempre usarão outra fotografia da pessoa.</p><div class="chroma-gallery approved-chroma-gallery">${approved}</div>${batchButton}<p class="batch-disclosure">Imagens tratadas para compor a edição básica do PoliMatch.</p></section>
-    <section><p class="eyebrow">Sua coleção</p><section class="panel ranking-list">${cards || '<p class="empty">Demonstração visual: estas Chromas ainda não foram adicionadas ao seu inventário.</p>'}</section></section>
-  </main>`;
+    <section class="chroma-tier approved-batch"><div class="chroma-tier-heading"><div><p class="eyebrow">Cartas básicas</p><h2>35 acabamentos aprovados</h2></div><span class="tier-symbol batch-count">35</span></div><p>São as cartas básicas atuais. As futuras Chromas serão colecionáveis e sempre usarão outra fotografia da pessoa.</p><div class="chroma-gallery approved-chroma-gallery">${approved}</div><button class="primary batch-toggle" id="expand-chroma-batch" type="button">Ver as 35 cartas básicas</button><button class="secondary batch-toggle" id="collapse-chroma-batch" type="button" hidden>Mostrar apenas os primeiros</button><p class="batch-disclosure">Imagens tratadas para compor a edição básica do PoliMatch.</p></section>
+    <section><p class="eyebrow">Sua coleção</p><section class="panel ranking-list">${cards || '<p class="empty">Demonstração visual: estas Chromas ainda não foram adicionadas ao seu inventário.</p>'}</section></section>`;
 }
 
-function nav() {
-  return `<nav class="bottom-nav" aria-label="Navegação principal">
-    <button class="nav-button ${state.screen === "topics" ? "active" : ""}" data-screen="topics">Início</button>
-    <button class="nav-button ${state.screen === "duel" ? "active" : ""}" data-screen="duel">Duelo</button>
-    <button class="nav-button ${state.screen === "ranking" ? "active" : ""}" data-screen="ranking">Ranking</button>
+function navMarkup() {
+  return `<nav class="bottom-nav" aria-label="Navegação principal" hidden>
+    <button class="nav-button" type="button" data-screen="topics">Início</button>
+    <button class="nav-button" type="button" data-screen="duel">Duelo</button>
+    <button class="nav-button" type="button" data-screen="ranking">Ranking</button>
   </nav>`;
 }
 
-function connectionScreen() {
-  return `<main class="connection"><section class="panel"><p class="eyebrow">Conexão necessária</p><h1>Não conseguimos falar com o servidor.</h1><p>${escapeHtml(state.error)}. Nenhuma escolha será registrada enquanto a conexão não voltar.</p><button class="primary" id="retry" type="button">Tentar novamente</button></section></main>`;
+function connectionContent() {
+  if (!state.error) return "<p>Preparando o duelo…</p>";
+  return `<section class="panel"><p class="eyebrow">Conexão necessária</p><h1>Não conseguimos falar com o servidor.</h1><p>${escapeHtml(state.error)}. Nenhuma escolha será registrada enquanto a conexão não voltar.</p><button class="primary" id="retry" type="button">Tentar novamente</button></section>`;
 }
 
-function coachOverlay() {
-  if (!state.showCoach) return "";
+function duelMarkup() {
+  return `<div data-duel-main>
+      <div class="duel-head"><div><p class="eyebrow" data-duel-eyebrow>Escolha uma entre quatro</p><h1 data-duel-heading>Quem você prefere?</h1></div><span class="progress-pill"></span></div>
+      <section class="prediction-baseline" data-prediction-baseline aria-label="Linha de base da aposta" hidden><strong>25%</strong><span>é a chance de acertar ao acaso entre quatro cartas</span></section>
+      <p class="round-instruction">Escolha uma pessoa ou use Conhecer perfil antes de decidir.</p>
+      <section class="round-feedback" data-feedback-channels aria-label="Resultado da escolha" hidden>
+        <p class="feedback-channel feedback-personal"><strong>No seu ranking</strong><span data-personal-feedback></span></p>
+        <p class="feedback-channel feedback-global" data-global-feedback-band hidden><strong>No placar do público</strong><span data-global-feedback></span></p>
+      </section>
+      <button class="retry-vote" type="button" id="retry-vote" hidden>Tentar de novo</button>
+      <button class="retry-vote" type="button" id="retry-prediction" hidden>Tentar a mesma aposta novamente</button>
+      <button class="secondary prediction-refresh" id="refresh-prediction" type="button" hidden>Atualizar estado</button>
+      <div class="arena arena-four" data-duel-arena>${Array.from({ length: 4 }, (_, index) => candidateSlot(index)).join("")}</div>
+      <button class="skip-button" type="button" id="skip-round" data-free-skip>Nenhuma destas · trocar as quatro</button>
+      <button class="skip-button" type="button" id="skip-prediction" data-prediction-skip hidden>Pular esta aposta</button>
+      <p class="daily-fixed-note" data-daily-note hidden></p>
+      <p class="prediction-sealed" data-prediction-sealed hidden>O resultado só aparece depois do fechamento do recorte diário — nunca ao vivo.</p>
+    </div>
+    <section data-duel-aux hidden></section>`;
+}
+
+function appMarkup() {
+  return `<div class="app-shell" data-screen="connection">
+      ${headerMarkup()}
+      <main class="connection" data-panel="connection"><p>Preparando o duelo…</p></main>
+      <main class="screen home-screen" data-panel="topics" hidden></main>
+      <main class="screen duel-screen" data-panel="duel" hidden>${duelMarkup()}</main>
+      <main class="screen ranking-screen" data-panel="ranking" hidden>${rankingMarkup()}</main>
+      <main class="screen collection-screen" data-panel="collection" hidden>${collectionContent()}</main>
+      <main class="screen prediction-results-panel" data-panel="prediction-results" hidden></main>
+      ${navMarkup()}
+    </div>
+    <dialog id="modal"></dialog>
+    <dialog class="coach-dialog" id="coach-dialog" aria-labelledby="coach-title">
+      <section class="coach-card"><span class="coach-icon" aria-hidden="true">${brandSymbol("coach-symbol")}</span><p class="eyebrow">Primeira rodada</p><h2 id="coach-title">Escolha uma entre quatro.</h2><p data-coach-description></p><button class="primary" id="dismiss-coach" type="button">Começar rodada</button></section>
+    </dialog>
+    <div data-overlay-root></div>
+    <p class="app-live-region visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>`;
+}
+
+function captureCandidateSlot(root) {
+  const button = root.querySelector(".candidate-card");
+  const outcome = root.querySelector(".card-outcome");
+  return {
+    root,
+    button,
+    profileButton: root.querySelector(".profile-trigger"),
+    fallback: root.querySelector(".portrait-fallback"),
+    image: root.querySelector(".portrait img"),
+    name: root.querySelector(".candidate-name"),
+    affiliation: root.querySelector(".candidate-affiliation"),
+    office: root.querySelector(".candidate-office"),
+    summary: root.querySelector(".candidate-summary"),
+    interactionHint: root.querySelector(".candidate-profile-hint"),
+    outcome,
+    outcomeValue: outcome.querySelector("b"),
+    outcomeMessage: outcome.querySelector("small"),
+  };
+}
+
+function captureRefs() {
+  const panels = Object.fromEntries([...app.querySelectorAll("[data-panel]")].map((panel) => [panel.dataset.panel, panel]));
+  return {
+    shell: app.querySelector(".app-shell"),
+    panels,
+    topbar: app.querySelector(".topbar"),
+    accountButton: app.querySelector("#account-button"),
+    accountLabel: app.querySelector("[data-account-label]"),
+    accountPhoto: app.querySelector(".account-photo"),
+    accountFallback: app.querySelector(".account-symbol"),
+    soundToggle: app.querySelector("#sound-toggle"),
+    nav: app.querySelector(".bottom-nav"),
+    navButtons: [...app.querySelectorAll("[data-screen]")],
+    duelMain: app.querySelector("[data-duel-main]"),
+    duelAux: app.querySelector("[data-duel-aux]"),
+    duelEyebrow: app.querySelector("[data-duel-eyebrow]"),
+    duelHeading: app.querySelector("[data-duel-heading]"),
+    duelArena: app.querySelector("[data-duel-arena]"),
+    instruction: app.querySelector(".round-instruction"),
+    feedbackChannels: app.querySelector("[data-feedback-channels]"),
+    personalFeedback: app.querySelector("[data-personal-feedback]"),
+    globalFeedbackBand: app.querySelector("[data-global-feedback-band]"),
+    globalFeedback: app.querySelector("[data-global-feedback]"),
+    retryVote: app.querySelector("#retry-vote"),
+    retryPrediction: app.querySelector("#retry-prediction"),
+    refreshPrediction: app.querySelector("#refresh-prediction"),
+    predictionBaseline: app.querySelector("[data-prediction-baseline]"),
+    progress: app.querySelector(".progress-pill"),
+    freeSkip: app.querySelector("[data-free-skip]"),
+    predictionSkip: app.querySelector("[data-prediction-skip]"),
+    dailyNote: app.querySelector("[data-daily-note]"),
+    predictionSealed: app.querySelector("[data-prediction-sealed]"),
+    slots: [...app.querySelectorAll("[data-candidate-slot]")].map(captureCandidateSlot),
+    rankingDescription: app.querySelector("[data-ranking-description]"),
+    rankingTotal: app.querySelector("[data-ranking-total]"),
+    rankingResult: app.querySelector("[data-ranking-result]"),
+    rankingIntegrity: app.querySelector("[data-ranking-integrity]"),
+    rankingPolicy: app.querySelector("[data-ranking-policy]"),
+    rankingPulse: app.querySelector("[data-ranking-pulse]"),
+    rankingPodium: app.querySelector("[data-ranking-podium]"),
+    rankingList: app.querySelector("[data-ranking-list]"),
+    rankingSearch: app.querySelector("#ranking-search"),
+    revealRanking: app.querySelector("#reveal-ranking"),
+    modal: app.querySelector("#modal"),
+    coachDialog: app.querySelector("#coach-dialog"),
+    coachStart: app.querySelector("#dismiss-coach"),
+    coachDescription: app.querySelector("[data-coach-description]"),
+    overlays: app.querySelector("[data-overlay-root]"),
+    liveRegion: app.querySelector(".app-live-region"),
+    connectionMarkup: "<p>Preparando o duelo…</p>",
+    overlayMarkup: "",
+    topicsMounted: false,
+    duelAuxMarkup: "",
+    predictionResultsMarkup: "",
+  };
+}
+
+function renderHeader() {
+  const accountName = state.account?.displayName?.split(" ")[0];
+  const avatarUrl = safeUrl(state.account?.avatarUrl);
+  refs.accountButton.classList.toggle("is-signed-in", Boolean(state.account));
+  refs.accountButton.setAttribute("aria-label", state.account ? "Abrir sua conta" : "Salvar seu jogo com Google");
+  refs.accountLabel.textContent = accountName ? `Olá, ${accountName}` : "Salvar jogo";
+  refs.accountPhoto.hidden = !avatarUrl;
+  refs.accountFallback.hidden = Boolean(avatarUrl);
+  if (avatarUrl) refs.accountPhoto.setAttribute("src", avatarUrl);
+  else refs.accountPhoto.removeAttribute("src");
+
+  const soundLabel = state.soundEnabled ? "Desativar efeitos sonoros" : "Ativar efeitos sonoros";
+  refs.soundToggle.classList.toggle("is-on", state.soundEnabled);
+  refs.soundToggle.setAttribute("aria-label", soundLabel);
+  refs.soundToggle.setAttribute("aria-pressed", String(state.soundEnabled));
+  refs.soundToggle.querySelector("span").textContent = state.soundEnabled ? "♪" : "♪̸";
+}
+
+function renderConnection() {
+  const markup = connectionContent();
+  if (markup === refs.connectionMarkup) return;
+  refs.panels.connection.innerHTML = markup;
+  refs.connectionMarkup = markup;
+}
+
+function renderTopics() {
+  if (!refs.topicsMounted) {
+    refs.panels.topics.innerHTML = topicsContent();
+    refs.topicsMounted = true;
+  }
+  const dailyAnswered = Number(state.dailySession?.progress?.answered) || 0;
+  const dailyTotal = Number(state.dailySession?.progress?.total) || 10;
+  const dailyComplete = state.dailySession?.status === "completed";
+  const dailyAction = aggregateAvailable("prediction-reveal") && state.dailySession?.pendingPrediction
+    ? `Responder aposta · ${state.dailySession.pendingPrediction.slot}/${dailyTotal}`
+    : dailyComplete ? "Ver fechamento de hoje" : dailyAnswered ? `Continuar · ${dailyAnswered}/${dailyTotal}` : "Jogar rodada do dia";
+  refs.panels.topics.querySelector("[data-home-start-label]").textContent = dailyAction;
+  refs.panels.topics.querySelector("#start-election-secondary span").textContent = dailyAction;
+  refs.panels.topics.querySelector("[data-daily-progress]").textContent = `${dailyAnswered}/${dailyTotal}`;
+  const publicRanking = aggregateAvailable("global-ranking");
+  const prediction = aggregateAvailable("prediction-reveal");
+  refs.panels.topics.querySelector("#open-ranking").textContent = publicRanking ? PUBLIC_RANKING_COPY.homeCta : "Ver meu ranking";
+  refs.panels.topics.querySelector("#open-prediction-results").hidden = !prediction;
+  refs.panels.topics.querySelector("#open-prediction-results").textContent = PREDICTION_REVEAL_COPY.homeCta;
+  refs.panels.topics.querySelector("[data-global-duels]").parentElement.innerHTML = publicRanking
+    ? formatAggregateCopy(PUBLIC_RANKING_COPY.homeCountTemplate, { count: `<strong data-global-duels>${state.globalDuels}</strong>` })
+    : `<strong data-global-duels>${state.personalDuels}</strong> escolhas no seu ranking`;
+  refs.panels.topics.querySelector("[data-withheld-home]").hidden = publicRanking || prediction;
+}
+
+function renderDuel() {
+  const daily = state.gameMode === "daily";
+  const loading = daily && (state.dailyLoading || state.dailyLoadError);
+  const prediction = daily && !loading && aggregateAvailable("prediction-reveal") && Boolean(state.dailySession?.pendingPrediction);
+  const completed = daily && !loading && !prediction && state.dailySession?.status === "completed";
+  const auxiliary = loading || completed;
+
+  refs.duelMain.hidden = auxiliary;
+  refs.duelAux.hidden = !auxiliary;
+  refs.panels.duel.classList.toggle("prediction-screen", prediction);
+  refs.panels.duel.dataset.gameMode = prediction ? "daily-prediction" : daily ? "daily" : "free";
+  refs.panels.duel.dataset.votePhase = state.votePhase;
+  refs.panels.duel.setAttribute("aria-busy", String(prediction ? state.predictionBusy : state.busy));
+
+  if (auxiliary) {
+    const markup = loading ? dailyLoadingContent() : dailyClosingScreen();
+    if (markup !== refs.duelAuxMarkup) {
+      refs.duelAux.innerHTML = markup;
+      refs.duelAuxMarkup = markup;
+    }
+    refs.slots.forEach((slot) => patchCandidateSlot(slot, null));
+    return;
+  }
+
+  refs.duelAuxMarkup = "";
+  if (refs.duelAux.textContent) refs.duelAux.replaceChildren();
+  const recovery = voteRecoveryControl(state);
+  const predictionPresentation = prediction ? dailyPredictionExtras() : null;
+  refs.duelEyebrow.textContent = predictionPresentation?.eyebrow || (daily ? "Rodada do dia" : "Modo livre");
+  refs.duelHeading.textContent = predictionPresentation?.heading || "Quem você prefere?";
+  refs.progress.textContent = predictionPresentation?.progress || (daily
+    ? `${state.dailySession.progress.answered + 1}/${state.dailySession.progress.total}`
+    : `${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}`);
+  refs.instruction.textContent = predictionPresentation?.instruction
+    || state.result
+    || "Escolha uma pessoa ou use Conhecer perfil antes de decidir.";
+  refs.instruction.classList.toggle("is-result", !prediction && Boolean(state.result));
+  refs.instruction.classList.toggle("is-error", predictionPresentation?.error || state.resultTone === "erro");
+  refs.instruction.hidden = !prediction && Boolean(state.personalFeedbackMessage);
+  refs.feedbackChannels.hidden = prediction || !state.personalFeedbackMessage;
+  refs.personalFeedback.textContent = state.personalFeedbackMessage;
+  refs.globalFeedbackBand.hidden = !state.globalFeedbackMessage;
+  refs.globalFeedback.textContent = state.globalFeedbackMessage;
+  refs.retryVote.hidden = prediction || !recovery.visible;
+  refs.retryVote.disabled = recovery.disabled;
+  refs.retryVote.id = recovery.visible ? recovery.id : "retry-vote";
+  refs.retryVote.textContent = recovery.label || "Tentar novamente";
+  const predictionFailed = prediction && Boolean(state.pendingPredictionAction && state.predictionError);
+  refs.retryPrediction.hidden = !predictionFailed;
+  refs.refreshPrediction.hidden = !predictionFailed;
+  refs.predictionBaseline.hidden = !prediction;
+  refs.duelArena.classList.toggle("prediction-arena", prediction);
+  refs.slots.forEach((slot, index) => patchCandidateSlot(
+    slot,
+    state.round[index] ? candidateSlotModel(state.round[index], { actionMode: prediction ? "prediction" : "vote" }) : null,
+  ));
+  const free = !daily && !prediction;
+  refs.freeSkip.hidden = !free;
+  if (free) refs.freeSkip.id = "skip-round";
+  else refs.freeSkip.removeAttribute("id");
+  refs.freeSkip.disabled = state.busy || Boolean(state.pendingWinnerId);
+  refs.predictionSkip.hidden = !prediction;
+  refs.predictionSkip.disabled = state.predictionBusy || Boolean(state.pendingPredictionAction);
+  refs.dailyNote.hidden = !daily;
+  refs.dailyNote.textContent = prediction
+    ? "Sua preferência já foi confirmada. A aposta é separada, opcional e não altera ranking nem progresso."
+    : "Este slot é igual para todos e não pode ser trocado.";
+  refs.predictionSealed.hidden = !prediction;
+}
+
+function renderPredictionResults() {
+  const markup = dailyPredictionResultsScreen();
+  if (markup === refs.predictionResultsMarkup) return;
+  refs.panels["prediction-results"].innerHTML = markup;
+  refs.predictionResultsMarkup = markup;
+}
+
+function renderRanking() {
+  const presentation = rankingPresentation();
+  refs.panels.ranking.querySelector("h1").textContent = presentation.publicRankingAvailable ? PUBLIC_RANKING_COPY.heading : "Seu ranking";
+  const segmented = refs.panels.ranking.querySelector(".segmented");
+  segmented.hidden = !presentation.publicRankingAvailable;
+  segmented.querySelector('[data-ranking-view="general"]').hidden = !presentation.publicRankingAvailable;
+  refs.rankingDescription.textContent = presentation.personal ? "O retrato das comparações que você fez." : PUBLIC_RANKING_COPY.description;
+  refs.rankingTotal.textContent = `${presentation.totalDuels} ${presentation.countNoun}`;
+  refs.rankingResult.hidden = !state.result;
+  refs.rankingResult.textContent = state.result;
+  refs.rankingIntegrity.hidden = presentation.publicRankingAvailable && presentation.personal;
+  refs.rankingIntegrity.innerHTML = presentation.publicRankingAvailable ? `${PUBLIC_RANKING_COPY.trust} <a href="/integridade.html">${PUBLIC_RANKING_COPY.integrityLink}</a>` : `${WITHHELD_COPY.comparisonUnavailable} ${WITHHELD_COPY.rankingSuffix}`;
+  const policy = state.personalRankingPolicy;
+  refs.rankingPolicy.hidden = !presentation.personal || !policy?.label;
+  refs.rankingPolicy.querySelector("strong").textContent = policy?.label ? `Ordenado por ${policy.label}` : "";
+  refs.rankingPolicy.querySelector("span").textContent = policy?.explanation || "";
+  app.querySelectorAll("[data-ranking-view]").forEach((button) => button.classList.toggle("active", button.dataset.rankingView === state.rankingView));
+  refs.rankingPulse.innerHTML = presentation.publicPulse;
+  refs.rankingPodium.hidden = !presentation.podiumCards;
+  refs.rankingPodium.innerHTML = presentation.podiumCards;
+  if (refs.rankingSearch.value !== state.rankingQuery) refs.rankingSearch.value = state.rankingQuery;
+  refs.rankingList.innerHTML = presentation.rows || `<p class="empty">${presentation.empty}</p>`;
+  refs.revealRanking.hidden = !presentation.revealCount;
+  refs.revealRanking.textContent = presentation.revealCount ? `Ver ranking completo (${presentation.revealCount})` : "";
+}
+
+function renderCollection() {
+  refs.panels.collection.querySelectorAll("[data-batch-card]").forEach((cardElement) => {
+    cardElement.hidden = !state.chromaBatchExpanded && Number(cardElement.dataset.batchCard) >= 6;
+  });
+  refs.panels.collection.querySelector("#expand-chroma-batch").hidden = state.chromaBatchExpanded;
+  refs.panels.collection.querySelector("#collapse-chroma-batch").hidden = !state.chromaBatchExpanded;
+}
+
+function renderNavigation() {
+  refs.nav.hidden = !state.ready;
+  refs.navButtons.forEach((button) => {
+    const active = button.dataset.screen === state.screen;
+    button.classList.toggle("active", active);
+    if (active) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+}
+
+function renderOverlays() {
+  const markup = authOverlay();
+  if (markup === refs.overlayMarkup) return;
+  refs.overlays.innerHTML = markup;
+  refs.overlayMarkup = markup;
+  if (state.authOpen) queueMicrotask(() => refs.overlays.querySelector("#close-auth")?.focus());
+  if (state.authOpen && !state.account && !state.authBusy && state.authErrorKind !== "provider") queueMicrotask(mountAuthButton);
+}
+
+function renderCoach() {
+  if (!state.showCoach) {
+    if (refs.coachDialog.open) refs.coachDialog.close();
+    return;
+  }
   const finalInstruction = state.gameMode === "daily"
     ? "Esta combinação é fixa e igual para todos: não há troca no modo diário."
     : "Se nenhuma fizer sentido, troque as quatro.";
-  return `<div class="coach-overlay" role="dialog" aria-modal="true" aria-labelledby="coach-title"><section class="coach-card"><span class="coach-icon" aria-hidden="true">${brandSymbol("coach-symbol")}</span><p class="eyebrow">Primeira rodada</p><h2 id="coach-title">Escolha uma entre quatro.</h2><p>Toque na sua preferida. Segure qualquer carta para conhecer a pessoa. ${finalInstruction}</p><button class="primary" id="dismiss-coach" type="button">Começar rodada</button></section></div>`;
+  refs.coachDescription.textContent = `Cada carta tem dois controles: escolha uma pessoa quando decidir ou abra Conhecer perfil antes de votar. ${finalInstruction}`;
+  if (refs.coachDialog.open) return;
+  queueMicrotask(() => {
+    if (!state.showCoach || refs.coachDialog.open) return;
+    refs.coachDialog.showModal();
+    refs.coachStart.focus();
+  });
 }
 
 function render() {
-  if (!state.ready) {
-    app.innerHTML = `<div class="app-shell">${header()}${state.error ? connectionScreen() : '<main class="connection"><p>Preparando o duelo…</p></main>'}</div>`;
-  } else {
-    const screen = state.screen === "duel"
-      ? duelScreen()
-      : state.screen === "ranking"
-        ? rankingScreen()
-        : state.screen === "collection"
-          ? collectionScreen()
-          : state.screen === "prediction-results"
-            ? dailyPredictionResultsScreen()
-            : topicsScreen();
-    app.innerHTML = `<div class="app-shell">${header()}${screen}${nav()}</div><dialog id="modal"></dialog>${coachOverlay()}${authOverlay()}`;
+  renderHeader();
+  const activePanel = state.ready ? state.screen : "connection";
+  showPersistentPanel(refs.panels, activePanel);
+  refs.shell.dataset.screen = activePanel;
+  if (!state.ready) renderConnection();
+  else {
+    renderDuel();
+    if (state.screen === "topics") renderTopics();
+    if (state.screen === "ranking") renderRanking();
+    if (state.screen === "collection") renderCollection();
+    if (state.screen === "prediction-results") renderPredictionResults();
   }
-  bindEvents();
+  renderNavigation();
+  renderCoach();
+  renderOverlays();
 }
 
-function showProfile(id) {
+function announceStatus(message) {
+  refs.liveRegion.textContent = message;
+}
+
+function showProfile(id, trigger = document.activeElement) {
+  if (state.busy || state.pendingWinnerId || state.predictionBusy || state.pendingPredictionAction) return false;
   const person = state.dailyCandidates.find((candidate) => candidate.id === id)
     || state.candidates.find((candidate) => candidate.id === id);
-  if (!person) return;
+  if (!person) return false;
   sound.play("profile");
-  const modal = document.querySelector("#modal");
+  const modal = refs.modal;
   const metadata = [person.office, person.party, person.location].filter(Boolean);
   const facts = (person.facts || []).map((fact) => `<li>${escapeHtml(fact)}</li>`).join("");
   const sources = (person.sources || []).map((source) => {
@@ -641,28 +969,14 @@ function showProfile(id) {
     const label = typeof source === "string" ? "Fonte" : source.label || source.publisher || "Fonte";
     return href ? `<li><a href="${escapeHtml(href)}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a></li>` : "";
   }).join("");
-  const predictionBlocksVote = aggregateAvailable("prediction-reveal") && state.dailySession?.pendingPrediction;
-  const canVote = state.screen === "duel" && !predictionBlocksVote
-    && state.round.some((candidate) => candidate.id === person.id) && !state.busy && !state.pendingWinnerId;
-  modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar resumo">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2>${escapeHtml(person.name)}</h2><p class="profile-role"><strong>${escapeHtml(candidateRole(person))}</strong></p>${metadata.length ? `<p class="profile-meta">${metadata.map(escapeHtml).join(" · ")}</p>` : ""}${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions">${canVote ? `<button class="primary" id="vote-from-profile" data-candidate="${escapeHtml(person.id)}" type="button">Escolher esta pessoa</button>` : ""}<button class="secondary" id="close-modal" type="button">Voltar ao duelo</button></div>`;
-  let silentClose = false;
+  profileReturnTarget = trigger instanceof HTMLElement && trigger.matches("button") ? trigger : null;
+  profileReturnCandidateId = id;
+  const returnLabel = state.screen === "duel" ? "Voltar à rodada" : "Voltar ao ranking";
+  modal.setAttribute("aria-labelledby", "profile-title");
+  modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar perfil de ${escapeHtml(person.name)}">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2 id="profile-title">${escapeHtml(person.name)}</h2><p class="profile-role"><strong>${escapeHtml(candidateRole(person))}</strong></p>${metadata.length ? `<p class="profile-meta">${metadata.map(escapeHtml).join(" · ")}</p>` : ""}${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions"><button class="secondary" id="close-modal" type="button">${returnLabel}</button></div>`;
   modal.showModal();
-  modal.addEventListener("close", () => {
-    if (!silentClose) sound.play("dismiss");
-    document.querySelectorAll(".candidate-card.is-peeking").forEach((cardElement) => cardElement.classList.remove("is-peeking"));
-  }, { once: true });
-  const closeProfile = () => modal.close();
-  modal.querySelector("#close-modal").addEventListener("click", closeProfile);
-  modal.querySelector("#close-modal-top").addEventListener("click", closeProfile);
-  modal.onclick = (event) => {
-    if (event.target === modal) modal.close();
-  };
   modal.querySelector("#close-modal-top").focus();
-  modal.querySelector("#vote-from-profile")?.addEventListener("click", () => {
-    silentClose = true;
-    modal.close();
-    vote(person.id);
-  });
+  return true;
 }
 
 function chooseNextRound() {
@@ -758,7 +1072,9 @@ async function vote(winnerId, { retry = false } = {}) {
   state.result = "Confirmando sua escolha…";
   state.resultTone = "";
   const aggregateResponseAllowed = aggregateAvailable("global-ranking");
+  if (!state.roundId) state.roundId = crypto.randomUUID();
   render();
+  announceStatus(state.result);
   try {
     const response = attempt.gameMode === "daily"
       ? await submitDailyVote(attempt.roundId, attempt.editionId, attempt.slot, attempt.winnerId, "eleicoes-2026", {
@@ -814,6 +1130,7 @@ async function vote(winnerId, { retry = false } = {}) {
     state.globalFeedbackMessage = channels.global?.message || "";
     state.result = "";
     render();
+    announceStatus([state.personalFeedbackMessage, state.globalFeedbackMessage].filter(Boolean).join(" "));
     const feedbackEvent = channels.personal.primaryEvent || response.vote?.rankingEvent || (response.vote?.zebra ? "zebra" : "confirm");
     sound.play(feedbackEvent);
     try { navigator.vibrate?.(hapticPattern(feedbackEvent)); } catch {}
@@ -838,7 +1155,12 @@ async function vote(winnerId, { retry = false } = {}) {
       state.busy = false;
       state.selectedId = "";
       state.roundOutcome = null;
+      state.personalFeedbackMessage = "";
+      state.globalFeedbackMessage = "";
+      state.result = "Nova rodada disponível";
+      state.resultTone = "";
       render();
+      announceStatus(state.result);
       resultTimer = setTimeout(() => {
         if (state.busy) return;
         state.result = "";
@@ -1079,6 +1401,7 @@ async function recoverFromVoteFailure(error, winner, attemptIdentity, attemptGam
     // pendente e reutiliza o mesmo roundId depois da versão ser atualizada.
     state.pendingWinnerId = winner.id;
     render();
+    announceStatus(state.result);
     sound.play("error");
     return;
   }
@@ -1086,6 +1409,7 @@ async function recoverFromVoteFailure(error, winner, attemptIdentity, attemptGam
   state.result = failure.message;
   render();
   scheduleRetryUnlock();
+  announceStatus(state.result);
   sound.play("error");
 }
 
@@ -1200,21 +1524,77 @@ async function resyncDailyState(attemptIdentity) {
   }
 }
 
-function bindEvents() {
-  document.querySelector("#account-button")?.addEventListener("click", () => {
+function closeAuth() {
+  state.authOpen = false;
+  state.authError = "";
+  state.authErrorKind = "";
+  render();
+}
+
+async function enableTilt(button) {
+  const status = refs.panels.collection.querySelector("#motion-status");
+  try {
+    const enabled = await enableDeviceTilt();
+    button.textContent = enabled ? "Inclinação ativada" : "Use o dedo para mover o brilho";
+    status.textContent = enabled ? "Mova o celular para testar os hologramas." : "Este aparelho não liberou o sensor; o efeito pelo toque continua ativo.";
+  } catch {
+    status.textContent = "A inclinação não foi autorizada; o efeito pelo toque continua ativo.";
+  }
+  announceStatus(status.textContent);
+}
+
+async function refreshPredictionState() {
+  if (state.predictionBusy) return;
+  state.predictionBusy = true;
+  render();
+  const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+  const resynced = await resyncDailyState(identity);
+  if (!isCurrentVoteIdentity(state, identity)) return;
+  state.predictionBusy = false;
+  if (!resynced) state.predictionError = "Não conseguimos atualizar o estado. Tente novamente.";
+  render();
+}
+
+function handleAppClick(event) {
+  if (event.target === refs.modal && refs.modal.open) {
+    refs.modal.close();
+    return;
+  }
+  if (event.target.matches?.(".auth-overlay")) {
+    closeAuth();
+    return;
+  }
+
+  const button = event.target.closest?.("button");
+  if (!button || !app.contains(button)) return;
+
+  if (["close-modal", "close-modal-top"].includes(button.id)) {
+    refs.modal.close();
+    return;
+  }
+  if (button.id === "account-button") {
     sound.play("navigation");
     state.authOpen = true;
     state.authError = "";
+    state.authErrorKind = "";
     render();
-  });
-  const closeAuth = () => { state.authOpen = false; state.authError = ""; render(); };
-  document.querySelector("#close-auth")?.addEventListener("click", closeAuth);
-  document.querySelector("#continue-anonymous")?.addEventListener("click", closeAuth);
-  document.querySelector(".auth-overlay")?.addEventListener("click", (event) => { if (event.target === event.currentTarget) closeAuth(); });
-  document.querySelector(".auth-overlay")?.addEventListener("keydown", (event) => { if (event.key === "Escape") closeAuth(); });
-  document.querySelector("#logout")?.addEventListener("click", signOut);
-  if (state.authOpen) document.querySelector("#close-auth")?.focus();
-  document.querySelector("#sound-toggle")?.addEventListener("click", () => {
+    return;
+  }
+  if (["close-auth", "continue-anonymous"].includes(button.id)) {
+    closeAuth();
+    return;
+  }
+  if (button.id === "logout") {
+    signOut();
+    return;
+  }
+  if (button.id === "retry-google-provider") {
+    state.authError = "";
+    state.authErrorKind = "";
+    render();
+    return;
+  }
+  if (button.id === "sound-toggle") {
     if (state.soundEnabled) {
       sound.play("soundOff");
       state.soundEnabled = sound.setEnabled(false);
@@ -1222,139 +1602,219 @@ function bindEvents() {
       state.soundEnabled = sound.setEnabled(true);
       sound.play("soundOn");
     }
-    render();
-    document.querySelector("#sound-toggle")?.focus();
-  });
-  document.querySelector("#retry")?.addEventListener("click", () => { sound.play("navigation"); initialize(); });
-  document.querySelector("#start-election")?.addEventListener("click", () => enterDuel("daily"));
-  document.querySelector("#start-election-secondary")?.addEventListener("click", () => enterDuel("daily"));
-  document.querySelector("#open-ranking")?.addEventListener("click", () => {
+    renderHeader();
+    // WebKit does not focus buttons on pointer activation; this preserves the
+    // existing control contract without repairing focus after a DOM remount.
+    button.focus();
+    return;
+  }
+  if (button.id === "retry") {
+    sound.play("navigation");
+    initialize();
+    return;
+  }
+  if (["start-election", "start-election-secondary"].includes(button.id)) {
+    enterDuel("daily");
+    return;
+  }
+  if (button.id === "open-ranking") {
     sound.play("navigation");
     state.screen = "ranking";
-    state.rankingView = aggregateAvailable("global-ranking") ? state.rankingView : "personal";
     state.result = "";
     state.resultTone = "";
     render();
-  });
-  document.querySelector("#open-prediction-results")?.addEventListener("click", () => { sound.play("navigation"); openDailyPredictionResults(); });
-  document.querySelector("#retry-prediction-results")?.addEventListener("click", openDailyPredictionResults);
-  document.querySelector("#prediction-results-home")?.addEventListener("click", () => {
+    return;
+  }
+  if (button.id === "open-prediction-results" || button.id === "retry-prediction-results") {
+    sound.play("navigation");
+    openDailyPredictionResults();
+    return;
+  }
+  if (button.id === "prediction-results-home") {
     sound.play("navigation");
     state.screen = "topics";
     state.predictionResultsError = "";
     render();
-  });
-  document.querySelector("#continue-duels")?.addEventListener("click", () => { state.result = ""; state.resultTone = ""; enterDuel(); });
-  document.querySelector("#start-free-mode")?.addEventListener("click", () => {
+    return;
+  }
+  if (button.id === "continue-duels") {
+    state.result = "";
+    state.resultTone = "";
+    enterDuel();
+    return;
+  }
+  if (button.id === "start-free-mode" || button.id === "daily-loading-free") {
     state.result = "";
     state.resultTone = "";
     enterDuel("free");
-  });
-  document.querySelector("#retry-daily")?.addEventListener("click", () => enterDuel("daily"));
-  document.querySelector("#daily-loading-free")?.addEventListener("click", () => enterDuel("free"));
-  document.querySelector("#daily-open-ranking")?.addEventListener("click", () => {
+    return;
+  }
+  if (button.id === "retry-daily") {
+    enterDuel("daily");
+    return;
+  }
+  if (button.id === "daily-open-ranking") {
     sound.play("navigation");
     state.screen = "ranking";
     state.rankingView = "personal";
     state.result = "";
     state.resultTone = "";
     render();
-  });
-  document.querySelector("#retry-vote")?.addEventListener("click", () => {
-    if (state.busy || !state.pendingWinnerId) return;
-    // Mesmo `state.roundId` da tentativa anterior: se aquela chegou ao servidor,
-    // esta é reconhecida como repetição e devolve o mesmo resultado.
-    vote(state.pendingWinnerId, { retry: true });
-  });
-  document.querySelector("#retry-prediction")?.addEventListener("click", () => answerDailyPrediction(null, { retry: true }));
-  document.querySelector("#refresh-prediction")?.addEventListener("click", async () => {
-    if (state.predictionBusy) return;
-    state.predictionBusy = true;
-    render();
-    const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
-    const resynced = await resyncDailyState(identity);
-    if (!isCurrentVoteIdentity(state, identity)) return;
-    state.predictionBusy = false;
-    if (!resynced) {
-      state.predictionError = PREDICTION_REVEAL_COPY.refreshFailed;
-    }
-    render();
-  });
-  document.querySelector("#skip-prediction")?.addEventListener("click", () => answerDailyPrediction(null));
-  document.querySelector("#restore-session")?.addEventListener("click", restoreVoteSession);
-  document.querySelector("#skip-round")?.addEventListener("click", () => {
+    return;
+  }
+  if (["retry-vote", "restore-session"].includes(button.id)) {
+    const recovery = voteRecoveryControl(state);
+    if (!recovery.visible || recovery.disabled || recovery.id !== button.id) return;
+    const pendingCandidate = refs.slots.find(({ button: candidateButton }) => candidateButton.dataset.vote === state.pendingWinnerId);
+    if (!pendingCandidate) return;
+    // O controle de recuperação some quando a tentativa começa. Transfira o
+    // foco antes para a carta persistente que continua representando a escolha.
+    pendingCandidate.button.focus();
+    if (state.voteAction === VOTE_ACTIONS.RESTORE_SESSION) restoreVoteSession();
+    else vote(state.pendingWinnerId, { retry: true });
+    return;
+  }
+  if (button.id === "retry-prediction") {
+    answerDailyPrediction(null, { retry: true });
+    return;
+  }
+  if (button.id === "refresh-prediction") {
+    refreshPredictionState();
+    return;
+  }
+  if (button.id === "skip-prediction") {
+    answerDailyPrediction(null);
+    return;
+  }
+  if (button.id === "skip-round") {
     if (state.busy || state.pendingWinnerId) return;
     sound.play("shuffle");
     state.result = "";
     state.resultTone = "";
     chooseNextRound();
     render();
-  });
-  document.querySelector("#dismiss-coach")?.addEventListener("click", () => {
+    announceStatus("Nova rodada disponível");
+    return;
+  }
+  if (button.id === "dismiss-coach") {
     sound.play("navigation");
     localStorage.setItem("polimatch:v4:round-coach", "seen");
     state.showCoach = false;
-    render();
-  });
-  document.querySelector("#dismiss-coach")?.focus();
-  document.querySelector("#reveal-ranking")?.addEventListener("click", () => { state.rankingExpanded = true; render(); });
-  document.querySelector("#expand-chroma-batch")?.addEventListener("click", () => { state.chromaBatchExpanded = true; render(); });
-  document.querySelector("#collapse-chroma-batch")?.addEventListener("click", () => { state.chromaBatchExpanded = false; render(); document.querySelector(".approved-batch")?.scrollIntoView({ behavior: "smooth", block: "start" }); });
-  document.querySelector("#ranking-search")?.addEventListener("input", (event) => {
-    const cursor = event.target.selectionStart;
+    refs.coachDialog.close();
+    return;
+  }
+  if (button.id === "reveal-ranking") {
+    state.rankingExpanded = true;
+    renderRanking();
+    return;
+  }
+  if (button.id === "expand-chroma-batch") {
+    state.chromaBatchExpanded = true;
+    renderCollection();
+    return;
+  }
+  if (button.id === "collapse-chroma-batch") {
+    state.chromaBatchExpanded = false;
+    renderCollection();
+    refs.panels.collection.querySelector(".approved-batch")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  if (button.id === "enable-chroma-motion") {
+    enableTilt(button);
+    return;
+  }
+  if (button.dataset.profile) {
+    if (state.busy || state.pendingWinnerId || button.getAttribute("aria-disabled") === "true") return;
+    showProfile(button.dataset.profile, button);
+    return;
+  }
+  if (button.dataset.screen) {
+    if (button.dataset.screen === "duel") enterDuel();
+    else {
+      sound.play("navigation");
+      state.screen = button.dataset.screen;
+      state.result = "";
+      state.resultTone = "";
+      render();
+    }
+    return;
+  }
+  if (button.dataset.rankingView) {
+    sound.play("navigation");
+    state.rankingView = button.dataset.rankingView;
+    state.rankingQuery = "";
+    state.rankingExpanded = false;
+    renderRanking();
+  }
+}
+
+function installEvents() {
+  app.addEventListener("click", handleAppClick);
+  app.addEventListener("input", (event) => {
+    if (event.target.id !== "ranking-search") return;
     state.rankingQuery = event.target.value;
-    render();
-    const input = document.querySelector("#ranking-search");
-    input?.focus();
-    input?.setSelectionRange(cursor, cursor);
+    renderRanking();
   });
-  document.querySelectorAll("[data-vote]").forEach((button) => installPressGesture(button, {
-    onTap: () => vote(button.dataset.vote),
+  app.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && state.authOpen) closeAuth();
+  });
+  app.addEventListener("error", (event) => {
+    if (event.target.matches?.(".candidate-card .portrait img")) markPortraitFailed(event.target);
+  }, true);
+  app.addEventListener("load", (event) => {
+    if (event.target.matches?.(".candidate-card .portrait img")) markPortraitLoaded(event.target);
+  }, true);
+  refs.modal.addEventListener("close", () => {
+    sound.play("dismiss");
+    refs.slots.forEach(({ button }) => button.classList.remove("is-peeking"));
+    const returnTarget = profileReturnTarget;
+    const returnCandidateId = profileReturnCandidateId;
+    profileReturnTarget = null;
+    profileReturnCandidateId = "";
+    setTimeout(() => {
+      const currentCandidateId = returnTarget?.dataset.profile || returnTarget?.dataset.vote || "";
+      if (returnTarget?.isConnected && currentCandidateId === returnCandidateId) returnTarget.focus();
+    }, 0);
+  });
+  refs.coachDialog.addEventListener("close", () => {
+    localStorage.setItem("polimatch:v4:round-coach", "seen");
+    state.showCoach = false;
+    setTimeout(() => refs.slots[0]?.button.focus(), 0);
+  });
+  refs.slots.forEach(({ button }) => installPressGesture(button, {
+    onTap: () => {
+      if (button.getAttribute("aria-disabled") === "true") return;
+      if (button.dataset.predict) answerDailyPrediction(button.dataset.predict);
+      else if (button.dataset.vote) vote(button.dataset.vote);
+    },
     onHold: () => {
+      if (state.busy || state.pendingWinnerId || button.getAttribute("aria-disabled") === "true" || !button.dataset.vote) return;
       button.classList.add("is-peeking");
       try { navigator.vibrate?.(18); } catch {}
-      showProfile(button.dataset.vote);
+      showProfile(button.dataset.vote, button);
     },
   }));
-  document.querySelectorAll("[data-predict]").forEach((button) => installPressGesture(button, {
-    onTap: () => answerDailyPrediction(button.dataset.predict),
-  }));
-  document.querySelectorAll("[data-profile]").forEach((button) => button.addEventListener("click", () => showProfile(button.dataset.profile)));
-  document.querySelectorAll("[data-screen]").forEach((button) => button.addEventListener("click", () => {
-    if (button.dataset.screen === "duel") {
-      enterDuel();
-      return;
-    }
-    sound.play("navigation");
-    state.screen = button.dataset.screen;
-    if (state.screen === "ranking" && !aggregateAvailable("global-ranking")) state.rankingView = "personal";
-    state.result = "";
-    state.resultTone = "";
-    render();
-  }));
-  document.querySelectorAll("[data-ranking-view]").forEach((button) => button.addEventListener("click", () => { sound.play("navigation"); state.rankingView = button.dataset.rankingView; state.rankingQuery = ""; state.rankingExpanded = false; render(); }));
-  if (state.screen === "collection") installChromaMotion(document);
-  document.querySelector("#enable-chroma-motion")?.addEventListener("click", async (event) => {
-    const status = document.querySelector("#motion-status");
-    try {
-      const enabled = await enableDeviceTilt();
-      event.currentTarget.textContent = enabled ? "Inclinação ativada" : "Use o dedo para mover o brilho";
-      if (status) status.textContent = enabled ? "Mova o celular para testar os hologramas." : "Este aparelho não liberou o sensor; o efeito pelo toque continua ativo.";
-    } catch {
-      if (status) status.textContent = "A inclinação não foi autorizada; o efeito pelo toque continua ativo.";
-    }
-  });
-  if (state.authOpen && !state.account && !state.authBusy) mountAuthButton();
+}
+
+function mountApp() {
+  const template = document.createElement("template");
+  template.innerHTML = appMarkup();
+  app.replaceChildren(template.content.cloneNode(true));
+  refs = captureRefs();
+  renderCollection();
+  installChromaMotion(refs.panels.collection);
+  installEvents();
 }
 
 async function mountAuthButton() {
-  const element = document.querySelector("#google-button");
+  const element = refs.overlays.querySelector("#google-button");
   if (!element || !googleClientId()) return;
   try {
     await mountGoogleButton(element, { callback: handleGoogleCredential });
   } catch (error) {
     if (!state.authOpen) return;
     state.authError = error.message || "Não foi possível abrir o Google agora.";
+    state.authErrorKind = "provider";
     render();
   }
 }
@@ -1363,6 +1823,7 @@ async function handleGoogleCredential(response) {
   if (!response?.credential || state.authBusy) return;
   state.authBusy = true;
   state.authError = "";
+  state.authErrorKind = "";
   render();
   let result;
   try {
@@ -1370,6 +1831,7 @@ async function handleGoogleCredential(response) {
   } catch (error) {
     state.authBusy = false;
     state.authError = error.message || "Não foi possível salvar seu jogo agora.";
+    state.authErrorKind = "credential";
     sound.play("error");
     render();
     return;
@@ -1399,6 +1861,7 @@ async function signOut() {
   if (state.authBusy) return;
   state.authBusy = true;
   state.authError = "";
+  state.authErrorKind = "";
   render();
   try {
     await revokeSessionBeforeClearing(state.recoveryKey, {
@@ -1421,13 +1884,18 @@ async function signOut() {
     state.authBusy = false;
     state.authOpen = false;
     state.result = "Você saiu. Um jogo novo começou neste aparelho.";
+    state.resultTone = "";
+    state.pendingWinnerId = "";
+    state.roundId = crypto.randomUUID();
     render();
+    announceStatus(state.result);
     // A sessão antiga já foi revogada e a identidade anônima já está ativa.
     // O diário tem retry próprio e jamais pode restaurar visualmente a conta.
     await refreshDailySession({ epoch: state.identityEpoch, recoveryKey: state.recoveryKey });
   } catch (error) {
     state.authBusy = false;
     state.authError = error.message || "Não foi possível sair agora.";
+    state.authErrorKind = "session";
     render();
   }
 }
@@ -1488,6 +1956,7 @@ async function initialize() {
     state.gameMode = "daily";
     state.dailyLoading = true;
     state.pendingWinnerId = "";
+    state.resultTone = "";
     state.ready = true;
     identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
   } catch (error) {
@@ -1515,4 +1984,5 @@ document.addEventListener("visibilitychange", () => {
 });
 window.addEventListener("focus", () => { void refreshCapabilitiesOnResume(); });
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
+mountApp();
 initialize();

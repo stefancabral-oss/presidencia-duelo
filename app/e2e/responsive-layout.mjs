@@ -41,7 +41,8 @@ const candidates = approvedEditorialCandidates(CATALOG
     elo: 1200 - index,
     wins: Math.max(1, 18 - (index % 17)),
     losses: 1 + (index % 8),
-    decisions: 24,
+    decisions: Math.max(1, 18 - (index % 17)) + 1 + (index % 8),
+    rank: index + 1,
     winRate: Math.round((Math.max(1, 18 - (index % 17)) / 24) * 100),
   }));
 const playableNames = candidates.map(({ displayName, name }) => displayName || name);

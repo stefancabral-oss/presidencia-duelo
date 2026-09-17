@@ -269,6 +269,7 @@ h1 { margin-bottom: 8px; font-size: clamp(2rem, 8vw, 2.8rem); line-height: 1; le
 @keyframes result-in { from { opacity: 0; transform: translate(-50%, -8px) scale(.98); } }
 .panel { padding: 18px; }
 .ranking-screen { align-items: start; }
+.ranking-overview, .ranking-details { min-width: 0; display: grid; gap: 16px; align-content: start; }
 .ranking-overview, .ranking-results { min-width: 0; display: grid; align-content: start; gap: 16px; }
 .ranking-list { display: grid; gap: 2px; }
 .ranking-heading { margin: 0; padding: 18px 18px 20px; border-radius: 24px; background: linear-gradient(145deg, rgb(1 34 27 / 84%), rgb(9 75 59 / 74%)); border-bottom: 1px solid rgb(232 206 126 / 28%); }

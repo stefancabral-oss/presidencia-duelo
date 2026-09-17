@@ -575,7 +575,7 @@ function rankingPresentation() {
       : person.losses === 1 ? PUBLIC_RANKING_COPY.rowLossOne : PUBLIC_RANKING_COPY.rowLossMany;
     const unplayed = personal ? "Ainda sem comparações" : PUBLIC_RANKING_COPY.rowUnplayed;
 
-    return `<button class="ranking-row" type="button" data-profile="${escapeHtml(person.id)}"><strong class="rank-position">${person.displayRank ?? "—"}</strong><span class="rank-person">${escapeHtml(person.displayName || shortName(person.name))}<small>${escapeHtml(candidateTaxonomy(person))}</small>${person.decisions ? `<span class="vote-counts"><b class="vote-positive">+ ${person.wins} ${winNoun}</b><b class="vote-negative">− ${person.losses} ${lossNoun}</b></span>` : `<span class="not-played">${unplayed}</span>`}</span><strong class="rank-score">${person.decisions ? `${person.displayRank}º<small>${person.wins} de ${person.decisions} confrontos</small>` : "—"}</strong></button>`;
+    return `<button class="ranking-row" type="button" data-profile="${escapeHtml(person.id)}"><strong class="rank-position">${person.displayRank ?? "—"}</strong><span class="rank-person">${escapeHtml(person.displayName || shortName(person.name))}<small>${escapeHtml(candidateTaxonomy(person))}</small>${person.decisions ? `<span class="vote-counts"><b class="vote-positive">+ ${person.wins} ${winNoun}</b><b class="vote-negative">− ${person.losses} ${lossNoun}</b></span>` : `<span class="not-played">${unplayed}</span>`}</span><strong class="rank-score">${person.decisions ? `${Number.isInteger(person.displayRank) ? `${person.displayRank}º` : "—"}<small>${person.wins} de ${person.decisions} confrontos</small>` : "—"}</strong></button>`;
   }).join("");
   const parties = [...new Set(ranking.map(({ party }) => party).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
   const areas = [...new Set(ranking.map(({ primaryArea }) => primaryArea).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
@@ -607,19 +607,20 @@ function rankingPresentation() {
 }
 
 function rankingMarkup() {
-  return `<header class="ranking-heading"><p class="eyebrow">${PUBLIC_RANKING_COPY.topicEyebrow}</p><h1>${PUBLIC_RANKING_COPY.heading}</h1><p data-ranking-description></p><strong data-ranking-total></strong></header>
+  return `<section class="ranking-overview"><header class="ranking-heading"><p class="eyebrow">${PUBLIC_RANKING_COPY.topicEyebrow}</p><h1>${PUBLIC_RANKING_COPY.heading}</h1><p data-ranking-description></p><strong data-ranking-total></strong></header>
     <div class="result-banner" data-ranking-result hidden></div>
     <div class="segmented" aria-label="Tipo de ranking"><button type="button" data-ranking-view="general">${PUBLIC_RANKING_COPY.selector}</button><button type="button" data-ranking-view="personal">${PUBLIC_RANKING_COPY.personalSelector}</button></div>
     <p class="ranking-trust" data-ranking-integrity>Escolhas confirmadas pelo servidor. <a href="/integridade.html">${PUBLIC_RANKING_COPY.integrityLink}</a></p>
     <p class="ranking-policy" data-ranking-policy hidden><strong></strong><span></span></p>
     <div data-ranking-pulse></div>
     <section class="podium" data-ranking-podium aria-label="${PUBLIC_RANKING_COPY.podiumAria}" hidden></section>
+    </section><section class="ranking-details">
     <label class="ranking-search"><span>${PUBLIC_RANKING_COPY.searchLabel}</span><input id="ranking-search" type="search" placeholder="Buscar nome ou partido" autocomplete="off"></label>
     <section class="panel ranking-list" data-ranking-list></section>
     <div class="ranking-filters"><label><span>Partido</span><select id="ranking-party"><option value="">Todos</option></select></label><label><span>Área</span><select id="ranking-area"><option value="">Todas</option></select></label></div>
     <button class="secondary reveal-ranking" id="reveal-ranking" type="button" hidden></button>
     <button class="secondary" id="start-tiebreak" type="button" hidden>Desempatar meu Top 5</button>
-    <button class="primary continue-duels" id="continue-duels" type="button">${PUBLIC_RANKING_COPY.backToChoices}</button>`;
+    <button class="primary continue-duels" id="continue-duels" type="button">${PUBLIC_RANKING_COPY.backToChoices}</button></section>`;
 }
 
 function collectionContent() {
@@ -1168,7 +1169,9 @@ async function vote(winnerId, { retry = false } = {}) {
     state.pendingDailyRefresh = forceDailyRefresh;
     const { channels } = confirmed;
     state.roundOutcome = channels.personal;
-    state.personalFeedbackMessage = choiceMessage(winner.displayName || winner.name, confirmed.personalDuels, { zebra: response.vote?.personalFeedback?.zebra });
+    state.personalFeedbackMessage = response.vote?.feedbackScope === "legacy-global"
+      ? channels.personal.message
+      : choiceMessage(winner.displayName || winner.name, confirmed.personalDuels, { zebra: response.vote?.personalFeedback?.zebra });
     state.globalFeedbackMessage = "";
     state.result = "";
     render();

@@ -307,6 +307,7 @@ try {
   await activateWithKeyboard(page, page.locator('.nav-button[data-screen="ranking"]'));
   await page.getByRole("heading", { name: "Ranking", exact: true }).waitFor();
   await page.locator("[data-ranking-total]", { hasText: "0 escolhas confirmadas" }).waitFor();
+  await activateWithKeyboard(page, page.locator('[data-ranking-view="general"]'));
   const rankingProfile = page.locator(".ranking-row[data-profile]").first();
   await activateWithKeyboard(page, rankingProfile);
   const rankingModal = page.locator("#modal");

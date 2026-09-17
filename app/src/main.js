@@ -16,7 +16,7 @@ import { googleClientId, mountGoogleButton } from "./google-login.js";
 import { isCurrentVoteIdentity, resetPendingVoteForIdentityChange, revokeSessionBeforeClearing } from "./logout.js";
 import { VOTE_ACTIONS, VOTE_PHASES, voteFailureState, voteRecoveryControl } from "./vote-flow.js";
 import { confirmedVoteData } from "./vote-response.js";
-import { formatAggregateCopy, PREDICTION_REVEAL_COPY, PUBLIC_RANKING_COPY, WITHHELD_COPY } from "./aggregate-copy.js";
+import { formatAggregateCopy, MIRROR_COPY, PREDICTION_REVEAL_COPY, PUBLIC_RANKING_COPY, WITHHELD_COPY } from "./aggregate-copy.js";
 import { markPortraitFailed, markPortraitLoaded, patchCandidateSlot, showPersistentPanel } from "./persistent-dom.js";
 import { compactTaxonomyLabel } from "../../shared/catalog-taxonomy.js";
 
@@ -104,6 +104,9 @@ let advanceAfterDiscard = null;
 let roundAdvanceTimer;
 let retryEnableTimer;
 let aggregateExpiryTimer;
+let mirrorComparison = null;
+let mirrorComparisonLoading = false;
+let mirrorComparisonError = "";
 
 function aggregateAvailable(scope) {
   return aggregateScopeAvailable(state.capabilities, scope);
@@ -125,11 +128,12 @@ function applyExpiredAggregateCapabilities(previous = state.capabilities) {
     state.predictionResultsLoading = false;
     state.predictionResultsError = "";
   }
+  if (!aggregateAvailable("mirror-comparison")) { mirrorComparison = null; mirrorComparisonError = ""; }
   if (predictionRevealExpired) {
     state.predictionBusy = false;
     state.pendingPredictionAction = null;
     state.selectedId = "";
-    if (state.dailySession && !state.busy) installDailySession(state.dailySession);
+    if (state.gameMode === "daily" && state.dailySession && !state.busy) installDailySession(state.dailySession);
   }
   return globalRankingExpired || predictionRevealExpired;
 }
@@ -157,6 +161,7 @@ let profileReturnTarget = null;
 let profileReturnCandidateId = "";
 
 function clearVoteTimers() {
+  mirrorComparison = null; mirrorComparisonLoading = false; mirrorComparisonError = "";
   advanceAfterDiscard = null;
   clearTimeout(resultTimer);
   clearTimeout(roundAdvanceTimer);
@@ -451,6 +456,7 @@ function dailyClosingScreen() {
       <small>${escapeHtml(cutCopy)}</small>
     </section>
     ${mirrorMarkup}
+    ${state.gameFeatures.mirror && aggregateAvailable("mirror-comparison") ? mirrorComparisonContent() : ""}
     <section class="daily-receipt" aria-labelledby="daily-receipt-title">
       <div><p class="eyebrow">Seu comprovante</p><h2 id="daily-receipt-title">As dez escolhidas</h2></div>
       <ol>${choices}</ol>
@@ -652,9 +658,9 @@ function duelMarkup() {
       <button class="retry-vote" type="button" id="retry-vote" hidden>Tentar de novo</button>
       <button class="retry-vote" type="button" id="retry-prediction" hidden>${PREDICTION_REVEAL_COPY.retrySame}</button>
       <button class="secondary prediction-refresh" id="refresh-prediction" type="button" hidden>${PREDICTION_REVEAL_COPY.refreshState}</button>
+      <button class="secondary" type="button" id="leave-pair" hidden>Agora não · ir para as dez escolhas</button>
       <div class="arena arena-four" data-duel-arena>${Array.from({ length: 4 }, (_, index) => candidateSlot(index)).join("")}</div>
       <section data-discard-panel hidden></section>
-      <button class="secondary" type="button" id="leave-pair" hidden>Agora não · ir para as dez escolhas</button>
       <button class="skip-button" type="button" id="skip-round" data-free-skip>Nenhuma destas · trocar as quatro</button>
       <button class="skip-button" type="button" id="skip-prediction" data-prediction-skip hidden>${PREDICTION_REVEAL_COPY.skip}</button>
       <p class="daily-fixed-note" data-daily-note hidden></p>
@@ -820,7 +826,7 @@ function renderDuel() {
   refs.duelMain.hidden = auxiliary;
   refs.duelAux.hidden = !auxiliary;
   refs.panels.duel.classList.toggle("prediction-screen", prediction);
-  refs.panels.duel.dataset.gameMode = prediction ? "daily-prediction" : daily ? "daily" : "free";
+  refs.panels.duel.dataset.gameMode = prediction ? "daily-prediction" : state.gameMode;
   refs.panels.duel.dataset.votePhase = state.votePhase;
   refs.panels.duel.setAttribute("aria-busy", String(prediction ? state.predictionBusy : state.busy));
 
@@ -870,6 +876,7 @@ function renderDuel() {
   ));
   const free = !daily && !prediction && !pair;
   refs.panels.duel.querySelector("#leave-pair").hidden = !pair;
+  refs.panels.duel.querySelector("#leave-pair").disabled = state.busy || Boolean(state.pendingWinnerId) || Boolean(state.pendingDiscard);
   refs.freeSkip.hidden = !free;
   if (free) refs.freeSkip.id = "skip-round";
   else refs.freeSkip.removeAttribute("id");
@@ -1165,13 +1172,13 @@ async function vote(winnerId, { retry = false } = {}) {
     state.result = "";
     render();
     announceStatus([state.personalFeedbackMessage, state.globalFeedbackMessage].filter(Boolean).join(" "));
-    const feedbackEvent = channels.personal.primaryEvent || response.vote?.rankingEvent || (response.vote?.zebra ? "zebra" : "confirm");
+    const feedbackEvent = channels.personal.zebra ? "zebra" : "confirm";
     sound.play(feedbackEvent);
     try { navigator.vibrate?.(hapticPattern(feedbackEvent)); } catch {}
-    const advance = () => {
+    const advance = async () => {
       if (["warmup", "tiebreak"].includes(attempt.gameMode)) {
         state.busy = false; state.selectedId = ""; state.roundOutcome = null; state.personalFeedbackMessage = "";
-        enterPairMode(attempt.gameMode); return;
+        await enterPairMode(attempt.gameMode); return;
       }
       if (dailyMode) {
         if (state.pendingDailyRefresh || !state.pendingDailySession) {
@@ -1494,6 +1501,14 @@ async function restoreVoteSession() {
     state.personalRanking = rankingForCatalog(personal, state.candidates);
     state.personalRankingPolicy = personal.rankingPolicy || null;
     state.personalDuels = Number(personal.duels) || 0;
+    if (["warmup", "tiebreak"].includes(state.gameMode)) {
+      const mode = state.gameMode;
+      clearVoteTimers();
+      resetPendingVoteForIdentityChange(state);
+      await enterPairMode(mode);
+      announceStatus("Sessão restabelecida. Uma nova rodada foi emitida para este jogo.");
+      return;
+    }
     if (dailySession) {
       const validatedDaily = validateDailySession(dailySession);
       const changedRound = dailySessionRoundChanged(state.dailySession, validatedDaily);
@@ -1614,7 +1629,11 @@ function handleAppClick(event) {
     refs.modal.close();
     return;
   }
-  if (["leave-pair", "leave-pair-status"].includes(button.id)) { state.warmupSkipped = true; state.busy = false; enterDuel("daily"); return; }
+  if (button.id === "mirror-comparison") { loadMirrorComparison(); return; }
+  if (["leave-pair", "leave-pair-status"].includes(button.id)) {
+    if (state.busy || state.pendingWinnerId || state.pendingDiscard) return;
+    state.warmupSkipped = true; enterDuel("daily"); return;
+  }
   if (button.id === "retry-pair") { enterPairMode(state.gameMode); return; }
   if (button.id === "start-tiebreak") { enterPairMode("tiebreak"); return; }
   if (button.id === "retry-collection" || button.dataset.screen === "collection") { loadCollection(); return; }
@@ -2069,12 +2088,19 @@ function renderDiscard() {
   const pending = state.pendingDiscard;
   panel.hidden = !pending;
   if (!pending) { if (panel.textContent) panel.replaceChildren(); return; }
-  const attempted = Object.hasOwn(pending, "attempted");
-  const button = (id, label) => `<button type="button" data-discard="${escapeHtml(id || "")}" ${state.discardBusy ? "disabled" : ""}>${escapeHtml(label)}</button>`;
-  const markup = `<h2>Quem você tira da mesa?</h2><p>Opcional. O descarte é registrado à parte e não muda o ranking.</p>${state.discardError ? `<p role="alert">${escapeHtml(state.discardError)}</p>` : ""}<div class="discard-actions">${attempted
-    ? button(pending.attempted, "Repetir a mesma decisão")
-    : pending.candidates.map(person => button(person.id, `Descartar ${person.displayName || person.name}`)).join("") + button(null, "Pular descarte")}</div>`;
-  if (panel.innerHTML !== markup) panel.innerHTML = markup;
+  if (panel.dataset.roundId !== pending.roundId) {
+    panel.dataset.roundId = pending.roundId;
+    // Only acknowledged presentations enter the optional-decision denominator.
+    // Recording an offer must not block the person's confirmed primary choice.
+    gameRequest("/api/discard-offer", state.recoveryKey, { roundId: pending.roundId }).catch(() => {});
+    const button = (id, label) => '<button type="button" data-discard="' + escapeHtml(id || "") + '">' + escapeHtml(label) + '</button>';
+    panel.innerHTML = '<h2>Quem você tira da mesa?</h2><p>Opcional. O descarte é registrado à parte e não muda o ranking.</p><p class="discard-status" role="status"></p><div class="discard-actions">' + pending.candidates.map(person => button(person.id, 'Descartar ' + (person.displayName || person.name))).join('') + button(null, 'Pular descarte') + '</div>';
+  }
+  panel.querySelector('.discard-status').textContent = state.discardError || (state.discardBusy ? 'Confirmando descarte…' : '');
+  for (const button of panel.querySelectorAll('[data-discard]')) {
+    const same = (button.dataset.discard || null) === pending.attempted;
+    button.setAttribute('aria-disabled', String(state.discardBusy || (Object.hasOwn(pending, 'attempted') && !same)));
+  }
 }
 
 async function confirmDiscard(candidateId) {
@@ -2090,7 +2116,10 @@ async function confirmDiscard(candidateId) {
     if (result.roundId !== pending.roundId || result.candidateId !== candidateId || result.rankingEffect !== "none") throw new Error("Confirmação incompleta; repita a mesma decisão.");
     state.pendingDiscard = null; state.discardBusy = false; renderDiscard();
     const advance = advanceAfterDiscard; advanceAfterDiscard = null;
-    advance?.();
+    await advance?.();
+    if (!isCurrentVoteIdentity(state, identity)) return;
+    const target = refs.panels.duel.querySelector("[data-vote]:not([hidden])") || refs.panels.duel.querySelector("h1");
+    if (target) { if (!target.matches("button")) target.tabIndex = -1; target.focus(); }
     announceStatus(candidateId ? "Descarte registrado separadamente. Seu ranking foi preservado." : "Descarte pulado. Sua escolha está confirmada.");
   } catch (error) {
     if (!isCurrentVoteIdentity(state, identity) || state.pendingDiscard !== pending) return;
@@ -2140,3 +2169,22 @@ window.addEventListener("focus", () => { void refreshCapabilitiesOnResume(); });
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
 mountApp();
 initialize();
+
+function mirrorComparisonContent() {
+  const comparison = mirrorComparison?.comparison;
+  const summary = comparison ? formatAggregateCopy(MIRROR_COPY.summary, comparison) : MIRROR_COPY.pending;
+  const sample = comparison ? formatAggregateCopy(MIRROR_COPY.sample, { count: comparison.completedPlayers }) : "";
+  return '<section class="mirror-comparison"><h2>' + MIRROR_COPY.heading + '</h2><p role="status">' + escapeHtml(mirrorComparisonLoading ? MIRROR_COPY.loading : mirrorComparisonError || summary) + '</p><p>' + escapeHtml(sample) + '</p><button type="button" id="mirror-comparison" aria-disabled="' + mirrorComparisonLoading + '">' + MIRROR_COPY.action + '</button></section>';
+}
+async function loadMirrorComparison() {
+  if (mirrorComparisonLoading || !aggregateAvailable("mirror-comparison")) return;
+  const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+  mirrorComparisonLoading = true; mirrorComparisonError = ""; render();
+  try {
+    const result = await gameRequest("/api/mirror-comparison", identity.recoveryKey);
+    if (!isCurrentVoteIdentity(state, identity) || !aggregateAvailable("mirror-comparison")) return;
+    if (!["pending", "published"].includes(result.status) || (result.status === "published" && (!result.comparison || !Number.isSafeInteger(result.comparison.aligned)))) throw new TypeError("Invalid closed comparison");
+    mirrorComparison = result;
+  } catch { if (isCurrentVoteIdentity(state, identity) && aggregateAvailable("mirror-comparison")) mirrorComparisonError = MIRROR_COPY.error; }
+  finally { if (isCurrentVoteIdentity(state, identity)) { mirrorComparisonLoading = false; render(); } }
+}

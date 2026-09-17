@@ -23,6 +23,10 @@ export async function installGameSchema(client) {
       round_id uuid PRIMARY KEY REFERENCES choice_rounds(round_id), player_id uuid NOT NULL REFERENCES anonymous_players(id),
       candidate_id text, created_at timestamptz NOT NULL DEFAULT now()
     );
+    CREATE TABLE IF NOT EXISTS discard_offers (
+      round_id uuid PRIMARY KEY REFERENCES choice_rounds(round_id),
+      offered_at timestamptz NOT NULL DEFAULT now()
+    );
     CREATE TABLE IF NOT EXISTS finish_rewards (
       player_id uuid NOT NULL REFERENCES anonymous_players(id), edition_id text NOT NULL REFERENCES daily_editions(id),
       finish_id text, acquired_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(player_id, edition_id),
@@ -53,7 +57,8 @@ export function gameProgressStore({ pool, findPlayer, candidateCatalog, ranking,
       if (catalog.length < 2) fail("elenco insuficiente", 409);
       return transaction(recoveryKey, async (client, player) => {
         const pending = await client.query(`SELECT i.* FROM issued_pair_rounds i LEFT JOIN choice_rounds r ON r.round_id=i.id
-          WHERE i.player_id=$1 AND i.topic_id=$2 AND i.mode=$3 AND r.round_id IS NULL ORDER BY i.created_at LIMIT 1`, [player.id, topic, mode]);
+          WHERE i.player_id=$1 AND i.topic_id=$2 AND i.mode=$3 AND r.round_id IS NULL
+            AND i.candidate_ids <@ $4::text[] ORDER BY i.created_at LIMIT 1`, [player.id, topic, mode, catalog.map(person => person.id)]);
         const completed = await client.query("SELECT count(*) AS count FROM choice_rounds WHERE player_id=$1 AND topic_id=$2 AND choice_mode=$3", [player.id, topic, mode]);
         const count = Number(completed.rows[0].count);
         const personal = await ranking(client, topic, { playerId: player.id });
@@ -62,7 +67,11 @@ export function gameProgressStore({ pool, findPlayer, candidateCatalog, ranking,
           remaining = Math.max(0, WARMUP_ROUNDS - count);
           candidateIds = [catalog[(count * 2) % catalog.length].id, catalog[(count * 2 + 1) % catalog.length].id];
         } else {
-          const topIds = personal.ranking.filter(person => person.decisions > 0).slice(0, 5).map(person => person.id);
+          // Keep the whole tie group crossing the fifth position. A stable ID
+          // sort must never silently exclude an equally ranked preference.
+          const played = personal.ranking.filter(person => person.decisions > 0);
+          const boundary = played[4]?.rank;
+          const topIds = played.filter((person, index) => index < 5 || (boundary != null && person.rank === boundary)).map(person => person.id);
           const comparisons = await client.query("SELECT winner_id, loser_id FROM votes WHERE player_id=$1 AND topic_id=$2 AND winner_id=ANY($3::text[]) AND loser_id=ANY($3::text[])", [player.id, topic, topIds]);
           const selected = uncertainPair(topIds, comparisons.rows.map(row => ({ winnerId: row.winner_id, loserId: row.loser_id })));
           remaining = selected.remaining; candidateIds = selected.pair?.candidateIds;
@@ -92,12 +101,22 @@ export function gameProgressStore({ pool, findPlayer, candidateCatalog, ranking,
         return result.payload;
       });
     },
+    async offerDiscard(recoveryKey, roundId) {
+      if (!validRoundId(roundId)) fail("rodada inválida");
+      return transaction(recoveryKey, async (client, player) => {
+        const result = await client.query("SELECT 1 FROM choice_rounds WHERE round_id=$1 AND player_id=$2", [roundId, player.id]);
+        if (!result.rowCount) fail("rodada não pertence à sessão", 409);
+        await client.query("INSERT INTO discard_offers(round_id) VALUES($1) ON CONFLICT DO NOTHING", [roundId]);
+        return { roundId, offered: true };
+      });
+    },
     async discard({ recoveryKey, roundId, candidateId }) {
       if (!validRoundId(roundId) || (candidateId !== null && typeof candidateId !== "string")) fail("descarte inválido");
       return transaction(recoveryKey, async (client, player) => {
         const result = await client.query("SELECT winner_id,candidate_ids FROM choice_rounds WHERE round_id=$1 AND player_id=$2", [roundId, player.id]);
         const round = result.rows[0];
         if (!round || (candidateId !== null && (!round.candidate_ids.includes(candidateId) || round.winner_id === candidateId))) fail("descarte fora da rodada", 409);
+        await client.query("INSERT INTO discard_offers(round_id) VALUES($1) ON CONFLICT DO NOTHING", [roundId]);
         const prior = await client.query("SELECT candidate_id FROM round_discards WHERE round_id=$1", [roundId]);
         if (prior.rowCount && prior.rows[0].candidate_id !== candidateId) fail("descarte já confirmado com outra decisão", 409);
         await client.query("INSERT INTO round_discards(round_id,player_id,candidate_id) VALUES($1,$2,$3) ON CONFLICT DO NOTHING", [roundId, player.id, candidateId]);
@@ -110,7 +129,7 @@ export function gameProgressStore({ pool, findPlayer, candidateCatalog, ranking,
           count(d.round_id) FILTER (WHERE d.candidate_id IS NOT NULL)::int AS completed,
           count(d.round_id) FILTER (WHERE d.candidate_id IS NULL)::int AS skipped,
           count(*) FILTER (WHERE d.round_id IS NULL)::int AS pending
-          FROM choice_rounds r LEFT JOIN round_discards d ON d.round_id=r.round_id
+          FROM choice_rounds r JOIN discard_offers o ON o.round_id=r.round_id LEFT JOIN round_discards d ON d.round_id=r.round_id
           WHERE r.player_id=$1 AND ($2::text IS NULL OR r.daily_edition_id=$2)`, [player.id, editionId]);
         const counts = result.rows[0];
         return { editionId, ...counts, completionRate: counts.rounds ? counts.completed / counts.rounds : null };

@@ -650,3 +650,4 @@ button:focus-visible { outline: 3px solid #2a8d70; outline-offset: 3px; }
 .finish-safira, .finish-quartzo { background: linear-gradient(130deg, #586aab, #d4e5ef, #586aab); }
 .finish-onix { background: linear-gradient(130deg, #576766, #c2cfcc, #576766); }
 .finish-aurora, .finish-cristal { background: linear-gradient(130deg, #a3d3c8, #e5c4da, #bedae2); }
+.bottom-nav { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 1fr; }

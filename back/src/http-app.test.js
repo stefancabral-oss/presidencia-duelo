@@ -24,6 +24,27 @@ function fakeStore(overrides = {}) {
 
 const googleIdentity = { configured: false, verify: async () => ({ subject: "test" }) };
 
+test("new personal game routes require identity and mirror comparison requires its independent scope", async () => {
+  let calls = 0;
+  const store = fakeStore({ mirrorComparison: async () => { calls++; return { status: "pending" }; } });
+  const app = createHttpApp({ store, googleIdentity, env: {} });
+  await withServer(app, async base => {
+    for (const route of ["pair-round", "pair-vote", "round-discard", "discard-offer", "collection"]) {
+      const response = await fetch(`${base}/api/${route}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      assert.equal(response.status, 401, route);
+    }
+    assert.equal((await fetch(`${base}/api/mirror-comparison`, { method: "POST", headers: { Authorization: "Bearer pm2_player" } })).status, 403);
+  });
+  assert.equal(calls, 0);
+  const authorized = createHttpApp({ store, googleIdentity, env: {}, aggregatePublication: authorizedAggregatePublication({ scopes: ["mirror-comparison"] }) });
+  await withServer(authorized, async base => {
+    const response = await fetch(`${base}/api/mirror-comparison`, { method: "POST", headers: { Authorization: "Bearer pm2_player" } });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+  });
+  assert.equal(calls, 1);
+});
+
 test("retired binary vote route is absent and cannot write a vote", async () => {
   let writes = 0;
   const app = createHttpApp({

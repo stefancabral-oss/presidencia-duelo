@@ -8,7 +8,9 @@ import { createTopicStore } from "../src/topic-store.js";
 // Run only against the disposable database provided by the integration workflow.
 const connection = process.env.DATABASE_URL;
 if (!connection) throw new Error("DATABASE_URL is required (disposable test database)");
-const registry = createApprovedTestRegistry(CATALOG.map(person => person.id));
+const approvedRegistry = createApprovedTestRegistry(CATALOG.map(person => person.id));
+const withdrawn = new Set();
+const registry = { ...approvedRegistry, candidatesForTopic: topic => approvedRegistry.candidatesForTopic(topic).filter(person => !withdrawn.has(person.id)) };
 const store = createTopicStore(connection, { candidateRegistry: registry, clock: () => new Date("2032-09-17T15:00:00Z"), collectionEnabled: true });
 const audit = new pg.Pool({ connectionString: connection });
 await store.init();
@@ -26,6 +28,15 @@ try {
   assert.equal(replay.round.status, "alreadyProcessed");
   assert.deepEqual(created.round.personalFeedback, replay.round.personalFeedback);
   version = created.player.version;
+  withdrawn.add(request.winnerId);
+  assert.equal((await store.pairVote(request)).round.status, "alreadyProcessed", "withdrawal cannot revoke a confirmed receipt");
+  withdrawn.clear();
+  const oldPending = await store.pairRound(other.recoveryKey, "eleicoes-2026", "warmup");
+  withdrawn.add(oldPending.round.candidateIds[0]);
+  const replacement = await store.pairRound(other.recoveryKey, "eleicoes-2026", "warmup");
+  assert.notEqual(replacement.round.id, oldPending.round.id);
+  assert.deepEqual(await store.pairRound(other.recoveryKey, "eleicoes-2026", "warmup"), replacement);
+  withdrawn.clear();
   const beforeDiscard = await store.playerRanking(player.recoveryKey, "eleicoes-2026");
   await assert.rejects(store.discard({ ...request, candidateId: request.winnerId }), /fora da rodada/);
   const discard = { ...request, candidateId: first.round.candidateIds[1] };
@@ -38,6 +49,10 @@ try {
     const result = await store.pairVote({ recoveryKey: player.recoveryKey, roundId: pair.round.id, winnerId: pair.round.candidateIds[0], playerVersion: version });
     version = result.player.version;
     if (i === 0) await store.discard({ recoveryKey: player.recoveryKey, roundId: pair.round.id, candidateId: null });
+    if (i === 1) {
+      assert.equal((await store.discardMetrics(player.recoveryKey)).rounds, 2, "unoffered historic/client round must not dilute completion");
+      await store.offerDiscard(player.recoveryKey, pair.round.id);
+    }
   }
   assert.equal((await store.pairRound(player.recoveryKey, "eleicoes-2026", "warmup")).status, "completed");
   assert.deepEqual(await store.discardMetrics(player.recoveryKey), { editionId: null, rounds: 3, completed: 1, skipped: 1, pending: 1, completionRate: 1 / 3 });
@@ -56,6 +71,13 @@ try {
   assert.equal(rewards[0].items.length, 1);
   assert.deepEqual(rewards[0], rewards[1]);
   assert.equal((await store.collection(other.recoveryKey)).items.length, 0);
+  assert.equal((await store.mirrorComparison(player.recoveryKey)).status, "pending");
+  const mirror = await store.mirrorComparison(player.recoveryKey, { now: new Date("2032-09-18T15:00:00Z") });
+  assert.equal(mirror.status, "published");
+  assert.equal(mirror.comparison.aligned, 10);
+  assert.equal(mirror.comparison.completedPlayers, 1);
+  assert.equal(mirror.mirror.axes.length, 3);
+  assert.equal((await store.mirrorComparison(other.recoveryKey, { now: new Date("2032-09-18T15:00:00Z") })).status, "pending");
   const restarted = createTopicStore(connection, { candidateRegistry: registry, collectionEnabled: true });
   try { await restarted.init(); assert.equal((await restarted.collection(player.recoveryKey)).items.length, 1); }
   finally { await restarted.close(); }

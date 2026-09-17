@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import pg from "pg";
 import { isRoundZebra } from "../../shared/player-feedback.js";
+import { sessionMirror, compareSessionWithCut } from "../../shared/session-mirror.js";
 import { gameProgressStore, installGameSchema } from "./game-progress.js";
 import { AGGREGATE_PUBLIC_COPY_POLICY } from "../../shared/aggregate-publication-copy.js";
 import { eloTier, isZebra, ratingDeltas } from "../../shared/elo.js";
@@ -2232,6 +2233,23 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
       } finally {
         client.release();
       }
+    },
+
+    async mirrorComparison(recoveryKey, { now } = {}) {
+      const requestedAt = clockInstant(clock, now);
+      const client = await pool.connect();
+      let session;
+      try {
+        const player = await findPlayer(client, recoveryKey);
+        const result = await client.query(`SELECT e.id FROM daily_editions e JOIN daily_completions c ON c.edition_id=e.id
+          WHERE c.player_id=$1 AND e.closes_at <= $2 AND e.topic_id='eleicoes-2026'
+          ORDER BY e.edition_date DESC LIMIT 1`, [player.id, requestedAt]);
+        if (!result.rowCount) return { status: "pending" };
+        const materialized = await loadMaterializedDailyEditionById(client, result.rows[0].id);
+        session = await selectDailyPlayerSession(client, materialized, player.id);
+      } finally { client.release(); }
+      const cut = await store.dailyCut(session.edition.topicId, session.edition.date, { now: requestedAt });
+      return { status: "published", mirror: sessionMirror(session), comparison: compareSessionWithCut(session, cut) };
     },
 
     async dailyCut(topicId, requestedDate, { now } = {}) {

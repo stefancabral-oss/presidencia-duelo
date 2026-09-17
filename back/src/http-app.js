@@ -211,9 +211,21 @@ export function createHttpApp({
     try { noStore(res).json(await store.discard({ recoveryKey: requiredRecoveryKey(req), roundId: req.body?.roundId, candidateId: req.body?.candidateId })); }
     catch (error) { sendError(req, res, error); }
   });
+  app.post("/api/discard-offer", async (req, res) => {
+    try { noStore(res).json(await store.offerDiscard(requiredRecoveryKey(req), req.body?.roundId)); }
+    catch (error) { sendError(req, res, error); }
+  });
   app.post("/api/collection", async (req, res) => {
     try { noStore(res).json(await store.collection(requiredRecoveryKey(req))); }
     catch (error) { sendError(req, res, error); }
+  });
+  app.post("/api/mirror-comparison", async (req, res) => {
+    if (!requireAggregateScope(req, res, "mirror-comparison")) return;
+    try {
+      const result = await store.mirrorComparison(requiredRecoveryKey(req), { now: clock() });
+      if (!requireAggregateScope(req, res, "mirror-comparison")) return;
+      noStore(res).json(result);
+    } catch (error) { sendError(req, res, error); }
   });
   app.get("/api/discard-metrics", async (req, res) => {
     try { noStore(res).json(await store.discardMetrics(requiredRecoveryKey(req), req.query.editionId ? String(req.query.editionId) : null)); }

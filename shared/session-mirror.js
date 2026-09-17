@@ -27,3 +27,23 @@ export function sessionMirror(session) {
     notice: "Este retrato descreve suas escolhas nesta sessão. Não estima ideologia nem representa o eleitorado.",
   };
 }
+
+// Compare only the same frozen edition's completed cohort. Ties are reported
+// separately; the percentage is agreement with slot leaders, not the number
+// of people with an identical full profile.
+export function compareSessionWithCut(session, cut) {
+  if (session?.status !== "completed" || cut?.status !== "published"
+      || session.edition.id !== cut.edition?.id || session.edition.snapshotHash !== cut.catalogSnapshotHash
+      || !Array.isArray(cut.rounds) || cut.rounds.length !== session.answers.length) throw new TypeError("Espelho: recorte incompatível");
+  let aligned = 0, tied = 0;
+  for (const answer of session.answers) {
+    const round = cut.rounds.find(row => row.slot === answer.slot);
+    if (!round?.choices?.length || round.choices.reduce((n, item) => n + item.count, 0) !== cut.completedPlayers) throw new TypeError("Espelho: denominador incompatível");
+    const max = Math.max(...round.choices.map(item => item.count));
+    const leaders = round.choices.filter(item => item.count === max && max > 0);
+    if (leaders.length > 1) tied++;
+    else if (leaders.length === 1 && leaders[0].candidateId === answer.winnerId) aligned++;
+  }
+  return { editionId: session.edition.id, date: session.edition.date, completedPlayers: cut.completedPlayers,
+    rounds: session.answers.length, aligned, tied, methodology: cut.methodology, sampleNotice: cut.sampleNotice };
+}

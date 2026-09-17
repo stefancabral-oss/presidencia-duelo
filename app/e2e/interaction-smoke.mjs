@@ -275,7 +275,7 @@ try {
   await enableSound.click();
   if (!await page.getByRole("button", { name: "Desativar efeitos sonoros" }).evaluate((button) => button === document.activeElement)) throw new Error("O controle de som perdeu foco depois de ligado");
   if (await page.evaluate(() => localStorage.getItem("polimatch:sound")) !== "on") throw new Error("A preferência de som ligado não foi persistida");
-  const primaryNavLabels = await page.locator(".bottom-nav .nav-button").allTextContents();
+  const primaryNavLabels = await page.locator(".bottom-nav .nav-button:visible").allTextContents();
   if (primaryNavLabels.join("|") !== "Início|Duelo|Ranking") throw new Error("A navegação principal não apresenta Início, Duelo e Ranking nesta ordem");
   if (await page.getByRole("button", { name: "Coleção" }).count()) throw new Error("Coleção/Chromas ainda aparece na navegação pública");
   await page.getByRole("button", { name: "Salvar seu jogo com Google" }).click();

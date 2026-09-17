@@ -80,6 +80,10 @@ jobs:
         env:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
         run: node app/e2e/daily-session.mjs
+      - name: Validate issued pairs, discard focus and earned collection
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/game-progress.mjs
 
       - name: Validate optional daily prediction and closed reveal
         env:

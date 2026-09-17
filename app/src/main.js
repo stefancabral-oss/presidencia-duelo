@@ -10,7 +10,6 @@ import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials
 import { installPressGesture } from "./press-gesture.js";
 import { candidateCardArt, candidateDocumentaryPhoto } from "./photos.js";
 import { profileProvenance } from "./editorial-presentation.js";
-import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
 import { createSoundController } from "./sound.js";
 import { googleClientId, mountGoogleButton } from "./google-login.js";
 import { isCurrentVoteIdentity, resetPendingVoteForIdentityChange, revokeSessionBeforeClearing } from "./logout.js";
@@ -54,7 +53,6 @@ const state = {
   rankingParty: "",
   rankingArea: "",
   rankingExpanded: false,
-  chromaBatchExpanded: false,
   recoveryKey: "",
   playerVersion: 0,
   account: null,
@@ -838,6 +836,7 @@ function renderDuel() {
       refs.duelAux.innerHTML = markup;
       refs.duelAuxMarkup = markup;
     }
+    patchMirrorComparison();
     refs.slots.forEach((slot) => patchCandidateSlot(slot, null));
     return;
   }
@@ -1590,18 +1589,6 @@ function closeAuth() {
   render();
 }
 
-async function enableTilt(button) {
-  const status = refs.panels.collection.querySelector("#motion-status");
-  try {
-    const enabled = await enableDeviceTilt();
-    button.textContent = enabled ? "Inclinação ativada" : "Use o dedo para mover o brilho";
-    status.textContent = enabled ? "Mova o celular para testar os hologramas." : "Este aparelho não liberou o sensor; o efeito pelo toque continua ativo.";
-  } catch {
-    status.textContent = "A inclinação não foi autorizada; o efeito pelo toque continua ativo.";
-  }
-  announceStatus(status.textContent);
-}
-
 async function refreshPredictionState() {
   if (state.predictionBusy) return;
   state.predictionBusy = true;
@@ -1776,21 +1763,6 @@ function handleAppClick(event) {
     renderRanking();
     return;
   }
-  if (button.id === "expand-chroma-batch") {
-    state.chromaBatchExpanded = true;
-    renderCollection();
-    return;
-  }
-  if (button.id === "collapse-chroma-batch") {
-    state.chromaBatchExpanded = false;
-    renderCollection();
-    refs.panels.collection.querySelector(".approved-batch")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    return;
-  }
-  if (button.id === "enable-chroma-motion") {
-    enableTilt(button);
-    return;
-  }
   if (button.dataset.profile) {
     if (state.busy || state.pendingWinnerId || button.getAttribute("aria-disabled") === "true") return;
     showProfile(button.dataset.profile, button);
@@ -1884,7 +1856,6 @@ function mountApp() {
   app.replaceChildren(template.content.cloneNode(true));
   refs = captureRefs();
   renderCollection();
-  installChromaMotion(refs.panels.collection);
   installEvents();
 }
 
@@ -2120,7 +2091,8 @@ async function confirmDiscard(candidateId) {
     const advance = advanceAfterDiscard; advanceAfterDiscard = null;
     await advance?.();
     if (!isCurrentVoteIdentity(state, identity)) return;
-    const target = [...refs.panels.duel.querySelectorAll("[data-vote], h1")].find(element => element.getClientRects().length > 0);
+    const visible = selector => [...refs.panels.duel.querySelectorAll(selector)].find(element => element.getClientRects().length > 0);
+    const target = visible("[data-vote]") || visible("h1");
     if (target) { if (!target.matches("button")) target.tabIndex = -1; target.focus(); }
     announceStatus(candidateId ? "Descarte registrado separadamente. Seu ranking foi preservado." : "Descarte pulado. Sua escolha está confirmada.");
   } catch (error) {
@@ -2173,10 +2145,17 @@ mountApp();
 initialize();
 
 function mirrorComparisonContent() {
+  return '<section class="mirror-comparison"><h2>' + MIRROR_COPY.heading + '</h2><p role="status" data-mirror-status></p><p data-mirror-sample></p><button type="button" id="mirror-comparison">' + MIRROR_COPY.action + '</button></section>';
+}
+function patchMirrorComparison() {
+  const panel = refs.duelAux.querySelector('.mirror-comparison');
+  if (!panel) return;
   const comparison = mirrorComparison?.comparison;
   const summary = comparison ? formatAggregateCopy(MIRROR_COPY.summary, comparison) : MIRROR_COPY.pending;
   const sample = comparison ? formatAggregateCopy(MIRROR_COPY.sample, { count: comparison.completedPlayers }) : "";
-  return '<section class="mirror-comparison"><h2>' + MIRROR_COPY.heading + '</h2><p role="status">' + escapeHtml(mirrorComparisonLoading ? MIRROR_COPY.loading : mirrorComparisonError || summary) + '</p><p>' + escapeHtml(sample) + '</p><button type="button" id="mirror-comparison" aria-disabled="' + mirrorComparisonLoading + '">' + MIRROR_COPY.action + '</button></section>';
+  panel.querySelector('[data-mirror-status]').textContent = mirrorComparisonLoading ? MIRROR_COPY.loading : mirrorComparisonError || summary;
+  panel.querySelector('[data-mirror-sample]').textContent = sample;
+  panel.querySelector('button').setAttribute('aria-disabled', String(mirrorComparisonLoading));
 }
 async function loadMirrorComparison() {
   if (mirrorComparisonLoading || !aggregateAvailable("mirror-comparison")) return;

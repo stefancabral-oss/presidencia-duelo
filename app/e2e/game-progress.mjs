@@ -53,6 +53,7 @@ try {
   await page.locator('.bottom-nav [data-screen="duel"]').click();
   await page.locator('.arena-pair [data-vote]:visible').first().waitFor();
   assert.equal(await page.locator('[data-vote]:visible').count(), 2);
+  if (process.env.POLIMATCH_GAME_SCREENSHOTS) await page.screenshot({ path: `${process.env.POLIMATCH_GAME_SCREENSHOTS}/pair.png`, fullPage: true });
   await page.locator('[data-vote]:visible').first().click();
   await page.waitForFunction(() => document.querySelector('#leave-pair').disabled);
   await page.locator('#leave-pair').evaluate(button => button.click());
@@ -76,9 +77,11 @@ try {
   await page.locator('#leave-pair-status').click();
   await page.getByRole('heading', { name: 'Seu Espelho de hoje' }).waitFor();
   assert.equal(await page.locator('.mirror-axes article').count(), 3);
+  if (process.env.POLIMATCH_GAME_SCREENSHOTS) await page.screenshot({ path: `${process.env.POLIMATCH_GAME_SCREENSHOTS}/mirror.png`, fullPage: true });
   await page.getByRole('button', { name: 'Coleção', exact: true }).click();
   await page.getByRole('heading', { name: 'Jade', exact: true }).waitFor();
-  await page.getByRole('button', { name: 'Ranking', exact: true }).click();
+  if (process.env.POLIMATCH_GAME_SCREENSHOTS) await page.screenshot({ path: `${process.env.POLIMATCH_GAME_SCREENSHOTS}/collection.png`, fullPage: true });
+  await page.locator('.bottom-nav [data-screen="ranking"]').click();
   await page.locator('#start-tiebreak').click();
   await page.locator('[data-game-mode="tiebreak"] .arena-pair [data-vote]:visible').first().waitFor();
   assert.equal(await page.locator('[data-vote]:visible').count(), 2);

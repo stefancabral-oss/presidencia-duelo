@@ -21,7 +21,7 @@ export function sessionMirror(session) {
   return { version: 1, editionId: session.edition.id, total,
     axes: [axis("area", "Áreas de atuação", "primaryArea"), axis("party", "Partidos", "party"),
       { id: "group", label: "Política e influência", known: groups.length, unknown: total - groups.length,
-        values: [{ value: "Política", count: political }, { value: "Influência no debate", count: groups.length - political }],
+        values: groups.length ? [{ value: "Política", count: political }, { value: "Influência no debate", count: groups.length - political }] : [],
         text: groups.length ? `Nas ${groups.length} escolhas com classificação confirmada, você escolheu ${political} pessoas da política e ${groups.length - political} de influência no debate.`
           : "Este recorte ainda não tem classificações confirmadas entre política e influência no debate." }],
     notice: "Este retrato descreve suas escolhas nesta sessão. Não estima ideologia nem representa o eleitorado.",

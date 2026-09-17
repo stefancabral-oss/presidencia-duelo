@@ -62,7 +62,9 @@ modo livre e nas dez escolhas diárias.
   2,125% depois. Sonda de 35 mensagens: sete templates, cinco ocorrências cada.
   É simulação, não pesquisa com usuários nem frequência observada em produção.
 
-O resultado final dos checks e SHA verificado será registrado em verification.json.
+Os seis checks passaram no commit de runtime `7e7491bfc875664cf88c3b830e6f22f5b55f7ee4`.
+Resultados, links e limites estão em `verification.json`; commits posteriores de
+evidência não mudam o runtime verificado.
 
 ## Matriz por issue
 

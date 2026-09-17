@@ -19,6 +19,8 @@ Este diretório organiza a reconstrução do frontend em estágios sequenciais e
 
 ## Regra de dependência
 
+O planejamento da expansão do épico #206 está em [17_candidate_news](17_candidate_news/README.md), com frentes Back, Front e App. Sua criação antecipada foi solicitada pelo usuário; os documentos e issues não declaram etapas anteriores ou funcionalidades concluídas. O grafo próprio distingue contratos para desenvolvimento com fixtures de integração e aceite real.
+
 Cada estágio depende do anterior, salvo correção crítica explicitamente marcada como hotfix.
 
 ## Definição de concluído por estágio

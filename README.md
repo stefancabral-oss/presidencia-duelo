@@ -128,6 +128,8 @@ API:
 - segredo obrigatório de produção: `VOTER_NETWORK_SECRET=<valor aleatório com ao menos 32 caracteres>`;
 - topologia obrigatória de produção: `TRUST_PROXY_HOPS=<quantidade exata de proxies confiáveis até a API>`;
 - para ativar o login: `GOOGLE_CLIENT_ID=<OAuth Web Client ID>`;
+- enquanto o ledger editorial estiver vazio, a autoridade editorial externa permanece ausente e o catálogo fica fechado;
+- antes de publicar qualquer decisão editorial, injetar `EDITORIAL_AUTHORITY_PUBLIC_JWK`, `EDITORIAL_AUTHORITY_ISSUER`, `EDITORIAL_AUTHORITY_KEY_ID` e `EDITORIAL_AUTHORITY_RECEIPTS`; recibos inválidos ou ausentes mantêm default-deny;
 - origem padrão de produção: somente `https://polimatch.com.br`; ambientes adicionais exigem `APP_ORIGINS=https://polimatch.com.br,https://staging.exemplo`;
 - healthcheck: `GET /api/health`.
 

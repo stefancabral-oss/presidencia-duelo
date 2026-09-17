@@ -4,7 +4,8 @@ import { confirmedDailyVoteData, dailyPendingPredictionCandidates, dailyRoundCan
 import { confirmedDailyPredictionData, validateDailyPredictionResults } from "./daily-prediction.js";
 import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials, nextBalancedGroup, rankingForCatalog, rankingHighlights, rankingPodium, shortName } from "./domain.js";
 import { installPressGesture } from "./press-gesture.js";
-import { candidatePhoto } from "./photos.js";
+import { candidateCardArt, candidateDocumentaryPhoto } from "./photos.js";
+import { profileProvenance } from "./editorial-presentation.js";
 import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
 import { approvedBasicCards } from "./approved-chromas.js";
 import { createSoundController } from "./sound.js";
@@ -177,12 +178,26 @@ function profileSection(title, content, className = "") {
   return `<section${className ? ` class="${className}"` : ""}><h3>${escapeHtml(title)}</h3><p>${escapeHtml(content)}</p></section>`;
 }
 
-function portrait(candidate) {
-  const photo = candidatePhoto(candidate);
+function cardPortrait(candidate) {
+  const art = candidateCardArt(candidate);
   return `<div class="portrait">
     <span class="portrait-fallback">${escapeHtml(initials(candidate.name))}</span>
-    ${photo ? `<img src="${escapeHtml(photo)}" alt="Foto de ${escapeHtml(candidate.name)}" onerror="this.remove()">` : ""}
+    ${art ? `<img src="${escapeHtml(art)}" alt="Ilustração editorial de ${escapeHtml(candidate.name)}" onerror="this.remove()">` : ""}
   </div>`;
+}
+
+function profilePortrait(candidate) {
+  const photo = candidateDocumentaryPhoto(candidate);
+  const placeholder = '<div class="profile-photo-placeholder" role="img" aria-label="Foto documental ainda não disponível"><span aria-hidden="true">▧</span><strong>Foto documental ainda não disponível</strong></div>';
+  if (!photo) {
+    return placeholder;
+  }
+  return `<div class="portrait profile-documentary-photo">${placeholder}<img src="${escapeHtml(photo)}" alt="Foto documental de ${escapeHtml(candidate.name)}" onload="this.previousElementSibling?.remove()" onerror="this.remove()"></div>`;
+}
+
+function profileProvenanceMarkup(candidate) {
+  const provenance = profileProvenance(candidate);
+  return `<section class="profile-provenance" aria-labelledby="profile-provenance-title"><h3 id="profile-provenance-title">Procedência</h3>${provenance.content ? `<p class="content-provenance">${escapeHtml(provenance.content)}</p>` : ""}<p class="photo-provenance">${escapeHtml(provenance.photo)}</p>${provenance.cardArt ? `<p class="card-art-provenance">${escapeHtml(provenance.cardArt)}</p>` : ""}</section>`;
 }
 
 function card(candidate, { mode = "vote" } = {}) {
@@ -207,7 +222,7 @@ function card(candidate, { mode = "vote" } = {}) {
       <span class="card-material" aria-hidden="true"></span>
       <span class="card-facets" aria-hidden="true"></span>
       <span class="card-brand" aria-hidden="true">${brandSymbol("card-brand-symbol")}<b>PoliMatch</b></span>
-      ${portrait(candidate)}
+      ${cardPortrait(candidate)}
       <span class="candidate-copy">
         <span class="candidate-title"><strong class="candidate-name">${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong><span class="card-rarity" aria-hidden="true">●</span></span>
         <span class="candidate-affiliation">${escapeHtml(candidateTaxonomy(candidate))}</span>
@@ -252,17 +267,17 @@ function authOverlay() {
 }
 
 function topicsScreen() {
-  const approvedCandidates = state.candidates.filter((candidate) => candidatePhoto(candidate));
+  const availableCandidates = state.candidates;
   const featuredSlots = [47, 28, 1, 63];
-  const featuredCandidates = featuredSlots.map((personId) => approvedCandidates.find((candidate) => Number(candidate.personId) === personId)).filter(Boolean);
+  const featuredCandidates = featuredSlots.map((personId) => availableCandidates.find((candidate) => Number(candidate.personId) === personId)).filter(Boolean);
   const preview = featuredCandidates.map((candidate, index) => {
-    const photo = candidatePhoto(candidate);
+    const art = candidateCardArt(candidate);
     return `<article class="home-preview-card home-preview-card-${index + 1}" aria-hidden="true">
-      ${photo ? `<img src="${escapeHtml(photo)}" alt="" width="240" height="300">` : ""}
+      ${art ? `<img src="${escapeHtml(art)}" alt="" width="240" height="300">` : ""}
       <span><strong>${escapeHtml(candidate.displayName || shortName(candidate.name))}</strong><small>${escapeHtml(candidateTaxonomy(candidate))}</small></span>
     </article>`;
   }).join("");
-  const approvedCount = approvedCandidates.length;
+  const availableCount = availableCandidates.length;
   const dailyAnswered = Number(state.dailySession?.progress?.answered) || 0;
   const dailyTotal = Number(state.dailySession?.progress?.total) || 10;
   const dailyComplete = state.dailySession?.status === "completed";
@@ -282,6 +297,7 @@ function topicsScreen() {
         </div>
         <div class="home-trust" aria-label="Informações da edição">
           <span><strong>${dailyAnswered}/${dailyTotal}</strong> rodada do dia</span>
+          <span><strong>${availableCount}</strong> perfis disponíveis nesta edição</span>
           <span><strong>${state.globalDuels}</strong> escolhas confirmadas</span>
         </div>
       </div>
@@ -297,7 +313,7 @@ function topicsScreen() {
         <div><p class="eyebrow">Edição disponível</p><h2 id="home-topic-title">Eleições 2026</h2></div>
         <span class="home-live"><i aria-hidden="true"></i> no ar</span>
       </div>
-      <p>Dez escolhas fixas, iguais para todo mundo, fechadas à meia-noite de São Paulo. Segure qualquer carta para conhecer o perfil antes de escolher.</p>
+      <p>Dez escolhas fixas, iguais para todo mundo, fechadas à meia-noite de São Paulo, usando apenas conteúdo revisado e arte de carta aprovada. Segure qualquer carta para conhecer o perfil antes de escolher.</p>
       <button class="home-topic-cta" type="button" id="start-election-secondary"><span>${dailyAction}</span><b aria-hidden="true">→</b></button>
     </section>
 
@@ -312,7 +328,7 @@ function topicsScreen() {
 
     <section class="home-next" aria-label="Perfis disponíveis nesta edição">
       <p class="eyebrow">Todos no ar</p>
-      <div><strong>Políticos + influenciadores</strong><span>${approvedCount} perfis com foto aprovada</span><small>Disponível</small></div>
+      <div><strong>Políticos + influenciadores</strong><span>${availableCount} perfis disponíveis nesta edição</span><small>Disponível</small></div>
     </section>
     <p class="legal-note home-legal">Experiência lúdica de opinião. Não constitui pesquisa eleitoral.</p>
   </main>`;
@@ -489,7 +505,7 @@ function collectionScreen() {
   return `<main class="screen collection-screen"><div><p class="eyebrow">Laboratório de Chromas</p><h1>Coleção</h1><p class="lead">Mova o dedo sobre cada carta. No celular, ative a inclinação para o reflexo acompanhar o aparelho.</p><button class="motion-button" id="enable-chroma-motion" type="button">Ativar efeito ao inclinar</button><p class="motion-status" id="motion-status" role="status"></p></div>
     <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Suprema</p><h2>Três estrelas douradas</h2></div><span class="tier-symbol gold-stars">★★★</span></div><p>Ouro em relevo, feixes direcionais e dois desenhos holográficos exclusivos.</p><div class="chroma-gallery">${supreme}</div></section>
     <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Comemorativa</p><h2>Estrela prismática</h2></div><span class="tier-symbol prism-star">★</span></div><p>Cristal óptico, espectro colorido e refração diferente em cada pessoa.</p><div class="chroma-gallery">${commemorative}</div></section>
-    <section class="chroma-tier approved-batch"><div class="chroma-tier-heading"><div><p class="eyebrow">Cartas básicas</p><h2>35 acabamentos aprovados</h2></div><span class="tier-symbol batch-count">35</span></div><p>São as cartas básicas atuais. As futuras Chromas serão colecionáveis e sempre usarão outra fotografia da pessoa.</p><div class="chroma-gallery approved-chroma-gallery">${approved}</div>${batchButton}<p class="batch-disclosure">Imagens tratadas para compor a edição básica do PoliMatch.</p></section>
+    <section class="chroma-tier approved-batch"><div class="chroma-tier-heading"><div><p class="eyebrow">Cartas básicas</p><h2>35 acabamentos do lote piloto</h2></div><span class="tier-symbol batch-count">35</span></div><p>São estudos visuais do lote piloto. Cada arte só entra na edição depois de uma decisão humana individual no portão editorial.</p><div class="chroma-gallery approved-chroma-gallery">${approved}</div>${batchButton}<p class="batch-disclosure">Imagens tratadas para avaliação da edição básica do PoliMatch.</p></section>
     <section><p class="eyebrow">Sua coleção</p><section class="panel ranking-list">${cards || '<p class="empty">Demonstração visual: estas Chromas ainda não foram adicionadas ao seu inventário.</p>'}</section></section>
   </main>`;
 }
@@ -546,7 +562,7 @@ function showProfile(id) {
   }).join("");
   const canVote = state.screen === "duel" && !state.dailySession?.pendingPrediction
     && state.round.some((candidate) => candidate.id === person.id) && !state.busy && !state.pendingWinnerId;
-  modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar resumo">×</button><div class="profile-scroll"><div class="profile-preview">${portrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2>${escapeHtml(person.name)}</h2><div class="profile-taxonomy">${profileSection("Cargo/função", candidateRole(person))}${profileSection("Partido", person.party || "Não informado")}${profileSection("Área de atuação", person.primaryArea || "Não informado")}${person.contextAffiliation ? profileSection("Contexto/afiliação", person.contextAffiliation) : ""}</div>${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>${person.reviewedAt ? `<p class="review-note">Revisado em ${escapeHtml(person.reviewedAt)}.</p>` : ""}` : '<p class="review-note">Fontes em revisão editorial. O perfil só será publicado depois da checagem.</p>'}</section></div></div><div class="dialog-actions">${canVote ? `<button class="primary" id="vote-from-profile" data-candidate="${escapeHtml(person.id)}" type="button">Escolher esta pessoa</button>` : ""}<button class="secondary" id="close-modal" type="button">Voltar ao duelo</button></div>`;
+  modal.innerHTML = `<button class="dialog-close" id="close-modal-top" type="button" aria-label="Fechar resumo">×</button><div class="profile-scroll"><div class="profile-preview">${profilePortrait(person)}</div><div class="dialog-body profile-copy"><p class="eyebrow">Quem é?</p><h2>${escapeHtml(person.name)}</h2><div class="profile-taxonomy">${profileSection("Cargo/função", candidateRole(person))}${profileSection("Partido", person.party || person.affiliation || "Não informado")}${profileSection("Área de atuação", person.primaryArea || person.area || "Não informado")}${person.contextAffiliation || person.office ? profileSection("Contexto/afiliação", person.contextAffiliation || person.office) : ""}</div>${profileSection("Sobre", candidateSummary(person))}${profileSection("Por que está nesta curadoria", person.relevance2026)}${facts ? `<section><h3>Três fatos</h3><ul>${facts}</ul></section>` : ""}${profileSection("Realização ou destaque", person.highlight)}${profileSection("Pontos de atenção", person.controversy, "profile-caution")}<section><h3>Fontes</h3>${sources ? `<ul class="source-list">${sources}</ul>` : '<p class="review-note">Nenhuma fonte pública foi fornecida.</p>'}</section>${profileProvenanceMarkup(person)}</div></div><div class="dialog-actions">${canVote ? `<button class="primary" id="vote-from-profile" data-candidate="${escapeHtml(person.id)}" type="button">Escolher esta pessoa</button>` : ""}<button class="secondary" id="close-modal" type="button">Voltar ao duelo</button></div>`;
   let silentClose = false;
   modal.showModal();
   modal.addEventListener("close", () => {

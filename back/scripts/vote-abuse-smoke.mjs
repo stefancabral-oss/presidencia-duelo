@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import pg from "pg";
 import { createTopicStore, recoveryKeyHash, VOTE_ABUSE_LIMITS } from "../src/topic-store.js";
+import { createApprovedTestRegistry } from "../test-support/editorial-fixtures.js";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL é obrigatória para o smoke de abuso");
 
-const store = createTopicStore(connectionString);
+const candidateRegistry = createApprovedTestRegistry();
+const store = createTopicStore(connectionString, { candidateRegistry });
 await store.init();
 
 async function expectCode(operation, code) {

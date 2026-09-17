@@ -32,6 +32,7 @@ import {
   buildDailyEdition,
 } from "./daily-session.js";
 import { PUBLIC_CANDIDATE_SCHEMA_V1, PUBLIC_CANDIDATE_SCHEMA_V2 } from "./candidates.js";
+import { createApprovedTestRegistry } from "../test-support/editorial-fixtures.js";
 
 function historicalCandidate(id, index = 0, overrides = {}) {
   return {
@@ -139,22 +140,24 @@ test("prediction scoring is neutral for skips, ties and an empty sample", () => 
   assert.equal(scoreDailyPrediction({ predictedCandidateId: "a" }, empty), "no-sample");
 });
 
+const candidateRegistry = createApprovedTestRegistry();
+
 test("only active curated topics accept votes", () => {
-  assert.equal(validateTopic("eleicoes-2026"), "eleicoes-2026");
-  assert.throws(() => validateTopic("influenciadores"), /indisponível/);
-  assert.throws(() => validateVote("eleicoes-2026", "lula", "lula"), /voto inválido/);
-  assert.throws(() => validateVote("eleicoes-2026", "lula", "acm-neto"), /voto inválido/);
-  assert.doesNotThrow(() => validateVote("eleicoes-2026", "lula", "jair-bolsonaro"));
+  assert.equal(validateTopic("eleicoes-2026", candidateRegistry), "eleicoes-2026");
+  assert.throws(() => validateTopic("influenciadores", candidateRegistry), /indisponível/);
+  assert.throws(() => validateVote("eleicoes-2026", "lula", "lula", candidateRegistry), /voto inválido/);
+  assert.throws(() => validateVote("eleicoes-2026", "lula", "acm-neto", candidateRegistry), /voto inválido/);
+  assert.doesNotThrow(() => validateVote("eleicoes-2026", "lula", "jair-bolsonaro", candidateRegistry));
 });
 
 test("four-card rounds require four unique playable candidates and the winner", () => {
   assert.deepEqual(
-    validateRoundVote("eleicoes-2026", "lula", ["lula", "jair-bolsonaro", "anitta", "neymar-jr"]),
+    validateRoundVote("eleicoes-2026", "lula", ["lula", "jair-bolsonaro", "anitta", "neymar-jr"], candidateRegistry),
     { topic: "eleicoes-2026", candidateIds: ["lula", "jair-bolsonaro", "anitta", "neymar-jr"] },
   );
-  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["lula", "lula", "anitta", "neymar-jr"]), /rodada inválida/);
-  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["jair-bolsonaro", "anitta", "neymar-jr", "ludmilla"]), /rodada inválida/);
-  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["lula", "jair-bolsonaro", "anitta", "acm-neto"]), /rodada inválida/);
+  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["lula", "lula", "anitta", "neymar-jr"], candidateRegistry), /rodada inválida/);
+  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["jair-bolsonaro", "anitta", "neymar-jr", "ludmilla"], candidateRegistry), /rodada inválida/);
+  assert.throws(() => validateRoundVote("eleicoes-2026", "lula", ["lula", "jair-bolsonaro", "anitta", "acm-neto"], candidateRegistry), /rodada inválida/);
 });
 
 test("daily choices persist the authoritative candidate order while free choices are canonical", () => {
@@ -507,9 +510,9 @@ test("topic ranking exposes only candidates from that curation", () => {
     { candidate_id: "lula", rating: 1016, wins: 1, losses: 0, zebras: 0 },
     { candidate_id: "jair-bolsonaro", rating: 984, wins: 0, losses: 1, zebras: 0 },
     { candidate_id: "not-in-topic", rating: 4000, wins: 999, losses: 0, zebras: 0 },
-  ]);
+  ], candidateRegistry);
   assert.equal(result.topicId, "eleicoes-2026");
-  assert.equal(result.ranking.length, 54);
+  assert.equal(result.ranking.length, 5);
   assert.equal(result.ranking[0].id, "lula");
   assert.equal(result.ranking[0].party, "PT");
   assert.equal(result.ranking[0].primaryArea, "Política institucional");
@@ -522,7 +525,7 @@ test("unplayed candidates have no rank and do not consume competition positions"
   const result = rankingFromRows("eleicoes-2026", 2, [
     { candidate_id: "lula", rating: 1016, wins: 1, losses: 0, zebras: 0 },
     { candidate_id: "jair-bolsonaro", rating: 984, wins: 0, losses: 1, zebras: 0 },
-  ]);
+  ], candidateRegistry);
   const played = result.ranking.slice(0, 2);
   const unplayed = result.ranking.slice(2);
 
@@ -530,7 +533,7 @@ test("unplayed candidates have no rank and do not consume competition positions"
     ["lula", 1],
     ["jair-bolsonaro", 2],
   ]);
-  assert.equal(unplayed.length, 52);
+  assert.equal(unplayed.length, 3);
   assert.equal(unplayed.every(({ decisions, elo, rank }) => decisions === 0 && elo === 1000 && rank === null), true);
 });
 

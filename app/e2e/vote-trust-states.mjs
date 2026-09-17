@@ -3,6 +3,7 @@ import path from "node:path";
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
 import { completedDailySession } from "./daily-fixture.mjs";
+import { approvedEditorialCandidates } from "./editorial-fixtures.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -16,7 +17,7 @@ const POLICY = {
   label: "maioria nos confrontos observados",
   explanation: "A ordem usa confrontos diretos e mantém empates não resolvidos.",
 };
-const candidates = ["lula", "anitta", "neymar-jr", "renan-santos"].map((id, index) => ({
+const candidates = approvedEditorialCandidates(["lula", "anitta", "neymar-jr", "renan-santos"].map((id, index) => ({
   personId: index + 1,
   id,
   name: `Pessoa De Teste ${index + 1}`,
@@ -26,7 +27,7 @@ const candidates = ["lula", "anitta", "neymar-jr", "renan-santos"].map((id, inde
   office: "Cargo de teste",
   summary: "Resumo de teste.",
   bio: "Perfil editorial de teste.",
-}));
+})));
 
 function createServer() {
   return {

@@ -4,6 +4,7 @@ import CATALOG from "../../shared/elections-2026.json" with { type: "json" };
 import { hasCuratedPortrait } from "../../shared/curated-portraits.js";
 import { compactTaxonomyLabel } from "../../shared/catalog-taxonomy.js";
 import { completedDailySession } from "./daily-fixture.mjs";
+import { approvedEditorialCandidates } from "./editorial-fixtures.mjs";
 
 const browserName = process.env.POLIMATCH_E2E_BROWSER || "chromium";
 const appUrl = process.env.POLIMATCH_E2E_URL || "http://127.0.0.1:4173/";
@@ -117,7 +118,7 @@ function assertOutcomeSemantics(outcomes, viewportLabel) {
 }
 
 const shortViewportCandidateIds = new Set([46, 53, 90, 125]);
-const candidates = CATALOG.filter(({ personId }) => shortViewportCandidateIds.has(personId));
+const candidates = approvedEditorialCandidates(CATALOG.filter(({ personId }) => shortViewportCandidateIds.has(personId)));
 if (candidates.length !== 4) throw new Error("O catálogo não contém as quatro pessoas do smoke de hierarquia");
 if (!candidates.some(({ party }) => party)
   || !candidates.some(({ party, primaryArea }) => !party && primaryArea)

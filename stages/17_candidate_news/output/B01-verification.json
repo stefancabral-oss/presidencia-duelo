@@ -9,7 +9,20 @@
     { "command": "node app/node_modules/vite/bin/vite.js build app", "status": "passed" },
     { "command": "git diff --check", "status": "passed" }
   ],
-  "postgresql": { "status": "pending-ci", "localAvailable": false, "script": "back/scripts/civic-schema-smoke.mjs" },
+  "implementationCommit": "06dac872ec3af4e879236dd9b7710e57b5947086",
+  "pullRequest": "https://github.com/stefancabral-oss/presidencia-duelo/pull/230",
+  "postgresql": {
+    "status": "passed-ci",
+    "localAvailable": false,
+    "script": "back/scripts/civic-schema-smoke.mjs",
+    "run": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35253716137",
+    "jobId": 105312046285,
+    "checks": { "migration": "pass", "emptyRollback": "pass", "populatedRollback": "refused", "repeat": "idempotent", "fixtureCandidacies": 5, "relationalChecks": 7 },
+    "legacyPublicFingerprintUnchanged": "5b146cbaca7678fd76113000b3be93f7779df8f2e31f9a0e3d3ce15bb7f0ea8d"
+  },
+  "backendAndSharedCI": "passed",
+  "designValidatorCI": { "status": "passed", "runId": 35253716190 },
+  "browserCI": { "statusAtRecording": "running", "runId": 35253716061, "finalEvidence": "PR #230 checks and description" },
   "humanApproval": false,
   "realDataImported": false,
   "mergePerformed": false,

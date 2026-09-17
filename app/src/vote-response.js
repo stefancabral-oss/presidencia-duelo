@@ -74,18 +74,18 @@ function requireMatchingRound(response, { roundId, winnerId, candidateIds }) {
     && response.vote?.feedbackScope === "legacy-global"
     && isNeutralLegacyPersonalFeedback(response.vote?.personalFeedback);
   const personalFeedbackIsComplete = response.vote?.feedbackScope === "personal"
-    && outcomeIds.length === 4 && uniqueOutcomeIds.size === 4
+    && outcomeIds.length === candidateIds.length && uniqueOutcomeIds.size === candidateIds.length
     && outcomeIds.every((id) => expectedCandidates.has(id))
-    && winners.length === 1 && winners[0]?.id === winnerId && losers.length === 3
+    && winners.length === 1 && winners[0]?.id === winnerId && losers.length === candidateIds.length - 1
     && completeOutcomes && typeof response.vote.personalFeedback?.zebra === "boolean"
     && Boolean(String(response.vote.personalFeedback?.primaryEvent || "").trim());
-  if (!roundId || candidateIds.length !== 4 || new Set(candidateIds).size !== 4 || !expectedCandidates.has(winnerId)
+  if (!roundId || ![2, 4].includes(candidateIds.length) || new Set(candidateIds).size !== candidateIds.length || !expectedCandidates.has(winnerId)
     || response.round?.id !== roundId || response.vote?.id !== roundId
     || response.round?.status !== status || !["created", "alreadyProcessed"].includes(status)
     || response.round?.winnerId !== winnerId || response.vote?.winnerId !== winnerId
     || !sameOrderedIds(response.round?.candidateIds, candidateIds)
     || !sameOrderedIds(response.vote?.candidateIds, candidateIds)
-    || response.vote?.comparisons !== 3
+    || response.vote?.comparisons !== candidateIds.length - 1
     || (!legacyReplay && !personalFeedbackIsComplete)) {
     throw new TypeError("resposta de voto inválida: rodada divergente");
   }

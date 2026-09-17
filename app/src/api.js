@@ -203,3 +203,8 @@ export function submitDailyPrediction(predictionId, editionId, slot, candidateId
     }),
   });
 }
+
+export function loadGameCapabilities() { return requestJson("/api/game-capabilities"); }
+export function gameRequest(path, recoveryKey, body = {}) {
+  return requestJson(path, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + recoveryKey }, body: JSON.stringify(body) });
+}

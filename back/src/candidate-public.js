@@ -9,6 +9,7 @@ import {
 export const PUBLIC_CANDIDATE_SCHEMA_V1 = "candidate-public-v1";
 export const PUBLIC_CANDIDATE_SCHEMA_V2 = "candidate-public-v2";
 export const PUBLIC_CANDIDATE_SCHEMA_V3 = "candidate-public-v3";
+export const PUBLIC_CANDIDATE_SCHEMA_V4 = "candidate-public-v4";
 
 export const PUBLIC_CANDIDATE_CONTENT_FIELDS_V1 = Object.freeze([
   "personId",
@@ -330,7 +331,18 @@ function candidatePublicSnapshotV2(candidate) {
   ));
 }
 
+function candidatePublicSnapshotV4(candidate) {
+  const payload = candidatePublicPayload(candidate, { ruleset: PUBLIC_CANDIDATE_SCHEMA_V2 });
+  // Preserve the frozen value on replay; only approved live profiles can
+  // introduce a new classification. Restored name/photo-only profiles cannot.
+  const group = Object.hasOwn(candidate, "mirrorGroup") ? candidate.mirrorGroup
+    : payload.publication.content.status === "approved" ? candidate.group ?? null : null;
+  if (group !== null && !["politica", "influencia_debate"].includes(group)) editorialInvalid("grupo do Espelho inválido");
+  return immutableJsonSnapshot({ ...payload, mirrorGroup: group });
+}
+
 const PUBLIC_CANDIDATE_PROJECTORS = new Map([
+  [PUBLIC_CANDIDATE_SCHEMA_V4, candidatePublicSnapshotV4],
   [PUBLIC_CANDIDATE_SCHEMA_V1, candidatePublicSnapshotV1],
   [PUBLIC_CANDIDATE_SCHEMA_V2, candidatePublicSnapshotV2],
   [PUBLIC_CANDIDATE_SCHEMA_V3, (candidate) => candidatePublicPayload(candidate, { ruleset: PUBLIC_CANDIDATE_SCHEMA_V2 })],

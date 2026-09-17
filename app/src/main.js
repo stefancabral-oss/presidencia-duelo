@@ -1,4 +1,7 @@
 import "./styles.css";
+import { gameRequest, loadGameCapabilities } from "./api.js";
+import { sessionMirror } from "../../shared/session-mirror.js";
+import { choiceMessage } from "../../shared/player-feedback.js";
 import { createPlayer, endSession, exchangeGoogleCredential, loadCandidates, loadCapabilities, loadDailyPredictionResults, loadDailySession, loadPlayerRanking, loadRanking, submitDailyPrediction, submitDailyVote, submitRoundVote } from "./api.js";
 import { aggregateScopeAvailable, nextAggregateCapabilityExpiry, PERSONAL_ONLY_CAPABILITIES, validateCapabilities, withAggregateScopeWithheld } from "./capabilities.js";
 import { confirmedDailyVoteData, dailyPendingPredictionCandidates, dailyRoundCandidates, dailySessionRoundChanged, validateDailySession } from "./daily-session.js";
@@ -7,14 +10,12 @@ import { catalogForTopic, displayRanking, filterRanking, hapticPattern, initials
 import { installPressGesture } from "./press-gesture.js";
 import { candidateCardArt, candidateDocumentaryPhoto } from "./photos.js";
 import { profileProvenance } from "./editorial-presentation.js";
-import { enableDeviceTilt, installChromaMotion } from "./chroma-motion.js";
-import { approvedBasicCards } from "./approved-chromas.js";
 import { createSoundController } from "./sound.js";
 import { googleClientId, mountGoogleButton } from "./google-login.js";
 import { isCurrentVoteIdentity, resetPendingVoteForIdentityChange, revokeSessionBeforeClearing } from "./logout.js";
 import { VOTE_ACTIONS, VOTE_PHASES, voteFailureState, voteRecoveryControl } from "./vote-flow.js";
 import { confirmedVoteData } from "./vote-response.js";
-import { formatAggregateCopy, PREDICTION_REVEAL_COPY, PUBLIC_RANKING_COPY, WITHHELD_COPY } from "./aggregate-copy.js";
+import { formatAggregateCopy, MIRROR_COPY, PREDICTION_REVEAL_COPY, PUBLIC_RANKING_COPY, WITHHELD_COPY } from "./aggregate-copy.js";
 import { markPortraitFailed, markPortraitLoaded, patchCandidateSlot, showPersistentPanel } from "./persistent-dom.js";
 import { compactTaxonomyLabel } from "../../shared/catalog-taxonomy.js";
 
@@ -52,7 +53,6 @@ const state = {
   rankingParty: "",
   rankingArea: "",
   rankingExpanded: false,
-  chromaBatchExpanded: false,
   recoveryKey: "",
   playerVersion: 0,
   account: null,
@@ -61,6 +61,16 @@ const state = {
   authError: "",
   authErrorKind: "",
   collection: [],
+  gameFeatures: {},
+  pairRemaining: 0,
+  pairLoading: false,
+  pairError: "",
+  warmupSkipped: false,
+  collectionError: "",
+  collectionLoading: false,
+  pendingDiscard: null,
+  discardError: "",
+  discardBusy: false,
   result: "",
   // "erro" faz a mensagem ser grafada como falha. Sem isso, "seu voto não foi
   // contado" sai no mesmo dourado de "invadiu o Top 10".
@@ -88,9 +98,13 @@ const state = {
   soundEnabled: sound.enabled,
 };
 let resultTimer;
+let advanceAfterDiscard = null;
 let roundAdvanceTimer;
 let retryEnableTimer;
 let aggregateExpiryTimer;
+let mirrorComparison = null;
+let mirrorComparisonLoading = false;
+let mirrorComparisonError = "";
 
 function aggregateAvailable(scope) {
   return aggregateScopeAvailable(state.capabilities, scope);
@@ -99,9 +113,11 @@ function aggregateAvailable(scope) {
 function applyExpiredAggregateCapabilities(previous = state.capabilities) {
   const hadGlobalRanking = previous.scopes["global-ranking"].status === "available";
   const hadPredictionReveal = previous.scopes["prediction-reveal"].status === "available";
+  const hadMirrorComparison = previous.scopes["mirror-comparison"].status === "available";
   state.capabilities = validateCapabilities(JSON.parse(JSON.stringify(state.capabilities)));
   const globalRankingExpired = hadGlobalRanking && !aggregateAvailable("global-ranking");
   const predictionRevealExpired = hadPredictionReveal && !aggregateAvailable("prediction-reveal");
+  const mirrorComparisonExpired = hadMirrorComparison && !aggregateAvailable("mirror-comparison");
   if (!aggregateAvailable("global-ranking")) {
     state.ranking = [];
     state.globalDuels = 0;
@@ -112,13 +128,14 @@ function applyExpiredAggregateCapabilities(previous = state.capabilities) {
     state.predictionResultsLoading = false;
     state.predictionResultsError = "";
   }
+  if (!aggregateAvailable("mirror-comparison")) { mirrorComparison = null; mirrorComparisonError = ""; }
   if (predictionRevealExpired) {
     state.predictionBusy = false;
     state.pendingPredictionAction = null;
     state.selectedId = "";
-    if (state.dailySession && !state.busy) installDailySession(state.dailySession);
+    if (state.gameMode === "daily" && state.dailySession && !state.busy) installDailySession(state.dailySession);
   }
-  return globalRankingExpired || predictionRevealExpired;
+  return globalRankingExpired || predictionRevealExpired || mirrorComparisonExpired;
 }
 
 function scheduleAggregateCapabilityExpiry() {
@@ -144,6 +161,8 @@ let profileReturnTarget = null;
 let profileReturnCandidateId = "";
 
 function clearVoteTimers() {
+  mirrorComparison = null; mirrorComparisonLoading = false; mirrorComparisonError = "";
+  advanceAfterDiscard = null;
   clearTimeout(resultTimer);
   clearTimeout(roundAdvanceTimer);
   clearTimeout(retryEnableTimer);
@@ -187,13 +206,6 @@ function prepareFreeRound() {
   state.previousRound = [];
   state.roundId = crypto.randomUUID();
 }
-
-const chromaPreviews = [
-  { person: "Lula", role: "Chroma Suprema", image: "/chromas/rendered/lula-supreme-3star-v1.jpg", variant: "supreme supreme-rays" },
-  { person: "Renan Santos", role: "Chroma Suprema", image: "/chromas/rendered/renan-santos-supreme-3star-v1.jpg", variant: "supreme supreme-rings" },
-  { person: "Lula", role: "Chroma Comemorativa", image: "/chromas/rendered/lula-commemorative-prism-v1.jpg", variant: "commemorative prism-shards" },
-  { person: "Renan Santos", role: "Chroma Comemorativa", image: "/chromas/rendered/renan-santos-commemorative-prism-v1.jpg", variant: "commemorative prism-aurora" },
-];
 
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>'"]/g, (character) => ({
@@ -313,8 +325,8 @@ function candidateSlotModel(candidate, { actionMode = "vote" } = {}) {
     ].filter(Boolean),
     outcome: outcome ? {
       tone: outcome.tone,
-      value: Number.isFinite(delta) ? `${delta > 0 ? "+" : ""}${delta} Elo` : outcome.winner ? "Escolhida" : "Não foi desta vez",
-      message: outcome.shortMessage,
+      value: outcome.winner ? "Escolhida" : "Não escolhida",
+      message: outcome.winner ? "Confirmada" : "Sem descarte",
     } : null,
   };
 }
@@ -426,6 +438,8 @@ function dailyClosingScreen() {
   const cutCopy = predictionReveal
     ? formatAggregateCopy(PREDICTION_REVEAL_COPY.availabilityTemplate, { time: new Date(session.cut.availableAt).toLocaleString("pt-BR", { timeZone: session.ruleset.timeZone, hour: "2-digit", minute: "2-digit" }) })
     : WITHHELD_COPY.comparisonUnavailable;
+  const mirror = state.gameFeatures.mirror ? sessionMirror(session) : null;
+  const mirrorMarkup = mirror ? `<section class="mirror-axes">${mirror.axes.map(axis => `<article><h2>${escapeHtml(axis.label)}</h2><p>${escapeHtml(axis.text)}</p>${axis.values.map(item => `<span>${escapeHtml(item.value)}: ${item.count}</span>`).join(" ")}</article>`).join("")}<p>${escapeHtml(mirror.notice)}</p></section>` : "";
   const receiptCopy = predictionReveal
     ? formatAggregateCopy(PREDICTION_REVEAL_COPY.receiptTemplate, {
       count: session.predictionProgress.predicted,
@@ -436,11 +450,13 @@ function dailyClosingScreen() {
     <section class="daily-close-hero">
       <p class="eyebrow">Rodada do dia · 10/10</p>
       <span class="daily-close-mark" aria-hidden="true">✓</span>
-      <h1>Você fechou a rodada.</h1>
+      <h1>${mirror ? "Seu Espelho de hoje" : "Você fechou a rodada."}</h1>
       <p class="lead">${receiptCopy} Este é um recorte fechado — amanhã, todo mundo recebe outro baralho.</p>
       ${predictionReveal ? `<p class="daily-methodology">${escapeHtml(session.cut.methodology)}</p>` : ""}
       <small>${escapeHtml(cutCopy)}</small>
     </section>
+    ${mirrorMarkup}
+    ${state.gameFeatures.mirror && aggregateAvailable("mirror-comparison") ? mirrorComparisonContent() : ""}
     <section class="daily-receipt" aria-labelledby="daily-receipt-title">
       <div><p class="eyebrow">Seu comprovante</p><h2 id="daily-receipt-title">As dez escolhidas</h2></div>
       <ol>${choices}</ol>
@@ -558,13 +574,13 @@ function rankingPresentation() {
       ? `derrota${person.losses === 1 ? "" : "s"}`
       : person.losses === 1 ? PUBLIC_RANKING_COPY.rowLossOne : PUBLIC_RANKING_COPY.rowLossMany;
     const unplayed = personal ? "Ainda sem comparações" : PUBLIC_RANKING_COPY.rowUnplayed;
-    const eloSuffix = personal ? "Elo" : PUBLIC_RANKING_COPY.eloSuffix;
-    return `<button class="ranking-row" type="button" data-profile="${escapeHtml(person.id)}"><strong class="rank-position">${person.displayRank ?? "—"}</strong><span class="rank-person">${escapeHtml(person.displayName || shortName(person.name))}<small>${escapeHtml(candidateTaxonomy(person))}</small>${person.decisions ? `<span class="vote-counts"><b class="vote-positive">+ ${person.wins} ${winNoun}</b><b class="vote-negative">− ${person.losses} ${lossNoun}</b></span>` : `<span class="not-played">${unplayed}</span>`}</span><strong class="rank-score">${person.decisions ? `${person.winRate}%<small>${person.elo} ${eloSuffix}</small>` : "—"}</strong></button>`;
+
+    return `<button class="ranking-row" type="button" data-profile="${escapeHtml(person.id)}"><strong class="rank-position">${person.displayRank ?? "—"}</strong><span class="rank-person">${escapeHtml(person.displayName || shortName(person.name))}<small>${escapeHtml(candidateTaxonomy(person))}</small>${person.decisions ? `<span class="vote-counts"><b class="vote-positive">+ ${person.wins} ${winNoun}</b><b class="vote-negative">− ${person.losses} ${lossNoun}</b></span>` : `<span class="not-played">${unplayed}</span>`}</span><strong class="rank-score">${person.decisions ? `${Number.isInteger(person.displayRank) ? `${person.displayRank}º` : "—"}<small>${person.wins} de ${person.decisions} confrontos</small>` : "—"}</strong></button>`;
   }).join("");
   const parties = [...new Set(ranking.map(({ party }) => party).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
   const areas = [...new Set(ranking.map(({ primaryArea }) => primaryArea).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
   const options = (values, selected) => values.map((value) => `<option value="${escapeHtml(value)}"${value === selected ? " selected" : ""}>${escapeHtml(value)}</option>`).join("");
-  const podiumCards = podium.map((person) => `<button class="podium-card podium-${Math.min(person.displayRank, 3)}" type="button" data-profile="${escapeHtml(person.id)}"><span>${person.displayRank}º</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><small>${person.winRate}%</small></button>`).join("");
+  const podiumCards = podium.map((person) => `<button class="podium-card podium-${Math.min(person.displayRank, 3)}" type="button" data-profile="${escapeHtml(person.id)}"><span>${person.displayRank}º</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><small>${person.displayRank}º lugar</small></button>`).join("");
   const highlightColumn = (title, type, people) => `<section class="ranking-highlight ranking-highlight-${type}"><p>${title}</p>${people.length ? people.map((person, index) => `<button type="button" data-profile="${escapeHtml(person.id)}"><span>${index + 1}</span><strong>${escapeHtml(person.displayName || shortName(person.name))}</strong><b>${type === "chosen" ? `+${person.wins}` : `−${person.losses}`}</b></button>`).join("") : `<small>${PUBLIC_RANKING_COPY.awaitingDuels}</small>`}</section>`;
   const publicPulse = !personal && (highlights.chosen.length || highlights.rejected.length) ? `<section class="public-pulse" aria-label="${PUBLIC_RANKING_COPY.pulseAria}"><div class="section-title"><span>${PUBLIC_RANKING_COPY.pulse}</span><small>${PUBLIC_RANKING_COPY.pulseDetail}</small></div><div class="pulse-grid">${highlightColumn(PUBLIC_RANKING_COPY.mostWins, "chosen", highlights.chosen)}${highlightColumn(PUBLIC_RANKING_COPY.mostLosses, "rejected", highlights.rejected)}</div></section>` : "";
   const empty = state.rankingQuery
@@ -591,48 +607,37 @@ function rankingPresentation() {
 }
 
 function rankingMarkup() {
-  return `<header class="ranking-heading"><p class="eyebrow">${PUBLIC_RANKING_COPY.topicEyebrow}</p><h1>${PUBLIC_RANKING_COPY.heading}</h1><p data-ranking-description></p><strong data-ranking-total></strong></header>
+  return `<section class="ranking-overview"><header class="ranking-heading"><p class="eyebrow">${PUBLIC_RANKING_COPY.topicEyebrow}</p><h1>${PUBLIC_RANKING_COPY.heading}</h1><p data-ranking-description></p><strong data-ranking-total></strong></header>
     <div class="result-banner" data-ranking-result hidden></div>
     <div class="segmented" aria-label="Tipo de ranking"><button type="button" data-ranking-view="general">${PUBLIC_RANKING_COPY.selector}</button><button type="button" data-ranking-view="personal">${PUBLIC_RANKING_COPY.personalSelector}</button></div>
     <p class="ranking-trust" data-ranking-integrity>Escolhas confirmadas pelo servidor. <a href="/integridade.html">${PUBLIC_RANKING_COPY.integrityLink}</a></p>
     <p class="ranking-policy" data-ranking-policy hidden><strong></strong><span></span></p>
     <div data-ranking-pulse></div>
     <section class="podium" data-ranking-podium aria-label="${PUBLIC_RANKING_COPY.podiumAria}" hidden></section>
+    </section><section class="ranking-details">
     <label class="ranking-search"><span>${PUBLIC_RANKING_COPY.searchLabel}</span><input id="ranking-search" type="search" placeholder="Buscar nome ou partido" autocomplete="off"></label>
     <section class="panel ranking-list" data-ranking-list></section>
     <div class="ranking-filters"><label><span>Partido</span><select id="ranking-party"><option value="">Todos</option></select></label><label><span>Área</span><select id="ranking-area"><option value="">Todas</option></select></label></div>
     <button class="secondary reveal-ranking" id="reveal-ranking" type="button" hidden></button>
-    <button class="primary continue-duels" id="continue-duels" type="button">${PUBLIC_RANKING_COPY.backToChoices}</button>`;
+    <button class="secondary" id="start-tiebreak" type="button" hidden>Desempatar meu Top 5</button>
+    <button class="primary continue-duels" id="continue-duels" type="button">${PUBLIC_RANKING_COPY.backToChoices}</button></section>`;
 }
 
 function collectionContent() {
-  const unique = [...new Map(state.collection.map((person) => [person.id, person])).values()];
-  const cards = unique.map((person) => `<div class="ranking-row">${brandSymbol("collection-symbol")}<span>${escapeHtml(shortName(person.name))}<br><small>Chroma possuída</small></span><strong>×${state.collection.filter(({ id }) => id === person.id).length}</strong></div>`).join("");
-  const previewCard = ({ person, role, image, variant }) => `<article class="chroma-card featured-chroma-card ${variant}" data-hologram tabindex="0" aria-label="${escapeHtml(person)}, ${escapeHtml(role)}. Mova o dedo ou incline o celular para ver o holograma.">
-    <img class="chroma-art" src="${escapeHtml(image)}" alt="${escapeHtml(role)} de ${escapeHtml(person)}" width="530" height="742">
-    <span class="holo-foil" aria-hidden="true"></span><span class="holo-pattern" aria-hidden="true"></span><span class="holo-glint" aria-hidden="true"></span>
-  </article>`;
-  const batchCard = ({ personId, person, look, lookName, image }, index) => `<article class="chroma-card approved-chroma-card look-${look.toLowerCase()}" data-hologram data-batch-card="${index}" tabindex="0" aria-label="${escapeHtml(person)}, carta básica com acabamento ${escapeHtml(lookName)}.">
-    <img class="chroma-art approved-chroma-art" src="${escapeHtml(image)}" alt="Carta básica de ${escapeHtml(person)}" width="600" height="750" loading="lazy" decoding="async">
-    <span class="approved-chroma-brand" aria-hidden="true">${brandSymbol("approved-brand-symbol")}<b>PoliMatch</b></span>
-    <span class="approved-chroma-frame" aria-hidden="true"></span>
-    <span class="approved-chroma-copy"><strong>${escapeHtml(person)}</strong><small>${escapeHtml(lookName)}</small><em>#${escapeHtml(personId)} · ARTE EDITADA POR IA</em></span>
-    <span class="holo-foil" aria-hidden="true"></span><span class="holo-pattern" aria-hidden="true"></span><span class="holo-glint" aria-hidden="true"></span>
-  </article>`;
-  const supreme = chromaPreviews.filter(({ variant }) => variant.startsWith("supreme")).map(previewCard).join("");
-  const commemorative = chromaPreviews.filter(({ variant }) => variant.startsWith("commemorative")).map(previewCard).join("");
-  const approved = approvedBasicCards.map(batchCard).join("");
-  return `<div><p class="eyebrow">Laboratório de Chromas</p><h1>Coleção</h1><p class="lead">Mova o dedo sobre cada carta. No celular, ative a inclinação para o reflexo acompanhar o aparelho.</p><button class="motion-button" id="enable-chroma-motion" type="button">Ativar efeito ao inclinar</button><p class="motion-status" id="motion-status"></p></div>
-    <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Suprema</p><h2>Três estrelas douradas</h2></div><span class="tier-symbol gold-stars">★★★</span></div><p>Ouro em relevo, feixes direcionais e dois desenhos holográficos exclusivos.</p><div class="chroma-gallery">${supreme}</div></section>
-    <section class="chroma-tier"><div class="chroma-tier-heading"><div><p class="eyebrow">Chroma Comemorativa</p><h2>Estrela prismática</h2></div><span class="tier-symbol prism-star">★</span></div><p>Cristal óptico, espectro colorido e refração diferente em cada pessoa.</p><div class="chroma-gallery">${commemorative}</div></section>
-    <section class="chroma-tier approved-batch"><div class="chroma-tier-heading"><div><p class="eyebrow">Cartas básicas</p><h2>35 acabamentos do lote piloto</h2></div><span class="tier-symbol batch-count">35</span></div><p>São estudos visuais do lote piloto. Cada arte só entra na edição depois de uma decisão humana individual no portão editorial.</p><div class="chroma-gallery approved-chroma-gallery">${approved}</div><button class="primary batch-toggle" id="expand-chroma-batch" type="button">Ver as 35 cartas básicas</button><button class="secondary batch-toggle" id="collapse-chroma-batch" type="button" hidden>Mostrar apenas os primeiros</button><p class="batch-disclosure">Imagens tratadas para avaliação da edição básica do PoliMatch.</p></section>
-    <section><p class="eyebrow">Sua coleção</p><section class="panel ranking-list">${cards || '<p class="empty">Demonstração visual: estas Chromas ainda não foram adicionadas ao seu inventário.</p>'}</section></section>`;
+  const items = state.collection.map(item => '<article class="finish-card finish-' + escapeHtml(item.id) + '"><span aria-hidden="true">◆</span><h2>' + escapeHtml(item.title) + '</h2><p>Acabamento universal</p></article>').join("");
+  return '<p class="eyebrow">Sua coleção</p><h1>Acabamentos que você conquistou</h1><p>Complete as dez escolhas do dia para conquistar um acabamento gratuito. Todos têm a mesma classe; nenhum é associado a uma pessoa ou partido.</p>'
+    + (state.collectionLoading ? '<p role="status">Carregando seu inventário…</p>' : '')
+    + (state.collectionError ? '<p role="alert">' + escapeHtml(state.collectionError) + '</p><button type="button" id="retry-collection">Tentar novamente</button>' : '')
+    + '<div class="finish-grid">' + items + '</div>'
+    + (!state.collectionLoading && !items ? '<p>Seu inventário está vazio. A coleção aparece aqui depois de uma sessão concluída.</p>' : '')
+    + '<p>Sem venda, compra indireta ou vantagem no ranking.</p>';
 }
 
 function navMarkup() {
   return `<nav class="bottom-nav" aria-label="Navegação principal" hidden>
     <button class="nav-button" type="button" data-screen="topics">Início</button>
     <button class="nav-button" type="button" data-screen="duel">Duelo</button>
+    <button class="nav-button" type="button" data-screen="collection" hidden>Coleção</button>
     <button class="nav-button" type="button" data-screen="ranking">${PUBLIC_RANKING_COPY.heading}</button>
   </nav>`;
 }
@@ -654,7 +659,9 @@ function duelMarkup() {
       <button class="retry-vote" type="button" id="retry-vote" hidden>Tentar de novo</button>
       <button class="retry-vote" type="button" id="retry-prediction" hidden>${PREDICTION_REVEAL_COPY.retrySame}</button>
       <button class="secondary prediction-refresh" id="refresh-prediction" type="button" hidden>${PREDICTION_REVEAL_COPY.refreshState}</button>
+      <button class="secondary" type="button" id="leave-pair" hidden>Agora não · ir para as dez escolhas</button>
       <div class="arena arena-four" data-duel-arena>${Array.from({ length: 4 }, (_, index) => candidateSlot(index)).join("")}</div>
+      <section data-discard-panel hidden></section>
       <button class="skip-button" type="button" id="skip-round" data-free-skip>Nenhuma destas · trocar as quatro</button>
       <button class="skip-button" type="button" id="skip-prediction" data-prediction-skip hidden>${PREDICTION_REVEAL_COPY.skip}</button>
       <p class="daily-fixed-note" data-daily-note hidden></p>
@@ -814,34 +821,38 @@ function renderDuel() {
   const loading = daily && (state.dailyLoading || state.dailyLoadError);
   const prediction = daily && !loading && aggregateAvailable("prediction-reveal") && Boolean(state.dailySession?.pendingPrediction);
   const completed = daily && !loading && !prediction && state.dailySession?.status === "completed";
-  const auxiliary = loading || completed;
+  const pair = ["warmup", "tiebreak"].includes(state.gameMode);
+  const auxiliary = loading || completed || (pair && (state.pairLoading || state.pairError || !state.round.length));
 
   refs.duelMain.hidden = auxiliary;
   refs.duelAux.hidden = !auxiliary;
   refs.panels.duel.classList.toggle("prediction-screen", prediction);
-  refs.panels.duel.dataset.gameMode = prediction ? "daily-prediction" : daily ? "daily" : "free";
+  refs.panels.duel.dataset.gameMode = prediction ? "daily-prediction" : state.gameMode;
   refs.panels.duel.dataset.votePhase = state.votePhase;
   refs.panels.duel.setAttribute("aria-busy", String(prediction ? state.predictionBusy : state.busy));
 
   if (auxiliary) {
-    const markup = loading ? dailyLoadingContent() : dailyClosingScreen();
+    const markup = pair ? pairStatusContent() : loading ? dailyLoadingContent() : dailyClosingScreen();
     if (markup !== refs.duelAuxMarkup) {
       refs.duelAux.innerHTML = markup;
       refs.duelAuxMarkup = markup;
     }
+    patchMirrorComparison();
     refs.slots.forEach((slot) => patchCandidateSlot(slot, null));
     return;
   }
 
   refs.duelAuxMarkup = "";
   if (refs.duelAux.textContent) refs.duelAux.replaceChildren();
+  renderDiscard();
   const recovery = voteRecoveryControl(state);
   const predictionPresentation = prediction ? dailyPredictionExtras() : null;
-  refs.duelEyebrow.textContent = predictionPresentation?.eyebrow || (daily ? "Rodada do dia" : "Modo livre");
+  refs.duelArena.classList.toggle("arena-pair", pair);
+  refs.duelEyebrow.textContent = predictionPresentation?.eyebrow || (pair ? state.gameMode === "warmup" ? "Duelo rápido" : "Desempate do seu Top 5" : daily ? "Rodada do dia" : "Modo livre");
   refs.duelHeading.textContent = predictionPresentation?.heading || "Quem você prefere?";
   refs.progress.textContent = predictionPresentation?.progress || (daily
     ? `${state.dailySession.progress.answered + 1}/${state.dailySession.progress.total}`
-    : `${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}`);
+    : pair ? `${state.gameMode === "tiebreak" ? "Até " : ""}${state.pairRemaining} confrontos para concluir` : `${state.personalDuels} ${state.personalDuels === 1 ? "escolha" : "escolhas"}`);
   refs.instruction.textContent = predictionPresentation?.instruction
     || state.result
     || "Escolha uma pessoa ou use Conhecer perfil antes de decidir.";
@@ -865,7 +876,9 @@ function renderDuel() {
     slot,
     state.round[index] ? candidateSlotModel(state.round[index], { actionMode: prediction ? "prediction" : "vote" }) : null,
   ));
-  const free = !daily && !prediction;
+  const free = !daily && !prediction && !pair;
+  refs.panels.duel.querySelector("#leave-pair").hidden = !pair;
+  refs.panels.duel.querySelector("#leave-pair").disabled = state.busy || Boolean(state.pendingWinnerId) || Boolean(state.pendingDiscard);
   refs.freeSkip.hidden = !free;
   if (free) refs.freeSkip.id = "skip-round";
   else refs.freeSkip.removeAttribute("id");
@@ -903,6 +916,7 @@ function renderRanking() {
   refs.rankingResult.textContent = state.result;
   refs.rankingIntegrity.hidden = presentation.publicRankingAvailable && presentation.personal;
   refs.rankingIntegrity.innerHTML = presentation.publicRankingAvailable ? `${PUBLIC_RANKING_COPY.trust} <a href="/integridade.html">${PUBLIC_RANKING_COPY.integrityLink}</a>` : `${WITHHELD_COPY.comparisonUnavailable} ${WITHHELD_COPY.rankingSuffix}`;
+  refs.panels.ranking.querySelector("#start-tiebreak").hidden = !state.gameFeatures.pairs || !presentation.personal || state.personalDuels === 0;
   const policy = state.personalRankingPolicy;
   refs.rankingPolicy.hidden = !presentation.personal || !policy?.label;
   refs.rankingPolicy.querySelector("strong").textContent = policy?.label ? `Ordenado por ${policy.label}` : "";
@@ -918,16 +932,14 @@ function renderRanking() {
 }
 
 function renderCollection() {
-  refs.panels.collection.querySelectorAll("[data-batch-card]").forEach((cardElement) => {
-    cardElement.hidden = !state.chromaBatchExpanded && Number(cardElement.dataset.batchCard) >= 6;
-  });
-  refs.panels.collection.querySelector("#expand-chroma-batch").hidden = state.chromaBatchExpanded;
-  refs.panels.collection.querySelector("#collapse-chroma-batch").hidden = !state.chromaBatchExpanded;
+  refs.panels.collection.innerHTML = collectionContent();
+
 }
 
 function renderNavigation() {
   refs.nav.hidden = !state.ready;
   refs.navButtons.forEach((button) => {
+    if (button.dataset.screen === "collection") button.hidden = !state.gameFeatures.collection;
     const active = button.dataset.screen === state.screen;
     button.classList.toggle("active", active);
     if (active) button.setAttribute("aria-current", "page");
@@ -1047,6 +1059,8 @@ async function refreshDailySession(identity, { showCoach = false } = {}) {
 
 async function enterDuel(mode = state.gameMode) {
   if (state.busy) return;
+  if (state.gameFeatures.pairs && mode === "daily" && !state.warmupSkipped && state.personalDuels < 3) return enterPairMode("warmup");
+  if (["warmup", "tiebreak"].includes(mode)) return enterPairMode(mode);
   sound.play("enter");
   const previousMode = state.gameMode;
   state.dailyLoadEpoch = Number(state.dailyLoadEpoch || 0) + 1;
@@ -1069,7 +1083,7 @@ async function enterDuel(mode = state.gameMode) {
 async function vote(winnerId, { retry = false } = {}) {
   if (state.busy || (state.pendingWinnerId && !retry)) return;
   const winner = state.round.find(({ id }) => id === winnerId);
-  if (!winner || state.round.length !== 4) return;
+  if (!winner || ![2, 4].includes(state.round.length)) return;
   const attempt = {
     gameMode: state.gameMode,
     roundId: state.roundId,
@@ -1109,6 +1123,8 @@ async function vote(winnerId, { retry = false } = {}) {
         version: attemptPlayerVersion,
         predictionEnabled: aggregateAvailable("prediction-reveal"),
       })
+      : ["warmup", "tiebreak"].includes(attempt.gameMode)
+        ? await gameRequest("/api/pair-vote", attemptIdentity.recoveryKey, { roundId: attempt.roundId, winnerId: attempt.winnerId, playerVersion: attemptPlayerVersion })
       : await submitRoundVote(attempt.roundId, attempt.winnerId, attempt.candidateIds, "eleicoes-2026", {
         recoveryKey: attemptIdentity.recoveryKey,
         version: attemptPlayerVersion,
@@ -1153,15 +1169,21 @@ async function vote(winnerId, { retry = false } = {}) {
     state.pendingDailyRefresh = forceDailyRefresh;
     const { channels } = confirmed;
     state.roundOutcome = channels.personal;
-    state.personalFeedbackMessage = channels.personal.message;
-    state.globalFeedbackMessage = channels.global?.message || "";
+    state.personalFeedbackMessage = response.vote?.feedbackScope === "legacy-global"
+      ? channels.personal.message
+      : choiceMessage(winner.displayName || winner.name, confirmed.personalDuels, { zebra: response.vote?.personalFeedback?.zebra });
+    state.globalFeedbackMessage = "";
     state.result = "";
     render();
     announceStatus([state.personalFeedbackMessage, state.globalFeedbackMessage].filter(Boolean).join(" "));
-    const feedbackEvent = channels.personal.primaryEvent || response.vote?.rankingEvent || (response.vote?.zebra ? "zebra" : "confirm");
+    const feedbackEvent = channels.personal.zebra ? "zebra" : "confirm";
     sound.play(feedbackEvent);
     try { navigator.vibrate?.(hapticPattern(feedbackEvent)); } catch {}
-    roundAdvanceTimer = setTimeout(() => {
+    const advance = async () => {
+      if (["warmup", "tiebreak"].includes(attempt.gameMode)) {
+        state.busy = false; state.selectedId = ""; state.roundOutcome = null; state.personalFeedbackMessage = "";
+        await enterPairMode(attempt.gameMode); return;
+      }
       if (dailyMode) {
         if (state.pendingDailyRefresh || !state.pendingDailySession) {
           state.pendingDailySession = null;
@@ -1196,7 +1218,11 @@ async function vote(winnerId, { retry = false } = {}) {
         state.globalFeedbackMessage = "";
         render();
       }, 1800);
-    }, 1050);
+    };
+    if (state.gameFeatures.discard) {
+      state.pendingDiscard = { roundId: attempt.roundId, candidates: state.round.filter(person => person.id !== winnerId) };
+      advanceAfterDiscard = advance; renderDiscard();
+    } else roundAdvanceTimer = setTimeout(advance, 1050);
   } catch (error) {
     if (!isCurrentVoteIdentity(state, attemptIdentity)) return;
     await recoverFromVoteFailure(error, winner, attemptIdentity, attempt.gameMode);
@@ -1479,6 +1505,14 @@ async function restoreVoteSession() {
     state.personalRanking = rankingForCatalog(personal, state.candidates);
     state.personalRankingPolicy = personal.rankingPolicy || null;
     state.personalDuels = Number(personal.duels) || 0;
+    if (["warmup", "tiebreak"].includes(state.gameMode)) {
+      const mode = state.gameMode;
+      clearVoteTimers();
+      resetPendingVoteForIdentityChange(state);
+      await enterPairMode(mode);
+      announceStatus("Sessão restabelecida. Uma nova rodada foi emitida para este jogo.");
+      return;
+    }
     if (dailySession) {
       const validatedDaily = validateDailySession(dailySession);
       const changedRound = dailySessionRoundChanged(state.dailySession, validatedDaily);
@@ -1558,18 +1592,6 @@ function closeAuth() {
   render();
 }
 
-async function enableTilt(button) {
-  const status = refs.panels.collection.querySelector("#motion-status");
-  try {
-    const enabled = await enableDeviceTilt();
-    button.textContent = enabled ? "Inclinação ativada" : "Use o dedo para mover o brilho";
-    status.textContent = enabled ? "Mova o celular para testar os hologramas." : "Este aparelho não liberou o sensor; o efeito pelo toque continua ativo.";
-  } catch {
-    status.textContent = "A inclinação não foi autorizada; o efeito pelo toque continua ativo.";
-  }
-  announceStatus(status.textContent);
-}
-
 async function refreshPredictionState() {
   if (state.predictionBusy) return;
   state.predictionBusy = true;
@@ -1597,6 +1619,21 @@ function handleAppClick(event) {
 
   if (["close-modal", "close-modal-top"].includes(button.id)) {
     refs.modal.close();
+    return;
+  }
+  if (button.id === "mirror-comparison") { loadMirrorComparison(); return; }
+  if (["leave-pair", "leave-pair-status"].includes(button.id)) {
+    if (state.busy || state.pendingWinnerId || state.pendingDiscard) return;
+    state.warmupSkipped = true; enterDuel("daily"); return;
+  }
+  if (button.id === "retry-pair") { enterPairMode(state.gameMode); return; }
+  if (button.id === "start-tiebreak") { enterPairMode("tiebreak"); return; }
+  if (button.id === "retry-collection" || button.dataset.screen === "collection") { loadCollection(); return; }
+  if (button.hasAttribute("data-discard")) { confirmDiscard(button.dataset.discard || null); return; }
+  if (button.hasAttribute("data-discard-continue")) {
+    if (state.pendingDiscard && state.discardError && !state.discardBusy) {
+      finishDiscard("Sua escolha está confirmada. Não foi possível confirmar o descarte; ele pode ter sido registrado.");
+    }
     return;
   }
   if (button.id === "account-button") {
@@ -1735,21 +1772,6 @@ function handleAppClick(event) {
     renderRanking();
     return;
   }
-  if (button.id === "expand-chroma-batch") {
-    state.chromaBatchExpanded = true;
-    renderCollection();
-    return;
-  }
-  if (button.id === "collapse-chroma-batch") {
-    state.chromaBatchExpanded = false;
-    renderCollection();
-    refs.panels.collection.querySelector(".approved-batch")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    return;
-  }
-  if (button.id === "enable-chroma-motion") {
-    enableTilt(button);
-    return;
-  }
   if (button.dataset.profile) {
     if (state.busy || state.pendingWinnerId || button.getAttribute("aria-disabled") === "true") return;
     showProfile(button.dataset.profile, button);
@@ -1843,7 +1865,6 @@ function mountApp() {
   app.replaceChildren(template.content.cloneNode(true));
   refs = captureRefs();
   renderCollection();
-  installChromaMotion(refs.panels.collection);
   installEvents();
 }
 
@@ -1973,7 +1994,8 @@ async function initialize() {
     const capabilitiesRequest = loadCapabilities()
       .then(validateCapabilities)
       .catch(() => PERSONAL_ONLY_CAPABILITIES);
-    const [candidates, player, capabilities] = await Promise.all([loadCandidates(), ensurePlayer(), capabilitiesRequest]);
+    const [candidates, player, capabilities, gameFeatures] = await Promise.all([loadCandidates(), ensurePlayer(), capabilitiesRequest, loadGameCapabilities().catch(() => ({}))]);
+    state.gameFeatures = gameFeatures?.version === 1 ? gameFeatures : {};
     installCapabilities(capabilities);
     let snapshot = null;
     if (aggregateAvailable("global-ranking")) {
@@ -1993,7 +2015,7 @@ async function initialize() {
     state.personalRankingPolicy = player.personal.rankingPolicy || null;
     state.account = player.personal.account || null;
     state.personalDuels = Number(player.personal.duels) || 0;
-    state.rankingView = aggregateAvailable("global-ranking") ? "general" : "personal";
+    state.rankingView = "personal";
     state.gameMode = "daily";
     state.dailyLoading = true;
     state.pendingWinnerId = "";
@@ -2007,6 +2029,106 @@ async function initialize() {
   // Catálogo, identidade e ranking pessoal são o núcleo do app. Agregados são
   // opcionais e fail-closed; sua ausência nunca derruba o jogo pessoal.
   if (identity) await refreshDailySession(identity);
+}
+
+function pairStatusContent() {
+  const message = state.pairLoading ? "Preparando duas cartas…" : state.pairError || (state.gameMode === "warmup"
+    ? "Aquecimento concluído. Agora vêm as dez escolhas do dia."
+    : "Revisão concluída para os nomes observados do seu Top 5. Preferências próximas podem continuar empatadas; novas escolhas podem mudar esse retrato.");
+  return `<section class="panel"><h1>${state.gameMode === "warmup" ? "Duelo rápido" : "Seu Top 5"}</h1><p role="status">${escapeHtml(message)}</p>${state.pairError ? '<button type="button" id="retry-pair">Tentar novamente</button>' : ""}<button type="button" id="leave-pair-status" class="primary">Ir para as dez escolhas</button></section>`;
+}
+
+async function enterPairMode(mode) {
+  if (!state.gameFeatures.pairs || state.busy) return;
+  const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+  const loadEpoch = ++state.dailyLoadEpoch;
+  state.screen = "duel"; state.gameMode = mode; state.pairLoading = true;
+  state.pairError = ""; state.showCoach = false; state.round = []; render();
+  try {
+    const result = await gameRequest("/api/pair-round", identity.recoveryKey, { mode, topicId: "eleicoes-2026" });
+    if (!isCurrentVoteIdentity(state, identity) || loadEpoch !== state.dailyLoadEpoch) return;
+    if (!result || result.mode !== mode || !["active", "completed"].includes(result.status)
+        || !Number.isSafeInteger(result.remaining) || result.remaining < 0) throw new Error("Rodada incompleta. Tente novamente.");
+    state.pairRemaining = result.remaining;
+    if (result.status === "active") {
+      const ids = result.round?.candidateIds;
+      if (!Array.isArray(ids) || ids.length !== 2 || new Set(ids).size !== 2 || !result.round.id
+          || ids.some(id => !state.candidates.some(person => person.id === id))) throw new Error("Rodada divergente. Tente novamente.");
+      state.round = ids.map(id => state.candidates.find(person => person.id === id));
+      state.roundId = result.round.id; state.pendingWinnerId = ""; state.votePhase = VOTE_PHASES.READY;
+      state.result = "Duas cartas. A escolha conta nos seus confrontos; o placar público só aparece quando autorizado.";
+    } else if (mode === "warmup") state.warmupSkipped = true;
+  } catch (error) {
+    if (!isCurrentVoteIdentity(state, identity) || loadEpoch !== state.dailyLoadEpoch) return;
+    state.pairError = error.message;
+  }
+  state.pairLoading = false; render();
+}
+
+function renderDiscard() {
+  const panel = refs.panels.duel.querySelector("[data-discard-panel]");
+  const pending = state.pendingDiscard;
+  panel.hidden = !pending;
+  if (!pending) { if (panel.textContent) panel.replaceChildren(); return; }
+  if (panel.dataset.roundId !== pending.roundId) {
+    panel.dataset.roundId = pending.roundId;
+    // Only acknowledged presentations enter the optional-decision denominator.
+    // Recording an offer must not block the person's confirmed primary choice.
+    gameRequest("/api/discard-offer", state.recoveryKey, { roundId: pending.roundId }).catch(() => {});
+    const button = (id, label) => '<button type="button" data-discard="' + escapeHtml(id || "") + '">' + escapeHtml(label) + '</button>';
+    panel.innerHTML = '<h2>Quem você tira da mesa?</h2><p>Opcional. O descarte é registrado à parte e não muda o ranking.</p><p class="discard-status" role="status"></p><div class="discard-actions">' + pending.candidates.map(person => button(person.id, 'Descartar ' + (person.displayName || person.name))).join('') + button(null, 'Pular descarte') + '<button type="button" data-discard-continue hidden>Continuar sem confirmar descarte</button></div>';
+  }
+  panel.querySelector('.discard-status').textContent = state.discardError || (state.discardBusy ? 'Confirmando descarte…' : '');
+  panel.querySelector('[data-discard-continue]').hidden = !state.discardError || state.discardBusy;
+  for (const button of panel.querySelectorAll('[data-discard]')) {
+    const same = (button.dataset.discard || null) === pending.attempted;
+    button.setAttribute('aria-disabled', String(state.discardBusy || (Object.hasOwn(pending, 'attempted') && !same)));
+  }
+}
+
+async function finishDiscard(message) {
+  const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+  const advance = advanceAfterDiscard;
+  advanceAfterDiscard = null;
+  state.pendingDiscard = null; state.discardBusy = false; state.discardError = "";
+  renderDiscard();
+  await advance?.();
+  if (!isCurrentVoteIdentity(state, identity)) return;
+  const visible = selector => [...refs.panels.duel.querySelectorAll(selector)].find(element => element.getClientRects().length > 0);
+  const target = visible("[data-vote]") || visible("h1");
+  if (target) { if (!target.matches("button")) target.tabIndex = -1; target.focus(); }
+  announceStatus(message);
+}
+
+async function confirmDiscard(candidateId) {
+  const pending = state.pendingDiscard;
+  if (!pending || state.discardBusy) return;
+  if (Object.hasOwn(pending, "attempted") && pending.attempted !== candidateId) return;
+  pending.attempted = candidateId;
+  const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+  state.discardBusy = true; state.discardError = ""; renderDiscard();
+  try {
+    const result = await gameRequest("/api/round-discard", identity.recoveryKey, { roundId: pending.roundId, candidateId });
+    if (!isCurrentVoteIdentity(state, identity) || state.pendingDiscard !== pending) return;
+    if (result.roundId !== pending.roundId || result.candidateId !== candidateId || result.rankingEffect !== "none") throw new Error("Confirmação incompleta; repita a mesma decisão.");
+    await finishDiscard(candidateId ? "Descarte registrado separadamente. Seu ranking foi preservado." : "Descarte pulado. Sua escolha está confirmada.");
+  } catch (error) {
+    if (!isCurrentVoteIdentity(state, identity) || state.pendingDiscard !== pending) return;
+    state.discardBusy = false; state.discardError = error.message; renderDiscard();
+  }
+}
+
+async function loadCollection() {
+  if (!state.gameFeatures.collection || state.busy) return;
+  const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+  state.screen = "collection"; state.collectionLoading = true; state.collectionError = ""; render();
+  try {
+    const result = await gameRequest("/api/collection", identity.recoveryKey);
+    if (!isCurrentVoteIdentity(state, identity)) return;
+    if (!Array.isArray(result.items) || result.purchasable !== false) throw new Error("Inventário incompleto. Tente novamente.");
+    state.collection = result.items;
+  } catch (error) { if (isCurrentVoteIdentity(state, identity)) state.collectionError = error.message; }
+  if (isCurrentVoteIdentity(state, identity)) { state.collectionLoading = false; render(); }
 }
 
 let capabilitiesRefreshId = 0;
@@ -2038,3 +2160,29 @@ window.addEventListener("focus", () => { void refreshCapabilitiesOnResume(); });
 if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {}));
 mountApp();
 initialize();
+
+function mirrorComparisonContent() {
+  return '<section class="mirror-comparison"><h2>' + MIRROR_COPY.heading + '</h2><p role="status" data-mirror-status></p><p data-mirror-sample></p><button type="button" id="mirror-comparison">' + MIRROR_COPY.action + '</button></section>';
+}
+function patchMirrorComparison() {
+  const panel = refs.duelAux.querySelector('.mirror-comparison');
+  if (!panel) return;
+  const comparison = mirrorComparison?.comparison;
+  const summary = comparison ? formatAggregateCopy(MIRROR_COPY.summary, comparison) : MIRROR_COPY.pending;
+  const sample = comparison ? formatAggregateCopy(MIRROR_COPY.sample, { count: comparison.completedPlayers }) : "";
+  panel.querySelector('[data-mirror-status]').textContent = mirrorComparisonLoading ? MIRROR_COPY.loading : mirrorComparisonError || summary;
+  panel.querySelector('[data-mirror-sample]').textContent = sample;
+  panel.querySelector('button').setAttribute('aria-disabled', String(mirrorComparisonLoading));
+}
+async function loadMirrorComparison() {
+  if (mirrorComparisonLoading || !aggregateAvailable("mirror-comparison")) return;
+  const identity = { epoch: state.identityEpoch, recoveryKey: state.recoveryKey };
+  mirrorComparisonLoading = true; mirrorComparisonError = ""; render();
+  try {
+    const result = await gameRequest("/api/mirror-comparison", identity.recoveryKey);
+    if (!isCurrentVoteIdentity(state, identity) || !aggregateAvailable("mirror-comparison")) return;
+    if (!["pending", "published"].includes(result.status) || (result.status === "published" && (!result.comparison || !Number.isSafeInteger(result.comparison.aligned)))) throw new TypeError("Invalid closed comparison");
+    mirrorComparison = result;
+  } catch { if (isCurrentVoteIdentity(state, identity) && aggregateAvailable("mirror-comparison")) mirrorComparisonError = MIRROR_COPY.error; }
+  finally { if (isCurrentVoteIdentity(state, identity)) { mirrorComparisonLoading = false; render(); } }
+}

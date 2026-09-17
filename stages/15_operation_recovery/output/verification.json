@@ -1,12 +1,29 @@
 {
   "issue": 202,
   "date": "2026-09-17",
-  "unitTests": { "passed": 323, "failed": 0 },
+  "unitTests": { "passed": 324, "failed": 0 },
   "viteBuild": "passed",
   "verifiedRecoveryPhotos": 54,
   "photoRecoveryBrowserSmoke": { "chromium": "passed", "webkit": "passed" },
   "editorialBrowserSmoke": { "webkit": "passed" },
   "editorialApprovalsInvented": 0,
-  "postgresCI": "pending",
-  "production": "pending"
+  "postgresCI": "passed",
+  "ciChecks": { "passed": 6, "failed": 0, "head": "6d7501adf5fd3751a4d781b7f726eb54f6f8eca7" },
+  "production": {
+    "status": "verified",
+    "checkedAt": "2026-09-17T04:37:31.132Z",
+    "sourceCommitFromBothDeploymentRecords": "8d7a46db4c5eceb3179cf0add0ba6634397d1c66",
+    "healthEmbeddedRevision": null,
+    "pwaBundle": "assets/index-8n-4Ufco.js",
+    "health": 200,
+    "capabilities": 200,
+    "mode": "personal-only",
+    "photographsWithMatchingSha256": 54,
+    "browser": "Edge",
+    "dailySessionOpened": true,
+    "visibleDailyPhotographsLoaded": 4,
+    "profileOpenedAndReturned": true,
+    "automatedProductionVotes": 0
+  },
+  "evidence": "https://github.com/stefancabral-oss/presidencia-duelo/pull/204#issuecomment-5708645598"
 }

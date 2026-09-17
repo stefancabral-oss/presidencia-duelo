@@ -4,6 +4,7 @@ import { DAILY_DISTRIBUTION_COPY, formatAggregateCopy } from "./aggregate-copy.j
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const DAILY_RULESET_SCHEMAS = new Map([
+  ["daily-four-card-v4@4", "candidate-public-v4"],
   ["daily-four-card-v1@1", "candidate-public-v1"],
   ["daily-four-card-v2@2", "candidate-public-v2"],
   ["daily-four-card-v3@3", "candidate-public-v3"],

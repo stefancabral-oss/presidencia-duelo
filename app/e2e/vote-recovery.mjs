@@ -546,12 +546,12 @@ try {
     };
 
     await votar(page);
-    await page.getByText("Escolha já confirmada. O detalhamento pessoal desta rodada anterior não está disponível.", { exact: true }).waitFor();
+    await page.locator("[data-personal-feedback]", { hasText: "Escolha já confirmada. O detalhamento pessoal desta rodada anterior não está disponível." }).waitFor();
     if (!await page.getByText("No seu ranking", { exact: true }).isVisible()) {
       throw new Error("o replay legado perdeu o rótulo do canal pessoal indisponível");
     }
-    if (!await page.getByText("No placar do público", { exact: true }).isVisible()) {
-      throw new Error("o replay legado ocultou ou relabelou o evento público persistido");
+    if (await page.getByText("No placar do público", { exact: true }).isVisible()) {
+      throw new Error("o replay legado reintroduziu o evento global na confirmação pessoal");
     }
     if ((await page.locator("body").innerText()).includes("confirmado no seu ranking")) {
       throw new Error("o replay legado inventou detalhamento pessoal para a rodada anterior");

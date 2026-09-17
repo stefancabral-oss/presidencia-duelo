@@ -98,3 +98,5 @@ jobs:
         run: npm run test:integration --prefix back
       - name: Prove vote abuse is blocked
         run: npm run test:abuse --prefix back
+      - name: Verify issued pairs, optional discard and earned inventory
+        run: node back/scripts/game-progress-smoke.mjs

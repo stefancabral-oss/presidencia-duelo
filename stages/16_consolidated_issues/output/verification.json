@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "status": "technical-delivery-verified-human-criteria-pending",
+  "fullRequestComplete": false,
+  "reviewFollowup": {
+    "baseline": "1406c045033702c8b519b5d2dfaa1c10f9fbf12b",
+    "reviewComments": [4033488626, 4033488638, 4033488641],
+    "changes": ["explicit collection navigation supersession", "document shared non-daily quota and clarify limit message", "allow advancing after uncertain optional discard without submitting a divergent decision"],
+    "regressionBeforeFix": "game-progress failed: optional discard failure must offer progression without a successful retry",
+    "localAfterFix": { "unitPassed": 331, "build": "passed", "gameProgressChromium": "passed", "gameProgressWebkit": "passed", "gameRecoveryChromium": "7/7" },
+    "ciEvidence": "The CI block below records the prior runtime. Follow-up head checks are linked in the PR after completion."
+  },
+  "pullRequest": "https://github.com/stefancabral-oss/presidencia-duelo/pull/205",
+  "verifiedRuntimeCommit": "7e7491bfc875664cf88c3b830e6f22f5b55f7ee4",
+  "baseCommit": "8d7a46db4c5eceb3179cf0add0ba6634397d1c66",
+  "verifiedDate": "2026-09-17",
+  "mergeableObserved": true,
+  "mergePerformed": false,
+  "deploymentPerformed": false,
+  "local": {
+    "unitTests": { "passed": 331, "failed": 0, "command": "node --test app/src/*.test.js back/src/*.test.js shared/*.test.js" },
+    "build": "passed",
+    "verifiedRecoveryPhotographs": 54,
+    "curatedPortraitFiles": 99,
+    "totalPortraitSlots": 125,
+    "pilotAssetsExcludedFromBundle": true,
+    "diffWhitespace": "passed",
+    "chromium": {
+      "interaction": "passed",
+      "accessibleProfile": "passed",
+      "editorialGate": "passed",
+      "photoRecovery": "passed",
+      "responsiveLayout": { "screens": 3, "viewports": 16, "result": "passed" },
+      "gameProgress": "passed: warmup, sending lock, discard failure/retry/focus, closure, mirror, collection, tiebreak and four-card free mode",
+      "gameRecovery": { "scenarios": 7, "passed": 7 },
+      "voteRecovery": "passed including timeout, 503, 401, 409, idempotency, truncated 200 and legacy receipt"
+    },
+    "browserApiMode": "mocked; no production votes",
+    "postgresMode": "CI disposable PostgreSQL 16; not available locally"
+  },
+  "continuousIntegration": {
+    "commit": "7e7491bfc875664cf88c3b830e6f22f5b55f7ee4",
+    "checksPassed": 6,
+    "checksFailed": 0,
+    "checks": [
+      { "name": "validate", "result": "success", "run": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35185311152" },
+      { "name": "back-unit", "result": "success", "run": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35185311157" },
+      { "name": "shared-data", "result": "success", "run": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35185311157" },
+      { "name": "back-integration-postgres", "result": "success", "run": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35185311157" },
+      { "name": "browser-smoke (chromium)", "result": "success", "run": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35185311144" },
+      { "name": "browser-smoke (webkit)", "result": "success", "run": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35185311144" }
+    ],
+    "postgresCoverage": ["mode cardinality migration", "issued pair ownership", "concurrent replay", "replay after editorial withdrawal", "pending replacement after withdrawal", "three-round warmup", "separate discard without ranking changes", "presentation-based discard denominator", "earned inventory concurrency and restart", "closed same-edition mirror comparison"]
+  },
+  "feedbackMeasurement": {
+    "artifact": "feedback-measurement.json",
+    "kind": "synthetic simulation, not user research",
+    "rounds": 4000,
+    "seeds": 10,
+    "oldZebraRate": 0.32225,
+    "newZebraRate": 0.02125,
+    "messageProbeRounds": 35,
+    "distinctTemplates": 7,
+    "maximumTemplateCount": 5
+  },
+  "independentReview": {
+    "baselineAa21180Failures": 5,
+    "baseline995a319AdditionalFailures": 2,
+    "recoveryScenariosPassed": 7,
+    "latestReviewedCommit": "7e7491bfc875664cf88c3b830e6f22f5b55f7ee4",
+    "handoffMatrixReviewed": true,
+    "realAssistiveReaderTestPerformed": false,
+    "humanListeningPerformed": false
+  },
+  "remainingExternalCriteria": [
+    "#151 human listening to timbre and volume after deploy",
+    "#156 human validation of complete app experience",
+    "#166 real NVDA or VoiceOver announcement evidence",
+    "#167 prior-stage assistive human gate",
+    "#171 individual editorial approvals; restored photos are not content approval",
+    "#173 editorial review of inferred fields and unresolved sourced data",
+    "#180 three approved live axes are still unavailable; comparison needs its independent publication receipt",
+    "#175 and #177 retain dependent criteria",
+    "#176 explicitly deferred by Stefan in #202"
+  ],
+  "productionRecovery": {
+    "pullRequest": 204,
+    "deployedCommit": "8d7a46db4c5eceb3179cf0add0ba6634397d1c66",
+    "evidence": "https://github.com/stefancabral-oss/presidencia-duelo/pull/204#issuecomment-5708645598",
+    "newMechanicsDeployed": false
+  }
+}

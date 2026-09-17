@@ -1,5 +1,11 @@
 # Primeiro lote de retratos Chroma
 
+> Registro histórico. A PR #205 substitui a vitrine da Coleção por inventário
+> gratuito de acabamentos universais; este lote não é oferecido nem concedido
+> ao jogador. As decisões e os arquivos abaixo permanecem como referência de
+> procedência, não como descrição da interface atual. Regra vigente:
+> `stages/16_consolidated_issues/CONTEXT.md`.
+
 ## Decisão de produto
 
 - A carta básica continua sendo a aparência padrão de todas as pessoas.

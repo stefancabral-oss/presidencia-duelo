@@ -33,13 +33,14 @@ const CONTROLS_POLICY = Object.freeze({
       "GET /api/ranking",
       "publicAggregate in POST /api/round-vote",
       "publicAggregate in POST /api/daily-vote",
+      "publicAggregate in POST /api/pair-vote",
     ]),
     "daily-distribution": Object.freeze(["GET /api/daily-cut"]),
     "prediction-reveal": Object.freeze([
       "GET /api/daily-prediction-results",
       "POST /api/daily-prediction",
     ]),
-    "mirror-comparison": Object.freeze(["future aggregate comparison in the personal mirror"]),
+    "mirror-comparison": Object.freeze(["POST /api/mirror-comparison"]),
   }),
 });
 

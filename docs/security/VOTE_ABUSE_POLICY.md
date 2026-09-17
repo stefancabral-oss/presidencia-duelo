@@ -21,10 +21,12 @@ Somente escolhas novas consomem cota. Repetir o mesmo `roundId` livre ou `answer
 | jogador | 8 escolhas | minuto do PostgreSQL | HTTP 429, `VOTE_RATE_LIMITED` |
 | jogador, total | 30 escolhas | dia editorial de São Paulo | HTTP 429, `VOTE_DAILY_LIMIT` |
 | jogador, rodada do dia | 10 escolhas | janela persistida da edição diária | HTTP 429, `DAILY_CHOICE_LIMIT` |
-| jogador, modo livre | 20 escolhas | dia editorial de São Paulo | HTTP 429, `FREE_CHOICE_LIMIT` |
+| jogador, conjunto não diário: livre, aquecimento e desempate | 20 escolhas compartilhadas | dia editorial de São Paulo | HTTP 429, `FREE_CHOICE_LIMIT` |
 | pseudônimo de rede | 3 novos jogadores anônimos | dia UTC | HTTP 429, `PLAYER_ISSUANCE_LIMIT` |
 
-Uma escolha entre quatro gera três comparações Elo, mas consome uma unidade. A cota total de 30 é compartilhada: concluir os dez slots diários deixa até vinte escolhas livres naquela mesma data editorial. A edição diária usa exatamente seus `opensAt` e `closesAt` persistidos; o modo livre calcula a mesma janela no relógio injetado pela aplicação. Apenas o bucket de minuto usa `now()` do PostgreSQL.
+Uma escolha entre quatro gera três comparações Elo, mas consome uma unidade; uma escolha entre duas também consome uma unidade. Na consolidação #182 de 17/09/2026, aquecimento e desempate usam o mesmo conjunto não diário do modo livre: três votos no aquecimento deixam dezessete escolhas para livre/desempate nessa data editorial. Esgotar esse conjunto impede novos votos nos três modos até a próxima data, mas preserva as dez escolhas diárias. Os nomes históricos `freeChoices` e `FREE_CHOICE_LIMIT` identificam esse conjunto compartilhado na API; não prometem vinte escolhas adicionais em quatro cartas. Os limites numéricos e snapshots anteriores permanecem inalterados.
+
+A cota total é 30. A edição diária usa exatamente seus `opensAt` e `closesAt` persistidos; os modos não diários calculam a mesma janela no relógio injetado pela aplicação. Apenas o bucket de minuto usa `now()` do PostgreSQL.
 
 Na migração da cota antiga por dia UTC, os buckets legados que se sobrepõem ao dia editorial são somados conservadoramente ao contador total v2, limitado a 30. A aproximação pode bloquear cedo, mas nunca concede uma segunda franquia de 30 escolhas durante o deploy.
 

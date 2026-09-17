@@ -6,6 +6,7 @@ import {
   APP_AGGREGATE_COPY,
   DAILY_DISTRIBUTION_COPY,
   PREDICTION_REVEAL_COPY,
+  MIRROR_COPY,
   PUBLIC_RANKING_COPY,
   WITHHELD_COPY,
 } from "./aggregate-copy.js";
@@ -28,6 +29,7 @@ test("every fingerprinted copy leaf has a runtime consumer in its declared scope
   assert.deepEqual(Object.keys(APP_AGGREGATE_COPY).sort(), [
     "daily-distribution",
     "global-ranking",
+    "mirror-comparison",
     "prediction-reveal",
     "withheld",
   ]);
@@ -42,12 +44,14 @@ test("every fingerprinted copy leaf has a runtime consumer in its declared scope
       source("../../back/src/topic-store.js"),
     ]),
     "prediction-reveal": [await source("./main.js")],
+    "mirror-comparison": [await source("./main.js")],
   };
   const copyByScope = {
     withheld: WITHHELD_COPY,
     "global-ranking": PUBLIC_RANKING_COPY,
     "daily-distribution": DAILY_DISTRIBUTION_COPY,
     "prediction-reveal": PREDICTION_REVEAL_COPY,
+    "mirror-comparison": MIRROR_COPY,
   };
 
   for (const [scope, copy] of Object.entries(copyByScope)) {

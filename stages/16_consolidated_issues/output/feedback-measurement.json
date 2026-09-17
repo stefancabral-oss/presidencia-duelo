@@ -1,0 +1,289 @@
+{
+  "methodology": "10 fixed seeds; 54 synthetic latent strengths; 400 four-card choices each; Luce winner sampling; production Elo deltas; message probe seed 1 rounds 101–135",
+  "rounds": 4000,
+  "beforeRate": 0.32225,
+  "afterRate": 0.02125,
+  "runs": [
+    {
+      "seed": 1,
+      "rounds": 400,
+      "before": 130,
+      "after": 4
+    },
+    {
+      "seed": 2,
+      "rounds": 400,
+      "before": 138,
+      "after": 8
+    },
+    {
+      "seed": 3,
+      "rounds": 400,
+      "before": 135,
+      "after": 11
+    },
+    {
+      "seed": 4,
+      "rounds": 400,
+      "before": 136,
+      "after": 6
+    },
+    {
+      "seed": 5,
+      "rounds": 400,
+      "before": 130,
+      "after": 8
+    },
+    {
+      "seed": 6,
+      "rounds": 400,
+      "before": 135,
+      "after": 12
+    },
+    {
+      "seed": 7,
+      "rounds": 400,
+      "before": 113,
+      "after": 7
+    },
+    {
+      "seed": 8,
+      "rounds": 400,
+      "before": 108,
+      "after": 10
+    },
+    {
+      "seed": 9,
+      "rounds": 400,
+      "before": 137,
+      "after": 12
+    },
+    {
+      "seed": 10,
+      "rounds": 400,
+      "before": 127,
+      "after": 7
+    }
+  ],
+  "distribution": {
+    "Mais uma escolha sua: Pessoa.": 5,
+    "Nesta mesa, sua preferência foi Pessoa.": 5,
+    "Você ficou com Pessoa.": 5,
+    "Escolha registrada para Pessoa.": 5,
+    "Seu retrato ganha uma escolha: Pessoa.": 5,
+    "Pessoa foi sua escolha nesta rodada.": 5,
+    "Você preferiu Pessoa entre estas pessoas.": 5
+  },
+  "messages": [
+    {
+      "round": 101,
+      "winner": 25,
+      "zebra": false,
+      "message": "Mais uma escolha sua: Pessoa."
+    },
+    {
+      "round": 102,
+      "winner": 40,
+      "zebra": false,
+      "message": "Nesta mesa, sua preferência foi Pessoa."
+    },
+    {
+      "round": 103,
+      "winner": 52,
+      "zebra": false,
+      "message": "Você ficou com Pessoa."
+    },
+    {
+      "round": 104,
+      "winner": 6,
+      "zebra": false,
+      "message": "Escolha registrada para Pessoa."
+    },
+    {
+      "round": 105,
+      "winner": 40,
+      "zebra": false,
+      "message": "Seu retrato ganha uma escolha: Pessoa."
+    },
+    {
+      "round": 106,
+      "winner": 48,
+      "zebra": false,
+      "message": "Pessoa foi sua escolha nesta rodada."
+    },
+    {
+      "round": 107,
+      "winner": 38,
+      "zebra": false,
+      "message": "Você preferiu Pessoa entre estas pessoas."
+    },
+    {
+      "round": 108,
+      "winner": 41,
+      "zebra": false,
+      "message": "Mais uma escolha sua: Pessoa."
+    },
+    {
+      "round": 109,
+      "winner": 31,
+      "zebra": false,
+      "message": "Nesta mesa, sua preferência foi Pessoa."
+    },
+    {
+      "round": 110,
+      "winner": 47,
+      "zebra": false,
+      "message": "Você ficou com Pessoa."
+    },
+    {
+      "round": 111,
+      "winner": 33,
+      "zebra": false,
+      "message": "Escolha registrada para Pessoa."
+    },
+    {
+      "round": 112,
+      "winner": 15,
+      "zebra": false,
+      "message": "Seu retrato ganha uma escolha: Pessoa."
+    },
+    {
+      "round": 113,
+      "winner": 26,
+      "zebra": false,
+      "message": "Pessoa foi sua escolha nesta rodada."
+    },
+    {
+      "round": 114,
+      "winner": 37,
+      "zebra": false,
+      "message": "Você preferiu Pessoa entre estas pessoas."
+    },
+    {
+      "round": 115,
+      "winner": 30,
+      "zebra": false,
+      "message": "Mais uma escolha sua: Pessoa."
+    },
+    {
+      "round": 116,
+      "winner": 52,
+      "zebra": false,
+      "message": "Nesta mesa, sua preferência foi Pessoa."
+    },
+    {
+      "round": 117,
+      "winner": 35,
+      "zebra": false,
+      "message": "Você ficou com Pessoa."
+    },
+    {
+      "round": 118,
+      "winner": 18,
+      "zebra": false,
+      "message": "Escolha registrada para Pessoa."
+    },
+    {
+      "round": 119,
+      "winner": 40,
+      "zebra": false,
+      "message": "Seu retrato ganha uma escolha: Pessoa."
+    },
+    {
+      "round": 120,
+      "winner": 33,
+      "zebra": false,
+      "message": "Pessoa foi sua escolha nesta rodada."
+    },
+    {
+      "round": 121,
+      "winner": 9,
+      "zebra": false,
+      "message": "Você preferiu Pessoa entre estas pessoas."
+    },
+    {
+      "round": 122,
+      "winner": 29,
+      "zebra": false,
+      "message": "Mais uma escolha sua: Pessoa."
+    },
+    {
+      "round": 123,
+      "winner": 29,
+      "zebra": false,
+      "message": "Nesta mesa, sua preferência foi Pessoa."
+    },
+    {
+      "round": 124,
+      "winner": 37,
+      "zebra": false,
+      "message": "Você ficou com Pessoa."
+    },
+    {
+      "round": 125,
+      "winner": 15,
+      "zebra": false,
+      "message": "Escolha registrada para Pessoa."
+    },
+    {
+      "round": 126,
+      "winner": 20,
+      "zebra": false,
+      "message": "Seu retrato ganha uma escolha: Pessoa."
+    },
+    {
+      "round": 127,
+      "winner": 44,
+      "zebra": false,
+      "message": "Pessoa foi sua escolha nesta rodada."
+    },
+    {
+      "round": 128,
+      "winner": 2,
+      "zebra": false,
+      "message": "Você preferiu Pessoa entre estas pessoas."
+    },
+    {
+      "round": 129,
+      "winner": 32,
+      "zebra": false,
+      "message": "Mais uma escolha sua: Pessoa."
+    },
+    {
+      "round": 130,
+      "winner": 40,
+      "zebra": false,
+      "message": "Nesta mesa, sua preferência foi Pessoa."
+    },
+    {
+      "round": 131,
+      "winner": 35,
+      "zebra": false,
+      "message": "Você ficou com Pessoa."
+    },
+    {
+      "round": 132,
+      "winner": 37,
+      "zebra": false,
+      "message": "Escolha registrada para Pessoa."
+    },
+    {
+      "round": 133,
+      "winner": 48,
+      "zebra": false,
+      "message": "Seu retrato ganha uma escolha: Pessoa."
+    },
+    {
+      "round": 134,
+      "winner": 3,
+      "zebra": false,
+      "message": "Pessoa foi sua escolha nesta rodada."
+    },
+    {
+      "round": 135,
+      "winner": 6,
+      "zebra": false,
+      "message": "Você preferiu Pessoa entre estas pessoas."
+    }
+  ]
+}

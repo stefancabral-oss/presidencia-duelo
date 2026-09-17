@@ -1,5 +1,12 @@
 # PoliMatch — Contexto global ICM
 
+## Entrega consolidada autorizada em 17/09/2026
+
+Stefan solicitou uma única PR sem conflitos com as issues abertas prontas.
+O estágio 16 registra o escopo e as decisões desta entrega, incluindo coleção
+gratuita, aquecimento/desempate e fechamento pessoal. A autorização permite
+consolidar unidades na mesma PR, sem fabricar gates humanos ou mesclar sem revisão.
+
 ## Integração autorizada em 17/09/2026
 
 O responsável solicitou mesclar as PRs pendentes #191, #194, #195, #199, #200 e

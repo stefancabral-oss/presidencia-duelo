@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-09-17T16:02:11.193Z",
+  "scope": "planning-documentation-only",
+  "status": "passed",
+  "counts": {
+    "lanes": 3,
+    "agentGuides": 3,
+    "microissues": 18,
+    "markdownFiles": 29,
+    "localLinksChecked": 48,
+    "nativeHierarchyLinks": 21
+  },
+  "checks": {
+    "requiredSectionsAndNumberedSteps": true,
+    "relativeLinks": true,
+    "resolvedReferences": true,
+    "dependencyGraphAcyclic": true,
+    "githubNativeHierarchy": true
+  },
+  "implementationComplete": false,
+  "applicationTestsRun": false,
+  "humanApproval": false,
+  "mergePerformed": false,
+  "deploymentPerformed": false,
+  "errors": []
+}

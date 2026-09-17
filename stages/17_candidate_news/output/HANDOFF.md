@@ -1,5 +1,7 @@
 # Handoff — decomposição do épico #206
 
+Atualização: a implementação autorizada de B01 possui [handoff próprio](B01-HANDOFF.md) e [evidências próprias](B01-verification.json). O restante deste arquivo preserva a entrega documental #228; suas declarações de ausência de implementação referem-se àquela entrega.
+
 ## Entrega
 
 Planejamento separado em Back #207 (7 microissues), Front #208 (6) e App #209 (5), com instruções agente.md e um Markdown por microissue. O README e manifest.json registram a ordem, vínculos e dependências; GitHub acompanha a execução.

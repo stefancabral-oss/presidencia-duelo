@@ -2,6 +2,8 @@
 
 ## Objetivo
 
+Atualização de execução em 17/09/2026: Stefan autorizou implementar as pendências. B01 (#210) está em implementação na branch `feat/210-civic-contracts`, sobre main `f99ac18` com #205 já mesclada; a documentação de #228 foi incorporada por merge da branch. O escopo abaixo preserva o histórico do planejamento, não limita essa autorização posterior. Contrato e limites atuais: [back/B01-contract.md](back/B01-contract.md). Evidências por unidade: [output/B01-HANDOFF.md](output/B01-HANDOFF.md) e `output/B01-verification.json`. Merge, deploy e gates humanos continuam separados.
+
 Decompor o épico [#206](https://github.com/stefancabral-oss/presidencia-duelo/issues/206) em três frentes, com guias agente.md e microissues executáveis. A solicitação atual é criar o planejamento e os artefatos no repositório/GitHub.
 
 ## Entradas

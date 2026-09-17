@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-17",
+  "issue": 210,
+  "branch": "feat/210-civic-contracts",
+  "baseCommit": "f99ac18c1db5d296d6ed49edcaca21239b260205",
+  "checks": [
+    { "command": "node --test app/src/*.test.js back/src/*.test.js shared/*.test.js", "status": "passed", "tests": 354, "failures": 0, "newCivicTests": 23 },
+    { "command": "node app/node_modules/vite/bin/vite.js build app", "status": "passed" },
+    { "command": "git diff --check", "status": "passed" }
+  ],
+  "postgresql": { "status": "pending-ci", "localAvailable": false, "script": "back/scripts/civic-schema-smoke.mjs" },
+  "humanApproval": false,
+  "realDataImported": false,
+  "mergePerformed": false,
+  "deploymentPerformed": false
+}

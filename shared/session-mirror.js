@@ -33,7 +33,7 @@ export function sessionMirror(session) {
 // of people with an identical full profile.
 export function compareSessionWithCut(session, cut) {
   if (session?.status !== "completed" || cut?.status !== "published"
-      || session.edition.id !== cut.edition?.id || session.edition.snapshotHash !== cut.catalogSnapshotHash
+      || session.edition.id !== cut.edition?.id || session.edition.snapshotHash !== cut.edition?.snapshotHash
       || !Array.isArray(cut.rounds) || cut.rounds.length !== session.answers.length) throw new TypeError("Espelho: recorte incompatível");
   let aligned = 0, tied = 0;
   for (const answer of session.answers) {

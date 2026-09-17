@@ -115,9 +115,11 @@ function aggregateAvailable(scope) {
 function applyExpiredAggregateCapabilities(previous = state.capabilities) {
   const hadGlobalRanking = previous.scopes["global-ranking"].status === "available";
   const hadPredictionReveal = previous.scopes["prediction-reveal"].status === "available";
+  const hadMirrorComparison = previous.scopes["mirror-comparison"].status === "available";
   state.capabilities = validateCapabilities(JSON.parse(JSON.stringify(state.capabilities)));
   const globalRankingExpired = hadGlobalRanking && !aggregateAvailable("global-ranking");
   const predictionRevealExpired = hadPredictionReveal && !aggregateAvailable("prediction-reveal");
+  const mirrorComparisonExpired = hadMirrorComparison && !aggregateAvailable("mirror-comparison");
   if (!aggregateAvailable("global-ranking")) {
     state.ranking = [];
     state.globalDuels = 0;
@@ -135,7 +137,7 @@ function applyExpiredAggregateCapabilities(previous = state.capabilities) {
     state.selectedId = "";
     if (state.gameMode === "daily" && state.dailySession && !state.busy) installDailySession(state.dailySession);
   }
-  return globalRankingExpired || predictionRevealExpired;
+  return globalRankingExpired || predictionRevealExpired || mirrorComparisonExpired;
 }
 
 function scheduleAggregateCapabilityExpiry() {
@@ -326,7 +328,7 @@ function candidateSlotModel(candidate, { actionMode = "vote" } = {}) {
     outcome: outcome ? {
       tone: outcome.tone,
       value: outcome.winner ? "Escolhida" : "Não escolhida",
-      message: outcome.winner ? "Sua preferência nesta rodada" : "Sem descarte registrado",
+      message: outcome.winner ? "Confirmada" : "Sem descarte",
     } : null,
   };
 }
@@ -2118,7 +2120,7 @@ async function confirmDiscard(candidateId) {
     const advance = advanceAfterDiscard; advanceAfterDiscard = null;
     await advance?.();
     if (!isCurrentVoteIdentity(state, identity)) return;
-    const target = refs.panels.duel.querySelector("[data-vote]:not([hidden])") || refs.panels.duel.querySelector("h1");
+    const target = [...refs.panels.duel.querySelectorAll("[data-vote], h1")].find(element => element.getClientRects().length > 0);
     if (target) { if (!target.matches("button")) target.tabIndex = -1; target.focus(); }
     announceStatus(candidateId ? "Descarte registrado separadamente. Seu ranking foi preservado." : "Descarte pulado. Sua escolha está confirmada.");
   } catch (error) {

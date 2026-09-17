@@ -23,6 +23,8 @@ await page.route("**/api/**", async route => {
   if (path === "/api/player/state") return send(personal());
   if (path === "/api/daily-session") return send(base);
   if (path === "/api/pair-round") {
+    const mode = route.request().postDataJSON().mode;
+    if (mode === "tiebreak") return send({ mode, status: "active", remaining: 7, round: { id: "550e8400-e29b-41d4-a716-000000000099", candidateIds: catalog.slice(0, 2).map(person => person.id) } });
     if (pairCount === 3) return send({ mode: "warmup", status: "completed", remaining: 0, round: null });
     pendingPair = { id: `550e8400-e29b-41d4-a716-${String(pairCount + 1).padStart(12, "0")}`, candidateIds: catalog.slice(pairCount * 2, pairCount * 2 + 2).map(person => person.id) };
     return send({ mode: "warmup", status: "active", remaining: 3 - pairCount, round: pendingPair });
@@ -43,6 +45,7 @@ await page.route("**/api/**", async route => {
     return send({ ...discards.at(-1), status: "created", rankingEffect: "none" });
   }
   if (path === "/api/collection") return send({ purchasable: false, enabled: true, total: 12, items: [{ id: "jade", title: "Jade", acquiredAt: "2026-09-17T00:00:00Z" }] });
+  if (path === "/api/discard-offer") return send({ offered: true });
   return send({ error: "mock não encontrado" }, 404);
 });
 try {
@@ -75,6 +78,13 @@ try {
   assert.equal(await page.locator('.mirror-axes article').count(), 3);
   await page.getByRole('button', { name: 'Coleção', exact: true }).click();
   await page.getByRole('heading', { name: 'Jade', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Ranking', exact: true }).click();
+  await page.locator('#start-tiebreak').click();
+  await page.locator('[data-game-mode="tiebreak"] .arena-pair [data-vote]:visible').first().waitFor();
+  assert.equal(await page.locator('[data-vote]:visible').count(), 2);
+  await page.locator('#leave-pair').click();
+  await page.locator('#start-free-mode').click();
+  assert.equal(await page.locator('[data-vote]:visible').count(), 4, 'free mode retains four cards');
   assert.equal(votes.length, 3);
   assert.deepEqual(errors, []);
   console.log('Game UI: two cards, blocked departure while sending, persistent discard focus, failure/retry identity, three-round completion, mirror and real inventory passed.');

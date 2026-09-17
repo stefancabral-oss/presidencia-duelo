@@ -28,11 +28,11 @@ test("a round upset needs low round probability, not simply one stronger opponen
 
 test("mirror comparison uses the same closed cohort, keeps ties distinct and rejects another snapshot", () => {
   const session = { status: "completed", edition: { id: "edition-a", date: "2026-09-16", snapshotHash: "hash-a" }, answers: [{ slot: 1, winnerId: "a" }, { slot: 2, winnerId: "b" }] };
-  const cut = { status: "published", edition: { id: "edition-a" }, catalogSnapshotHash: "hash-a", completedPlayers: 2, methodology: "closed", sampleNotice: "small",
+  const cut = { status: "published", edition: { id: "edition-a", snapshotHash: "hash-a" }, catalogSnapshotHash: "selected-subset-hash", completedPlayers: 2, methodology: "closed", sampleNotice: "small",
     rounds: [{ slot: 1, choices: [{ candidateId: "a", count: 2 }, { candidateId: "b", count: 0 }] }, { slot: 2, choices: [{ candidateId: "a", count: 1 }, { candidateId: "b", count: 1 }] }] };
   assert.deepEqual(compareSessionWithCut(session, cut), { editionId: "edition-a", date: "2026-09-16", completedPlayers: 2, rounds: 2, aligned: 1, tied: 1, methodology: "closed", sampleNotice: "small" });
   assert.throws(() => compareSessionWithCut(session, { ...cut, status: "pending" }), /incompatível/);
-  assert.throws(() => compareSessionWithCut(session, { ...cut, catalogSnapshotHash: "hash-b" }), /incompatível/);
+  assert.throws(() => compareSessionWithCut(session, { ...cut, edition: { ...cut.edition, snapshotHash: "hash-b" } }), /incompatível/);
   assert.throws(() => compareSessionWithCut(session, { ...cut, completedPlayers: 3 }), /denominador/);
 });
 test("35 ordinary rounds distribute feedback across seven comprehensible messages", () => {

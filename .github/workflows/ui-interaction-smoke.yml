@@ -84,6 +84,10 @@ jobs:
         env:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
         run: node app/e2e/game-progress.mjs
+      - name: Validate pair recovery, permissions and touch geometry
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/game-recovery.mjs
 
       - name: Validate optional daily prediction and closed reveal
         env:

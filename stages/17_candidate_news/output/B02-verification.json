@@ -3,7 +3,7 @@
   "issue": 211,
   "branch": "feat/211-official-import",
   "baseCommit": "ffc38984f7d8b33647d3cfbcad3029fca2ec2e38",
-  "recordedAt": "2026-09-18T11:57:28.303Z",
+  "recordedAt": "2026-09-18T17:40:32.513Z",
   "local": {
     "unitTests": {
       "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
@@ -82,6 +82,22 @@
         "durationMs": 1628.6472,
         "commit": "767ea9dfac86a6132847525185a66de02eafb018"
       }
+    },
+    "processReview": {
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "command": "node --test back/src/civic-process-review.test.js",
+      "realCliRepeatedWithoutOverwrite": true
+    },
+    "processRevisionFullSuite": {
+      "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
+      "tests": 458,
+      "passed": 458,
+      "failed": 0,
+      "durationMs": 30083.0958,
+      "runtime": "Node.js 24.19.0 Windows",
+      "CIVIC_PYTHON": "bundled Python"
     }
   },
   "pilot": {
@@ -158,7 +174,11 @@
         "name": "shared-data",
         "conclusion": "success"
       }
-    ]
+    ],
+    "processRevision": {
+      "status": "pending new head",
+      "checks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks"
+    }
   },
   "acceptance": {
     "human": "pending",
@@ -191,10 +211,19 @@
     "apiLicense": null,
     "sourceAccessBasis": "Resolução TSE 23.609/2019, art. 74: public consultation; not a general API reuse license",
     "publicProcessLookup": {
-      "status": "hCaptcha required",
-      "actsRead": false,
-      "challengeCompleted": false,
-      "authorizationRequested": true
+      "status": "partial: new visual challenge requires intervention",
+      "actsRead": true,
+      "actsReadCount": 12,
+      "initialChallengesCompleted": true,
+      "authorizationReceived": {
+        "actor": "Stefan",
+        "text": "Sim",
+        "date": "2026-09-18"
+      },
+      "bypassed": false,
+      "temporaryUnavailabilityObserved": true,
+      "failedVisualChallengeAttempts": 3,
+      "interventionRequested": true
     }
   },
   "reviewCorrections": {
@@ -209,5 +238,18 @@
     "pr232": "e2716217d6c5a2993dd6fa21ec33de28634e4881",
     "method": "git merge-tree --write-tree HEAD origin/feat/213-news-collection",
     "conflicts": false
+  },
+  "processSourceReview": {
+    "evidenceId": "3d8d48bb1c8e2e9757d4769cc5214a3b2632ff126cbac995ae4759625124f9b0",
+    "documents": 12,
+    "candidaciesWithDocuments": 9,
+    "candidacies": 37,
+    "individualDetails": 95,
+    "legalIntervalsProven": 0,
+    "humanAcceptance": "pending",
+    "complete": false,
+    "source": "public PJe documents consulted via normal browser UI",
+    "artifact": "B02-process-review.json",
+    "rawDocumentsCommitted": false
   }
 }

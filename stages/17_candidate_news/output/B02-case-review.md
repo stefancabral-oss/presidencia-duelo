@@ -156,7 +156,7 @@ A [Resolução TSE 23.609/2019, art. 74](https://www.tse.jus.br/legislacao/compi
 
 Para cada composição, localizar nos processos o vínculo/apensamento titular–vice/suplente e os atos datados de registro/substituição/renúncia. O art. 32 disciplina a associação processual; o art. 69 trata a renúncia datada/homologada. Atualização do DTO e geração do CSV não demonstram esses períodos. Transcrever somente fatos necessários no manifesto de relações, com URL/localizador, data de origem, intervalo e condição de uso verificados; executar o importador novamente. Não transformar o prazo geral de substituição em data individual.
 
-A consulta pública unificada apresentou hCaptcha em 18/09/2026 antes de exibir o RRC 0603024-47.2026.6.26.0000. Nenhum processo/ato foi lido nessa consulta. Autorização para completar o desafio foi solicitada no chat; não houve contorno.
+Após autorização de Stefan ("Sim"), os desafios iniciais foram concluídos pela interface normal em 18/09/2026. Foram lidos 12 atos institucionais, que esclarecem registros coletivo/individual, substituições, renúncias e situação de chapa distinta da situação individual. [Dossiê processual e limites](B02-process-review.md), [fatos minimizados](B02-process-evidence.json) e [revisão validada](B02-process-review.json). Não houve contorno. O serviço apresentou indisponibilidade e depois um novo desafio visual, cujas três leituras foram recusadas; intervenção na aba foi solicitada. A coleta processual permanece parcial.
 
 ## Revisão e aceite
 

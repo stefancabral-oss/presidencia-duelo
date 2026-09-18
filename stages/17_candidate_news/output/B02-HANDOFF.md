@@ -34,10 +34,18 @@ Cinco apontamentos da revisão técnica tratados: exportação durável; replay 
 
 ## Pendente e gate humano
 
-#211 permanece aberta. O dossiê torna a revisão concreta: responsável editorial confirma identidades/vínculos, busca atos datados nos processos e revisa os sete históricos; responsável de produto confirma SP e o recorte/exceções. A consulta pública PJe exige hCaptcha; autorização de resolução solicitada no chat, sem completar/contornar o desafio. Base de consulta pública verificada na Resolução 23.609, art. 74; nenhuma licença geral da API presumida. Não marcar vigência comprovada com geração/coleta, nem autocertificar gate. Ingestão/publicação B06 é posterior e não bloqueia B02 staging por si só.
+#211 permanece aberta. O dossiê torna a revisão concreta: responsável editorial confirma identidades/vínculos, busca atos datados nos processos e revisa os sete históricos; responsável de produto confirma SP e o recorte/exceções. Após autorização de Stefan ("Sim"), os desafios iniciais foram concluídos e 12 atos institucionais lidos. [Dossiê processual](B02-process-review.md), [fatos](B02-process-evidence.json) e [revisão portável](B02-process-review.json) esclarecem nove candidaturas sem criar vigências. A coleta posterior apresentou indisponibilidade e desafio visual recusado em três tentativas; intervenção na aba foi solicitada, sem contorno. Base de consulta pública verificada na Resolução 23.609, art. 74; nenhuma licença geral da API presumida. Não marcar vigência comprovada com geração/coleta, nem autocertificar gate. Ingestão/publicação B06 é posterior e não bloqueia B02 staging por si só.
 
 Próxima unidade independente pelo grafo: B04 (#213), apoiada em B01 concluída. B03 depende do aceite de B02 para conclusão. Front/App podem consumir fixtures existentes para protótipos conforme o plano, respeitando seus gates.
 
 ## Reversão
 
 Desligar a execução do CLI/consumidores e conservar snapshots. Em falha de fonte, servir/consultar somente a última carga reconciliada conhecida, nunca um lote incompleto nem diretório vazio presumido. Não remover dados históricos, não acionar rollback do PostgreSQL populado, não promover staging a conteúdo público.
+
+## Consulta processual autorizada em 18/09/2026
+
+Doze decisões/certidões transcritas como fatos institucionais necessários. Guto e o primeiro suplente têm pares coletivo/individual explicitamente ligados nas decisões, sem substituição entre aplicações. Vivian tem substituição e nova chapa expressamente declaradas; Vera tem deferimento individual e indeferimento da chapa original distintos. Salles possui atos de renúncia/deferimento; Geraldo possui deferimento regional da nova primeira suplente em recurso no TSE; Edjane possui duas renúncias homologadas. Certidão do TSE declara as substituições presidencial/vice do PRTB sem deferir os novos registros.
+
+Novo validador/CLI vincula provas ao lote/detalhes, preserva os 37 casos e suas pendências e gera revisão imutável. Dez regressões novas; suíte integral atual: 458/458 aprovados em Windows, duração 30083.0958 ms. CI do novo head é conferido nos checks; os runs anteriores continuam identificados pelo código validado. Nenhuma composição ganhou instante jurídico inferido ou aprovação humana.
+
+Acesso a concluir: desafio visual na consulta do segundo suplente coletivo de Guto; depois consultar o ato desse par, renúncia anterior de Geraldo, atos de substituição faltantes e as demais composições. Documento de precisão de dia não permite preencher automaticamente timestamp de B01. Não transformar assinatura, autuação ou coleta em vigência; manter lacunas explicitamente justificadas e entregar nova revisão ao responsável.

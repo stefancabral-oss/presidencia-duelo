@@ -1,4 +1,7 @@
 import { createHash } from 'node:crypto';
+import { civicRecordDigest } from './civic-import.js';
+import { buildDivulgaReview } from './civic-divulga-detail.js';
+import { validateCivicDataset } from '../../shared/civic-contract.js';
 
 const fail = reason => { throw new Error(`Civic process review: ${reason}`); };
 const exact = (value, keys, required = keys) => {
@@ -14,11 +17,16 @@ const events = new Set(['renunciation_homologated','substitute_selected','substi
 
 // Validates provenance bindings and projects facts for review. It does not read
 // court documents, attest their interpretation, approve a gate or emit tickets.
-export function buildCivicProcessReview(detailReview, evidence) {
+export function buildCivicProcessReview(detailReview, evidence, batch) {
   exact(evidence,['version','batchId','detailReviewId','recordedAt','synthetic','publication','humanAcceptance','legalIntervalsInferred','documents','cases']);
   const { collection, review } = detailReview ?? {};
   if (!collection || !review || collection.synthetic !== false || review.synthetic !== false || evidence.synthetic !== false || evidence.version !== 1 || collection.version !== 1 || review.version !== 1 || evidence.publication !== 'staging_only' || review.publication !== 'staging_only' || evidence.humanAcceptance !== 'pending' || evidence.legalIntervalsInferred !== false || !instant(evidence.recordedAt) || !/^[a-f0-9]{64}$/.test(evidence.batchId) || !/^[a-f0-9]{64}$/.test(evidence.detailReviewId) || evidence.batchId !== review.batchId || evidence.detailReviewId !== review.reviewId || !Array.isArray(evidence.documents) || evidence.documents.length > 200 || !Array.isArray(evidence.cases) || evidence.cases.length !== 0) fail('boundary or identity');
   if (!Array.isArray(collection.projections) || !Array.isArray(review.cases) || collection.projections.length > 1000 || review.cases.length > 1000) fail('detail coverage');
+  if (!batch || batch.batchId !== evidence.batchId || batch.dataset?.synthetic !== false) fail('pinned batch identity');
+  validateCivicDataset(batch.dataset);
+  if (civicRecordDigest(batch.dataset.records) !== batch.report?.transformedRecordsSha256) fail('pinned batch fingerprint');
+  const canonical = buildDivulgaReview(batch,collection);
+  if (canonical.reviewId !== review.reviewId || hash(canonical.cases) !== hash(review.cases)) fail('pinned candidacy coverage or detail review fingerprint');
   const details = new Map(collection.projections.map(p => [p.sourceKey,p]));
   if (details.size !== collection.projections.length || collection.projections.some(p=>!/^\d{1,20}$/.test(p.sourceKey) || !['BR',collection.pilotUf].includes(p.jurisdiction)) || new Set(review.cases.map(c=>c.sourceKey)).size !== review.cases.length || review.cases.some(c=>!details.has(c.sourceKey) || !Array.isArray(c.references) || !Array.isArray(c.exceptionReasons))) fail('ambiguous source identity');
   const stableDetails = collection.projections.map(({evidence,...record})=>({...record,evidence:{...evidence,fetchedAt:undefined}}));

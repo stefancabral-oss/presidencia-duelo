@@ -3,7 +3,7 @@
   "issue": 211,
   "branch": "feat/211-official-import",
   "baseCommit": "ffc38984f7d8b33647d3cfbcad3029fca2ec2e38",
-  "recordedAt": "2026-09-18T17:42:30.974Z",
+  "recordedAt": "2026-09-18T17:44:44.122Z",
   "local": {
     "unitTests": {
       "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
@@ -84,8 +84,8 @@
       }
     },
     "processReview": {
-      "tests": 10,
-      "passed": 10,
+      "tests": 13,
+      "passed": 13,
       "failed": 0,
       "command": "node --test back/src/civic-process-review.test.js",
       "realCliRepeatedWithoutOverwrite": true,
@@ -95,20 +95,30 @@
         "localLinksChecked": 119
       },
       "portableCli": {
-        "command": "node back/scripts/civic-process-review.mjs stages/17_candidate_news/output/B02-case-review.json stages/17_candidate_news/output/B02-process-evidence.json ../b02-source-cache/process-review-3d8d48bb.json",
+        "command": "node back/scripts/civic-process-review.mjs stages/17_candidate_news/output/B02-pilot-delivery.json stages/17_candidate_news/output/B02-case-review.json stages/17_candidate_news/output/B02-process-evidence.json ../b02-source-cache/process-review-pinned-3d8d48bb.json",
         "status": "passed",
         "evidenceId": "3d8d48bb1c8e2e9757d4769cc5214a3b2632ff126cbac995ae4759625124f9b0",
         "complete": false
-      }
+      },
+      "durationMs": 348.2744
     },
     "processRevisionFullSuite": {
       "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
-      "tests": 458,
-      "passed": 458,
+      "tests": 461,
+      "passed": 461,
       "failed": 0,
-      "durationMs": 30083.0958,
+      "durationMs": 27986.909,
       "runtime": "Node.js 24.19.0 Windows",
-      "CIVIC_PYTHON": "bundled Python"
+      "CIVIC_PYTHON": "bundled Python",
+      "previous": {
+        "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
+        "tests": 458,
+        "passed": 458,
+        "failed": 0,
+        "durationMs": 30083.0958,
+        "runtime": "Node.js 24.19.0 Windows",
+        "CIVIC_PYTHON": "bundled Python"
+      }
     }
   },
   "pilot": {
@@ -222,6 +232,10 @@
           "conclusion": "success"
         }
       ],
+      "checks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks"
+    },
+    "pinnedProcessRevision": {
+      "status": "pending new code head",
       "checks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks"
     }
   },

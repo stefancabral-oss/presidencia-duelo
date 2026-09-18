@@ -30,7 +30,7 @@ Cinco apontamentos da revisão técnica tratados: exportação durável; replay 
 
 ## Validação
 
-49 cenários B02 aprovados após as correções. Suíte integral, comandos, restauração real em diretório novo e CI em [verification](B02-verification.json). PostgreSQL remoto verifica isolamento civic e preservação do jogo, embora esta importação não escreva no banco.
+448 testes locais aprovados, incluindo 49 cenários B02 após as correções. CI do código [767ea9d](https://github.com/stefancabral-oss/presidencia-duelo/commit/767ea9dfac86a6132847525185a66de02eafb018) aprovado: [Backend and Shared](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35342044600) e [Civic Planning](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35342044603), com 193 testes backend e integração PostgreSQL. Suíte integral, comandos, restauração real em diretório novo e CI em [verification](B02-verification.json). PostgreSQL remoto verifica isolamento civic e preservação do jogo, embora esta importação não escreva no banco.
 
 ## Pendente e gate humano
 

@@ -3,7 +3,7 @@
   "issue": 211,
   "branch": "feat/211-official-import",
   "baseCommit": "ffc38984f7d8b33647d3cfbcad3029fca2ec2e38",
-  "recordedAt": "2026-09-18T11:55:21.711Z",
+  "recordedAt": "2026-09-18T11:57:28.303Z",
   "local": {
     "unitTests": {
       "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
@@ -38,8 +38,8 @@
     "runtime": "Node.js 24.19.0 on Windows",
     "planning": {
       "status": "passed",
-      "markdownFiles": 33,
-      "localLinksChecked": 91,
+      "markdownFiles": 34,
+      "localLinksChecked": 108,
       "errors": []
     },
     "diffCheck": "passed",
@@ -74,7 +74,14 @@
         "complete": false,
         "accounted": true
       },
-      "initialTestCorrection": "One new test initially expected an uncombined legacy synthetic status; corrected assertion to the existing APTO / DEFERIDO COM RECURSO contract, then targeted and full suites passed."
+      "initialTestCorrection": "One new test initially expected an uncombined legacy synthetic status; corrected assertion to the existing APTO / DEFERIDO COM RECURSO contract, then targeted and full suites passed.",
+      "targetedAtPublishedHead": {
+        "tests": 49,
+        "passed": 49,
+        "failed": 0,
+        "durationMs": 1628.6472,
+        "commit": "767ea9dfac86a6132847525185a66de02eafb018"
+      }
     }
   },
   "pilot": {
@@ -92,16 +99,27 @@
     "otherUfsImported": false
   },
   "ci": {
-    "status": "pending-for-revision",
-    "validatedCodeCommit": null,
+    "status": "passed",
+    "validatedCodeCommit": "767ea9dfac86a6132847525185a66de02eafb018",
     "runtime": "Node.js 22 on Linux",
     "database": "PostgreSQL 16",
     "backendUnitTests": {
-      "tests": 176,
-      "passed": 176,
+      "tests": 193,
+      "passed": 193,
       "failed": 0
     },
-    "runs": [],
+    "runs": [
+      {
+        "name": "Backend and Shared",
+        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35342044600",
+        "conclusion": "success"
+      },
+      {
+        "name": "Civic Planning",
+        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35342044603",
+        "conclusion": "success"
+      }
+    ],
     "latestChecks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks",
     "previousValidation": {
       "status": "passed",
@@ -126,7 +144,21 @@
         }
       ],
       "latestChecks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks"
-    }
+    },
+    "jobs": [
+      {
+        "name": "back-unit",
+        "conclusion": "success"
+      },
+      {
+        "name": "back-integration-postgres",
+        "conclusion": "success"
+      },
+      {
+        "name": "shared-data",
+        "conclusion": "success"
+      }
+    ]
   },
   "acceptance": {
     "human": "pending",
@@ -171,5 +203,11 @@
     "verifiedHistoryRetainedWithPendingInterval": true,
     "sameHostDeadPidLockRecovery": true,
     "lastReconciledArchiveValidated": true
+  },
+  "mergeCompatibility": {
+    "main": "ffc38984f7d8b33647d3cfbcad3029fca2ec2e38",
+    "pr232": "e2716217d6c5a2993dd6fa21ec33de28634e4881",
+    "method": "git merge-tree --write-tree HEAD origin/feat/213-news-collection",
+    "conflicts": false
   }
 }

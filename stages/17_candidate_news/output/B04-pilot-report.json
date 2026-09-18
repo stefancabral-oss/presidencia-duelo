@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "issue": 213,
+  "recordedAt": "2026-09-18T11:18:59.281Z",
+  "scope": "real CLI run against proposed registry; no article acquisition",
+  "syntheticRegistry": false,
+  "publication": "staging_only",
+  "inventory": {
+    "right": {
+      "options": [],
+      "eligible": 0,
+      "required": 2,
+      "sufficient": false,
+      "independentOwners": 0
+    },
+    "left": {
+      "options": [],
+      "eligible": 0,
+      "required": 2,
+      "sufficient": false,
+      "independentOwners": 0
+    },
+    "international": {
+      "options": [],
+      "eligible": 0,
+      "required": 2,
+      "sufficient": false,
+      "independentOwners": 0
+    }
+  },
+  "results": [
+    {
+      "outletId": "agencia-brasil",
+      "status": "permission_pending",
+      "error": "permission_missing_or_expired",
+      "metadata": 0,
+      "report": null,
+      "repeated": false
+    },
+    {
+      "outletId": "brasil-de-fato",
+      "status": "permission_pending",
+      "error": "permission_missing_or_expired",
+      "metadata": 0,
+      "report": null,
+      "repeated": false
+    },
+    {
+      "outletId": "carta-capital",
+      "status": "permission_pending",
+      "error": "permission_missing_or_expired",
+      "metadata": 0,
+      "report": null,
+      "repeated": false
+    },
+    {
+      "outletId": "gazeta-do-povo",
+      "status": "permission_pending",
+      "error": "permission_missing_or_expired",
+      "metadata": 0,
+      "report": null,
+      "repeated": false
+    },
+    {
+      "outletId": "estadao",
+      "status": "permission_pending",
+      "error": "permission_missing_or_expired",
+      "metadata": 0,
+      "report": null,
+      "repeated": false
+    },
+    {
+      "outletId": "bbc-news-brasil",
+      "status": "permission_pending",
+      "error": "permission_missing_or_expired",
+      "metadata": 0,
+      "report": null,
+      "repeated": false
+    },
+    {
+      "outletId": "deutsche-welle",
+      "status": "permission_pending",
+      "error": "permission_missing_or_expired",
+      "metadata": 0,
+      "report": null,
+      "repeated": false
+    }
+  ]
+}

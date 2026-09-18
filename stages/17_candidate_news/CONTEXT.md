@@ -47,3 +47,7 @@ Código de produto, dados eleitorais novos publicados, automações agendadas, c
 ## Gate humano do produto futuro
 
 Permanece pendente. O responsável de produto/editorial valida protótipo, amostras, metodologia das fontes e piloto real; leitores de tela/usabilidade exigem evidências reais. Um agente não aprova seu próprio gate.
+
+## Execução B04 autorizada em 18/09/2026
+
+Stefan solicitou seguir na #213. Branch feat/213-news-collection, base main ffc3898 após #210 concluída. Entrega técnica: [contrato/runbook](back/B04-contract.md), [metodologia e cadastro nominal](back/B04-methodology.md), [handoff](output/B04-HANDOFF.md), [execução do cadastro](output/B04-pilot-report.json) e [verificação](output/B04-verification.json). Sete veículos propostos; permissões/classificações pendentes, zero elegíveis por espaço, nenhuma matéria adquirida/publicada. B02/#211 permanece na PR #231 com vigências e revisão humana pendentes; aceite técnico não encerra essas lacunas. Estado operacional e PR/commit atual constam das issues.

@@ -67,3 +67,7 @@ Em 2026-09-18T00:44:59.089Z, as correções foram aplicadas ao worktree Git da #
 ## Publicação e CI confirmados
 
 Correções publicadas no head `e39e8a68105cedbc1082290762b8da005a74a718`; Civic Planning aprovado no run `35292542364`. Os critérios das issues #211/#215/#227 foram sincronizados, preservando histórico/checklists e estado aberto. As três discussões técnicas corrigidas foram resolvidas; nenhum gate de produto/editorial foi aprovado. Este registro posterior altera somente evidências documentais e será verificado novamente pelo workflow. A branch contém main com #205/#229; a #230 incorpora sua ancestralidade. Mesclar #228 por merge commit preserva a integração.
+
+## Entrega técnica B04 — #213
+
+Branch feat/213-news-collection em main ffc3898. [Handoff próprio](B04-HANDOFF.md), [relatório do cadastro](B04-pilot-report.json) e [verificação](B04-verification.json): 422 testes locais aprovados, incluindo 23 cenários novos; build aprovado. Cadastro de sete candidatos sem permissões/classificações homologadas; insuficiência dos três espaços explícita. Coleta editorial real e aceite humano continuam pendentes. PR e commit atual são registrados na issue #213 e na descrição da entrega.

@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "issue": 211,
+  "branch": "feat/211-official-import",
+  "baseCommit": "ffc38984f7d8b33647d3cfbcad3029fca2ec2e38",
+  "recordedAt": "2026-09-18T01:40:48.085Z",
+  "local": {
+    "unitTests": {
+      "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
+      "firstRun": {
+        "tests": 431,
+        "passed": 431,
+        "failed": 0
+      },
+      "secondRun": {
+        "tests": 432,
+        "passed": 431,
+        "failed": 1,
+        "failedFile": "app/src/card-art-pilot-participant-validation.test.js",
+        "assertionFailureReported": false,
+        "isolatedRetry": {
+          "tests": 11,
+          "passed": 11,
+          "failed": 0
+        }
+      },
+      "finalRetry": {
+        "tests": 431,
+        "passed": 431,
+        "failed": 0,
+        "durationMs": 26668.0628
+      }
+    },
+    "build": {
+      "command": "node app/node_modules/vite/bin/vite.js build app",
+      "status": "passed"
+    },
+    "runtime": "Node.js 24.19.0 on Windows",
+    "planning": {
+      "status": "passed",
+      "markdownFiles": 33,
+      "localLinksChecked": 91,
+      "errors": []
+    },
+    "diffCheck": "passed"
+  },
+  "pilot": {
+    "batchId": "254cafe319d15c06a0f893af202638cc00c91b44770f7847340a0d8da92f1209",
+    "synthetic": false,
+    "candidacies": 37,
+    "persons": 95,
+    "tickets": 0,
+    "observedRelationships": 33,
+    "quarantine": 0,
+    "accounted": true,
+    "complete": false,
+    "reimportRepeated": true,
+    "publication": "staging_only",
+    "otherUfsImported": false
+  },
+  "ci": {
+    "status": "pending",
+    "runtime": "Node.js 22 on Linux",
+    "recordLocation": "pull-request checks and description"
+  },
+  "acceptance": {
+    "human": "pending",
+    "legalValidity": "pending",
+    "missingApiCompositions": 4,
+    "apiTerms": "pending",
+    "databaseWritten": false,
+    "publicRoutesAdded": false,
+    "deployed": false
+  }
+}

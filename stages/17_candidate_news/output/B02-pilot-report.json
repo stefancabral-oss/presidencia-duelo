@@ -1,0 +1,1152 @@
+{
+  "schemaVersion": 1,
+  "issue": 211,
+  "recordedAt": "2026-09-18T01:37:33.647Z",
+  "batchId": "254cafe319d15c06a0f893af202638cc00c91b44770f7847340a0d8da92f1209",
+  "source": "real TSE datasets; all scoped first-turn primary candidacies counted by independent Python CSV pass",
+  "publication": "staging_only",
+  "synthetic": false,
+  "candidacies": 37,
+  "persons": 95,
+  "tickets": 0,
+  "sourceArtifacts": [
+    {
+      "kind": "candidates",
+      "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2026.zip",
+      "archiveSha256": "6b04c6941a1dbb226624a4601e9ee2ffe59c78837e95efc26741cf6a1b673645",
+      "csvSha256": "6ab508210f59c532c9a6d43221b20a0c8309852e15ac6c66c99b104e06de03ca",
+      "locator": "consulta_cand_2026_BRASIL.csv",
+      "sourceGenerations": [
+        "2026-09-17T22:31:04.000Z"
+      ],
+      "fetchedAt": "2026-09-18T01:26:29.254Z",
+      "imported": true
+    },
+    {
+      "kind": "vacancies",
+      "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_vagas/consulta_vagas_2026.zip",
+      "archiveSha256": "6c360553ee3edcf3c5b20b03af36b020837cbfdb02e2c948bcedcb9477f7e961",
+      "csvSha256": "bdf6aa915be69b7c48e0a40b7696512780ee283f54cd38407555fb27d8e03f72",
+      "locator": "consulta_vagas_2026_BRASIL.csv",
+      "sourceGenerations": [
+        "2026-09-17T22:31:04.000Z"
+      ],
+      "fetchedAt": "2026-09-18T01:26:29.871Z",
+      "imported": true
+    },
+    {
+      "kind": "complementary",
+      "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand_complementar/consulta_cand_complementar_2026.zip",
+      "archiveSha256": "09f5f0505271672db03956d6a3a0b2f99580e2d0b83bbe276502afe0689cf759",
+      "csvSha256": "6a9d82d9e5abc2065729e4207f160356db1c82937838ff27ef03bcce200f404b",
+      "locator": "consulta_cand_complementar_2026_BRASIL.csv",
+      "sourceGenerations": [
+        "2026-09-17T22:31:04.000Z"
+      ],
+      "fetchedAt": "2026-09-18T01:26:30.226Z",
+      "imported": true
+    },
+    {
+      "kind": "historical",
+      "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/historico_candidatura/historico_candidatura_2026.zip",
+      "archiveSha256": "fcb890c10511ffc62c3bfc95bbc23df6e8df1c7e1e03a37958e239c962da1bec",
+      "csvSha256": "6f17a46010a477631900ce033c1cbfc3013583a19911846213055419f9c9cdd7",
+      "locator": "historico_candidatura_2026_BRASIL.csv",
+      "sourceGenerations": [
+        "2026-09-17T22:33:50.000Z"
+      ],
+      "fetchedAt": "2026-09-18T01:26:30.880Z",
+      "imported": false
+    }
+  ],
+  "report": {
+    "complete": false,
+    "accounted": true,
+    "transformVersion": 1,
+    "transformedRecordsSha256": "d6ee3b4310917e942ec6df21665ca37a1c6a0d9455296be4581115add1238d2a",
+    "counts": {
+      "BR:president": {
+        "official": 14,
+        "observed": 14,
+        "imported": 14,
+        "reconciled": 0,
+        "quarantined": 0,
+        "compositionPending": 14
+      },
+      "SP:governor": {
+        "official": 7,
+        "observed": 7,
+        "imported": 7,
+        "reconciled": 0,
+        "quarantined": 0,
+        "compositionPending": 7
+      },
+      "SP:senator": {
+        "official": 16,
+        "observed": 16,
+        "imported": 16,
+        "reconciled": 0,
+        "quarantined": 0,
+        "compositionPending": 16
+      }
+    },
+    "quarantine": [],
+    "gaps": [
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002544516",
+        "sourceKey": "250002544516",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002548139",
+        "sourceKey": "280002548139",
+        "scope": "BR:president",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002551502",
+        "sourceKey": "250002551502",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002532794",
+        "sourceKey": "250002532794",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002554479",
+        "sourceKey": "280002554479",
+        "scope": "BR:president",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002553928",
+        "sourceKey": "250002553928",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_and_legal_validity_missing"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:governor:250002536915",
+        "sourceKey": "250002536915",
+        "scope": "SP:governor",
+        "code": "explicit_relationship_and_legal_validity_missing"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002553884",
+        "sourceKey": "280002553884",
+        "scope": "BR:president",
+        "code": "explicit_relationship_and_legal_validity_missing"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002539826",
+        "sourceKey": "280002539826",
+        "scope": "BR:president",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002541312",
+        "sourceKey": "250002541312",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002552955",
+        "sourceKey": "250002552955",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002541365",
+        "sourceKey": "250002541365",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002544673",
+        "sourceKey": "250002544673",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:governor:250002549705",
+        "sourceKey": "250002549705",
+        "scope": "SP:governor",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:governor:250002544912",
+        "sourceKey": "250002544912",
+        "scope": "SP:governor",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002551547",
+        "sourceKey": "280002551547",
+        "scope": "BR:president",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002538811",
+        "sourceKey": "280002538811",
+        "scope": "BR:president",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002544514",
+        "sourceKey": "250002544514",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002554075",
+        "sourceKey": "250002554075",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002541308",
+        "sourceKey": "250002541308",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002553252",
+        "sourceKey": "250002553252",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002552153",
+        "sourceKey": "250002552153",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:governor:250002548080",
+        "sourceKey": "250002548080",
+        "scope": "SP:governor",
+        "code": "explicit_relationship_and_legal_validity_missing"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002552484",
+        "sourceKey": "280002552484",
+        "scope": "BR:president",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002551932",
+        "sourceKey": "280002551932",
+        "scope": "BR:president",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002542548",
+        "sourceKey": "280002542548",
+        "scope": "BR:president",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002551544",
+        "sourceKey": "280002551544",
+        "scope": "BR:president",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002541457",
+        "sourceKey": "280002541457",
+        "scope": "BR:president",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002540694",
+        "sourceKey": "280002540694",
+        "scope": "BR:president",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002552369",
+        "sourceKey": "250002552369",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002551501",
+        "sourceKey": "250002551501",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002541362",
+        "sourceKey": "250002541362",
+        "scope": "SP:senator",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:governor:250002553062",
+        "sourceKey": "250002553062",
+        "scope": "SP:governor",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:governor:250002550913",
+        "sourceKey": "250002550913",
+        "scope": "SP:governor",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002551975",
+        "sourceKey": "280002551975",
+        "scope": "BR:president",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:governor:250002541303",
+        "sourceKey": "250002541303",
+        "scope": "SP:governor",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002552487",
+        "sourceKey": "280002552487",
+        "scope": "BR:president",
+        "code": "explicit_relationship_observed_legal_validity_pending"
+      }
+    ],
+    "observedRelationships": [
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002544516",
+        "holderSourceKey": "250002544516",
+        "members": [
+          {
+            "sourceKey": "250002544518",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002544515",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002544516; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002548139",
+        "holderSourceKey": "280002548139",
+        "members": [
+          {
+            "sourceKey": "280002548140",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+          "locator": "parent.id=280002548139; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.071Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002551502",
+        "holderSourceKey": "250002551502",
+        "members": [
+          {
+            "sourceKey": "250002551505",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002551503",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002551502; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002532794",
+        "holderSourceKey": "250002532794",
+        "members": [
+          {
+            "sourceKey": "250002550682",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002532792",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002532794; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002554479",
+        "holderSourceKey": "280002554479",
+        "members": [
+          {
+            "sourceKey": "280002554490",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+          "locator": "parent.id=280002554479; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.071Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002539826",
+        "holderSourceKey": "280002539826",
+        "members": [
+          {
+            "sourceKey": "280002539825",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+          "locator": "parent.id=280002539826; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.071Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002541312",
+        "holderSourceKey": "250002541312",
+        "members": [
+          {
+            "sourceKey": "250002541311",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002541310",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002541312; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002552955",
+        "holderSourceKey": "250002552955",
+        "members": [
+          {
+            "sourceKey": "250002552954",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002552956",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002552955; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002541365",
+        "holderSourceKey": "250002541365",
+        "members": [
+          {
+            "sourceKey": "250002541366",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002541364",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002541365; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002544673",
+        "holderSourceKey": "250002544673",
+        "members": [
+          {
+            "sourceKey": "250002554098",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002544672",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002544673; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:governor:250002549705",
+        "holderSourceKey": "250002549705",
+        "members": [
+          {
+            "sourceKey": "250002549704",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/3/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002549705; parent.vices[].sq_CANDIDATO; response sha256=0ba30488007297b25a322b43d8b12fdecf2ece39fa5073485da1ce49d6da5cfd",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.093Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:governor:250002544912",
+        "holderSourceKey": "250002544912",
+        "members": [
+          {
+            "sourceKey": "250002552372",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/3/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002544912; parent.vices[].sq_CANDIDATO; response sha256=0ba30488007297b25a322b43d8b12fdecf2ece39fa5073485da1ce49d6da5cfd",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.093Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002551547",
+        "holderSourceKey": "280002551547",
+        "members": [
+          {
+            "sourceKey": "280002551546",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+          "locator": "parent.id=280002551547; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.071Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002538811",
+        "holderSourceKey": "280002538811",
+        "members": [
+          {
+            "sourceKey": "280002538812",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+          "locator": "parent.id=280002538811; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.071Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002544514",
+        "holderSourceKey": "250002544514",
+        "members": [
+          {
+            "sourceKey": "250002544513",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002544517",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002544514; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002554075",
+        "holderSourceKey": "250002554075",
+        "members": [
+          {
+            "sourceKey": "250002554136",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002554143",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002554075; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002541308",
+        "holderSourceKey": "250002541308",
+        "members": [
+          {
+            "sourceKey": "250002541309",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002541313",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002541308; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002553252",
+        "holderSourceKey": "250002553252",
+        "members": [
+          {
+            "sourceKey": "250002553251",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002553250",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002553252; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002552153",
+        "holderSourceKey": "250002552153",
+        "members": [
+          {
+            "sourceKey": "250002552151",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002552152",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002552153; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002552484",
+        "holderSourceKey": "280002552484",
+        "members": [
+          {
+            "sourceKey": "280002552485",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+          "locator": "parent.id=280002552484; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.071Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002551932",
+        "holderSourceKey": "280002551932",
+        "members": [
+          {
+            "sourceKey": "280002551933",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+          "locator": "parent.id=280002551932; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.071Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002542548",
+        "holderSourceKey": "280002542548",
+        "members": [
+          {
+            "sourceKey": "280002542549",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+          "locator": "parent.id=280002542548; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.071Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002551544",
+        "holderSourceKey": "280002551544",
+        "members": [
+          {
+            "sourceKey": "280002551543",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+          "locator": "parent.id=280002551544; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.071Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002541457",
+        "holderSourceKey": "280002541457",
+        "members": [
+          {
+            "sourceKey": "280002541458",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+          "locator": "parent.id=280002541457; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.071Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002540694",
+        "holderSourceKey": "280002540694",
+        "members": [
+          {
+            "sourceKey": "280002540693",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+          "locator": "parent.id=280002540694; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.071Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002552369",
+        "holderSourceKey": "250002552369",
+        "members": [
+          {
+            "sourceKey": "250002552371",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002552370",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002552369; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002551501",
+        "holderSourceKey": "250002551501",
+        "members": [
+          {
+            "sourceKey": "250002551504",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002551506",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002551501; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:senator:250002541362",
+        "holderSourceKey": "250002541362",
+        "members": [
+          {
+            "sourceKey": "250002541363",
+            "role": "substitute",
+            "position": 1
+          },
+          {
+            "sourceKey": "250002541361",
+            "role": "substitute",
+            "position": 2
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002541362; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.135Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:governor:250002553062",
+        "holderSourceKey": "250002553062",
+        "members": [
+          {
+            "sourceKey": "250002553061",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/3/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002553062; parent.vices[].sq_CANDIDATO; response sha256=0ba30488007297b25a322b43d8b12fdecf2ece39fa5073485da1ce49d6da5cfd",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.093Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:governor:250002550913",
+        "holderSourceKey": "250002550913",
+        "members": [
+          {
+            "sourceKey": "250002550912",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/3/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002550913; parent.vices[].sq_CANDIDATO; response sha256=0ba30488007297b25a322b43d8b12fdecf2ece39fa5073485da1ce49d6da5cfd",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.093Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002551975",
+        "holderSourceKey": "280002551975",
+        "members": [
+          {
+            "sourceKey": "280002551976",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+          "locator": "parent.id=280002551975; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.071Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6259:SP:governor:250002541303",
+        "holderSourceKey": "250002541303",
+        "members": [
+          {
+            "sourceKey": "250002541302",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/3/candidatoscomvicessuplentes",
+          "locator": "parent.id=250002541303; parent.vices[].sq_CANDIDATO; response sha256=0ba30488007297b25a322b43d8b12fdecf2ece39fa5073485da1ce49d6da5cfd",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.093Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      },
+      {
+        "candidacyId": "candidacy:v1:tse%3A2026%3A6257:BR:president:280002552487",
+        "holderSourceKey": "280002552487",
+        "members": [
+          {
+            "sourceKey": "280002552486",
+            "role": "vice",
+            "position": 1
+          }
+        ],
+        "evidence": {
+          "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+          "locator": "parent.id=280002552487; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+          "sourceAt": null,
+          "fetchedAt": "2026-09-18T01:32:31.071Z",
+          "license": null
+        },
+        "legalIntervalProvided": false
+      }
+    ],
+    "encodings": {
+      "candidates": "latin1",
+      "vacancies": "latin1",
+      "complementary": "latin1"
+    },
+    "electionKeys": {
+      "BR": "6257",
+      "SP": "6259"
+    },
+    "substitutions": [
+      {
+        "electionId": "tse:2026:6257",
+        "sourceKey": "280002554479",
+        "substitutedSourceKey": "280002553884",
+        "evidenceSourceId": "tse:complementary:6a9d82d9e5abc2065729e4207f160356db1c82937838ff27ef03bcce200f404b",
+        "legalTicketIntervalInferred": false
+      },
+      {
+        "electionId": "tse:2026:6257",
+        "sourceKey": "280002554490",
+        "substitutedSourceKey": "280002553883",
+        "evidenceSourceId": "tse:complementary:6a9d82d9e5abc2065729e4207f160356db1c82937838ff27ef03bcce200f404b",
+        "legalTicketIntervalInferred": false
+      },
+      {
+        "electionId": "tse:2026:6259",
+        "sourceKey": "250002554470",
+        "substitutedSourceKey": "250002536916",
+        "evidenceSourceId": "tse:complementary:6a9d82d9e5abc2065729e4207f160356db1c82937838ff27ef03bcce200f404b",
+        "legalTicketIntervalInferred": false
+      },
+      {
+        "electionId": "tse:2026:6259",
+        "sourceKey": "250002554098",
+        "substitutedSourceKey": "250002544671",
+        "evidenceSourceId": "tse:complementary:6a9d82d9e5abc2065729e4207f160356db1c82937838ff27ef03bcce200f404b",
+        "legalTicketIntervalInferred": false
+      },
+      {
+        "electionId": "tse:2026:6259",
+        "sourceKey": "250002554211",
+        "substitutedSourceKey": "250002548079",
+        "evidenceSourceId": "tse:complementary:6a9d82d9e5abc2065729e4207f160356db1c82937838ff27ef03bcce200f404b",
+        "legalTicketIntervalInferred": false
+      },
+      {
+        "electionId": "tse:2026:6259",
+        "sourceKey": "250002552372",
+        "substitutedSourceKey": "250002544911",
+        "evidenceSourceId": "tse:complementary:6a9d82d9e5abc2065729e4207f160356db1c82937838ff27ef03bcce200f404b",
+        "legalTicketIntervalInferred": false
+      },
+      {
+        "electionId": "tse:2026:6259",
+        "sourceKey": "250002550682",
+        "substitutedSourceKey": "250002532793",
+        "evidenceSourceId": "tse:complementary:6a9d82d9e5abc2065729e4207f160356db1c82937838ff27ef03bcce200f404b",
+        "legalTicketIntervalInferred": false
+      }
+    ],
+    "denominators": {
+      "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2026.zip",
+      "locator": "consulta_cand_2026_BRASIL.csv; sha256=6ab508210f59c532c9a6d43221b20a0c8309852e15ac6c66c99b104e06de03ca; independent Python csv counter: NR_TURNO=1, BR/CD_ELEICAO=6257/CD_CARGO=1; SP/CD_ELEICAO=6259/CD_CARGO=3,5",
+      "sourceAt": "2026-09-17T22:31:04.000Z",
+      "totals": {
+        "BR:president": 14,
+        "SP:governor": 7,
+        "SP:senator": 16
+      }
+    },
+    "sourceAt": "2026-09-17T22:31:04.000Z",
+    "omittedUfs": [
+      "AC",
+      "AL",
+      "AP",
+      "AM",
+      "BA",
+      "CE",
+      "DF",
+      "ES",
+      "GO",
+      "MA",
+      "MT",
+      "MS",
+      "MG",
+      "PA",
+      "PB",
+      "PR",
+      "PE",
+      "PI",
+      "RJ",
+      "RN",
+      "RS",
+      "RO",
+      "RR",
+      "SC",
+      "SE",
+      "TO"
+    ],
+    "humanAcceptance": "pending"
+  },
+  "apiRowsAreNotTheDenominator": true,
+  "unapprovedScopes": [
+    "AC",
+    "AL",
+    "AP",
+    "AM",
+    "BA",
+    "CE",
+    "DF",
+    "ES",
+    "GO",
+    "MA",
+    "MT",
+    "MS",
+    "MG",
+    "PA",
+    "PB",
+    "PR",
+    "PE",
+    "PI",
+    "RJ",
+    "RN",
+    "RS",
+    "RO",
+    "RR",
+    "SC",
+    "SE",
+    "TO"
+  ]
+}

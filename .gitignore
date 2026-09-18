@@ -1,4 +1,5 @@
 node_modules/
+back/data/civic-staging/
 dist/
 .DS_Store
 *.log

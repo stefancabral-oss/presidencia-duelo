@@ -1,5 +1,7 @@
 # B01 — implementação de contratos e schema
 
+Estado operacional em 18/09/2026 UTC: PR #230 mesclada em ffc38984f7d8b33647d3cfbcad3029fca2ec2e38; #210 fechada após checklist de consumidores/aceite humano marcado no GitHub. As pendências descritas nas seções abaixo são snapshots anteriores ao aceite. Próxima unidade B02 possui [handoff](B02-HANDOFF.md).
+
 Issue [#210](https://github.com/stefancabral-oss/presidencia-duelo/issues/210), branch `feat/210-civic-contracts`, base main `f99ac18` com planejamento #228 incorporado por merge. Responsável pela implementação: Codex, sob autorização de Stefan para construir as pendências.
 
 Entregue: 17 schemas compartilhados, validadores estritos, fixtures sintéticas, leitura alfabética paginada, comparação por recorte, estados de publicação/cobertura, histórico, migração isolada `civic_v1`, rollback vazio e ensaio PostgreSQL no workflow existente. [Contrato e arquitetura](../back/B01-contract.md) detalham interfaces para Front/App e responsabilidades futuras.

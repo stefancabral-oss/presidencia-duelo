@@ -2,6 +2,8 @@
 
 ## Objetivo
 
+Estado operacional em 18/09/2026 UTC: #228 e #230 mescladas; #210 concluída após checklist de revisão/aceite humano marcado no GitHub. Stefan solicitou seguir implementando o restante. B02 (#211) está na branch feat/211-official-import, baseada em main ffc3898: [contrato/runbook](back/B02-contract.md), [handoff](output/B02-HANDOFF.md), [relatório real](output/B02-pilot-report.json) e evidências output/B02-verification.json. O piloto técnico SP contabiliza as 37 candidaturas oficiais; vigências das chapas e seu aceite próprio continuam pendentes. As descrições antigas abaixo preservam o histórico do planejamento/B01.
+
 Atualização de execução em 17/09/2026: Stefan autorizou implementar as pendências. B01 (#210) está em implementação na branch `feat/210-civic-contracts`, sobre main `f99ac18` com #205 já mesclada; a documentação de #228 foi incorporada por merge da branch. O escopo abaixo preserva o histórico do planejamento, não limita essa autorização posterior. Contrato e limites atuais: [back/B01-contract.md](back/B01-contract.md). Evidências por unidade: [output/B01-HANDOFF.md](output/B01-HANDOFF.md) e `output/B01-verification.json`. Merge, deploy e gates humanos continuam separados.
 
 Decompor o épico [#206](https://github.com/stefancabral-oss/presidencia-duelo/issues/206) em três frentes, com guias agente.md e microissues executáveis. A solicitação atual é criar o planejamento e os artefatos no repositório/GitHub.

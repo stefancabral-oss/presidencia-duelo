@@ -42,6 +42,8 @@ jobs:
           EDITORIAL_AUTHORITY_ISSUER: ${{ secrets.EDITORIAL_AUTHORITY_ISSUER }}
           EDITORIAL_AUTHORITY_KEY_ID: ${{ secrets.EDITORIAL_AUTHORITY_KEY_ID }}
           EDITORIAL_AUTHORITY_RECEIPTS: ${{ secrets.EDITORIAL_AUTHORITY_RECEIPTS }}
+      - name: Verify Python for bounded civic ZIP reader
+        run: python3 --version
       - name: Test backend
         run: npm test --prefix back
       - name: Build API image and verify recovered photographs are packaged

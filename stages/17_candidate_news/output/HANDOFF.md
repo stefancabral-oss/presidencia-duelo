@@ -1,5 +1,7 @@
 # Handoff — decomposição do épico #206
 
+Estado operacional em 18/09/2026 UTC: #228/#230 mescladas e #210 concluída no GitHub. B02 iniciou implementação autorizada e possui [handoff próprio](B02-HANDOFF.md), [relatório real](B02-pilot-report.json) e evidências B02-verification.json. O restante deste arquivo preserva a entrega documental anterior; não representa o estado operacional atual de B01/B02.
+
 Atualização: a implementação autorizada de B01 possui [handoff próprio](B01-HANDOFF.md) e [evidências próprias](B01-verification.json). O restante deste arquivo preserva a entrega documental #228; suas declarações de ausência de implementação referem-se àquela entrega.
 
 ## Entrega

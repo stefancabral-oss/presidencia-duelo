@@ -2,6 +2,8 @@
 
 Issue [#213](https://github.com/stefancabral-oss/presidencia-duelo/issues/213), branch feat/213-news-collection sobre main ffc3898. Stefan autorizou iniciar #213; #210 está concluída. PR e commit da entrega são registrados no estado operacional da issue e na descrição da PR. B02/#211 está entregue tecnicamente na [PR #231](https://github.com/stefancabral-oss/presidencia-duelo/pull/231), com seus próprios gates pendentes.
 
+Entrega na [PR #232](https://github.com/stefancabral-oss/presidencia-duelo/pull/232), [commit técnico 76667b4](https://github.com/stefancabral-oss/presidencia-duelo/commit/76667b4d036df7dd171bb9e94ee1e6dfaf2a6253). CI aprovado: [Backend and Shared](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35339110484) e [Civic Planning](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35339110488). Novos checks após atualização documental são consultáveis na PR.
+
 ## Entrega técnica
 
 Cadastro nominal de sete candidatos, metodologia editorial versionada, adaptadores RSS/Atom/JSON, validação de direitos, SSRF/DNS fixado, limites de rede/XML, metadados minimizados, quarentena, drafts B01 quando fatos suficientes, snapshots verificáveis e expiração. [Contrato/runbook](../back/B04-contract.md) e [metodologia](../back/B04-methodology.md).

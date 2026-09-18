@@ -3,7 +3,7 @@
   "issue": 211,
   "branch": "feat/211-official-import",
   "baseCommit": "ffc38984f7d8b33647d3cfbcad3029fca2ec2e38",
-  "recordedAt": "2026-09-18T17:40:32.513Z",
+  "recordedAt": "2026-09-18T17:42:30.974Z",
   "local": {
     "unitTests": {
       "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
@@ -88,7 +88,18 @@
       "passed": 10,
       "failed": 0,
       "command": "node --test back/src/civic-process-review.test.js",
-      "realCliRepeatedWithoutOverwrite": true
+      "realCliRepeatedWithoutOverwrite": true,
+      "planning": {
+        "status": "passed",
+        "markdownFiles": 35,
+        "localLinksChecked": 119
+      },
+      "portableCli": {
+        "command": "node back/scripts/civic-process-review.mjs stages/17_candidate_news/output/B02-case-review.json stages/17_candidate_news/output/B02-process-evidence.json ../b02-source-cache/process-review-3d8d48bb.json",
+        "status": "passed",
+        "evidenceId": "3d8d48bb1c8e2e9757d4769cc5214a3b2632ff126cbac995ae4759625124f9b0",
+        "complete": false
+      }
     },
     "processRevisionFullSuite": {
       "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
@@ -176,7 +187,41 @@
       }
     ],
     "processRevision": {
-      "status": "pending new head",
+      "status": "passed",
+      "validatedCodeCommit": "00a2b2ab40c87dbd60fe39a0ce33458ca64087d9",
+      "runtime": "Node.js 22 Linux",
+      "database": "PostgreSQL 16",
+      "backendUnitTests": {
+        "tests": 203,
+        "passed": 203,
+        "failed": 0
+      },
+      "runs": [
+        {
+          "name": "Backend and Shared",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35375790683",
+          "conclusion": "success"
+        },
+        {
+          "name": "Civic Planning",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35375790684",
+          "conclusion": "success"
+        }
+      ],
+      "jobs": [
+        {
+          "name": "back-unit",
+          "conclusion": "success"
+        },
+        {
+          "name": "back-integration-postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "shared-data",
+          "conclusion": "success"
+        }
+      ],
       "checks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks"
     }
   },

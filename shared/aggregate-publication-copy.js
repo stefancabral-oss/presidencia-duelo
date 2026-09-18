@@ -58,7 +58,6 @@ export const AGGREGATE_PUBLIC_COPY_POLICY = deepFreeze({
         rowLossOne: "derrota",
         rowLossMany: "derrotas",
         rowUnplayed: "Ainda sem comparações",
-        eloSuffix: "Elo",
         backToChoices: "Voltar às escolhas",
         trust: "Escolhas confirmadas pelo servidor.",
         integrityLink: "Como o placar é protegido",
@@ -163,9 +162,17 @@ export const AGGREGATE_PUBLIC_COPY_POLICY = deepFreeze({
       },
     },
     "mirror-comparison": {
-      surfaceState: "not-implemented",
-      surfaces: [],
-      copy: {},
+      surfaceState: "implemented-but-withheld-without-receipt",
+      surfaces: ["daily-close"],
+      copy: {
+        action: "Comparar minha última sessão fechada",
+        heading: "Seu último Espelho com recorte fechado",
+        loading: "Buscando sua última sessão fechada…",
+        pending: "A comparação fica disponível após o fechamento do dia de uma sessão concluída.",
+        summary: "Na sessão de {date}, suas escolhas coincidiram com a preferência mais frequente em {aligned} de {rounds} rodadas. Houve empate em {tied} rodadas do grupo.",
+        sample: "Recorte: {count} sessões completas. Não representa o eleitorado nem mede quantas pessoas têm um perfil igual ao seu.",
+        error: "Não foi possível carregar o recorte fechado. Tente novamente.",
+      },
     },
   },
 });

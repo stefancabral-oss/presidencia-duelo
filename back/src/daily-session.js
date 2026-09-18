@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { PUBLIC_CANDIDATE_SCHEMA_V4 } from "./candidate-public.js";
 import { AGGREGATE_PUBLIC_COPY_POLICY, formatAggregateCopy } from "../../shared/aggregate-publication-copy.js";
 import { PUBLIC_CANDIDATE_SCHEMA_V1, PUBLIC_CANDIDATE_SCHEMA_V2, PUBLIC_CANDIDATE_SCHEMA_V3 } from "./candidates.js";
 
@@ -39,9 +40,13 @@ export const DAILY_SESSION_RULESET_V3 = Object.freeze({
   ...DAILY_SESSION_RULESET_V2,
   id: "daily-four-card-v3", version: 3, catalogSchema: PUBLIC_CANDIDATE_SCHEMA_V3,
 });
-export const DAILY_SESSION_RULESET = DAILY_SESSION_RULESET_V3;
+export const DAILY_SESSION_RULESET_V4 = Object.freeze({
+  ...DAILY_SESSION_RULESET_V3, id: "daily-four-card-v4", version: 4, catalogSchema: PUBLIC_CANDIDATE_SCHEMA_V4,
+});
+export const DAILY_SESSION_RULESET = DAILY_SESSION_RULESET_V4;
 
 const DAILY_RULESET_REGISTRY = new Map([
+  [`${DAILY_SESSION_RULESET_V4.id}@${DAILY_SESSION_RULESET_V4.version}`, DAILY_SESSION_RULESET_V4],
   [`${DAILY_SESSION_RULESET_V1.id}@${DAILY_SESSION_RULESET_V1.version}`, DAILY_SESSION_RULESET_V1],
   [`${DAILY_SESSION_RULESET_V2.id}@${DAILY_SESSION_RULESET_V2.version}`, DAILY_SESSION_RULESET_V2],
   [`${DAILY_SESSION_RULESET_V3.id}@${DAILY_SESSION_RULESET_V3.version}`, DAILY_SESSION_RULESET_V3],

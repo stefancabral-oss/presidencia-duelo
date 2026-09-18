@@ -275,7 +275,7 @@ try {
   await enableSound.click();
   if (!await page.getByRole("button", { name: "Desativar efeitos sonoros" }).evaluate((button) => button === document.activeElement)) throw new Error("O controle de som perdeu foco depois de ligado");
   if (await page.evaluate(() => localStorage.getItem("polimatch:sound")) !== "on") throw new Error("A preferência de som ligado não foi persistida");
-  const primaryNavLabels = await page.locator(".bottom-nav .nav-button").allTextContents();
+  const primaryNavLabels = await page.locator(".bottom-nav .nav-button:visible").allTextContents();
   if (primaryNavLabels.join("|") !== "Início|Duelo|Ranking") throw new Error("A navegação principal não apresenta Início, Duelo e Ranking nesta ordem");
   if (await page.getByRole("button", { name: "Coleção" }).count()) throw new Error("Coleção/Chromas ainda aparece na navegação pública");
   await page.getByRole("button", { name: "Salvar seu jogo com Google" }).click();
@@ -356,7 +356,7 @@ try {
     await page.getByRole("button", { name: "Ir para o modo livre" }).click();
 
     await page.locator(".candidate-card").first().click();
-    await page.locator("[data-personal-feedback]", { hasText: /subiu de patente/i }).waitFor();
+    await page.locator("[data-personal-feedback]", { hasText: /escolha|prefer|ficou com/i }).waitFor();
     const roundAfterLogin = roundVoteRequests.at(-1)?.roundId;
     if (!roundAfterLogin || roundAfterLogin === roundBeforeLogin) {
       throw new Error("O login não rotacionou o roundId ligado ao jogador anônimo");
@@ -682,21 +682,19 @@ try {
       filter: getComputedStyle(card).filter,
     };
   });
-  await page.locator("[data-personal-feedback]", { hasText: /subiu de patente/i }).waitFor();
+  await page.locator("[data-personal-feedback]", { hasText: /escolha|prefer|ficou com/i }).waitFor();
   const feedbackChannels = page.locator(".feedback-channel:visible");
-  if (await feedbackChannels.count() !== (includeGlobalEvent ? 2 : 1)) throw new Error("Os canais de feedback não respeitaram o contrato da resposta");
+  if (await feedbackChannels.count() !== 1) throw new Error("Os canais de feedback não respeitaram o contrato da resposta");
   if (!await feedbackChannels.nth(0).getByText("No seu ranking").isVisible()) throw new Error("O feedback pessoal não veio primeiro");
-  if (includeGlobalEvent && !await feedbackChannels.nth(1).getByText("No placar do público").isVisible()) throw new Error("O evento público não veio rotulado como secundário");
+  if (await page.locator("[data-global-feedback-band]").isVisible()) throw new Error("O evento público voltou a dominar a confirmação pessoal");
   if (!await page.locator("#skip-round").isDisabled()) throw new Error("A troca de rodada permaneceu ativa durante o resultado");
   if (await page.locator(".card-outcome").count() !== 4) throw new Error("O resultado visual não apareceu nas quatro cartas");
   if (await page.locator(".candidate-card.is-round-winner").count() !== 1 || await page.locator(".candidate-card.is-round-loser").count() !== 3) {
     throw new Error("Vitória e derrotas não receberam tratamentos visuais distintos");
   }
-  if (!await page.locator(".candidate-card.is-round-winner").getByText("+45 Elo").isVisible()) throw new Error("O ganho real de Elo não apareceu na carta escolhida");
-  if (!await page.locator(".candidate-card.is-round-winner").getByText("Subiu · Em ascensão", { exact: true }).isVisible()) {
-    throw new Error("O teste deixou de exercitar a mensagem longa de mudança de patente");
-  }
-  if (await page.locator(".candidate-card.is-round-loser").getByText("-15 Elo").count() !== 3) throw new Error("As perdas reais de Elo não apareceram nas outras cartas");
+  if (!await page.locator(".candidate-card.is-round-winner").getByText("Escolhida", { exact: true }).isVisible()) throw new Error("Escolha não identificada na carta vencedora");
+  if (await page.locator(".candidate-card.is-round-loser").getByText("Não escolhida", { exact: true }).count() !== 3) throw new Error("As três cartas restantes perderam o estado de não escolhidas");
+  if (/Elo|patente/.test(await page.locator('.duel-screen').innerText())) throw new Error("Jargão de ranking exposto no duelo");
   const outcomeEvidence = await measureRoundOutcomes(page);
   assertOutcomeSemantics(outcomeEvidence, "390 × 844");
   await page.setViewportSize({ width: 320, height: 568 });
@@ -800,7 +798,7 @@ try {
   if (persistence.statusCount !== 1) throw new Error("A região viva foi duplicada durante o voto");
   if (persistence.nextRoundIds.some((id) => selectedRoundIds.includes(id))) throw new Error("O smoke não produziu conteúdo novo suficiente para provar a atualização granular dos slots");
   const confirmingAnnouncement = persistence.announcements.findIndex((message) => message === "Confirmando sua escolha…");
-  const resultAnnouncement = persistence.announcements.findIndex((message, index) => index > confirmingAnnouncement && /subiu de patente/i.test(message));
+  const resultAnnouncement = persistence.announcements.findIndex((message, index) => index > confirmingAnnouncement && /escolha|prefer|ficou com/i.test(message));
   const nextRoundAnnouncement = persistence.announcements.findIndex((message, index) => index > resultAnnouncement && message === "Nova rodada disponível");
   if (confirmingAnnouncement < 0 || resultAnnouncement < 0 || nextRoundAnnouncement < 0) {
     throw new Error(`A região viva não anunciou a sequência completa: ${persistence.announcements.join(" | ")}`);
@@ -808,6 +806,8 @@ try {
   await page.getByRole("button", { name: "Ranking" }).click();
   await page.getByRole("heading", { name: "Ranking" }).waitFor();
   await page.getByText(`${successfulRoundVotes} ${successfulRoundVotes === 1 ? "escolha confirmada" : "escolhas confirmadas"}`, { exact: true }).waitFor();
+  if (!await page.locator('[data-ranking-view="personal"]').evaluate(button => button.classList.contains("active"))) throw new Error("O ranking pessoal não é o destino padrão");
+  await page.locator('[data-ranking-view="general"]').click();
   await page.getByText("Mais derrotas").waitFor();
   if (!await page.getByPlaceholder("Buscar por nome, partido ou área").isVisible()) throw new Error("A busca não descreve os campos estruturados");
   if (!await page.getByLabel("Partido").isVisible() || !await page.getByLabel("Área").isVisible()) throw new Error("Filtros estruturados ausentes");
@@ -916,7 +916,7 @@ try {
   }
 
   await page.locator(".candidate-card").first().click();
-  await page.locator("[data-personal-feedback]", { hasText: /subiu de patente/i }).waitFor();
+  await page.locator("[data-personal-feedback]", { hasText: /escolha|prefer|ficou com/i }).waitFor();
   const desktopOutcomeEvidence = await measureRoundOutcomes(page);
   assertOutcomeSemantics(desktopOutcomeEvidence, "1440 × 900");
   await page.locator(".card-outcome").first().waitFor({ state: "hidden", timeout: 2500 });

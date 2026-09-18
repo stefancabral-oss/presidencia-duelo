@@ -27,3 +27,9 @@ Commit, push, suíte completa, build e novo CI continuam pendentes. A execução
 ## Retomada com execução liberada
 
 Em 2026-09-18T00:44:57.861Z, a suíte completa das correções passou: 398 testes, zero falhas. Build Vite e `git diff --check` aprovados. O bloqueio anterior de processos foi superado. A execução PostgreSQL 16 e a publicação/CI serão confirmadas na PR; não inferir aprovação do banco a partir destes testes locais.
+
+## Retomada com execução liberada
+
+Em 2026-09-18T00:47:10.539Z, a suíte completa das correções passou: 399 testes, zero falhas. Build Vite e `git diff --check` aprovados. O bloqueio anterior de processos foi superado. A execução PostgreSQL 16 e a publicação/CI serão confirmadas na PR; não inferir aprovação do banco a partir destes testes locais.
+
+Integração efetiva por Git: branch documental e main #229 incorporadas sem conflitos; contexto e handoff B01 preservados. O verificador na árvore final contou 76 links em 31 Markdown, zero erros. O comando de testes final usou `--test-concurrency=1`: 399 aprovados; a tentativa paralela anterior encontrou uma falha nativa do Node Windows (CleanupQueue::Add), sem falha de assertiva de produto.

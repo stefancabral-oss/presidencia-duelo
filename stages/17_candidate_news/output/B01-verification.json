@@ -109,15 +109,19 @@
     },
     "fullSuite": {
       "status": "passed",
-      "tests": 398,
+      "tests": 399,
       "failures": 0,
-      "command": "node --test app/src/*.test.js back/src/*.test.js shared/*.test.js",
-      "checkedAt": "2026-09-18T00:44:57.861Z"
+      "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
+      "checkedAt": "2026-09-18T00:47:10.539Z",
+      "parallelRun": {
+        "status": "native-node-crash-on-windows",
+        "message": "node CleanupQueue::Add assertion insertion_info.second; serial execution of all 399 tests passed"
+      }
     },
     "build": {
       "status": "passed",
       "command": "node app/node_modules/vite/bin/vite.js build app",
-      "checkedAt": "2026-09-18T00:44:57.861Z"
+      "checkedAt": "2026-09-18T00:47:10.539Z"
     },
     "remoteCI": {
       "status": "pending-publication",
@@ -128,7 +132,18 @@
       "status": "passed",
       "command": "git diff --check"
     },
-    "previousBlockerResolved": true
+    "previousBlockerResolved": true,
+    "planningIntegration": {
+      "status": "passed",
+      "markdownFiles": 31,
+      "localLinksChecked": 76,
+      "microissues": 18,
+      "errors": 0,
+      "method": "verifyPlanning in actual merged Git checkout",
+      "planningHead": "e39e8a68105cedbc1082290762b8da005a74a718",
+      "mainHead": "5dccd3cefdcf5243174f64825ca53b5ccad90429",
+      "gitMergeConflicts": 0
+    }
   },
   "historicalEvidenceNote": "checks/postgresql/finalPublishedCI above apply to published commits before reviewCorrections; they do not validate the current local changes."
 }

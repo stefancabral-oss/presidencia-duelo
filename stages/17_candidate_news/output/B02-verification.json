@@ -42,7 +42,12 @@
       "localLinksChecked": 91,
       "errors": []
     },
-    "diffCheck": "passed"
+    "diffCheck": "passed",
+    "targetedAfterFinalZipCleanup": {
+      "tests": 32,
+      "passed": 32,
+      "failed": 0
+    }
   },
   "pilot": {
     "batchId": "254cafe319d15c06a0f893af202638cc00c91b44770f7847340a0d8da92f1209",
@@ -59,9 +64,28 @@
     "otherUfsImported": false
   },
   "ci": {
-    "status": "pending",
+    "status": "passed",
+    "validatedCodeCommit": "5a9f47b6e78494efc48613f16fbe1e8681b1649e",
     "runtime": "Node.js 22 on Linux",
-    "recordLocation": "pull-request checks and description"
+    "database": "PostgreSQL 16",
+    "backendUnitTests": {
+      "tests": 176,
+      "passed": 176,
+      "failed": 0
+    },
+    "runs": [
+      {
+        "name": "Backend and Shared",
+        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35296339181",
+        "conclusion": "success"
+      },
+      {
+        "name": "Civic Planning",
+        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35296339169",
+        "conclusion": "success"
+      }
+    ],
+    "latestChecks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks"
   },
   "acceptance": {
     "human": "pending",

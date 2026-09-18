@@ -2,6 +2,8 @@
 
 Issue [#211](https://github.com/stefancabral-oss/presidencia-duelo/issues/211). Branch feat/211-official-import. Base main ffc38984f7d8b33647d3cfbcad3029fca2ec2e38 com #228/#230 mescladas; #210 concluída no GitHub.
 
+Entrega técnica na [PR #231](https://github.com/stefancabral-oss/presidencia-duelo/pull/231), [commit de implementação 5a9f47b](https://github.com/stefancabral-oss/presidencia-duelo/commit/5a9f47b6e78494efc48613f16fbe1e8681b1649e). CI desse código aprovado: [Backend and Shared](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35296339181) e [Civic Planning](https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35296339169). Novas execuções após atualização documental ficam nos checks da PR. Aceite humano continua pendente.
+
 ## Entrega
 
 Importador oficial com aquisição limitada/checksum, ZIP/CRC, codificação fixada, CSV estrito, vagas oficiais, identidades por eleição, minimização, situações de julgamento, observações explícitas de chapa, quarentena, snapshots imutáveis e diferenças. Não publica nem altera banco/jogo. [Contrato e runbook](../back/B02-contract.md).
@@ -33,4 +35,3 @@ Próxima unidade independente pelo grafo: B04 (#213), apoiada em B01 concluída.
 ## Reversão
 
 Desligar a execução do CLI/consumidores e conservar snapshots. Em falha de fonte, servir/consultar somente a última carga reconciliada conhecida, nunca um lote incompleto nem diretório vazio presumido. Não remover dados históricos, não acionar rollback do PostgreSQL populado, não promover staging a conteúdo público.
-

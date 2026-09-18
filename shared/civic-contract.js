@@ -21,7 +21,7 @@ export const CIVIC_RECORDS = Object.freeze({
   members: { id: 'text', ticketId: ref('tickets'), personId: ref('persons'), role: enumeration(['holder','vice','substitute']), position: 'nonnegative', sourceId: ref('sources') },
   claims: { id: 'text', candidacyId: ref('candidacies'), kind: enumeration(['proposal','recorded_vote','executed_measure','observed_result','biography']), theme: 'text', text: 'text', sourceId: ref('sources'), locator: 'text', ...publishing },
   photographs: { id: 'text', personId: ref('persons'), sourceId: ref('sources'), url: 'https', credit: 'text', rights: enumeration(['pending','permitted','denied']), ...publishing },
-  outlets: { id: 'text', name: 'text', country: 'country', newsroom: 'text', orientation: enumeration(['right','left','mixed','unclassified']), classificationVersion: 'positive', classificationReview: enumeration(REVIEW), methodologySourceId: ref('sources'), usePermission: enumeration(['pending','permitted','denied']) },
+  outlets: { id: 'text', name: 'text', country: 'country', newsroom: 'text', orientation: enumeration(['right','left','center','mixed','unclassified']), classificationVersion: 'positive', classificationReview: enumeration(REVIEW), methodologySourceId: ref('sources'), usePermission: enumeration(['pending','permitted','denied']) },
   articles: { id: 'text', outletId: ref('outlets'), originOutletId: ref('outlets'), syndicatedFromId: ref('articles', true), canonicalUrl: 'https', headline: 'text', author: nullable('text'), kind: enumeration(['reporting','opinion','analysis','interview','press_release']), language: 'text', translatedFromId: ref('articles', true), sourceAt: 'instant', fetchedAt: 'instant', access: enumeration(['full','metadata_only','paywall','unavailable']), sourceId: ref('sources'), ...publishing },
   events: { id: 'text', title: 'text', summary: 'text', theme: 'text', jurisdiction: enumeration(['BR', ...UFS]), startsAt: 'instant', endsAt: 'instant', sourceId: ref('sources'), ...publishing },
   coverage: { id: 'text', eventId: ref('events'), slot: enumeration(SLOTS), state: enumeration(['present','not_found','collection_failed','restricted','pending','contested','withdrawn']), articleId: ref('articles', true), classificationVersion: nullable('positive'), relevance: nullable('text'), checkedAt: 'instant', reason: nullable('text') },
@@ -65,6 +65,7 @@ export function validateCivicRecord(kind, record) {
   if (kind === 'coverage') {
     if (record.state === 'present' && (!record.articleId || !record.classificationVersion || !record.relevance)) fail('coverage present evidence');
     if (record.state !== 'present' && !record.reason) fail('coverage gap reason');
+    if (['not_found','collection_failed'].includes(record.state) && [record.articleId,record.classificationVersion,record.relevance].some(value => value !== null)) fail('coverage no-result evidence');
   }
   return record;
 }
@@ -86,6 +87,14 @@ export function validateCivicDataset(data) {
       validateCivicRecord(kind, record);
       if (indexes[kind].has(record.id)) fail(`duplicate ${kind}`);
       indexes[kind].set(record.id, record);
+    }
+  }
+  for (const [kind, keys] of [['contests', ['electionId','jurisdiction','office']], ['editions', ['date','jurisdiction','revision']], ['changes', ['entityType','entityId','revision']]]) {
+    const seen = new Set();
+    for (const row of data.records[kind]) {
+      const key = JSON.stringify(keys.map(field => row[field]));
+      if (seen.has(key)) fail(`duplicate ${kind} scope`);
+      seen.add(key);
     }
   }
   for (const [kind, rows] of Object.entries(data.records)) for (const row of rows) for (const [key, spec] of Object.entries(CIVIC_RECORDS[kind])) {
@@ -117,10 +126,24 @@ export function validateCivicDataset(data) {
       if (row.slot === 'international' ? outlet.country === 'BR' : outlet.orientation !== row.slot) fail('coverage classification');
     }
   }
-  for (const kind of ['syndicatedFromId','translatedFromId']) for (const article of data.records.articles) {
-    const visited = new Set([article.id]); let next = article[kind];
-    while (next) { if (visited.has(next)) fail('article relationship cycle'); visited.add(next); next = indexes.articles.get(next)[kind]; }
+  // Both provenance edges form one graph. Resolve iteratively so mixed cycles
+  // are rejected too and large imports do not exhaust the call stack.
+  const unresolved = new Map();
+  const descendants = new Map();
+  for (const article of data.records.articles) {
+    const parents = new Set([article.syndicatedFromId, article.translatedFromId].filter(Boolean));
+    unresolved.set(article.id, parents.size);
+    for (const parent of parents) {
+      if (!descendants.has(parent)) descendants.set(parent, []);
+      descendants.get(parent).push(article.id);
+    }
   }
+  const ready = [...unresolved].filter(([, count]) => count === 0).map(([id]) => id);
+  for (let index = 0; index < ready.length; index++) for (const child of descendants.get(ready[index]) || []) {
+    unresolved.set(child, unresolved.get(child) - 1);
+    if (unresolved.get(child) === 0) ready.push(child);
+  }
+  if (ready.length !== data.records.articles.length) fail('article relationship cycle');
   const editionPositions = new Set();
   const editionEvents = new Set();
   for (const row of data.records.editionItems) {
@@ -128,17 +151,44 @@ export function validateCivicDataset(data) {
     const event = JSON.stringify([row.editionId, row.eventId]);
     if (editionPositions.has(position) || editionEvents.has(event)) fail('duplicate edition item');
     editionPositions.add(position); editionEvents.add(event);
+    const edition = indexes.editions.get(row.editionId);
+    const includedEvent = indexes.events.get(row.eventId);
+    if (edition.publication === 'published' && (includedEvent.publication !== 'published' || includedEvent.review !== 'approved')) fail('published edition requires published events');
   }
   for (const row of data.records.changes) if (!indexes[row.entityType].has(row.entityId)) fail('change target');
-  const versionKeys = new Set();
+  const versionIndex = new Map();
+  const latestVersions = new Map();
   for (const row of data.records.versions) {
     validateCivicRecord(row.entityType, row.snapshot);
-    if (!indexes[row.entityType].has(row.entityId) || row.snapshot.id !== row.entityId || row.snapshot.revision !== row.revision) fail('version identity');
+    const current = indexes[row.entityType].get(row.entityId);
+    if (!current || row.snapshot.id !== row.entityId || row.snapshot.revision !== row.revision) fail('version identity');
+    if (row.revision > current.revision) fail('version ahead of entity');
     const key = JSON.stringify([row.entityType,row.entityId,row.revision]);
-    if (versionKeys.has(key)) fail('duplicate version');
-    versionKeys.add(key);
+    if (versionIndex.has(key)) fail('duplicate version');
+    versionIndex.set(key, row.snapshot);
+    const entityKey = JSON.stringify([row.entityType,row.entityId]);
+    if (!latestVersions.has(entityKey) || row.revision > latestVersions.get(entityKey).revision) latestVersions.set(entityKey, row);
   }
-  for (const row of data.records.changes) if (!versionKeys.has(JSON.stringify([row.entityType,row.entityId,row.revision]))) fail('change without version');
+  // Historical anchors need not have actions, but the latest recorded snapshot
+  // must describe the current entity. Property order has no semantic meaning.
+  for (const row of latestVersions.values()) {
+    const current = indexes[row.entityType].get(row.entityId);
+    if (Object.keys(CIVIC_RECORDS[row.entityType]).some(key => row.snapshot[key] !== current[key])) fail('latest version differs from entity');
+  }
+  for (const row of data.records.changes) {
+    const snapshot = versionIndex.get(JSON.stringify([row.entityType,row.entityId,row.revision]));
+    if (!snapshot) fail('change without version');
+    const previous = versionIndex.get(JSON.stringify([row.entityType,row.entityId,row.revision - 1]));
+    if (row.action === 'publish') {
+      if (snapshot.publication !== 'published' || snapshot.review !== 'approved') fail('publish snapshot state');
+      if (row.revision > 1 && !previous) fail('change requires previous version');
+      if (previous && previous.publication === 'published') fail('publish transition requires unpublished predecessor');
+    } else {
+      if (!previous) fail('change requires previous version');
+      if (previous.publication !== 'published') fail('change requires published predecessor');
+      if (row.action === 'withdraw' ? snapshot.publication !== 'withdrawn' : snapshot.publication !== 'published' || snapshot.review !== 'approved') fail('change snapshot state');
+    }
+  }
   return data;
 }
 

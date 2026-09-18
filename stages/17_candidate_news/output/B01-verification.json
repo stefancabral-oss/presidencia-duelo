@@ -5,9 +5,21 @@
   "branch": "feat/210-civic-contracts",
   "baseCommit": "f99ac18c1db5d296d6ed49edcaca21239b260205",
   "checks": [
-    { "command": "node --test app/src/*.test.js back/src/*.test.js shared/*.test.js", "status": "passed", "tests": 354, "failures": 0, "newCivicTests": 23 },
-    { "command": "node app/node_modules/vite/bin/vite.js build app", "status": "passed" },
-    { "command": "git diff --check", "status": "passed" }
+    {
+      "command": "node --test app/src/*.test.js back/src/*.test.js shared/*.test.js",
+      "status": "passed",
+      "tests": 354,
+      "failures": 0,
+      "newCivicTests": 23
+    },
+    {
+      "command": "node app/node_modules/vite/bin/vite.js build app",
+      "status": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed"
+    }
   ],
   "implementationCommit": "06dac872ec3af4e879236dd9b7710e57b5947086",
   "pullRequest": "https://github.com/stefancabral-oss/presidencia-duelo/pull/230",
@@ -17,14 +29,106 @@
     "script": "back/scripts/civic-schema-smoke.mjs",
     "run": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35253716137",
     "jobId": 105312046285,
-    "checks": { "migration": "pass", "emptyRollback": "pass", "populatedRollback": "refused", "repeat": "idempotent", "fixtureCandidacies": 5, "relationalChecks": 7 },
+    "checks": {
+      "migration": "pass",
+      "emptyRollback": "pass",
+      "populatedRollback": "refused",
+      "repeat": "idempotent",
+      "fixtureCandidacies": 5,
+      "relationalChecks": 7
+    },
     "legacyPublicFingerprintUnchanged": "5b146cbaca7678fd76113000b3be93f7779df8f2e31f9a0e3d3ce15bb7f0ea8d"
   },
   "backendAndSharedCI": "passed",
-  "designValidatorCI": { "status": "passed", "runId": 35253716190 },
-  "browserCI": { "statusAtRecording": "running", "runId": 35253716061, "finalEvidence": "PR #230 checks and description" },
+  "designValidatorCI": {
+    "status": "passed",
+    "runId": 35253716190
+  },
+  "browserCI": {
+    "status": "passed",
+    "runId": 35253916225,
+    "commit": "181ea41777bce51adfd6f6e1631d46de3c45d3bc"
+  },
   "humanApproval": false,
   "realDataImported": false,
   "mergePerformed": false,
-  "deploymentPerformed": false
+  "deploymentPerformed": false,
+  "finalPublishedCI": {
+    "commit": "181ea41777bce51adfd6f6e1631d46de3c45d3bc",
+    "backendRunId": 35253918107,
+    "designRunId": 35253916694,
+    "browserRunId": 35253916225,
+    "status": "passed"
+  },
+  "reviewCorrections": {
+    "status": "committable-tests-passed-publication-pending",
+    "published": false,
+    "issues": [
+      "logical uniqueness for contests, editions and changes",
+      "mixed translation/syndication provenance cycles",
+      "immutable historical ticket members",
+      "published editions require approved published events",
+      "audit actions match snapshots and revision transitions",
+      "no-result coverage has null article evidence",
+      "explicit center outlet classification"
+    ],
+    "regressionScenarios": 44,
+    "scenarioModule": "shared/civic-review-scenarios.js",
+    "directNodeAssertions": {
+      "passed": 44,
+      "failed": 0,
+      "runner": "node_repl invoked actual saved civicReviewScenarios; also registered in node:test",
+      "largeGraphArticles": 4002
+    },
+    "syntax": {
+      "status": "passed",
+      "parser": "installed rollup/parseAst",
+      "files": [
+        "shared/civic-contract.js",
+        "shared/civic-contract.test.js",
+        "shared/civic-review-scenarios.js",
+        "back/src/civic-schema.js",
+        "back/scripts/civic-schema-smoke.mjs"
+      ]
+    },
+    "sqlStaticAssertions": {
+      "status": "passed",
+      "checks": 9,
+      "fixturePreconditions": 5,
+      "limitation": "SQL structure only; PostgreSQL execution pending"
+    },
+    "postgresSmoke": {
+      "status": "execution-pending",
+      "expectedRejectedWrites": 19,
+      "script": "back/scripts/civic-schema-smoke.mjs",
+      "command": "node back/scripts/civic-schema-smoke.mjs",
+      "environment": [
+        "DATABASE_URL pointing to disposable PostgreSQL 16",
+        "CIVIC_DISPOSABLE_TEST=1"
+      ]
+    },
+    "fullSuite": {
+      "status": "passed",
+      "tests": 398,
+      "failures": 0,
+      "command": "node --test app/src/*.test.js back/src/*.test.js shared/*.test.js",
+      "checkedAt": "2026-09-18T00:44:57.861Z"
+    },
+    "build": {
+      "status": "passed",
+      "command": "node app/node_modules/vite/bin/vite.js build app",
+      "checkedAt": "2026-09-18T00:44:57.861Z"
+    },
+    "remoteCI": {
+      "status": "pending-publication",
+      "publishedHead": "181ea41777bce51adfd6f6e1631d46de3c45d3bc"
+    },
+    "blockerErrors": [],
+    "whitespace": {
+      "status": "passed",
+      "command": "git diff --check"
+    },
+    "previousBlockerResolved": true
+  },
+  "historicalEvidenceNote": "checks/postgresql/finalPublishedCI above apply to published commits before reviewCorrections; they do not validate the current local changes."
 }

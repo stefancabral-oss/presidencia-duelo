@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { validateCivicDataset, validateCivicRecord, candidacyId, validateDirectoryQuery, comparisonCandidates, directoryCoverage, directoryPage } from './civic-contract.js';
 import { civicFixture } from './civic-fixtures.js';
+import { civicReviewScenarios } from './civic-review-scenarios.js';
 
 test('synthetic contract covers executive, senate, homonyms, history and vice replacement', () => {
   const data = validateCivicDataset(civicFixture());
@@ -86,3 +87,7 @@ test('generated cursor remains usable for long valid search filters', () => {
   assert.equal(second.items.length, 1);
   assert.notEqual(first.items[0].id, second.items[0].id);
 });
+
+
+// Also callable directly when the desktop sandbox cannot start node --test.
+for (const scenario of civicReviewScenarios) test(scenario.name, scenario.run);

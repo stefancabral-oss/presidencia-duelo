@@ -23,7 +23,7 @@ const constraints = {
   tickets: ['CHECK ("validTo" IS NULL OR "validTo" > "validFrom")'],
   members: ['UNIQUE ("ticketId", role, position)', 'UNIQUE ("ticketId", "personId")'],
   events: ['CHECK ("endsAt" >= "startsAt")'],
-  coverage: ['UNIQUE ("eventId", slot)', `CHECK ((state='present' AND "articleId" IS NOT NULL AND "classificationVersion" IS NOT NULL AND relevance IS NOT NULL) OR (state<>'present' AND reason IS NOT NULL))`],
+  coverage: ['UNIQUE ("eventId", slot)', `CHECK ((state='present' AND "articleId" IS NOT NULL AND "classificationVersion" IS NOT NULL AND relevance IS NOT NULL) OR (state<>'present' AND reason IS NOT NULL))`, `CONSTRAINT coverage_no_result CHECK (state NOT IN ('not_found','collection_failed') OR ("articleId" IS NULL AND "classificationVersion" IS NULL AND relevance IS NULL))`],
   editions: ['UNIQUE (date, jurisdiction, revision)'],
   editionItems: ['UNIQUE ("editionId", position)', 'UNIQUE ("editionId", "eventId")'],
   changes: ['UNIQUE ("entityType", "entityId", revision)'],
@@ -60,6 +60,17 @@ BEGIN
 END $$;
 CREATE CONSTRAINT TRIGGER ticket_contract AFTER INSERT OR UPDATE ON civic_v1.tickets DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION civic_v1.check_ticket();
 CREATE CONSTRAINT TRIGGER member_contract AFTER INSERT OR UPDATE OR DELETE ON civic_v1.members DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION civic_v1.check_ticket();
+-- Members are historical evidence: formation uses INSERTs in one transaction;
+-- corrections/substitutions use a new ticket/member identity, never DELETE.
+CREATE FUNCTION civic_v1.immutable_member_composition() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP='DELETE' THEN RAISE EXCEPTION 'immutable ticket member composition; insert a new ticket version'; END IF;
+  IF ROW(OLD.id,OLD."ticketId",OLD."personId",OLD.role,OLD.position,OLD."sourceId") IS DISTINCT FROM ROW(NEW.id,NEW."ticketId",NEW."personId",NEW.role,NEW.position,NEW."sourceId") THEN
+    RAISE EXCEPTION 'immutable ticket member composition; insert a new ticket version';
+  END IF;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER immutable_members BEFORE UPDATE OR DELETE ON civic_v1.members FOR EACH ROW EXECUTE FUNCTION civic_v1.immutable_member_composition();
 CREATE FUNCTION civic_v1.immutable_history() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'append-only civic history'; END $$;
 CREATE TRIGGER immutable_versions BEFORE UPDATE OR DELETE ON civic_v1.versions FOR EACH ROW EXECUTE FUNCTION civic_v1.immutable_history();
 CREATE TRIGGER immutable_changes BEFORE UPDATE OR DELETE ON civic_v1.changes FOR EACH ROW EXECUTE FUNCTION civic_v1.immutable_history();
@@ -97,7 +108,7 @@ export async function rollbackEmptyCivic(pool) {
     }
     // Static namespace, never supplied by CLI or content.
     await client.query(`DROP TABLE ${Object.keys(CIVIC_RECORDS).map(table).join(',')} RESTRICT`);
-    await client.query('DROP FUNCTION civic_v1.check_ticket(), civic_v1.immutable_history() RESTRICT');
+    await client.query('DROP FUNCTION civic_v1.check_ticket(), civic_v1.immutable_history(), civic_v1.immutable_member_composition() RESTRICT');
     await client.query('DROP TABLE civic_v1.migrations RESTRICT');
     await client.query('DROP SCHEMA civic_v1 RESTRICT');
     await client.query('COMMIT');

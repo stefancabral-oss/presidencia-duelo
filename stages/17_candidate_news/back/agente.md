@@ -2,7 +2,7 @@
 
 ## Missão
 
-Entregar os serviços e contratos do diretório eleitoral e das notícias diárias. O diretório tem universo próprio: candidaturas oficiais da eleição/cargo/circunscrição, com presidente e vice, governos das 26 UFs e DF e seus vices, senadores e seus dois suplentes. O catálogo de personalidades do jogo não limita a inclusão. A conclusão exige cobertura nacional do diretório; uma UF piloto é uma etapa intermediária.
+Entregar os serviços e contratos do diretório eleitoral e das notícias diárias. O diretório tem universo próprio: candidaturas oficiais da eleição/cargo/circunscrição, com presidente e vice, governos das 26 UFs e DF e seus vices, senadores e seus dois suplentes. O catálogo de personalidades do jogo não limita a inclusão. A conclusão do épico exige cobertura nacional do diretório; B02 conclui a importação reconciliada de Presidência e uma UF piloto em staging. BACK executará a expansão para as demais UFs depois, coordenada por A05, sem antecipar publicação para concluir B02.
 
 ## Fontes de verdade e leitura inicial
 
@@ -20,11 +20,11 @@ Ler o épico #206, este plano, `AGENTS.md`, `CONTEXT.md` da raiz e o contexto do
 ## Ordem e dependências
 
 1. [B01 · #210](https://github.com/stefancabral-oss/presidencia-duelo/issues/210) firma contratos, estados editoriais, migrações e fixtures.
-2. [B02 · #211](https://github.com/stefancabral-oss/presidencia-duelo/issues/211) importa candidaturas e composição temporal; [B04 · #213](https://github.com/stefancabral-oss/presidencia-duelo/issues/213) pode avançar em paralelo no cadastro e coleta de fontes.
+2. [B02 · #211](https://github.com/stefancabral-oss/presidencia-duelo/issues/211) entrega importador, composição temporal e registros reconciliados de Presidência/UF piloto em staging, com procedimento reutilizável de expansão; [B04 · #213](https://github.com/stefancabral-oss/presidencia-duelo/issues/213) pode avançar em paralelo no cadastro e coleta de fontes.
 3. [B03 · #212](https://github.com/stefancabral-oss/presidencia-duelo/issues/212) acrescenta afirmações, propostas e fotos; [B05 · #214](https://github.com/stefancabral-oss/presidencia-duelo/issues/214) produz rascunhos de acontecimentos e perspectivas.
-4. [B06 · #215](https://github.com/stefancabral-oss/presidencia-duelo/issues/215) expõe leitura pública e transições editoriais autorizadas.
+4. [B06 · #215](https://github.com/stefancabral-oss/presidencia-duelo/issues/215) recebe os lotes reconciliados de staging e expõe leitura pública/transições editoriais autorizadas. B02 não depende dessa publicação para concluir.
 5. [B07 · #216](https://github.com/stefancabral-oss/presidencia-duelo/issues/216) entrega prontidão operacional: jobs, limites, segurança, observabilidade, runbook e ensaio em staging.
-6. [A05 · #227](https://github.com/stefancabral-oss/presidencia-duelo/issues/227) conduz o release e os sete dias reais do piloto após essa prontidão; Back fornece suporte, exportações e medição, sem bloquear B07 na operação live futura.
+6. [A05 · #227](https://github.com/stefancabral-oss/presidencia-duelo/issues/227) conduz o release e os sete dias reais do piloto após essa prontidão; Back fornece suporte, exportações e medição, sem bloquear B07 na operação live futura. APP coordena a expansão nacional nessa fase; BACK importa/reconcilia as demais UFs pelo procedimento de B02 e encaminha os lotes para revisão/publicação por B06.
 
 Uma dependência pode fornecer contrato preliminar para desenvolvimento paralelo, mas a unidade dependente não deve ser declarada concluída antes do aceite requerido da anterior. Nenhum documento deste planejamento declara implementação, teste ou aprovação já realizados.
 
@@ -52,7 +52,7 @@ Novos conteúdos devem ser alcançáveis sem alterar confirmação de voto, Elo,
 
 ## Aceite da frente
 
-As sete microissues entregam dados reconciliados nacionais, APIs documentadas, trilha editorial e correções, coleta segura e prontidão operacional validada em staging. A microissue [A05 · #227](https://github.com/stefancabral-oss/presidencia-duelo/issues/227) é dona do release e do piloto editorial de sete dias consecutivos reais, registrando inclusive falhas ou dias sem nova edição; Back fornece instrumentos, dados e suporte. O aceite de B07 não depende desse piloto futuro. O encerramento do épico continua dependendo da evidência real do piloto, aprovação humana, smoke em produção e confirmação de deploy.
+As sete microissues entregam o importador com Presidência/UF piloto reconciliadas em staging, o procedimento de expansão, APIs documentadas, trilha editorial e correções, coleta segura e prontidão operacional validada em staging. A expansão/reconciliação nacional é responsabilidade técnica de BACK durante A05, sob coordenação de APP; não é pré-requisito para encerrar B02 ou iniciar A05. A microissue [A05 · #227](https://github.com/stefancabral-oss/presidencia-duelo/issues/227) é dona do release e do piloto editorial de sete dias consecutivos reais, registrando inclusive falhas ou dias sem nova edição; Back fornece instrumentos, dados e suporte. O aceite de B07 não depende desse piloto futuro. O encerramento do épico continua dependendo da evidência real do piloto, aprovação humana, smoke em produção e confirmação de deploy.
 
 ## Fora de escopo
 

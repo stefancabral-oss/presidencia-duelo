@@ -22,7 +22,7 @@ Front produz telas/componentes no pacote app/. App produz shell, rotas, clientes
 
 ## Dependências
 
-Pré-requisitos para iniciar e para concluir são distintos quando uma tela pode ser desenvolvida com fixtures. Mocks não comprovam integração real.
+Pré-requisitos para iniciar e para concluir são distintos quando uma tela pode ser desenvolvida com fixtures. Mocks não comprovam integração real. B02 conclui sobre registros reconciliados em staging de Presidência e uma UF piloto, sem depender de publicação por B06. A05 coordena a expansão nacional posterior: BACK importa/reconcilia e B06 revisa/publica. Todas as 27 UFs permanecem condição de conclusão do épico.
 
 | Código | Frente | Issue | Para iniciar | Adicionais para concluir |
 | --- | --- | --- | --- | --- |
@@ -50,12 +50,12 @@ Uma ordem topológica válida: B01 → B02 → B03 → B04 → B05 → B06 → B
 ## Marcos
 
 - Contratos e fixtures: B01.
-- Diretório e dados: B02/B03; coleta e acontecimentos: B04/B05.
+- Importador e diretório piloto reconciliado em staging: B02; conteúdo/proveniência: B03; coleta e acontecimentos: B04/B05.
 - Telas e shell: F01–F06 e A01–A03, com dependências acima.
 - API e prontidão operacional: B06/B07.
 - Integração e revisão assistiva: A04.
 - Release e piloto real de sete dias: A05, com apoio operacional de Back. B07 prepara staging/runbook e não exige produção antes do primeiro release.
-- Diretório final: Presidência e todas as 27 UFs, com denominadores separados de disponibilidade de fotos/textos/notícias; cobertura estadual de notícias explicitamente declarada.
+- Expansão nacional durante A05: BACK importa/reconcilia as demais UFs pelo procedimento de B02 e B06 revisa/publica. Diretório final: Presidência e todas as 27 UFs, com denominadores separados de disponibilidade de fotos/textos/notícias; cobertura estadual de notícias explicitamente declarada.
 
 ## Artefatos
 

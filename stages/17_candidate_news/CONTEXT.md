@@ -23,6 +23,8 @@ Decompor o épico [#206](https://github.com/stefancabral-oss/presidencia-duelo/i
 
 Front é uma responsabilidade de apresentação, não um segundo diretório de produto. App integra essas telas no Vite/PWA existente. Back publica contratos e dados. B01 define contrato inicial e fixtures; telas e shell podem avançar contra esse contrato sem aguardar toda a API, respeitando os gates aplicáveis.
 
+B02 conclui o importador e o piloto reconciliado de Presidência/uma UF em staging, com denominadores e exceções, sem depender de publicação em B06. Depois, A05 coordena a expansão nacional: BACK importa/reconcilia as demais UFs e B06 fornece revisão/publicação. A conclusão do épico mantém Presidência e todas as 27 UFs como alcance obrigatório.
+
 Todos os dados eleitorais oficiais do recorte fazem parte do diretório, independentemente da presença da pessoa no jogo ou de ter fotografia. Senado inclui dois suplentes; Executivo inclui vice. A composição é temporal. Notícias preservam três espaços de cobertura e mostram lacunas; orientação editorial, origem internacional e tipo de conteúdo são dimensões distintas.
 
 ## Dependências e início da implementação

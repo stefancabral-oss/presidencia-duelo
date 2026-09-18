@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "checkedAt": "2026-09-18T00:44:59.089Z",
   "scope": "planning-documentation-only",
-  "status": "passed-local-publication-pending",
+  "status": "passed-ci",
   "sourceHead": "47f185a4b3a3d6a7885a9a76c6f5bfda17a29343",
   "counts": {
     "lanes": 3,
@@ -50,13 +50,26 @@
   "applicationTestsRun": false,
   "buildRun": false,
   "humanApproval": false,
-  "commitCreated": false,
-  "published": false,
-  "remoteCIRun": false,
+  "commitCreated": true,
+  "published": true,
+  "remoteCIRun": true,
   "mergePerformed": false,
   "deploymentPerformed": false,
   "errors": [],
-  "publicationStatus": "pending-push",
+  "publicationStatus": "published",
   "currentSandboxBlock": false,
-  "remoteCIWorkflow": ".github/workflows/civic-planning.yml"
+  "remoteCIWorkflow": ".github/workflows/civic-planning.yml",
+  "ci": {
+    "workflow": "Civic Planning",
+    "status": "success",
+    "testedCommit": "e39e8a68105cedbc1082290762b8da005a74a718",
+    "runId": 35292542364,
+    "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35292542364"
+  },
+  "issueCriteriaSynchronized": [
+    211,
+    215,
+    227
+  ],
+  "reviewThreadsResolved": 3
 }

@@ -27,17 +27,19 @@
     "status": "passed-ci",
     "localAvailable": false,
     "script": "back/scripts/civic-schema-smoke.mjs",
-    "run": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35253716137",
-    "jobId": 105312046285,
+    "run": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35292644810",
+    "jobId": 105438588413,
+    "testedCommit": "71d8673c48fac49e7953dc66d0437f8ff03117b9",
     "checks": {
       "migration": "pass",
       "emptyRollback": "pass",
       "populatedRollback": "refused",
       "repeat": "idempotent",
       "fixtureCandidacies": 5,
-      "relationalChecks": 7
+      "relationalChecks": 19,
+      "legacyPublicFingerprintUnchanged": "2db49f7cf020fa218621595dc99dedb7c12c1d566d230251a085bca5128b1b57"
     },
-    "legacyPublicFingerprintUnchanged": "5b146cbaca7678fd76113000b3be93f7779df8f2e31f9a0e3d3ce15bb7f0ea8d"
+    "legacyPublicFingerprintUnchanged": "2db49f7cf020fa218621595dc99dedb7c12c1d566d230251a085bca5128b1b57"
   },
   "backendAndSharedCI": "passed",
   "designValidatorCI": {
@@ -61,8 +63,8 @@
     "status": "passed"
   },
   "reviewCorrections": {
-    "status": "committable-tests-passed-publication-pending",
-    "published": false,
+    "status": "published-local-and-postgresql-verified",
+    "published": true,
     "issues": [
       "logical uniqueness for contests, editions and changes",
       "mixed translation/syndication provenance cycles",
@@ -98,14 +100,20 @@
       "limitation": "SQL structure only; PostgreSQL execution pending"
     },
     "postgresSmoke": {
-      "status": "execution-pending",
-      "expectedRejectedWrites": 19,
+      "status": "passed-ci",
+      "testedCommit": "71d8673c48fac49e7953dc66d0437f8ff03117b9",
+      "runId": 35292644810,
+      "jobId": 105438588413,
       "script": "back/scripts/civic-schema-smoke.mjs",
-      "command": "node back/scripts/civic-schema-smoke.mjs",
-      "environment": [
-        "DATABASE_URL pointing to disposable PostgreSQL 16",
-        "CIVIC_DISPOSABLE_TEST=1"
-      ]
+      "checks": {
+        "migration": "pass",
+        "emptyRollback": "pass",
+        "populatedRollback": "refused",
+        "repeat": "idempotent",
+        "fixtureCandidacies": 5,
+        "relationalChecks": 19,
+        "legacyPublicFingerprintUnchanged": "2db49f7cf020fa218621595dc99dedb7c12c1d566d230251a085bca5128b1b57"
+      }
     },
     "fullSuite": {
       "status": "passed",
@@ -124,8 +132,14 @@
       "checkedAt": "2026-09-18T00:47:10.539Z"
     },
     "remoteCI": {
-      "status": "pending-publication",
-      "publishedHead": "181ea41777bce51adfd6f6e1631d46de3c45d3bc"
+      "status": "backend-design-planning-passed-browsers-running-at-recording",
+      "testedCommit": "71d8673c48fac49e7953dc66d0437f8ff03117b9",
+      "recordedAt": "2026-09-18T00:49:38.509Z",
+      "backendRunId": 35292644810,
+      "designRunId": 35292644809,
+      "planningRunId": 35292644815,
+      "browserRunId": 35292644806,
+      "liveChecks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/230/checks"
     },
     "blockerErrors": [],
     "whitespace": {
@@ -143,7 +157,8 @@
       "planningHead": "e39e8a68105cedbc1082290762b8da005a74a718",
       "mainHead": "5dccd3cefdcf5243174f64825ca53b5ccad90429",
       "gitMergeConflicts": 0
-    }
+    },
+    "reviewThreadsResolved": 6
   },
-  "historicalEvidenceNote": "checks/postgresql/finalPublishedCI above apply to published commits before reviewCorrections; they do not validate the current local changes."
+  "historicalEvidenceNote": "Original checks/finalPublishedCI describe earlier published commits; reviewCorrections records corrected code tested locally and in PostgreSQL CI. Browser state is a dated snapshot; current operational status is the PR live checks."
 }

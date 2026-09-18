@@ -1,27 +1,62 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-09-17T16:03:48.781Z",
+  "checkedAt": "2026-09-18T00:44:59.089Z",
   "scope": "planning-documentation-only",
-  "status": "passed",
+  "status": "passed-local-publication-pending",
+  "sourceHead": "47f185a4b3a3d6a7885a9a76c6f5bfda17a29343",
   "counts": {
     "lanes": 3,
     "agentGuides": 3,
     "microissues": 18,
     "markdownFiles": 29,
-    "localLinksChecked": 48,
-    "nativeHierarchyLinks": 21
+    "localLinksChecked": 68
   },
   "checks": {
     "requiredSectionsAndNumberedSteps": true,
     "relativeLinks": true,
     "resolvedReferences": true,
     "dependencyGraphAcyclic": true,
-    "githubNativeHierarchy": true
+    "executionOrder": true,
+    "githubNativeHierarchy": null
+  },
+  "commands": [
+    {
+      "command": "node --input-type=module -e \"import('./stages/17_candidate_news/output/check-planning.mjs').then(async ({ verifyPlanning }) => console.log(JSON.stringify(await verifyPlanning('.'), null, 2)))\"",
+      "workingDirectory": "repository root",
+      "executionMethod": "Node CLI in the actual Git worktree",
+      "shellExecuted": true,
+      "result": "passed"
+    }
+  ],
+  "linkCounting": {
+    "previousRecordedCount": 48,
+    "baselineCompleteCount": 66,
+    "finalCount": 68,
+    "previouslyOmittedIndexLabels": 18,
+    "handoffLinksAdded": 2
+  },
+  "previouslyVerifiedHierarchy": {
+    "checkedAt": "2026-09-17T16:03:48.781Z",
+    "nativeHierarchyLinks": 21,
+    "source": "original verification.json at sourceHead",
+    "recheckedThisExecution": false
+  },
+  "reviewCorrections": {
+    "B02Acceptance": "Presidency and one complete pilot UF reconciled in staging; no B06 publication prerequisite",
+    "nationalExpansion": "BACK executes remaining UF imports/reconciliation during A05; APP coordinates and B06 reviews/publishes; national epic scope preserved",
+    "implicitAcceptanceCycleRemoved": true
   },
   "implementationComplete": false,
   "applicationTestsRun": false,
+  "buildRun": false,
   "humanApproval": false,
+  "commitCreated": false,
+  "published": false,
+  "remoteCIRun": false,
   "mergePerformed": false,
   "deploymentPerformed": false,
-  "errors": []
+  "errors": [],
+  "publicationStatus": "pending-push",
+  "currentSandboxBlock": false,
+  "remoteCIWorkflow": ".github/workflows/civic-planning.yml"
 }

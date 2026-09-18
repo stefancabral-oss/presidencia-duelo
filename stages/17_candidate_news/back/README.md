@@ -2,6 +2,8 @@
 
 Issue principal: [#207](https://github.com/stefancabral-oss/presidencia-duelo/issues/207). Implementar a base de dados, importação oficial, proveniência, coleta permitida, agrupamento editorial, APIs públicas e operação auditável das áreas Candidatos e Notícias, preservando integralmente o jogo e cobrindo Presidência e as 27 UFs ao concluir o épico.
 
+B02 conclui com Presidência completa e uma UF piloto completa reconciliadas em staging, sem depender da publicação de B06. Depois, BACK executa a expansão/reconciliação das demais UFs com o mesmo importador, sob coordenação de A05; a cobertura nacional continua obrigatória para concluir o épico.
+
 Leia [agente.md](agente.md) antes da primeira microissue. Os códigos ordenam o roteiro; dependências definem quando iniciar. Pré-requisitos adicionais de conclusão constam do Markdown individual. Estado de execução é acompanhado no GitHub.
 
 | Código | Issue | Passo a passo | Depende de |

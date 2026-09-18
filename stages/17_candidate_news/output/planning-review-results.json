@@ -1,0 +1,430 @@
+{
+  "checkedAt": "2026-09-18T00:44:59.107Z",
+  "scope": "planning-documentation-only",
+  "counts": {
+    "lanes": 3,
+    "agentGuides": 3,
+    "microissues": 18,
+    "markdownFiles": 29,
+    "localLinksChecked": 68
+  },
+  "checks": {
+    "requiredSectionsAndNumberedSteps": true,
+    "relativeLinks": true,
+    "resolvedReferences": true,
+    "dependencyGraphAcyclic": true,
+    "executionOrder": true
+  },
+  "status": "passed",
+  "errors": [],
+  "localLinks": [
+    {
+      "file": "stages/17_candidate_news/AGENTS.md",
+      "line": 9,
+      "target": "back/agente.md",
+      "resolved": "stages/17_candidate_news/back/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/AGENTS.md",
+      "line": 10,
+      "target": "front/agente.md",
+      "resolved": "stages/17_candidate_news/front/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/AGENTS.md",
+      "line": 11,
+      "target": "app/agente.md",
+      "resolved": "stages/17_candidate_news/app/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/README.md",
+      "line": 9,
+      "target": "back/agente.md",
+      "resolved": "stages/17_candidate_news/back/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/README.md",
+      "line": 9,
+      "target": "back/README.md",
+      "resolved": "stages/17_candidate_news/back/README.md"
+    },
+    {
+      "file": "stages/17_candidate_news/README.md",
+      "line": 10,
+      "target": "front/agente.md",
+      "resolved": "stages/17_candidate_news/front/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/README.md",
+      "line": 10,
+      "target": "front/README.md",
+      "resolved": "stages/17_candidate_news/front/README.md"
+    },
+    {
+      "file": "stages/17_candidate_news/README.md",
+      "line": 11,
+      "target": "app/agente.md",
+      "resolved": "stages/17_candidate_news/app/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/README.md",
+      "line": 11,
+      "target": "app/README.md",
+      "resolved": "stages/17_candidate_news/app/README.md"
+    },
+    {
+      "file": "stages/17_candidate_news/README.md",
+      "line": 17,
+      "target": "CONTEXT.md",
+      "resolved": "stages/17_candidate_news/CONTEXT.md"
+    },
+    {
+      "file": "stages/17_candidate_news/README.md",
+      "line": 17,
+      "target": "AGENTS.md",
+      "resolved": "stages/17_candidate_news/AGENTS.md"
+    },
+    {
+      "file": "stages/17_candidate_news/README.md",
+      "line": 17,
+      "target": "references/epico-206.md",
+      "resolved": "stages/17_candidate_news/references/epico-206.md"
+    },
+    {
+      "file": "stages/17_candidate_news/README.md",
+      "line": 62,
+      "target": "manifest.json",
+      "resolved": "stages/17_candidate_news/manifest.json"
+    },
+    {
+      "file": "stages/17_candidate_news/README.md",
+      "line": 63,
+      "target": "output/HANDOFF.md",
+      "resolved": "stages/17_candidate_news/output/HANDOFF.md"
+    },
+    {
+      "file": "stages/17_candidate_news/README.md",
+      "line": 64,
+      "target": "output/verification.json",
+      "resolved": "stages/17_candidate_news/output/verification.json"
+    },
+    {
+      "file": "stages/17_candidate_news/app/README.md",
+      "line": 5,
+      "target": "agente.md",
+      "resolved": "stages/17_candidate_news/app/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/README.md",
+      "line": 9,
+      "target": "microissues/A01.md",
+      "resolved": "stages/17_candidate_news/app/microissues/A01.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/README.md",
+      "line": 10,
+      "target": "microissues/A02.md",
+      "resolved": "stages/17_candidate_news/app/microissues/A02.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/README.md",
+      "line": 11,
+      "target": "microissues/A03.md",
+      "resolved": "stages/17_candidate_news/app/microissues/A03.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/README.md",
+      "line": 12,
+      "target": "microissues/A04.md",
+      "resolved": "stages/17_candidate_news/app/microissues/A04.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/README.md",
+      "line": 13,
+      "target": "microissues/A05.md",
+      "resolved": "stages/17_candidate_news/app/microissues/A05.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/README.md",
+      "line": 15,
+      "target": "../README.md",
+      "resolved": "stages/17_candidate_news/README.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/agente.md",
+      "line": 47,
+      "target": "README.md",
+      "resolved": "stages/17_candidate_news/app/README.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/agente.md",
+      "line": 48,
+      "target": "../CONTEXT.md",
+      "resolved": "stages/17_candidate_news/CONTEXT.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/agente.md",
+      "line": 49,
+      "target": "../AGENTS.md",
+      "resolved": "stages/17_candidate_news/AGENTS.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/microissues/A01.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/app/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/microissues/A02.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/app/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/microissues/A03.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/app/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/microissues/A04.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/app/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/app/microissues/A05.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/app/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/README.md",
+      "line": 7,
+      "target": "agente.md",
+      "resolved": "stages/17_candidate_news/back/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/README.md",
+      "line": 11,
+      "target": "microissues/B01.md",
+      "resolved": "stages/17_candidate_news/back/microissues/B01.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/README.md",
+      "line": 12,
+      "target": "microissues/B02.md",
+      "resolved": "stages/17_candidate_news/back/microissues/B02.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/README.md",
+      "line": 13,
+      "target": "microissues/B03.md",
+      "resolved": "stages/17_candidate_news/back/microissues/B03.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/README.md",
+      "line": 14,
+      "target": "microissues/B04.md",
+      "resolved": "stages/17_candidate_news/back/microissues/B04.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/README.md",
+      "line": 15,
+      "target": "microissues/B05.md",
+      "resolved": "stages/17_candidate_news/back/microissues/B05.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/README.md",
+      "line": 16,
+      "target": "microissues/B06.md",
+      "resolved": "stages/17_candidate_news/back/microissues/B06.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/README.md",
+      "line": 17,
+      "target": "microissues/B07.md",
+      "resolved": "stages/17_candidate_news/back/microissues/B07.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/README.md",
+      "line": 19,
+      "target": "../README.md",
+      "resolved": "stages/17_candidate_news/README.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/agente.md",
+      "line": 65,
+      "target": "README.md",
+      "resolved": "stages/17_candidate_news/back/README.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/agente.md",
+      "line": 66,
+      "target": "../CONTEXT.md",
+      "resolved": "stages/17_candidate_news/CONTEXT.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/agente.md",
+      "line": 67,
+      "target": "../AGENTS.md",
+      "resolved": "stages/17_candidate_news/AGENTS.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/microissues/B01.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/back/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/microissues/B02.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/back/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/microissues/B03.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/back/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/microissues/B04.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/back/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/microissues/B05.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/back/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/microissues/B06.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/back/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/back/microissues/B07.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/back/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/README.md",
+      "line": 5,
+      "target": "agente.md",
+      "resolved": "stages/17_candidate_news/front/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/README.md",
+      "line": 9,
+      "target": "microissues/F01.md",
+      "resolved": "stages/17_candidate_news/front/microissues/F01.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/README.md",
+      "line": 10,
+      "target": "microissues/F02.md",
+      "resolved": "stages/17_candidate_news/front/microissues/F02.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/README.md",
+      "line": 11,
+      "target": "microissues/F03.md",
+      "resolved": "stages/17_candidate_news/front/microissues/F03.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/README.md",
+      "line": 12,
+      "target": "microissues/F04.md",
+      "resolved": "stages/17_candidate_news/front/microissues/F04.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/README.md",
+      "line": 13,
+      "target": "microissues/F05.md",
+      "resolved": "stages/17_candidate_news/front/microissues/F05.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/README.md",
+      "line": 14,
+      "target": "microissues/F06.md",
+      "resolved": "stages/17_candidate_news/front/microissues/F06.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/README.md",
+      "line": 16,
+      "target": "../README.md",
+      "resolved": "stages/17_candidate_news/README.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/agente.md",
+      "line": 74,
+      "target": "README.md",
+      "resolved": "stages/17_candidate_news/front/README.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/agente.md",
+      "line": 75,
+      "target": "../CONTEXT.md",
+      "resolved": "stages/17_candidate_news/CONTEXT.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/agente.md",
+      "line": 76,
+      "target": "../AGENTS.md",
+      "resolved": "stages/17_candidate_news/AGENTS.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/microissues/F01.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/front/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/microissues/F02.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/front/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/microissues/F03.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/front/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/microissues/F04.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/front/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/microissues/F05.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/front/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/front/microissues/F06.md",
+      "line": 7,
+      "target": "../agente.md",
+      "resolved": "stages/17_candidate_news/front/agente.md"
+    },
+    {
+      "file": "stages/17_candidate_news/output/HANDOFF.md",
+      "line": 48,
+      "target": "check-planning.mjs",
+      "resolved": "stages/17_candidate_news/output/check-planning.mjs"
+    },
+    {
+      "file": "stages/17_candidate_news/output/HANDOFF.md",
+      "line": 49,
+      "target": "planning-review-results.json",
+      "resolved": "stages/17_candidate_news/output/planning-review-results.json"
+    }
+  ]
+}

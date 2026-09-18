@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "synthetic": false,
+  "year": 2026,
+  "electionKeys": {
+    "BR": "6257",
+    "SP": "6259"
+  },
+  "pilotUf": "SP",
+  "divulgaElectionKey": "20322002026",
+  "relationsPath": "B02-pilot-relations.json",
+  "officialCounts": {
+    "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2026.zip",
+    "locator": "consulta_cand_2026_BRASIL.csv; sha256=6ab508210f59c532c9a6d43221b20a0c8309852e15ac6c66c99b104e06de03ca; independent Python csv counter: NR_TURNO=1, BR/CD_ELEICAO=6257/CD_CARGO=1; SP/CD_ELEICAO=6259/CD_CARGO=3,5",
+    "sourceAt": "2026-09-17T22:31:04.000Z",
+    "totals": {
+      "BR:president": 14,
+      "SP:governor": 7,
+      "SP:senator": 16
+    }
+  },
+  "candidates": {
+    "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2026.zip",
+    "locator": "consulta_cand_2026_BRASIL.csv",
+    "path": "../../../back/data/civic-staging/pinned-pilot/consulta_cand.csv",
+    "sha256": "6ab508210f59c532c9a6d43221b20a0c8309852e15ac6c66c99b104e06de03ca",
+    "archiveSha256": "6b04c6941a1dbb226624a4601e9ee2ffe59c78837e95efc26741cf6a1b673645",
+    "encoding": "latin1",
+    "sourceAt": "2026-09-17T22:31:04.000Z",
+    "fetchedAt": "2026-09-18T01:26:29.254Z",
+    "license": "Creative Commons Atribuição — TSE candidatos-2026 (portal consulted 2026-09-18)"
+  },
+  "vacancies": {
+    "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_vagas/consulta_vagas_2026.zip",
+    "locator": "consulta_vagas_2026_BRASIL.csv",
+    "path": "../../../back/data/civic-staging/pinned-pilot/consulta_vagas.csv",
+    "sha256": "bdf6aa915be69b7c48e0a40b7696512780ee283f54cd38407555fb27d8e03f72",
+    "archiveSha256": "6c360553ee3edcf3c5b20b03af36b020837cbfdb02e2c948bcedcb9477f7e961",
+    "encoding": "latin1",
+    "sourceAt": "2026-09-17T22:31:04.000Z",
+    "fetchedAt": "2026-09-18T01:26:29.871Z",
+    "license": "Creative Commons Atribuição — TSE candidatos-2026 (portal consulted 2026-09-18)"
+  },
+  "complementary": {
+    "url": "https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand_complementar/consulta_cand_complementar_2026.zip",
+    "locator": "consulta_cand_complementar_2026_BRASIL.csv",
+    "path": "../../../back/data/civic-staging/pinned-pilot/consulta_cand_complementar.csv",
+    "sha256": "6a9d82d9e5abc2065729e4207f160356db1c82937838ff27ef03bcce200f404b",
+    "archiveSha256": "09f5f0505271672db03956d6a3a0b2f99580e2d0b83bbe276502afe0689cf759",
+    "encoding": "latin1",
+    "sourceAt": "2026-09-17T22:31:04.000Z",
+    "fetchedAt": "2026-09-18T01:26:30.226Z",
+    "license": "Creative Commons Atribuição — TSE candidatos-2026 (portal consulted 2026-09-18)"
+  }
+}

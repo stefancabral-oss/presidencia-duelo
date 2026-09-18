@@ -1,0 +1,30 @@
+name: Civic Planning
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'stages/17_candidate_news/**'
+      - '.github/workflows/civic-planning.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  planning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify planning links, sections and dependency order
+        run: |
+          node --input-type=module <<'NODE'
+          import { verifyPlanning } from './stages/17_candidate_news/output/check-planning.mjs';
+          const result = await verifyPlanning('.');
+          console.log(JSON.stringify({ counts: result.counts, checks: result.checks, status: result.status, errors: result.errors }, null, 2));
+          if (result.status !== 'passed') process.exitCode = 1;
+          NODE

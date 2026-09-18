@@ -1,0 +1,311 @@
+{
+  "schemaVersion": 1,
+  "epic": 206,
+  "status": "planned",
+  "implementationComplete": false,
+  "branch": "docs/206-planejamento-frentes",
+  "stage": "stages/17_candidate_news",
+  "lanes": [
+    {
+      "lane": "back",
+      "issue": 207,
+      "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/207",
+      "agent": "back/agente.md",
+      "steps": [
+        {
+          "code": "B01",
+          "issue": 210,
+          "title": "[Back B01] Definir contratos, esquema próprio e fixtures eleitorais/editoriais",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/210",
+          "markdown": "back/microissues/B01.md",
+          "dependsOn": [],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "B02",
+          "issue": 211,
+          "title": "[Back B02] Importar candidaturas oficiais, chapas temporais e cobertura nacional",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/211",
+          "markdown": "back/microissues/B02.md",
+          "dependsOn": [
+            "B01"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "B03",
+          "issue": 212,
+          "title": "[Back B03] Vincular propostas, afirmações e fotografias com proveniência revisável",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/212",
+          "markdown": "back/microissues/B03.md",
+          "dependsOn": [
+            "B01",
+            "B02"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "B04",
+          "issue": 213,
+          "title": "[Back B04] Cadastrar veículos e coletar matérias por fontes permitidas",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/213",
+          "markdown": "back/microissues/B04.md",
+          "dependsOn": [
+            "B01"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "B05",
+          "issue": 214,
+          "title": "[Back B05] Modelar acontecimentos, três perspectivas e deduplicação editorial",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/214",
+          "markdown": "back/microissues/B05.md",
+          "dependsOn": [
+            "B01",
+            "B04"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "B06",
+          "issue": 215,
+          "title": "[Back B06] Expor APIs públicas e fluxo editorial autenticado de publicação/correção",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/215",
+          "markdown": "back/microissues/B06.md",
+          "dependsOn": [
+            "B01",
+            "B02",
+            "B03",
+            "B04",
+            "B05"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "B07",
+          "issue": 216,
+          "title": "[Back B07] Preparar jobs, segurança, frescor e custos para operação editorial",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/216",
+          "markdown": "back/microissues/B07.md",
+          "dependsOn": [
+            "B02",
+            "B03",
+            "B04",
+            "B05",
+            "B06"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "lane": "front",
+      "issue": 208,
+      "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/208",
+      "agent": "front/agente.md",
+      "steps": [
+        {
+          "code": "F01",
+          "issue": 217,
+          "title": "[Front F01] Prototipar jornadas e componentes com estados editoriais acessíveis",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/217",
+          "markdown": "front/microissues/F01.md",
+          "dependsOn": [
+            "B01"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "F02",
+          "issue": 218,
+          "title": "[Front F02] Construir diretório e filtros com cobertura eleitoral explícita",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/218",
+          "markdown": "front/microissues/F02.md",
+          "dependsOn": [
+            "B01",
+            "F01"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "F03",
+          "issue": 219,
+          "title": "[Front F03] Construir ficha, composição de chapa e referências por afirmação",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/219",
+          "markdown": "front/microissues/F03.md",
+          "dependsOn": [
+            "B01",
+            "F01"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "F04",
+          "issue": 220,
+          "title": "[Front F04] Comparar duas ou três candidaturas com temas e exposição equivalentes",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/220",
+          "markdown": "front/microissues/F04.md",
+          "dependsOn": [
+            "B01",
+            "F02",
+            "F03"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "F05",
+          "issue": 221,
+          "title": "[Front F05] Apresentar edição diária, acontecimentos e três perspectivas com lacunas",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/221",
+          "markdown": "front/microissues/F05.md",
+          "dependsOn": [
+            "B01",
+            "F01"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "F06",
+          "issue": 222,
+          "title": "[Front F06] Construir interface editorial de revisão, publicação e correções auditáveis",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/222",
+          "markdown": "front/microissues/F06.md",
+          "dependsOn": [
+            "B01",
+            "F01"
+          ],
+          "completionDependsOn": [
+            "B06",
+            "A02"
+          ],
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "lane": "app",
+      "issue": 209,
+      "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/209",
+      "agent": "app/agente.md",
+      "steps": [
+        {
+          "code": "A01",
+          "issue": 223,
+          "title": "[App A01] Integrar shell, rotas, deep links e contrato de montagem sem perder a rodada",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/223",
+          "markdown": "app/microissues/A01.md",
+          "dependsOn": [
+            "B01"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "A02",
+          "issue": 224,
+          "title": "[App A02] Conectar API, estado público e preferência de UF com leitura anônima",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/224",
+          "markdown": "app/microissues/A02.md",
+          "dependsOn": [
+            "B01"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "A03",
+          "issue": 225,
+          "title": "[App A03] Isolar cache/PWA, flags e privacidade preservando disponibilidade do jogo",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/225",
+          "markdown": "app/microissues/A03.md",
+          "dependsOn": [
+            "B01",
+            "A01",
+            "A02"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "A04",
+          "issue": 226,
+          "title": "[App A04] Integrar as três frentes e comprovar E2E, acessibilidade e regressão",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/226",
+          "markdown": "app/microissues/A04.md",
+          "dependsOn": [
+            "A03",
+            "B06",
+            "F02",
+            "F03",
+            "F04",
+            "F05",
+            "F06"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        },
+        {
+          "code": "A05",
+          "issue": 227,
+          "title": "[App A05] Conduzir release gradual, piloto de sete dias e reconciliação nacional",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/issues/227",
+          "markdown": "app/microissues/A05.md",
+          "dependsOn": [
+            "B01",
+            "B02",
+            "B03",
+            "B04",
+            "B05",
+            "B06",
+            "B07",
+            "F01",
+            "F02",
+            "F03",
+            "F04",
+            "F05",
+            "F06",
+            "A01",
+            "A02",
+            "A03",
+            "A04"
+          ],
+          "completionDependsOn": [],
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "executionOrder": [
+    "B01",
+    "B02",
+    "B03",
+    "B04",
+    "B05",
+    "B06",
+    "B07",
+    "F01",
+    "F02",
+    "F03",
+    "F04",
+    "F05",
+    "A02",
+    "F06",
+    "A01",
+    "A03",
+    "A04",
+    "A05"
+  ]
+}

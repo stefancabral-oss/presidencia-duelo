@@ -1,5 +1,4 @@
 node_modules/
-back/data/news-staging/
 dist/
 .DS_Store
 *.log
@@ -11,3 +10,4 @@ app/public/candidates/
 app/public/CREDITS.md
 app/public/icons/
 app/public/og-cover.png
+back/data/news-staging/

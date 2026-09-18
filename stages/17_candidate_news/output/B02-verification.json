@@ -3,7 +3,7 @@
   "issue": 211,
   "branch": "feat/211-official-import",
   "baseCommit": "ffc38984f7d8b33647d3cfbcad3029fca2ec2e38",
-  "recordedAt": "2026-09-18T17:44:44.122Z",
+  "recordedAt": "2026-09-18T17:46:28.921Z",
   "local": {
     "unitTests": {
       "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
@@ -235,7 +235,41 @@
       "checks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks"
     },
     "pinnedProcessRevision": {
-      "status": "pending new code head",
+      "status": "passed",
+      "validatedCodeCommit": "19e14690d5c2f29fc2ea0281ac688875a52f7d67",
+      "runtime": "Node.js 22 Linux",
+      "database": "PostgreSQL 16",
+      "backendUnitTests": {
+        "tests": 206,
+        "passed": 206,
+        "failed": 0
+      },
+      "runs": [
+        {
+          "name": "Backend and Shared",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35376153177",
+          "conclusion": "success"
+        },
+        {
+          "name": "Civic Planning",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35376153176",
+          "conclusion": "success"
+        }
+      ],
+      "jobs": [
+        {
+          "name": "back-unit",
+          "conclusion": "success"
+        },
+        {
+          "name": "back-integration-postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "shared-data",
+          "conclusion": "success"
+        }
+      ],
       "checks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks"
     }
   },

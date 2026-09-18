@@ -61,3 +61,7 @@ Pendências: commit/publicação destas correções, CI documental remoto e revi
 ## Retomada com execução liberada
 
 Em 2026-09-18T00:44:59.089Z, as correções foram aplicadas ao worktree Git da #228 e o verificador foi executado pelo Node CLI: 68 links relativos, 29 Markdown, zero erros. `git diff --check` aprovado. O workflow Civic Planning verifica esses contratos documentais em cada alteração. O bloqueio anterior foi superado; publicação e CI serão confirmados na PR. Nenhum gate de implementação ou editorial foi aprovado.
+
+## Publicação e CI confirmados
+
+Correções publicadas no head `e39e8a68105cedbc1082290762b8da005a74a718`; Civic Planning aprovado no run `35292542364`. Os critérios das issues #211/#215/#227 foram sincronizados, preservando histórico/checklists e estado aberto. As três discussões técnicas corrigidas foram resolvidas; nenhum gate de produto/editorial foi aprovado. Este registro posterior altera somente evidências documentais e será verificado novamente pelo workflow. A branch contém main com #205/#229; a #230 incorpora sua ancestralidade. Mesclar #228 por merge commit preserva a integração.

@@ -100,3 +100,7 @@ jobs:
         run: npm run test:abuse --prefix back
       - name: Verify issued pairs, optional discard and earned inventory
         run: node back/scripts/game-progress-smoke.mjs
+      - name: Verify isolated civic schema and rollback without changing game data
+        run: node back/scripts/civic-schema-smoke.mjs
+        env:
+          CIVIC_DISPOSABLE_TEST: '1'

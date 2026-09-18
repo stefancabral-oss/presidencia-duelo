@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-17",
+  "issue": 210,
+  "branch": "feat/210-civic-contracts",
+  "baseCommit": "f99ac18c1db5d296d6ed49edcaca21239b260205",
+  "checks": [
+    {
+      "command": "node --test app/src/*.test.js back/src/*.test.js shared/*.test.js",
+      "status": "passed",
+      "tests": 354,
+      "failures": 0,
+      "newCivicTests": 23
+    },
+    {
+      "command": "node app/node_modules/vite/bin/vite.js build app",
+      "status": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed"
+    }
+  ],
+  "implementationCommit": "06dac872ec3af4e879236dd9b7710e57b5947086",
+  "pullRequest": "https://github.com/stefancabral-oss/presidencia-duelo/pull/230",
+  "postgresql": {
+    "status": "passed-ci",
+    "localAvailable": false,
+    "script": "back/scripts/civic-schema-smoke.mjs",
+    "run": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35292644810",
+    "jobId": 105438588413,
+    "testedCommit": "71d8673c48fac49e7953dc66d0437f8ff03117b9",
+    "checks": {
+      "migration": "pass",
+      "emptyRollback": "pass",
+      "populatedRollback": "refused",
+      "repeat": "idempotent",
+      "fixtureCandidacies": 5,
+      "relationalChecks": 19,
+      "legacyPublicFingerprintUnchanged": "2db49f7cf020fa218621595dc99dedb7c12c1d566d230251a085bca5128b1b57"
+    },
+    "legacyPublicFingerprintUnchanged": "2db49f7cf020fa218621595dc99dedb7c12c1d566d230251a085bca5128b1b57"
+  },
+  "backendAndSharedCI": "passed",
+  "designValidatorCI": {
+    "status": "passed",
+    "runId": 35253716190
+  },
+  "browserCI": {
+    "status": "passed",
+    "runId": 35253916225,
+    "commit": "181ea41777bce51adfd6f6e1631d46de3c45d3bc"
+  },
+  "humanApproval": false,
+  "realDataImported": false,
+  "mergePerformed": false,
+  "deploymentPerformed": false,
+  "finalPublishedCI": {
+    "commit": "181ea41777bce51adfd6f6e1631d46de3c45d3bc",
+    "backendRunId": 35253918107,
+    "designRunId": 35253916694,
+    "browserRunId": 35253916225,
+    "status": "passed"
+  },
+  "reviewCorrections": {
+    "status": "published-local-and-postgresql-verified",
+    "published": true,
+    "issues": [
+      "logical uniqueness for contests, editions and changes",
+      "mixed translation/syndication provenance cycles",
+      "immutable historical ticket members",
+      "published editions require approved published events",
+      "audit actions match snapshots and revision transitions",
+      "no-result coverage has null article evidence",
+      "explicit center outlet classification"
+    ],
+    "regressionScenarios": 44,
+    "scenarioModule": "shared/civic-review-scenarios.js",
+    "directNodeAssertions": {
+      "passed": 44,
+      "failed": 0,
+      "runner": "node_repl invoked actual saved civicReviewScenarios; also registered in node:test",
+      "largeGraphArticles": 4002
+    },
+    "syntax": {
+      "status": "passed",
+      "parser": "installed rollup/parseAst",
+      "files": [
+        "shared/civic-contract.js",
+        "shared/civic-contract.test.js",
+        "shared/civic-review-scenarios.js",
+        "back/src/civic-schema.js",
+        "back/scripts/civic-schema-smoke.mjs"
+      ]
+    },
+    "sqlStaticAssertions": {
+      "status": "passed",
+      "checks": 9,
+      "fixturePreconditions": 5,
+      "limitation": "SQL structure only; PostgreSQL execution pending"
+    },
+    "postgresSmoke": {
+      "status": "passed-ci",
+      "testedCommit": "71d8673c48fac49e7953dc66d0437f8ff03117b9",
+      "runId": 35292644810,
+      "jobId": 105438588413,
+      "script": "back/scripts/civic-schema-smoke.mjs",
+      "checks": {
+        "migration": "pass",
+        "emptyRollback": "pass",
+        "populatedRollback": "refused",
+        "repeat": "idempotent",
+        "fixtureCandidacies": 5,
+        "relationalChecks": 19,
+        "legacyPublicFingerprintUnchanged": "2db49f7cf020fa218621595dc99dedb7c12c1d566d230251a085bca5128b1b57"
+      }
+    },
+    "fullSuite": {
+      "status": "passed",
+      "tests": 399,
+      "failures": 0,
+      "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
+      "checkedAt": "2026-09-18T00:47:10.539Z",
+      "parallelRun": {
+        "status": "native-node-crash-on-windows",
+        "message": "node CleanupQueue::Add assertion insertion_info.second; serial execution of all 399 tests passed"
+      }
+    },
+    "build": {
+      "status": "passed",
+      "command": "node app/node_modules/vite/bin/vite.js build app",
+      "checkedAt": "2026-09-18T00:47:10.539Z"
+    },
+    "remoteCI": {
+      "status": "backend-design-planning-passed-browsers-running-at-recording",
+      "testedCommit": "71d8673c48fac49e7953dc66d0437f8ff03117b9",
+      "recordedAt": "2026-09-18T00:49:38.509Z",
+      "backendRunId": 35292644810,
+      "designRunId": 35292644809,
+      "planningRunId": 35292644815,
+      "browserRunId": 35292644806,
+      "liveChecks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/230/checks"
+    },
+    "blockerErrors": [],
+    "whitespace": {
+      "status": "passed",
+      "command": "git diff --check"
+    },
+    "previousBlockerResolved": true,
+    "planningIntegration": {
+      "status": "passed",
+      "markdownFiles": 31,
+      "localLinksChecked": 76,
+      "microissues": 18,
+      "errors": 0,
+      "method": "verifyPlanning in actual merged Git checkout",
+      "planningHead": "e39e8a68105cedbc1082290762b8da005a74a718",
+      "mainHead": "5dccd3cefdcf5243174f64825ca53b5ccad90429",
+      "gitMergeConflicts": 0
+    },
+    "reviewThreadsResolved": 6
+  },
+  "historicalEvidenceNote": "Original checks/finalPublishedCI describe earlier published commits; reviewCorrections records corrected code tested locally and in PostgreSQL CI. Browser state is a dated snapshot; current operational status is the PR live checks."
+}

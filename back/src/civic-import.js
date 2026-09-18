@@ -199,8 +199,8 @@ export function prepareCivicImport({ candidates, vacancies, complementary, manif
     staged.sort((a,b) => a.ticket.validFrom.localeCompare(b.ticket.validFrom));
     if (staged.some((s,i) => i && (staged[i-1].ticket.validTo === null || staged[i-1].ticket.validTo > s.ticket.validFrom))) invalid = true;
     if (invalid) { pending('relationship_evidence_invalid_or_overlapping'); continue; }
-    if (missingLegalValidity) { pending('explicit_relationship_observed_legal_validity_pending'); continue; }
     for (const s of staged) { records.sources.push(s.source); records.tickets.push(s.ticket); records.members.push(...s.members); }
+    if (missingLegalValidity) { pending('explicit_relationship_observed_legal_validity_pending'); continue; }
     counts[scope].reconciled++;
   }
   const importedHolderKeys=new Set(records.candidacies.map(c=>`${electionKeys[records.contests.find(t=>t.id===c.contestId).jurisdiction]}:${c.sourceKey}`));

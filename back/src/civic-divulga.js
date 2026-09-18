@@ -1,5 +1,6 @@
-import { sha256, CivicImportError } from './civic-import.js';
+import { CivicImportError } from './civic-import.js';
 import { UFS } from '../../shared/civic-contract.js';
+import { readDivulgaJson } from './civic-divulga-detail.js';
 const decimal = value=>typeof value==='string'&&/^\d{1,32}$/.test(value);
 const key = value => {if(decimal(value)&&value!=='0')return value;if(!Number.isSafeInteger(value)||value<1)throw new CivicImportError('Divulga numeric identifier');return String(value);};
 
@@ -11,10 +12,7 @@ export async function collectDivulgaPilot({year,pilotUf,apiElectionKey,fetchImpl
   for(const [jurisdiction,officeCode] of [['BR','1'],[pilotUf,'3'],[pilotUf,'5']]) {
     const url=`https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/${year}/${jurisdiction}/${apiElectionKey}/${officeCode}/candidatoscomvicessuplentes`;
     const response=await fetchImpl(url,{redirect:'error',signal:AbortSignal.timeout(30000),headers:{'User-Agent':'PoliMatch-Staging/1.0 (public TSE data; no publication)'}});
-    if(!response.ok||!response.body)throw new CivicImportError(`Divulga collection HTTP ${response.status}`);
-    const parts=[];let size=0;
-    for await(const bytes of response.body){size+=bytes.length;if(size>8*1024*1024)throw new CivicImportError('Divulga response byte limit');parts.push(Buffer.from(bytes));}
-    const raw=Buffer.concat(parts),data=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));
+    const {data,rawResponseSha256}=await readDivulgaJson(response);
     if(!data||!Array.isArray(data.candidatos)||data.candidatos.length>10000)throw new CivicImportError('Divulga response profile');
     const holders=data.candidatos.map(candidate=>{
       const sourceKey=key(candidate.id);
@@ -29,7 +27,7 @@ export async function collectDivulgaPilot({year,pilotUf,apiElectionKey,fetchImpl
       return {sourceKey,members};
     });
     if(new Set(holders.map(h=>h.sourceKey)).size!==holders.length)throw new CivicImportError('Divulga duplicate holder');
-    projections.push({jurisdiction,officeCode,url,rawResponseSha256:sha256(raw),fetchedAt:new Date().toISOString(),sourceAt:null,holders});
+    projections.push({jurisdiction,officeCode,url,rawResponseSha256,fetchedAt:new Date().toISOString(),sourceAt:null,holders});
   }
   return {version:1,year,pilotUf,apiElectionKey,publication:'observation_only',projections};
 }

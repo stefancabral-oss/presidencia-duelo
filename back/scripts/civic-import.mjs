@@ -40,4 +40,4 @@ if (mode === '--download') {
 const relations = manifest.relationsPath ? JSON.parse(await readFile(resolve(dirname(manifestPath), manifest.relationsPath), 'utf8')) : [];
 const prepared = prepareCivicImport({ candidates, vacancies, complementary, manifest, relations });
 const result = await saveCivicImport(directory, prepared);
-console.log(JSON.stringify({ batchId: result.batch.batchId, repeated: result.repeated, publication: 'staging_only', synthetic: result.batch.dataset.synthetic, ...result.batch.report, diff: result.batch.diff },null,2));
+console.log(JSON.stringify({ batchId: result.batch.batchId, latestBatch:result.state.latestBatch, repeated: result.repeated, stateChanged:result.stateChanged, historicalReplay:result.historicalReplay, publication: 'staging_only', synthetic: result.batch.dataset.synthetic, ...result.batch.report, diff: result.batch.diff },null,2));

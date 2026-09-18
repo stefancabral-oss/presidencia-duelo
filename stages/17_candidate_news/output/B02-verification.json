@@ -3,7 +3,7 @@
   "issue": 211,
   "branch": "feat/211-official-import",
   "baseCommit": "ffc38984f7d8b33647d3cfbcad3029fca2ec2e38",
-  "recordedAt": "2026-09-18T01:40:48.085Z",
+  "recordedAt": "2026-09-18T11:55:21.711Z",
   "local": {
     "unitTests": {
       "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
@@ -47,6 +47,34 @@
       "tests": 32,
       "passed": 32,
       "failed": 0
+    },
+    "integralRevision": {
+      "targeted": {
+        "command": "node --test --test-concurrency=1 back/src/civic-divulga-detail.test.js back/src/civic-import.test.js",
+        "tests": 49,
+        "passed": 49,
+        "failed": 0
+      },
+      "fullSuite": {
+        "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
+        "tests": 448,
+        "passed": 448,
+        "failed": 0,
+        "durationMs": 26327.7328
+      },
+      "build": {
+        "command": "node app/node_modules/vite/bin/vite.js build app",
+        "status": "passed"
+      },
+      "portableSnapshot": {
+        "command": "node back/scripts/civic-import-snapshot.mjs stages/17_candidate_news/output/B02-pilot-delivery.json ../b02-pilot-portable-check",
+        "freshDirectory": true,
+        "restoredBatchId": "254cafe319d15c06a0f893af202638cc00c91b44770f7847340a0d8da92f1209",
+        "synthetic": false,
+        "complete": false,
+        "accounted": true
+      },
+      "initialTestCorrection": "One new test initially expected an uncombined legacy synthetic status; corrected assertion to the existing APTO / DEFERIDO COM RECURSO contract, then targeted and full suites passed."
     }
   },
   "pilot": {
@@ -64,8 +92,8 @@
     "otherUfsImported": false
   },
   "ci": {
-    "status": "passed",
-    "validatedCodeCommit": "5a9f47b6e78494efc48613f16fbe1e8681b1649e",
+    "status": "pending-for-revision",
+    "validatedCodeCommit": null,
     "runtime": "Node.js 22 on Linux",
     "database": "PostgreSQL 16",
     "backendUnitTests": {
@@ -73,27 +101,75 @@
       "passed": 176,
       "failed": 0
     },
-    "runs": [
-      {
-        "name": "Backend and Shared",
-        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35296339181",
-        "conclusion": "success"
+    "runs": [],
+    "latestChecks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks",
+    "previousValidation": {
+      "status": "passed",
+      "validatedCodeCommit": "5a9f47b6e78494efc48613f16fbe1e8681b1649e",
+      "runtime": "Node.js 22 on Linux",
+      "database": "PostgreSQL 16",
+      "backendUnitTests": {
+        "tests": 176,
+        "passed": 176,
+        "failed": 0
       },
-      {
-        "name": "Civic Planning",
-        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35296339169",
-        "conclusion": "success"
-      }
-    ],
-    "latestChecks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks"
+      "runs": [
+        {
+          "name": "Backend and Shared",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35296339181",
+          "conclusion": "success"
+        },
+        {
+          "name": "Civic Planning",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35296339169",
+          "conclusion": "success"
+        }
+      ],
+      "latestChecks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks"
+    }
   },
   "acceptance": {
     "human": "pending",
     "legalValidity": "pending",
-    "missingApiCompositions": 4,
     "apiTerms": "pending",
     "databaseWritten": false,
     "publicRoutesAdded": false,
-    "deployed": false
+    "deployed": false,
+    "absentFromListLocatedInDetail": 4,
+    "ambiguousDetailHistories": 7,
+    "technicalChatAcceptance": {
+      "actor": "Stefan",
+      "recordedDate": "2026-09-18",
+      "text": "211 ok",
+      "scope": "Previous technical delivery; does not approve subsequent dossier or legal intervals"
+    }
+  },
+  "individualSourceReview": {
+    "command": "node back/scripts/civic-divulga-review.mjs <pinned-manifest> <new-review.json>",
+    "reviewId": "081e8e6eff4cf8b7f85ee0cc296e1a6a07da58c44ba2924899c551e1b9289b93",
+    "officialCandidacies": 37,
+    "inspectedCandidacies": 37,
+    "individualDetails": 95,
+    "roleCompleteObservations": 30,
+    "ambiguousHistories": 7,
+    "legalIntervalsProven": 0,
+    "originLocalUpdates": 95,
+    "explicitSubstitutions": 7,
+    "agreesWithPinnedList": 29,
+    "apiLicense": null,
+    "sourceAccessBasis": "Resolução TSE 23.609/2019, art. 74: public consultation; not a general API reuse license",
+    "publicProcessLookup": {
+      "status": "hCaptcha required",
+      "actsRead": false,
+      "challengeCompleted": false,
+      "authorizationRequested": true
+    }
+  },
+  "reviewCorrections": {
+    "durableMinimizedExport": true,
+    "archivedReplayDoesNotRollback": true,
+    "verifiedHistoryRetainedWithPendingInterval": true,
+    "sameHostDeadPidLockRecovery": true,
+    "lastReconciledArchiveValidated": true
   }
 }

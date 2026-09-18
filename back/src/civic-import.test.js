@@ -7,7 +7,9 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { prepareCivicImport, parseTseCsv, tseGeneration, sha256, importDiff } from './civic-import.js';
-import { saveCivicImport } from './civic-import-store.js';
+import { saveCivicImport, recoverCivicImportLock } from './civic-import-store.js';
+import { hostname } from 'node:os';
+import { randomUUID } from 'node:crypto';
 import { acquireOfficialArchive, officialArchiveUrl } from './civic-acquisition.js';
 import { collectDivulgaPilot,divulgaRelationships } from './civic-divulga.js';
 import { civicImportFixture, encodeCsv, candidateHeader, vacancyHeader } from '../test-support/civic-import-fixture.js';
@@ -158,6 +160,56 @@ test('B02 process lock, older generation and wrong pilot refuse writes without m
   await writeFile(join(dir,'.import.lock'),'occupied');await assert.rejects(saveCivicImport(dir,prepare(f)),{code:'EEXIST'});await unlink(join(dir,'.import.lock'));
   const older=prepare(f);older.report.sourceAt='2032-07-31T15:00:00.000Z';await assert.rejects(saveCivicImport(dir,older),/Older/);
   const wrong=prepare(f);wrong.pilotUf='RJ';await assert.rejects(saveCivicImport(dir,wrong),/boundary/);assert.equal(await readFile(join(dir,'state.json'),'utf8'),before);
+}));
+
+test('B02 replaying an older archived batch from the same generation never rolls staging backward', async()=>withDirectory(async dir=>{
+  const f=civicImportFixture(),first=prepare(f);await saveCivicImport(dir,first);
+  f.relations[0].validFrom='2032-07-02T12:00:00.000Z';const second=prepare(f);await saveCivicImport(dir,second);
+  const before=await readFile(join(dir,'state.json'),'utf8'), replay=await saveCivicImport(dir,first);
+  assert.equal(replay.repeated,true);assert.equal(replay.historicalReplay,true);assert.equal(replay.stateChanged,false);
+  assert.equal(replay.state.latestBatch,second.batchId);assert.equal(replay.state.lastReconciledBatch,second.batchId);
+  assert.equal(await readFile(join(dir,'state.json'),'utf8'),before);
+}));
+
+test('B02 a verified earlier composition remains in a batch when a later observation lacks legal dates',()=>{
+  const f=civicImportFixture();f.relations[0].validTo='2032-07-20T12:00:00.000Z';
+  f.relations.push({...structuredClone(f.relations[0]),validFrom:null,validTo:null,evidence:{...f.relations[0].evidence,sourceAt:null,license:null}});
+  const batch=prepare(f),holder=batch.dataset.records.candidacies.find(c=>c.sourceKey==='11');
+  assert.equal(batch.report.complete,false);assert.equal(batch.report.counts['BR:president'].reconciled,1);
+  const tickets=batch.dataset.records.tickets.filter(t=>t.candidacyId===holder.id);
+  assert.equal(tickets.length,1);assert.equal(tickets[0].validTo,'2032-07-20T12:00:00.000Z');
+  assert.equal(batch.dataset.records.members.filter(m=>m.ticketId===tickets[0].id).length,2);
+  assert.ok(batch.report.gaps.some(g=>g.sourceKey==='11'&&g.code==='explicit_relationship_observed_legal_validity_pending'));
+});
+
+test('B02 validates the retained reconciled archive even when the latest batch is incomplete',async()=>withDirectory(async dir=>{
+  const f=civicImportFixture(),first=prepare(f);await saveCivicImport(dir,first);f.relations=[];await saveCivicImport(dir,prepare(f));
+  const before=await readFile(join(dir,'state.json'),'utf8'),archive=join(dir,'batches',first.batchId+'.json'),saved=await readFile(archive,'utf8');
+  await unlink(archive);await assert.rejects(saveCivicImport(dir,prepare(f)),/missing/);
+  assert.equal(await readFile(join(dir,'state.json'),'utf8'),before);
+  await writeFile(archive,saved);const corrupt=JSON.parse(saved);corrupt.dataset.records.persons[0].displayName='Unexpected corruption';await writeFile(archive,JSON.stringify(corrupt));
+  await assert.rejects(saveCivicImport(dir,prepare(f)),/fingerprint/);assert.equal(await readFile(join(dir,'state.json'),'utf8'),before);
+}));
+
+test('B02 explicit stale-lock recovery permits only a known dead process on this host',async()=>withDirectory(async dir=>{
+  await promisify(execFile)(process.execPath,['--input-type=module','-e','console.log(process.pid)']).then(async r=>{
+    const owner={version:1,hostname:hostname(),pid:Number(r.stdout.trim()),owner:randomUUID(),createdAt:new Date().toISOString()},path=join(dir,'.import.lock');
+    for(const invalid of [{...owner,pid:process.pid},{...owner,hostname:'unknown-foreign-host'},{...owner,owner:'unknown'}]){
+      await writeFile(path,JSON.stringify(invalid));await assert.rejects(recoverCivicImportLock(dir),/refused/);assert.equal(JSON.parse(await readFile(path,'utf8')).owner,invalid.owner);
+    }
+    await writeFile(path,JSON.stringify(owner));assert.equal((await recoverCivicImportLock(dir)).recovered,true);
+    assert.equal((await recoverCivicImportLock(dir)).recovered,false);assert.deepEqual(await readdir(dir),[]);
+    await saveCivicImport(dir,prepare(civicImportFixture()));assert.ok(JSON.parse(await readFile(join(dir,'state.json'),'utf8')).latestBatch);
+  });
+}));
+
+test('B02 portable minimized snapshot CLI restores an exact delivery in a fresh staging directory',async()=>withDirectory(async dir=>{
+  const batch=prepare(civicImportFixture()),bytes=Buffer.from(JSON.stringify(batch)),snapshot=join(dir,'export.json'),manifest=join(dir,'delivery.json'),staging=join(dir,'staging');
+  await writeFile(snapshot,bytes);await writeFile(manifest,JSON.stringify({version:1,export:{path:'export.json',sha256:sha256(bytes),batchId:batch.batchId,transformedRecordsSha256:batch.report.transformedRecordsSha256}}));
+  const script=fileURLToPath(new URL('../scripts/civic-import-snapshot.mjs',import.meta.url));
+  const execute=()=>promisify(execFile)(process.execPath,[script,manifest,staging]);
+  assert.equal(JSON.parse((await execute()).stdout).batchId,batch.batchId);assert.equal(JSON.parse((await execute()).stdout).repeated,true);
+  const before=await readFile(join(staging,'state.json'),'utf8');await writeFile(snapshot,'{}');await assert.rejects(execute());assert.equal(await readFile(join(staging,'state.json'),'utf8'),before);
 }));
 test('B02 bounded acquisition rejects HTTP errors, HTML, oversized/truncated response and checksum mismatch', async()=>withDirectory(async dir=>{
   const destination=join(dir,'source.zip');await writeFile(destination,'last-valid-file');

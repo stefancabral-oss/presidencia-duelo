@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "recordedAt": "2026-09-18T11:53:46.067Z",
+  "publication": "staging_only",
+  "humanAcceptance": "pending",
+  "export": {
+    "path": "B02-pilot-export.json",
+    "sha256": "a7a31dd9d3bbdd300ef94f30cfdce48b40ac864c31e99cee48a19f1de5c3f022",
+    "batchId": "254cafe319d15c06a0f893af202638cc00c91b44770f7847340a0d8da92f1209",
+    "transformedRecordsSha256": "d6ee3b4310917e942ec6df21665ca37a1c6a0d9455296be4581115add1238d2a"
+  },
+  "sourceManifestPath": "B02-pilot-manifest.json",
+  "reviewPath": "B02-case-review.json",
+  "limitations": [
+    "Legal ticket intervals not proven",
+    "Source CSV/ZIP private fields intentionally not committed; reacquisition must match pinned hashes",
+    "Other 26 UFs not reconciled"
+  ]
+}

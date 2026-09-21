@@ -1,0 +1,342 @@
+{
+  "version": 1,
+  "batchId": "254cafe319d15c06a0f893af202638cc00c91b44770f7847340a0d8da92f1209",
+  "detailReviewId": "a83db1744a66917284272ea94fcc0e79ea05dfa4f6a06ad4af8f6370583364be",
+  "recordedAt": "2026-09-21T21:44:43.000Z",
+  "synthetic": false,
+  "publication": "staging_only",
+  "humanAcceptance": "pending",
+  "legalIntervalsInferred": false,
+  "documents": [
+    {
+      "id": "guto-collective-decision",
+      "process": "0603024-47.2026.6.26.0000",
+      "kind": "Decisão 1264",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=regional/sp/2026/9/8/18/0/46/136d26a7d4cd5fbb6205105e22485eef763d69029e924c33bd2ac194814e8fcb",
+      "locator": "Decisão 1264; processo 0603024-47.2026.6.26.0000",
+      "signedAt": {
+        "value": "2026-09-08 18:00:46",
+        "timezone": null,
+        "precision": "second",
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-18T17:32:11.433Z",
+      "summary": "O pedido coletivo intempestivo foi julgado prejudicado porque o pedido individual 0603102-41.2026.6.26.0000 da mesma candidatura ao Senado já havia sido deferido. O vínculo é declarado na decisão; não é inferido de nome/partido.",
+      "sourceKeys": [
+        "250002553928",
+        "250002554075"
+      ],
+      "license": null,
+      "legalInterval": null
+    },
+    {
+      "id": "guto-individual-decision",
+      "process": "0603102-41.2026.6.26.0000",
+      "kind": "Decisão 1264",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=regional/sp/2026/9/8/18/0/18/4b0f54b742038d528979df03e652d678af67d7ab7dee6355710c8aebe85bdcb2",
+      "locator": "Decisão 1264; processo 0603102-41.2026.6.26.0000",
+      "signedAt": {
+        "value": "2026-09-08 18:00:18",
+        "timezone": null,
+        "precision": "second",
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-18T17:32:11.433Z",
+      "summary": "Pedido individual deferido para Senador, nome de urna GUTO SCHIAVETTO, número 144. A decisão identifica o DRAP 0603021-92.2026.6.26.0000. Não identifica os dois suplentes nem fixa o intervalo da composição.",
+      "sourceKeys": [
+        "250002554075"
+      ],
+      "license": null,
+      "legalInterval": null
+    },
+    {
+      "id": "vera-majoritarian-judgment",
+      "process": "0601254-19.2026.6.26.0000",
+      "kind": "Certidão de resultado de julgamento da Chapa Majoritária",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=regional/sp/2026/9/9/12/13/42/1f509357b37980ee70e5b4cac58a19d34ad03199c6ab3f5a616402781572a973",
+      "locator": "Certidão de resultado de julgamento da Chapa Majoritária; processo 0601254-19.2026.6.26.0000",
+      "signedAt": {
+        "value": null,
+        "timezone": null,
+        "precision": null,
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-18T17:32:11.433Z",
+      "summary": "Certifica o julgamento de 08/09/2026 no processo 0601255-04.2026.6.26.0000: registro individual de VERA LÚCIA deferido e chapa VERA LÚCIA/RENATA FRANÇA indeferida devido ao indeferimento da vice. Não prova o resultado do pedido da vice substituta.",
+      "sourceKeys": [
+        "250002536915",
+        "250002536916"
+      ],
+      "license": null,
+      "legalInterval": null,
+      "datedFacts": [
+        {
+          "event": "regional_judgment",
+          "date": "2026-09-08",
+          "precision": "day"
+        }
+      ]
+    },
+    {
+      "id": "vivian-former-vice-renunciation",
+      "process": "0602039-78.2026.6.26.0000",
+      "kind": "Decisão 2317",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=regional/sp/2026/8/14/16/41/29/cca34b63ee9d233e91fd1ab6926e3303eab04bce151b5a7872c454d342f9687c",
+      "locator": "Decisão 2317; processo 0602039-78.2026.6.26.0000",
+      "signedAt": {
+        "value": "2026-08-14 16:41:29",
+        "timezone": null,
+        "precision": "second",
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-18T17:32:11.433Z",
+      "summary": "Homologa a renúncia do candidato a vice-governador MARCELO PEREIRA DE AZEVEDO, pedido ID 67619336. A assinatura da homologação não é convertida automaticamente em início/fim da chapa.",
+      "sourceKeys": [
+        "250002544911"
+      ],
+      "license": null,
+      "legalInterval": null
+    },
+    {
+      "id": "vivian-substitute-vice-decision",
+      "process": "0602735-17.2026.6.26.0000",
+      "kind": "Decisão monocrática 41",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=regional/sp/2026/8/27/17/23/34/82eada03d6b36d486f536d1b5fb6e2bd684098c527bd752ba58930d7ffb75727",
+      "locator": "Decisão monocrática 41; processo 0602735-17.2026.6.26.0000",
+      "signedAt": {
+        "value": "2026-08-27 17:23:34",
+        "timezone": null,
+        "precision": "second",
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-18T17:32:30.113Z",
+      "summary": "Declara a substituição de MARCELO PEREIRA DE AZEVEDO por MARIA CRISTINA DAMASIO DE ALMEIDA, escolha partidária em 14/08/2026 e pedido em 15/08/2026. Cita a homologação da renúncia em 14/08/2026 no processo 0602039-78.2026.6.26.0000 e defere expressamente a chapa VIVIAN MENDES DA SILVA/MARIA CRISTINA DAMASIO DE ALMEIDA, número 80.",
+      "sourceKeys": [
+        "250002544912",
+        "250002544911",
+        "250002552372"
+      ],
+      "license": null,
+      "legalInterval": null,
+      "datedFacts": [
+        {
+          "event": "renunciation_homologated",
+          "date": "2026-08-14",
+          "precision": "day"
+        },
+        {
+          "event": "substitute_selected",
+          "date": "2026-08-14",
+          "precision": "day"
+        },
+        {
+          "event": "substitute_registration_requested",
+          "date": "2026-08-15",
+          "precision": "day"
+        }
+      ]
+    },
+    {
+      "id": "salles-former-first-substitute-renunciation",
+      "process": "0600550-06.2026.6.26.0000",
+      "kind": "Decisão 1542",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=regional/sp/2026/8/6/16/28/38/0bf14e4388f80b47a31d2eff01eca2881604f75f0157b69742f5e17c8013c42a",
+      "locator": "Decisão 1542; processo 0600550-06.2026.6.26.0000",
+      "signedAt": {
+        "value": "2026-08-06 16:28:38",
+        "timezone": null,
+        "precision": "second",
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-18T17:33:18.039Z",
+      "summary": "Homologa a renúncia de MARCOS DE ALCÂNTARA MACHADO (petição ID 67593069), extingue o processo sem apreciação do mérito e determina ciência ao partido. O ato não nomeia o substituto.",
+      "sourceKeys": [
+        "250002532793"
+      ],
+      "license": null,
+      "legalInterval": null
+    },
+    {
+      "id": "salles-current-first-substitute-decision",
+      "process": "0602507-42.2026.6.26.0000",
+      "kind": "Decisão 2072",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=regional/sp/2026/8/30/14/3/4/4d4696a8e9cf5d650ae29bc3ec9191a5eaf59de8940df7879bd7373fc968e26c",
+      "locator": "Decisão 2072; processo 0602507-42.2026.6.26.0000",
+      "signedAt": {
+        "value": "2026-08-30 14:03:04",
+        "timezone": null,
+        "precision": "second",
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-18T17:33:39.468Z",
+      "summary": "Defere FREDERICO BRAUN DAVILA como primeiro suplente de Senador, nome de urna FREDERICO D'AVILA e número 300. O processo é classificado no PJe como substituição por renúncia; a decisão não cita o titular, o substituído ou o instante inicial da composição.",
+      "sourceKeys": [
+        "250002550682"
+      ],
+      "license": null,
+      "legalInterval": null
+    },
+    {
+      "id": "rufino-current-first-substitute-judgment",
+      "process": "0603100-71.2026.6.26.0000",
+      "kind": "Acórdão TRE-SP de 08/09/2026, listado no TSE",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=regional/sp/2026/9/8/19/20/20/82a2f5389e8cbd3e0833158d330091a4cad5b0c88e74495f00bb58bda4a394e6",
+      "locator": "Acórdão TRE-SP de 08/09/2026, listado no TSE; processo 0603100-71.2026.6.26.0000",
+      "signedAt": {
+        "value": "2026-09-08 19:26:24",
+        "timezone": null,
+        "precision": "second",
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-18T17:34:02.745Z",
+      "summary": "O TRE-SP deferiu o registro de LUCIANA AVIGO FELIX como primeira suplente de Senador, número 200. O voto condiciona a viabilidade da chapa ao deferimento do titular e do segundo suplente. Na consulta de 18/09 o processo também estava no TSE como recurso ordinário eleitoral; não registrar trânsito definitivo ou converter o recurso em indeferimento.",
+      "sourceKeys": [
+        "250002554098"
+      ],
+      "license": null,
+      "legalInterval": null,
+      "datedFacts": [
+        {
+          "event": "regional_judgment",
+          "date": "2026-09-08",
+          "precision": "day"
+        },
+        {
+          "event": "appeal_received_by_tse",
+          "date": "2026-09-16",
+          "precision": "day",
+          "basis": "process_header_autuation_at_tse"
+        }
+      ]
+    },
+    {
+      "id": "edjane-substitute-vice-renunciation",
+      "process": "0603196-86.2026.6.26.0000",
+      "kind": "Decisão 2505",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=regional/sp/2026/9/14/17/41/26/eb6ccb679072bf98b685b24cf1cd37e675cfd351a4da4d0d675704f341c9ec1b",
+      "locator": "Decisão 2505; processo 0603196-86.2026.6.26.0000",
+      "signedAt": {
+        "value": "2026-09-14 17:41:26",
+        "timezone": null,
+        "precision": "second",
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-18T17:34:44.252Z",
+      "summary": "Homologa a renúncia de NAIR ALVES DUARTE, termos IDs 67816313/67816314, e considera prejudicados os embargos anteriores. Não cita um novo substituto. Não prova trânsito em julgado nem permite transformar a chapa em completa.",
+      "sourceKeys": [
+        "250002554211"
+      ],
+      "license": null,
+      "legalInterval": null
+    },
+    {
+      "id": "edjane-former-vice-renunciation",
+      "process": "0602324-71.2026.6.26.0000",
+      "kind": "Decisão 1662",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=regional/sp/2026/8/18/17/43/12/8fff9f06bb19a079bbbb153a6c5c840a077caff3f9a4c8490cd771ae65f565a0",
+      "locator": "Decisão 1662; processo 0602324-71.2026.6.26.0000",
+      "signedAt": {
+        "value": "2026-08-18 17:43:12",
+        "timezone": null,
+        "precision": "second",
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-18T17:35:05.371Z",
+      "summary": "Homologa a renúncia de RENATA CRISTINA TEDESQUE BOLSONARO (petição ID 67630720) e extingue o processo sem apreciação do mérito. Em conjunto com a decisão 2505, documenta as duas renúncias sucessivas, sem inferir nova vice ou vigência completa.",
+      "sourceKeys": [
+        "250002548079"
+      ],
+      "license": null,
+      "legalInterval": null
+    },
+    {
+      "id": "presidential-replacement-certificate",
+      "process": "0602033-94.2026.6.00.0000",
+      "kind": "Certidão de revisão da ata executiva no DRAP",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=tse/2026/9/16/16/21/52/88fb1edbe186f9a64e9b6d3ef20362ef8a3ac808f9b3f567566e8613d976dd76",
+      "locator": "Certidão de revisão da ata executiva no DRAP; processo 0602033-94.2026.6.00.0000",
+      "signedAt": {
+        "value": "2026-09-16 16:21:52",
+        "timezone": null,
+        "precision": "second",
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-18T17:35:41.151Z",
+      "summary": "Certifica a ata executiva apresentada no DRAP 0601584-39.2026.6.00.0000, ID 179482428: PABLO HENRIQUE COSTA MARÇAL é substituído por LEONARDO ALVES DE ARAÚJO como presidente e SILVIA HELLEN DA SILVA PEREIRA substitui LEONARDO como vice. O ato não informa a data da deliberação ou defere os registros novos.",
+      "sourceKeys": [
+        "280002553884",
+        "280002554479",
+        "280002553883",
+        "280002554490"
+      ],
+      "license": null,
+      "legalInterval": null
+    },
+    {
+      "id": "guto-first-substitute-collective-decision",
+      "process": "0603023-62.2026.6.26.0000",
+      "kind": "Decisão 1263",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=regional/sp/2026/9/8/18/0/46/286edb068153ba19f660f84f9f92981c5ba86886815531f92036af35734e0287",
+      "locator": "Decisão 1263; processo 0603023-62.2026.6.26.0000",
+      "signedAt": {
+        "value": "2026-09-08 18:00:46",
+        "timezone": null,
+        "precision": "second",
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-18T17:38:29.980Z",
+      "summary": "Identifica GUILHERME MEDON BIANCO FONSECA como primeiro suplente na chapa de RICARDO AUGUSTO MANGUE SCHIAVETTO. O pedido coletivo foi julgado prejudicado porque o pedido individual 0603104-11.2026.6.26.0000 da mesma candidatura já foi deferido. Não há substituição entre os dois requerimentos.",
+      "sourceKeys": [
+        "250002553929",
+        "250002554136",
+        "250002553928",
+        "250002554075"
+      ],
+      "license": null,
+      "legalInterval": null
+    },
+    {
+      "id": "guto-second-substitute-collective-finality",
+      "process": "0603022-77.2026.6.26.0000",
+      "kind": "Certidão de Trânsito em Julgado",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=regional/sp/2026/9/13/12/46/4/cebd4542bb341c0b4d2698964ada9669de1a0b23be7873fb7c32d2edfed076fa",
+      "locator": "Certidão de Trânsito em Julgado; processo 0603022-77.2026.6.26.0000",
+      "signedAt": {
+        "value": "2026-09-13 12:46:04",
+        "timezone": null,
+        "precision": "second",
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-21T21:44:43.000Z",
+      "summary": "Certifica o trânsito em julgado em 12/09/2026 do processo coletivo de FABIO RODRIGUES, segundo suplente de Guto. Não fixa a vigência da chapa nem prova, por si, o vínculo com o pedido individual.",
+      "sourceKeys": [
+        "250002553930"
+      ],
+      "license": null,
+      "legalInterval": null
+    },
+    {
+      "id": "guto-collective-chapa-cand-certificate",
+      "process": "0603022-77.2026.6.26.0000",
+      "kind": "Certidão de julgamento RCAND no CAND",
+      "url": "https://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento?extensaoArquivo=text/html&path=regional/sp/2026/9/21/16/16/3/fa71c4215c5b3d483417d12f2a35570c5e3513729c3854c4f3bfb6d804b76f73",
+      "locator": "Certidão de 21/09/2026; processo 0603022-77.2026.6.26.0000",
+      "signedAt": {
+        "value": "2026-09-21 16:16:03",
+        "timezone": null,
+        "precision": "second",
+        "meaning": "document_signed_at"
+      },
+      "consultedAt": "2026-09-21T21:44:43.000Z",
+      "summary": "Certifica que os RRC coletivos de senador 0603024-47, primeiro suplente 0603023-62 e segundo suplente 0603022-77 foram julgados como pedido não conhecido em 08/09/2026. Não altera o resultado dos RRCI individuais nem estabelece vigência.",
+      "sourceKeys": [
+        "250002553928",
+        "250002553929",
+        "250002553930"
+      ],
+      "license": null,
+      "legalInterval": null
+    }
+  ],
+  "cases": []
+}

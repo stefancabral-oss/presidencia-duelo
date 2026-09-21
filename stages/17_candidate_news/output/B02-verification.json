@@ -344,5 +344,20 @@
     "source": "public PJe documents consulted via normal browser UI",
     "artifact": "B02-process-review.json",
     "rawDocumentsCommitted": false
+  },
+  "sourceRefresh20260921": {
+    "detailReviewId": "a83db1744a66917284272ea94fcc0e79ea05dfa4f6a06ad4af8f6370583364be",
+    "evidenceId": "f672c1ac4aa1197a21d606b74a9aa94e70cefbe974622324ec493c8cae0e31a5",
+    "detailCommand": "node back/scripts/civic-divulga-review.mjs <pinned-manifest> <new-review.json>",
+    "processCommand": "node back/scripts/civic-process-review.mjs stages/17_candidate_news/output/B02-pilot-delivery.json stages/17_candidate_news/output/B02-case-review-2026-09-21.json stages/17_candidate_news/output/B02-process-evidence-2026-09-21.json <new-process-review.json>",
+    "officialCandidacies": 37,
+    "individualDetails": 95,
+    "documents": 14,
+    "candidaciesWithDocuments": 9,
+    "legalIntervalsProven": 0,
+    "complete": false,
+    "humanAcceptance": "pending",
+    "stagingPublished": false,
+    "newProcessChallengeBypassed": false
   }
 }

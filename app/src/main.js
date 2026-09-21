@@ -18,6 +18,9 @@ import { confirmedVoteData } from "./vote-response.js";
 import { formatAggregateCopy, MIRROR_COPY, PREDICTION_REVEAL_COPY, PUBLIC_RANKING_COPY, WITHHELD_COPY } from "./aggregate-copy.js";
 import { markPortraitFailed, markPortraitLoaded, patchCandidateSlot, showPersistentPanel } from "./persistent-dom.js";
 import { compactTaxonomyLabel } from "../../shared/catalog-taxonomy.js";
+// Áreas cívicas (Candidatos/Notícias, épico #206): integração por hooks explícitos,
+// sem tocar no motor de votação. Contrato em stages/17_candidate_news/app/A01-contract.md.
+import { createCivicShell } from "./civic/shell.js";
 
 const app = document.querySelector("#app");
 const sound = createSoundController();
@@ -98,6 +101,7 @@ const state = {
   soundEnabled: sound.enabled,
 };
 let resultTimer;
+let civicShell = null;
 let advanceAfterDiscard = null;
 let roundAdvanceTimer;
 let retryEnableTimer;
@@ -639,6 +643,9 @@ function navMarkup() {
     <button class="nav-button" type="button" data-screen="duel">Duelo</button>
     <button class="nav-button" type="button" data-screen="collection" hidden>Coleção</button>
     <button class="nav-button" type="button" data-screen="ranking">${PUBLIC_RANKING_COPY.heading}</button>
+    <button class="nav-button" type="button" data-civic-area="directory" hidden>Candidatos</button>
+    <button class="nav-button" type="button" data-civic-area="news" hidden>Notícias</button>
+    <button class="nav-button" type="button" data-nav-more aria-expanded="false" aria-controls="nav-more-sheet" hidden>Mais</button>
   </nav>`;
 }
 
@@ -679,7 +686,9 @@ function appMarkup() {
       <main class="screen ranking-screen" data-panel="ranking" hidden>${rankingMarkup()}</main>
       <main class="screen collection-screen" data-panel="collection" hidden>${collectionContent()}</main>
       <main class="screen prediction-results-panel" data-panel="prediction-results" hidden></main>
+      <main class="screen civic-screen" data-panel="civic" hidden></main>
       ${navMarkup()}
+      <div class="nav-more-sheet" id="nav-more-sheet" role="group" aria-label="Mais telas" hidden></div>
     </div>
     <dialog id="modal"></dialog>
     <dialog class="coach-dialog" id="coach-dialog" aria-labelledby="coach-title">
@@ -721,6 +730,8 @@ function captureRefs() {
     accountFallback: app.querySelector(".account-symbol"),
     soundToggle: app.querySelector("#sound-toggle"),
     nav: app.querySelector(".bottom-nav"),
+    navMoreSheet: app.querySelector("#nav-more-sheet"),
+    civicPanel: app.querySelector('[data-panel="civic"]'),
     navButtons: [...app.querySelectorAll("[data-screen]")],
     duelMain: app.querySelector("[data-duel-main]"),
     duelAux: app.querySelector("[data-duel-aux]"),
@@ -987,6 +998,7 @@ function render() {
     if (state.screen === "prediction-results") renderPredictionResults();
   }
   renderNavigation();
+  civicShell?.sync();
   renderCoach();
   renderOverlays();
 }
@@ -1866,6 +1878,23 @@ function mountApp() {
   refs = captureRefs();
   renderCollection();
   installEvents();
+  civicShell = createCivicShell({
+    app,
+    panel: refs.civicPanel,
+    nav: refs.nav,
+    sheet: refs.navMoreSheet,
+    getScreen: () => state.screen,
+    setScreen: (screen) => {
+      state.screen = screen;
+      state.result = "";
+      state.resultTone = "";
+      render();
+    },
+    getGameFeatures: () => state.gameFeatures,
+    isReady: () => state.ready,
+    announce: announceStatus,
+    sound,
+  });
 }
 
 async function mountAuthButton() {
@@ -2026,6 +2055,9 @@ async function initialize() {
     state.error = error.message || "Falha desconhecida";
   }
   render();
+  // Deep link cívico aberto antes do jogo ficar pronto é resolvido agora, sem
+  // interferir na rodada: o shell só troca `state.screen`.
+  if (state.ready) civicShell?.start();
   // Catálogo, identidade e ranking pessoal são o núcleo do app. Agregados são
   // opcionais e fail-closed; sua ausência nunca derruba o jogo pessoal.
   if (identity) await refreshDailySession(identity);

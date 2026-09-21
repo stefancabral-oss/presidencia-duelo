@@ -1071,6 +1071,9 @@ async function combineGoogleHistory(client, { accountPlayerId, anonymousPlayerId
   await client.query(`INSERT INTO equipped_chromas (player_id,topic_id,candidate_id,chroma_id,equipped_at)
     SELECT $1,topic_id,candidate_id,chroma_id,equipped_at FROM equipped_chromas WHERE player_id=$2
     ON CONFLICT (player_id,topic_id,candidate_id) DO NOTHING`, [activeId, historicalId]);
+  // Elimina só as sessões da origem anônima antes de mover as sessões Google
+  // para o jogador que continua a rodada diária.
+  await client.query("DELETE FROM player_sessions WHERE player_id=$1", [anonymousPlayerId]);
   if (keepAnonymousDaily) {
     await client.query("UPDATE player_history_links SET player_id=$1 WHERE player_id=$2", [anonymousPlayerId, accountPlayerId]);
     await client.query("UPDATE player_identities SET player_id=$1 WHERE provider='google' AND subject=$2", [anonymousPlayerId, subject]);
@@ -1082,7 +1085,6 @@ async function combineGoogleHistory(client, { accountPlayerId, anonymousPlayerId
     (source_player_id,player_id,source_kind,merge_token_hash) VALUES ($1,$2,$3,$4)`,
     [historicalId, activeId, keepAnonymousDaily ? "previous-google-player" : "anonymous-session", accessTokenHash(currentToken)]);
   await client.query("UPDATE anonymous_players SET recovery_hash=$1 WHERE id=$2", [recoveryKeyHash(createRecoveryKey()), anonymousPlayerId]);
-  await client.query("DELETE FROM player_sessions WHERE player_id=$1", [anonymousPlayerId]);
   return { playerId: activeId, status: "combined", anonymousChoices, previousChoices: Number(priorChoices.rows[0].count),
     activeDaily: keepAnonymousDaily ? "anonymous" : "account",
     dailyConflict: (dailyCounts.get(anonymousPlayerId) || 0) > 0 && (dailyCounts.get(accountPlayerId) || 0) > 0 };

@@ -23,3 +23,7 @@ Produto valida a proposta de navegação e a hierarquia; editorial valida lingua
 ## Reversão
 
 Reverter o commit remove telas, componentes, CSS e capturas; nenhuma dependência do jogo, do banco ou do deploy.
+
+## CI da PR #233
+
+Head documental `ccb74d5`: UI Interaction Smoke aprovado em Chromium e WebKit (inclui `civic-navigation.mjs`), Design Validator e Civic Planning aprovados. Backend/Shared não dispara porque a PR não altera `back/` nem `shared/`. Registro posterior só de evidência; nenhum gate humano foi aprovado.

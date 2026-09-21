@@ -24,3 +24,7 @@ Responsável de produto valida a organização da navegação e o retorno à rod
 ## Reversão
 
 Desligar as flags no servidor restaura a barra atual sem deploy de código. Reverter o commit remove o shell e os hooks; não há alteração de banco, service worker, manifest ou deploy.
+
+## CI da PR #233
+
+Head documental `ccb74d5`: UI Interaction Smoke aprovado em Chromium e WebKit (inclui `civic-navigation.mjs`), Design Validator e Civic Planning aprovados. Backend/Shared não dispara porque a PR não altera `back/` nem `shared/`. Registro posterior só de evidência; nenhum gate humano foi aprovado.

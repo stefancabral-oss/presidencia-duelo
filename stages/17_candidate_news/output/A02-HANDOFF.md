@@ -22,3 +22,7 @@ Produto revisa textos e recuperação de erro; responsável por privacidade conf
 ## Reversão
 
 Módulos isolados em `app/src/civic/`; reverter o commit não afeta jogo, banco ou storage do jogador. `clear()` remove a única chave gravada.
+
+## CI da PR #233
+
+Head documental `ccb74d5`: UI Interaction Smoke aprovado em Chromium e WebKit (inclui `civic-navigation.mjs`), Design Validator e Civic Planning aprovados. Backend/Shared não dispara porque a PR não altera `back/` nem `shared/`. Registro posterior só de evidência; nenhum gate humano foi aprovado.

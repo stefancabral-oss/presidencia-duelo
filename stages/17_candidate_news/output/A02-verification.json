@@ -112,9 +112,33 @@
     "diffCheck": "passed"
   },
   "ci": {
-    "status": "pending",
-    "note": "Checks da PR (Backend/Shared não afetado; Design Validator, UI Interaction Smoke em Chromium e WebKit, Civic Planning) serão registrados na descrição da PR",
-    "checks": null
+    "status": "passed",
+    "head": "ccb74d5a9f8272cbb92030497dbece4d6fed00fe",
+    "pullRequest": "https://github.com/stefancabral-oss/presidencia-duelo/pull/233",
+    "checks": [
+      {
+        "name": "UI Interaction Smoke · browser-smoke (chromium)",
+        "conclusion": "success",
+        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35550718131/job/106184833023"
+      },
+      {
+        "name": "UI Interaction Smoke · browser-smoke (webkit)",
+        "conclusion": "success",
+        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35550718131/job/106184832917"
+      },
+      {
+        "name": "Design Validator · validate",
+        "conclusion": "success",
+        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35550718129/job/106184832780"
+      },
+      {
+        "name": "Civic Planning · planning",
+        "conclusion": "success",
+        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35550718051/job/106184832290"
+      }
+    ],
+    "note": "Backend/Shared não dispara: a PR não altera back/ nem shared/. WebKit exercitou civic-navigation.mjs no CI; nenhum gate humano decorre destes checks.",
+    "recordedAt": "2026-09-21T01:30:24.122Z"
   },
   "acceptance": {
     "anonymousReads": "passed (credentials omit; nenhum 401 dispara login)",

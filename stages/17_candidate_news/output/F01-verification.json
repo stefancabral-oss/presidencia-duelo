@@ -1,0 +1,145 @@
+{
+  "schemaVersion": 1,
+  "branch": "claude/open-issues-check-0y643o",
+  "baseCommit": "0200a0548820c811114a8c8a59c31ef2c40ea038",
+  "recordedAt": "2026-09-21T01:20:12.146Z",
+  "runtimeCommit": "03d9fe30f2d59f954ddc26de00d77266f18bb87a",
+  "note": "runtimeCommit é a árvore completa verificada (A02 + F01 + A01). Commits por unidade permitem separar PRs; isoladamente não constroem, porque o shell importa telas e store.",
+  "issue": 217,
+  "unit": "F01",
+  "codeCommit": "e56c988658697d6b446a77a716b8bf9705af45a7",
+  "local": {
+    "unitTests": {
+      "command": "npm test --prefix app",
+      "total": 198,
+      "passed": 198,
+      "failed": 0,
+      "result": "passed"
+    },
+    "build": {
+      "command": "npm run build --prefix app",
+      "result": "passed",
+      "note": "editorial-assets:check, portraits:check, vite build e verify-card-art-pilot-excluded aprovados; mock-transport sai como chunk separado carregado só com VITE_CIVIC_MOCK=1"
+    },
+    "e2e": {
+      "command": "POLIMATCH_E2E_URL=http://127.0.0.1:4178/ POLIMATCH_E2E_BROWSER=chromium node app/e2e/civic-navigation.mjs",
+      "browser": "chromium",
+      "scenarios": [
+        {
+          "name": "flags desligadas: barra original e deep link vira área indisponível",
+          "ok": true
+        },
+        {
+          "name": "proposta de navegação: Jogar, Candidatos, Notícias e Mais com Ranking alcançável",
+          "ok": true
+        },
+        {
+          "name": "deep link recarregado abre o diretório com foco no título",
+          "ok": true
+        },
+        {
+          "name": "destino inexistente e parâmetros inválidos produzem estado legível sem quebrar o shell",
+          "ok": true
+        },
+        {
+          "name": "filtros vivem na URL e voltar/avançar restauram resultados",
+          "ok": true
+        },
+        {
+          "name": "sair para uma ficha durante a rodada e voltar preserva as quatro cartas, sem voto e com foco de volta",
+          "ok": true
+        },
+        {
+          "name": "voltar do navegador a partir da área cívica devolve ao jogo com a rodada intacta",
+          "ok": true
+        },
+        {
+          "name": "comparação: seleção de duas candidaturas com temas equivalentes e recusa de seleção inválida",
+          "ok": true
+        },
+        {
+          "name": "retirada (410) e limite de consultas aparecem como estados distintos",
+          "ok": true
+        },
+        {
+          "name": "trocar UF durante a leitura nunca mostra o recorte anterior",
+          "ok": true
+        },
+        {
+          "name": "notícias: edição com três espaços por acontecimento e lacunas explícitas",
+          "ok": true
+        },
+        {
+          "name": "teclado: Tab percorre título, filtros e cartões em ordem",
+          "ok": true
+        },
+        {
+          "name": "desktop: mesma proposta de navegação e grade de cartões",
+          "ok": true
+        }
+      ],
+      "passed": 13,
+      "total": 13,
+      "pageErrors": [],
+      "voteRequests": 0,
+      "resultsFile": "A01-e2e-results.json",
+      "webkit": "não executado localmente; adicionado ao ui-interaction-smoke.yml para o CI"
+    },
+    "screenshots": {
+      "directory": "F01-screens",
+      "generatedBy": "app/e2e/civic-navigation.mjs com POLIMATCH_E2E_CIVIC_SHOTS",
+      "browser": "chromium",
+      "viewports": [
+        "390x844",
+        "1280x800"
+      ],
+      "format": "jpeg q70, página inteira",
+      "files": [
+        "acontecimento-1280x800.jpg",
+        "acontecimento-390x844.jpg",
+        "comparacao-390x844.jpg",
+        "destino-inexistente-390x844.jpg",
+        "diretorio-1280x800.jpg",
+        "diretorio-390x844.jpg",
+        "diretorio-desatualizado-390x844.jpg",
+        "diretorio-limite-390x844.jpg",
+        "diretorio-vazio-filtro-390x844.jpg",
+        "ficha-1280x800.jpg",
+        "ficha-390x844.jpg",
+        "ficha-retirada-390x844.jpg",
+        "nav-mais-aberto-390x844.jpg",
+        "noticias-390x844.jpg",
+        "noticias-vazio-390x844.jpg"
+      ]
+    },
+    "planning": {
+      "command": "verifyPlanning('.') via stages/17_candidate_news/output/check-planning.mjs",
+      "result": "passed",
+      "markdownFiles": 41,
+      "localLinksChecked": 150,
+      "note": "executado antes dos handoffs; reexecutado após a documentação final"
+    },
+    "diffCheck": "passed"
+  },
+  "ci": {
+    "status": "pending",
+    "note": "Checks da PR (Backend/Shared não afetado; Design Validator, UI Interaction Smoke em Chromium e WebKit, Civic Planning) serão registrados na descrição da PR",
+    "checks": null
+  },
+  "acceptance": {
+    "journeysWithReturnAndFailure": "passed (especificação + E2E)",
+    "pendingContentRepresented": "passed (fotografia pendente com placeholder; afirmações pendentes contadas, não exibidas)",
+    "navigationProposalUnderSixButtons": "passed (cinco botões; Ranking/Coleção em Mais) — hipótese a validar",
+    "keyboardFocusZoomEquivalence": "parcial: teclado e foco no E2E; zoom 200% e leitores de tela só especificados",
+    "noElectoralRecommendation": "especificação; revisão editorial pendente",
+    "productValidation": "pending",
+    "editorialValidation": "pending",
+    "assistiveReview": "pending",
+    "human": {
+      "decision": "pending",
+      "responsible": null,
+      "observation": "Nenhum gate humano foi aprovado por esta execução."
+    }
+  },
+  "rollback": "Reverter o commit remove telas, componentes e CSS; nenhuma dependência do jogo."
+}

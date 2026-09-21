@@ -1,5 +1,7 @@
 # Handoff — decomposição do épico #206
 
+Atualização de 21/09/2026: F01, A01 e A02 foram implementadas em paralelo na branch `claude/open-issues-check-0y643o`, com handoffs e evidências próprios ([F01](F01-HANDOFF.md), [A01](A01-HANDOFF.md), [A02](A02-HANDOFF.md); [F01-verification.json](F01-verification.json), [A01-verification.json](A01-verification.json), [A02-verification.json](A02-verification.json)). Próximas unidades pelo grafo: F02/F03/F05 (após aceite de F01), A03 (após A01/A02), B03 e B05 (sobre B02/B04 já mescladas). Gates humanos dessas unidades permanecem pendentes.
+
 Estado operacional em 18/09/2026 UTC: #228/#230 mescladas e #210 concluída no GitHub. B02 iniciou implementação autorizada e possui [handoff próprio](B02-HANDOFF.md), [relatório real](B02-pilot-report.json) e evidências B02-verification.json. O restante deste arquivo preserva a entrega documental anterior; não representa o estado operacional atual de B01/B02.
 
 Atualização: a implementação autorizada de B01 possui [handoff próprio](B01-HANDOFF.md) e [evidências próprias](B01-verification.json). O restante deste arquivo preserva a entrega documental #228; suas declarações de ausência de implementação referem-se àquela entrega.

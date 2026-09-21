@@ -1,0 +1,205 @@
+{
+  "browser": "chromium",
+  "appUrl": "http://127.0.0.1:4179/",
+  "scenarios": [
+    {
+      "name": "flags desligadas: barra original e deep link vira área indisponível",
+      "ok": true,
+      "ms": 734,
+      "detail": {
+        "labels": [
+          "Início",
+          "Duelo",
+          "Ranking"
+        ]
+      }
+    },
+    {
+      "name": "proposta de navegação: Jogar, Candidatos, Notícias e Mais com Ranking alcançável",
+      "ok": true,
+      "ms": 920,
+      "detail": {
+        "labels": [
+          "Início",
+          "Jogar",
+          "Candidatos",
+          "Notícias",
+          "Mais"
+        ],
+        "sheetButtons": [
+          "Ranking"
+        ]
+      }
+    },
+    {
+      "name": "deep link recarregado abre o diretório com foco no título",
+      "ok": true,
+      "ms": 139,
+      "detail": {
+        "cards": 2,
+        "coverage": "2 de 2 candidaturas oficiais publicadas",
+        "photoStates": [
+          "pending",
+          "absent"
+        ]
+      }
+    },
+    {
+      "name": "destino inexistente e parâmetros inválidos produzem estado legível sem quebrar o shell",
+      "ok": true,
+      "ms": 91,
+      "detail": {
+        "requested": "Endereço pedido: #/ranking-secreto/1",
+        "notices": [
+          "Recorte \"XX\" não existe; mostrando o recorte escolhido.",
+          "Parâmetro ignorado: voto.",
+          "Dados sintéticos de teste: nomes, números e fontes são fictícios e não descrevem pessoas reais."
+        ]
+      }
+    },
+    {
+      "name": "filtros vivem na URL e voltar/avançar restauram resultados",
+      "ok": true,
+      "ms": 174,
+      "detail": {
+        "emptyText": "Nenhuma candidatura publicada combina com esses filtros. Limpe um filtro para ampliar."
+      }
+    },
+    {
+      "name": "sair para uma ficha durante a rodada e voltar preserva as quatro cartas, sem voto e com foco de volta",
+      "ok": true,
+      "ms": 1086,
+      "detail": {
+        "before": [
+          "tarcisio-de-freitas",
+          "augusto-cury",
+          "pablo-marcal",
+          "lula"
+        ],
+        "after": [
+          "tarcisio-de-freitas",
+          "augusto-cury",
+          "pablo-marcal",
+          "lula"
+        ],
+        "ticketRoles": [
+          "Titular",
+          "Vice"
+        ]
+      }
+    },
+    {
+      "name": "voltar do navegador a partir da área cívica devolve ao jogo com a rodada intacta",
+      "ok": true,
+      "ms": 76,
+      "detail": {
+        "before": [
+          "tarcisio-de-freitas",
+          "augusto-cury",
+          "pablo-marcal",
+          "lula"
+        ],
+        "after": [
+          "tarcisio-de-freitas",
+          "augusto-cury",
+          "pablo-marcal",
+          "lula"
+        ]
+      }
+    },
+    {
+      "name": "comparação: seleção de duas candidaturas com temas equivalentes e recusa de seleção inválida",
+      "ok": true,
+      "ms": 410,
+      "detail": {
+        "columns": 2,
+        "emptyCells": 1
+      }
+    },
+    {
+      "name": "retirada (410) e limite de consultas aparecem como estados distintos",
+      "ok": true,
+      "ms": 239,
+      "detail": {
+        "withdrawn": "Conteúdo retirado",
+        "softNotices": [
+          "Dados desatualizados: mostrando a última versão permitida",
+          "Muitas consultas: Aguarde 30 s antes de tentar de novo.",
+          "Dados sintéticos de teste: nomes, números e fontes são fictícios e não descrevem pessoas reais."
+        ],
+        "limited": "Muitas consultas"
+      }
+    },
+    {
+      "name": "trocar UF durante a leitura nunca mostra o recorte anterior",
+      "ok": true,
+      "ms": 1347,
+      "detail": {
+        "uf": "BR",
+        "contestLabels": [
+          "Presidência da República · 2032"
+        ]
+      }
+    },
+    {
+      "name": "notícias: edição com três espaços por acontecimento e lacunas explícitas",
+      "ok": true,
+      "ms": 281,
+      "detail": {
+        "dots": [
+          "present",
+          "collection_failed",
+          "not_found"
+        ],
+        "slotStates": [
+          "right:present",
+          "left:collection_failed",
+          "international:not_found"
+        ],
+        "externalLinks": [
+          "noreferrer noopener|https://example.test/article-a",
+          "noreferrer noopener|https://example.test/fixture"
+        ]
+      }
+    },
+    {
+      "name": "teclado: Tab percorre título, filtros e cartões em ordem",
+      "ok": true,
+      "ms": 41,
+      "detail": {
+        "sequence": [
+          "civic-filters-uf",
+          "civic-filters-contest",
+          "civic-filters-search",
+          "civic-filters-party",
+          "civic-filters-status",
+          "Aplicar filtros",
+          "Limpar",
+          "candidacy:v1:test-2032:BR:president:1",
+          "Synthetic fixture"
+        ]
+      }
+    },
+    {
+      "name": "desktop: mesma proposta de navegação e grade de cartões",
+      "ok": true,
+      "ms": 938,
+      "detail": {
+        "labels": [
+          "Início",
+          "Jogar",
+          "Candidatos",
+          "Notícias",
+          "Mais"
+        ],
+        "widths": [
+          299,
+          299
+        ]
+      }
+    }
+  ],
+  "pageErrors": [],
+  "voteRequests": 0,
+  "ok": true
+}

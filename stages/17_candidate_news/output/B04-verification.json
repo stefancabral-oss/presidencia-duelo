@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "issue": 213,
+  "branch": "feat/213-news-collection",
+  "baseCommit": "ffc38984f7d8b33647d3cfbcad3029fca2ec2e38",
+  "recordedAt": "2026-09-18T11:18:59.281Z",
+  "local": {
+    "unitTests": {
+      "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
+      "firstRun": {
+        "tests": 420,
+        "passed": 420,
+        "failed": 0
+      },
+      "finalRun": {
+        "tests": 422,
+        "passed": 422,
+        "failed": 0,
+        "durationMs": 24151.1772,
+        "newScenarios": 23
+      }
+    },
+    "build": {
+      "command": "node app/node_modules/vite/bin/vite.js build app",
+      "status": "passed"
+    },
+    "dependencyInstall": {
+      "npmAuditVulnerabilities": 0,
+      "parser": "saxes 6.0.0"
+    },
+    "networkInspection": {
+      "purpose": "public publisher terms only; no news article/feed body copied",
+      "url": "https://www.ebc.com.br/termos-de-uso-e-condicoes-gerais-do-portal-da-ebc",
+      "status": 200,
+      "bytes": 87131,
+      "sha256": "cbfe7e72bd4b6615de3c294d5f4059b32f73784f1b6a24cd2b82585e0407c358",
+      "dnsValidated": true,
+      "httpsPinned": true
+    },
+    "registryCli": {
+      "outlets": 7,
+      "permissionPending": 7,
+      "articlesFetched": 0,
+      "eligible": {
+        "right": 0,
+        "left": 0,
+        "international": 0
+      }
+    },
+    "planning": {
+      "status": "passed",
+      "markdownFiles": 34,
+      "localLinksChecked": 98,
+      "errors": []
+    },
+    "diffCheck": "passed",
+    "compatibility": {
+      "command": "git merge-tree --write-tree HEAD origin/feat/211-official-import",
+      "status": "passed",
+      "pendingPr": 231
+    }
+  },
+  "ci": {
+    "status": "passed",
+    "validatedCodeCommit": "76667b4d036df7dd171bb9e94ee1e6dfaf2a6253",
+    "runtime": "Node.js 22/Linux",
+    "database": "PostgreSQL 16",
+    "backendUnitTests": {
+      "tests": 167,
+      "passed": 167,
+      "failed": 0
+    },
+    "runs": [
+      {
+        "name": "Backend and Shared",
+        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35339110484",
+        "conclusion": "success"
+      },
+      {
+        "name": "Civic Planning",
+        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35339110488",
+        "conclusion": "success"
+      }
+    ],
+    "latestChecks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/232/checks"
+  },
+  "acceptance": {
+    "classification": "pending",
+    "terms": "pending",
+    "countryNewsroomOwnership": "pending_review",
+    "twoOptionsPerSlot": false,
+    "permittedRealCollection": "pending",
+    "human": "pending",
+    "published": false,
+    "deployed": false
+  }
+}

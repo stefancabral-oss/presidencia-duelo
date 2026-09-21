@@ -1,0 +1,389 @@
+{
+  "version": 1,
+  "recordedAt": "2026-09-18T11:16:44.976Z",
+  "scope": "proposed_inventory_not_approved",
+  "outlets": [
+    {
+      "id": "agencia-brasil",
+      "name": "Agência Brasil",
+      "country": "BR",
+      "newsroom": "Brasília; identificação editorial a revisar",
+      "owner": "EBC",
+      "language": "pt-BR",
+      "synthetic": false,
+      "feedUrl": null,
+      "feedHosts": [
+        "agenciabrasil.ebc.com.br",
+        "rss.ebc.com.br"
+      ],
+      "articleHosts": [
+        "agenciabrasil.ebc.com.br"
+      ],
+      "adapter": "rss",
+      "channelStatus": "not_homologated",
+      "classification": {
+        "version": 1,
+        "orientation": "unclassified",
+        "review": "pending",
+        "methodology": "B04-methodology.md v1; nenhuma classificação inferida pelo agente",
+        "evidence": [],
+        "responsible": null,
+        "reviewedAt": null,
+        "reviewDueAt": null
+      },
+      "permission": {
+        "state": "pending",
+        "termsUrl": "https://www.ebc.com.br/termos-de-uso-e-condicoes-gerais-do-portal-da-ebc",
+        "content": "metadata_only",
+        "retentionDays": 1,
+        "license": null,
+        "responsible": null,
+        "locator": null,
+        "checkedAt": "2026-09-18T11:16:44.976Z",
+        "expiresAt": null,
+        "attribution": "Agência Brasil"
+      },
+      "correctionsPolicy": "pending_review",
+      "syndicationPolicy": "origin_per_article_required",
+      "limitations": "Acesso gratuito não equivale a autorização comercial; confirmar finalidade, atribuição e termos específicos.",
+      "evidence": [
+        {
+          "url": "https://agenciabrasil.ebc.com.br/feed/",
+          "locator": "Índice oficial de feeds; URLs específicas não homologadas",
+          "checkedAt": "2026-09-18T11:16:44.976Z"
+        },
+        {
+          "url": "https://www.ebc.com.br/termos-de-uso-e-condicoes-gerais-do-portal-da-ebc",
+          "locator": "Itens 1(b) e 1(e): acesso pessoal/sem intuito comercial e reprodução com fonte; escopo do produto exige revisão",
+          "checkedAt": "2026-09-18T11:16:44.976Z"
+        }
+      ]
+    },
+    {
+      "id": "brasil-de-fato",
+      "name": "Brasil de Fato",
+      "country": "BR",
+      "newsroom": "Rede brasileira; redação originária por matéria a confirmar",
+      "owner": "ownership_review_pending:brasil-de-fato",
+      "language": "pt-BR",
+      "synthetic": false,
+      "feedUrl": null,
+      "feedHosts": [
+        "www.brasildefato.com.br"
+      ],
+      "articleHosts": [
+        "www.brasildefato.com.br"
+      ],
+      "adapter": "rss",
+      "channelStatus": "not_homologated",
+      "classification": {
+        "version": 1,
+        "orientation": "unclassified",
+        "review": "pending",
+        "methodology": "B04-methodology.md v1; nenhuma classificação inferida pelo agente",
+        "evidence": [],
+        "responsible": null,
+        "reviewedAt": null,
+        "reviewDueAt": null
+      },
+      "permission": {
+        "state": "pending",
+        "termsUrl": null,
+        "content": "metadata_only",
+        "retentionDays": 1,
+        "license": null,
+        "responsible": null,
+        "locator": null,
+        "checkedAt": "2026-09-18T11:16:44.976Z",
+        "expiresAt": null,
+        "attribution": "Brasil de Fato"
+      },
+      "correctionsPolicy": "pending_review",
+      "syndicationPolicy": "origin_per_article_required",
+      "limitations": "Entidade jurídica, termos de reutilização, canal e política de correções a comprovar.",
+      "evidence": [
+        {
+          "url": "https://www.brasildefato.com.br/quem-somos/",
+          "locator": "Rede regional descrita pela própria publicação; página não comprova licença de ingestão",
+          "checkedAt": "2026-09-18T11:16:44.976Z"
+        }
+      ]
+    },
+    {
+      "id": "carta-capital",
+      "name": "CartaCapital",
+      "country": "BR",
+      "newsroom": "Redação brasileira; expediente atual a revisar",
+      "owner": "ownership_review_pending:carta-capital",
+      "language": "pt-BR",
+      "synthetic": false,
+      "feedUrl": null,
+      "feedHosts": [
+        "www.cartacapital.com.br"
+      ],
+      "articleHosts": [
+        "www.cartacapital.com.br"
+      ],
+      "adapter": "rss",
+      "channelStatus": "not_homologated",
+      "classification": {
+        "version": 1,
+        "orientation": "unclassified",
+        "review": "pending",
+        "methodology": "B04-methodology.md v1; nenhuma classificação inferida pelo agente",
+        "evidence": [],
+        "responsible": null,
+        "reviewedAt": null,
+        "reviewDueAt": null
+      },
+      "permission": {
+        "state": "pending",
+        "termsUrl": "https://www.cartacapital.com.br/politica-de-privacidade/",
+        "content": "metadata_only",
+        "retentionDays": 1,
+        "license": null,
+        "responsible": null,
+        "locator": null,
+        "checkedAt": "2026-09-18T11:16:44.976Z",
+        "expiresAt": null,
+        "attribution": "CartaCapital"
+      },
+      "correctionsPolicy": "pending_review",
+      "syndicationPolicy": "origin_per_article_required",
+      "limitations": "Reprodução exige autorização. Divergência de identidade legal precisa revisão.",
+      "evidence": [
+        {
+          "url": "https://www.cartacapital.com.br/politica-de-privacidade/",
+          "locator": "Seção DIREITOS exige autorização por escrito; texto cita Editora Confiança e rodapé atual cita Editora Basset",
+          "checkedAt": "2026-09-18T11:16:44.976Z"
+        },
+        {
+          "url": "https://www.cartacapital.com.br/editora/cartacapital/",
+          "locator": "Manifesto próprio disponível para avaliação humana; não converte em rótulo automático",
+          "checkedAt": "2026-09-18T11:16:44.976Z"
+        }
+      ]
+    },
+    {
+      "id": "gazeta-do-povo",
+      "name": "Gazeta do Povo",
+      "country": "BR",
+      "newsroom": "Curitiba; expediente público",
+      "owner": "GRPCOM (estrutura jurídica atual sujeita à revisão)",
+      "language": "pt-BR",
+      "synthetic": false,
+      "feedUrl": null,
+      "feedHosts": [
+        "www.gazetadopovo.com.br"
+      ],
+      "articleHosts": [
+        "www.gazetadopovo.com.br"
+      ],
+      "adapter": "rss",
+      "channelStatus": "not_homologated",
+      "classification": {
+        "version": 1,
+        "orientation": "unclassified",
+        "review": "pending",
+        "methodology": "B04-methodology.md v1; nenhuma classificação inferida pelo agente",
+        "evidence": [],
+        "responsible": null,
+        "reviewedAt": null,
+        "reviewDueAt": null
+      },
+      "permission": {
+        "state": "pending",
+        "termsUrl": "https://www.gazetadopovo.com.br/termos",
+        "content": "metadata_only",
+        "retentionDays": 1,
+        "license": null,
+        "responsible": null,
+        "locator": null,
+        "checkedAt": "2026-09-18T11:16:44.976Z",
+        "expiresAt": null,
+        "attribution": "Gazeta do Povo"
+      },
+      "correctionsPolicy": "pending_review",
+      "syndicationPolicy": "origin_per_article_required",
+      "limitations": "Não foi comprovado acordo de ingestão nem canal autorizado; paywall não será contornado.",
+      "evidence": [
+        {
+          "url": "https://www.gazetadopovo.com.br/expediente/",
+          "locator": "Expediente identifica GRPCOM e endereço em Curitiba",
+          "checkedAt": "2026-09-18T11:16:44.976Z"
+        },
+        {
+          "url": "https://www.gazetadopovo.com.br/principios-editoriais/",
+          "locator": "Princípios e convicções como evidência documental para revisão",
+          "checkedAt": "2026-09-18T11:16:44.976Z"
+        },
+        {
+          "url": "https://www.gazetadopovo.com.br/termos",
+          "locator": "Condições de conteúdo/acesso não homologadas para coleta",
+          "checkedAt": "2026-09-18T11:16:44.976Z"
+        }
+      ]
+    },
+    {
+      "id": "estadao",
+      "name": "Estadão",
+      "country": "BR",
+      "newsroom": "São Paulo; redação responsável por matéria a revisar",
+      "owner": "Grupo Estado (controle atual a revisar)",
+      "language": "pt-BR",
+      "synthetic": false,
+      "feedUrl": null,
+      "feedHosts": [
+        "www.estadao.com.br"
+      ],
+      "articleHosts": [
+        "www.estadao.com.br"
+      ],
+      "adapter": "rss",
+      "channelStatus": "not_homologated",
+      "classification": {
+        "version": 1,
+        "orientation": "unclassified",
+        "review": "pending",
+        "methodology": "B04-methodology.md v1; nenhuma classificação inferida pelo agente",
+        "evidence": [],
+        "responsible": null,
+        "reviewedAt": null,
+        "reviewDueAt": null
+      },
+      "permission": {
+        "state": "pending",
+        "termsUrl": "https://acervo.estadao.com.br/faq/",
+        "content": "metadata_only",
+        "retentionDays": 1,
+        "license": null,
+        "responsible": null,
+        "locator": null,
+        "checkedAt": "2026-09-18T11:16:44.976Z",
+        "expiresAt": null,
+        "attribution": "Estadão"
+      },
+      "correctionsPolicy": "pending_review",
+      "syndicationPolicy": "origin_per_article_required",
+      "limitations": "Evidência parcial de termos; confirmar escopo, acordo, canal e direitos antes da coleta.",
+      "evidence": [
+        {
+          "url": "https://acervo.estadao.com.br/faq/",
+          "locator": "Resultado indexado do FAQ: licenciamento para reprodução; leitura direta indisponível nesta consulta",
+          "checkedAt": "2026-09-18T11:16:44.976Z"
+        }
+      ]
+    },
+    {
+      "id": "bbc-news-brasil",
+      "name": "BBC News Brasil",
+      "country": "GB",
+      "newsroom": "BBC; origem da redação de cada matéria a revisar",
+      "owner": "BBC (entidade contratante a confirmar)",
+      "language": "pt-BR",
+      "synthetic": false,
+      "feedUrl": null,
+      "feedHosts": [
+        "feeds.bbci.co.uk"
+      ],
+      "articleHosts": [
+        "www.bbc.com"
+      ],
+      "adapter": "rss",
+      "channelStatus": "not_homologated",
+      "classification": {
+        "version": 1,
+        "orientation": "unclassified",
+        "review": "pending",
+        "methodology": "B04-methodology.md v1; nenhuma classificação inferida pelo agente",
+        "evidence": [],
+        "responsible": null,
+        "reviewedAt": null,
+        "reviewDueAt": null
+      },
+      "permission": {
+        "state": "pending",
+        "termsUrl": "https://www.bbc.com/pages/terms-of-use",
+        "content": "metadata_only",
+        "retentionDays": 1,
+        "license": null,
+        "responsible": null,
+        "locator": null,
+        "checkedAt": "2026-09-18T11:16:44.976Z",
+        "expiresAt": null,
+        "attribution": "BBC News Brasil"
+      },
+      "correctionsPolicy": "pending_review",
+      "syndicationPolicy": "origin_per_article_required",
+      "limitations": "Internacional é origem proposta, não neutralidade. Licença empresarial atual, canal e sindicância precisam confirmação.",
+      "evidence": [
+        {
+          "url": "https://www.bbc.com/pages/terms-of-use",
+          "locator": "Consulta direta bloqueada por robots; termos atuais não homologados",
+          "checkedAt": "2026-09-18T11:16:44.976Z"
+        },
+        {
+          "url": "https://downloads.bbc.co.uk/usingthebbc/bbc_terms_of_use_19September2022english.pdf",
+          "locator": "Documento oficial histórico distingue uso individual de RSS e uso empresarial; confirmar versão vigente",
+          "checkedAt": "2026-09-18T11:16:44.976Z"
+        }
+      ]
+    },
+    {
+      "id": "deutsche-welle",
+      "name": "Deutsche Welle",
+      "country": "DE",
+      "newsroom": "Bonn e Berlim; origem por matéria a revisar",
+      "owner": "Deutsche Welle",
+      "language": "pt-BR",
+      "synthetic": false,
+      "feedUrl": null,
+      "feedHosts": [
+        "rss.dw.com",
+        "www.dw.com"
+      ],
+      "articleHosts": [
+        "www.dw.com"
+      ],
+      "adapter": "rss",
+      "channelStatus": "not_homologated",
+      "classification": {
+        "version": 1,
+        "orientation": "unclassified",
+        "review": "pending",
+        "methodology": "B04-methodology.md v1; nenhuma classificação inferida pelo agente",
+        "evidence": [],
+        "responsible": null,
+        "reviewedAt": null,
+        "reviewDueAt": null
+      },
+      "permission": {
+        "state": "pending",
+        "termsUrl": null,
+        "content": "metadata_only",
+        "retentionDays": 1,
+        "license": null,
+        "responsible": null,
+        "locator": null,
+        "checkedAt": "2026-09-18T11:16:44.976Z",
+        "expiresAt": null,
+        "attribution": "Deutsche Welle"
+      },
+      "correctionsPolicy": "pending_review",
+      "syndicationPolicy": "origin_per_article_required",
+      "limitations": "Canal em português, autorização, retenção, traduções e sindicação devem ser confirmados.",
+      "evidence": [
+        {
+          "url": "https://corporate.dw.com/de/%C3%BCber-die-deutsche-welle/a-71848692",
+          "locator": "Descrição institucional de 19/03/2025: emissora internacional alemã; sedes Bonn e Berlim",
+          "checkedAt": "2026-09-18T11:16:44.976Z"
+        },
+        {
+          "url": "https://amp.dw.com/en/benefit-from-smart-content-made-in-germany/a-19470839",
+          "locator": "Serviço institucional oferece parceria/RSS; termos do caso específico não homologados",
+          "checkedAt": "2026-09-18T11:16:44.976Z"
+        }
+      ]
+    }
+  ]
+}

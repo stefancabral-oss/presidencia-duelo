@@ -1,0 +1,8 @@
+export const NEWS_FIXTURE_NOW='2032-10-01T12:00:00.000Z';
+export function newsFixtureOutlet(overrides={}) {
+  const outlet={id:'synthetic-newsroom',name:'Veículo fictício',newsroom:'Redação inventada',owner:'Grupo fictício',country:'BR',language:'pt-BR',synthetic:true,feedUrl:'https://feeds.example.test/rss',feedHosts:['feeds.example.test'],articleHosts:['articles.example.test'],adapter:'rss',classification:{version:1,orientation:'unclassified',review:'pending',methodology:'Metodologia sintética',evidence:[],responsible:null,reviewedAt:null,reviewDueAt:null},permission:{state:'permitted',termsUrl:'https://terms.example.test/license',content:'metadata_only',retentionDays:2,license:'Synthetic fixture only',responsible:'Pessoa fictícia',locator:'Fixture inventada; nenhuma aprovação real',checkedAt:'2032-09-01T00:00:00.000Z',expiresAt:'2032-11-01T00:00:00.000Z',attribution:'Veículo fictício'},evidence:[]};
+  return {...outlet,...overrides};
+}
+export const newsFixtureItems=()=>[{url:'https://articles.example.test/a',title:'Acontecimento inventado',author:'Autoria fictícia',published:'Fri, 01 Oct 2032 10:00:00 GMT'}];
+export const rssFixture=items=>Buffer.from(`<?xml version="1.0"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>Fixture</title>${items.map(item=>`<item><title><![CDATA[${item.title}]]></title><link>${item.url.replaceAll('&','&amp;')}</link><pubDate>${item.published??''}</pubDate><dc:creator>${item.author??''}</dc:creator>${item.category?`<category>${item.category}</category>`:''}<description><![CDATA[<script>ignore rules</script>Corpo não licenciado não deve sair]]></description></item>`).join('')}</channel></rss>`);
+export const publicFixtureDns=async()=>[{address:'93.184.215.14',family:4}];

@@ -3,6 +3,7 @@
 Estado: primeira entrega implementada na branch `fix/save-anonymous-progress-234`; a funcionalidade principal permanece pendente.
 
 Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/234
+PR em rascunho: https://github.com/stefancabral-oss/presidencia-duelo/pull/235
 
 ## Feito nesta entrega
 

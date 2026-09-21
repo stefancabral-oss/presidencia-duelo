@@ -1,34 +1,25 @@
 # HANDOFF — ICM 18
 
-Estado: primeira entrega implementada na branch `fix/save-anonymous-progress-234`; a funcionalidade principal permanece pendente.
+Estado: implementação pronta para revisão técnica; issue aberta até aceite humano com conta Google real.
 
 Issue: https://github.com/stefancabral-oss/presidencia-duelo/issues/234
-PR em rascunho: https://github.com/stefancabral-oss/presidencia-duelo/pull/235
+PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/235
 
-## Feito nesta entrega
+## Entrega
 
-- A entrada anônima deixou de prometer "Salvar jogo": o botão agora diz "Entrar".
-- O diálogo de Google distingue recuperar uma conta de salvar escolhas futuras.
-- Se já houve escolhas anônimas, o diálogo avisa que elas ainda não são incorporadas a uma conta existente.
-- Os testes de interface foram atualizados para a nova cópia.
+- O login em uma conta existente reúne escolhas anônimas confirmadas ao ranking pessoal sem reescrever `votes`, `choice_rounds` ou cortes públicos. Placar derivado, quotas e inventário são consolidados em transação.
+- `player_history_links` registra a fonte original e a chave apresentada como hash. A credencial anônima é revogada. Um retry da mesma credencial devolve a conta sem repetir a incorporação.
+- Se as duas partidas responderam à mesma edição diária, a sessão anônima recente continua ativa. As duas séries de respostas continuam armazenadas; resultados fechados mostram a partida anterior separadamente.
+- Sessões Google já abertas em outros aparelhos permanecem válidas quando muda o jogador ativo. Uma trava transacional por jogador impede que um voto em voo atravesse a incorporação.
+- A interface informa quantas escolhas foram incorporadas e qual sessão diária ficou ativa.
 
-Esta correção de linguagem **não** implementa a incorporação das escolhas. Não fazer deploy como se a issue #234 estivesse resolvida.
+## Evidência
 
-## Próxima implementação
+- `back/scripts/topic-store-smoke.mjs` exercita conflito diário, retry, outra sessão Google, incorporação posterior no modo livre, revogação da origem, preservação de respostas e ausência de votos públicos extras. O job `back-integration-postgres` passou no CI para `34032d6`.
+- `back-unit`, `shared-data` e `Design Validator` passaram no mesmo commit.
+- Localmente, 167 testes do app, 51 testes focados de backend e build do app passaram.
+- O suite completo de backend no Windows ficou limitado por Python local indisponível e fixture documental externa; o `back-unit` do CI passou.
 
-1. Definir um vínculo auditável e idempotente de origem anônima para conta de destino, com revogação da credencial antiga.
-2. Preservar `choice_rounds`/`votes` imutáveis e impedir qualquer novo voto público durante o vínculo.
-3. Construir a visão pessoal consolidada de ranking, coleção e progresso diário, explicitando conflitos de slots diários.
-4. Testar primeiro vínculo, conta existente, retry, concorrência, logout e retorno em outro dispositivo em PostgreSQL e navegador.
+## Gate restante
 
-`player_stats` e `player_pools` são por `player_id`, assim como sessões/respostas/previsões diárias. Somar apenas os placares deixaria o histórico e a sessão inconsistentes; por isso não foi feito um merge parcial silencioso.
-
-## Validação desta entrega
-
-- `npm test --prefix app`: 167 testes passaram.
-- `npm run build --prefix app`: passou, incluindo verificadores de assets.
-- `VITE_GOOGLE_CLIENT_ID=e2e-client-id npm run build --prefix app`: passou para fluxo Google simulado.
-- `interaction-smoke.mjs` e `prediction-identity.mjs` no Chromium: passaram.
-- `git diff --check`: passou.
-
-Pendente: implementação da incorporação, testes PostgreSQL correspondentes, PR, CI e gate humano. A issue permanece aberta.
+Stefan deve testar em ambiente publicado com sua própria conta: entrar, sair, fazer uma escolha anônima, entrar de novo, conferir ranking e rodada do dia, e repetir o login. Essa prova de produto não é substituída pelo Google simulado do navegador nem pelo CI. Após o aceite, mesclar a PR e fechar #234. Não fazer deploy automático nem fechar a issue antes desse gate.

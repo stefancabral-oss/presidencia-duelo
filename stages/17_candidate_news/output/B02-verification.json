@@ -359,5 +359,18 @@
     "humanAcceptance": "pending",
     "stagingPublished": false,
     "newProcessChallengeBypassed": false
+  },
+  "rrciFollowup20260921": {
+    "detailReviewId": "a83db1744a66917284272ea94fcc0e79ea05dfa4f6a06ad4af8f6370583364be",
+    "evidenceId": "1a4681fd23f177b92afe7430f35b9d8ffaf9c5eac6ef7b28558daed08eda0009",
+    "processCommand": "node back/scripts/civic-process-review.mjs stages/17_candidate_news/output/B02-pilot-delivery.json stages/17_candidate_news/output/B02-case-review-2026-09-21.json stages/17_candidate_news/output/B02-process-evidence-2026-09-21-rrci.json <new-process-review.json>",
+    "documents": 17,
+    "candidaciesWithDocuments": 9,
+    "candidacies": 37,
+    "individualDetails": 95,
+    "legalIntervalsProven": 0,
+    "complete": false,
+    "humanAcceptance": "pending",
+    "newChallengeBypassed": false
   }
 }

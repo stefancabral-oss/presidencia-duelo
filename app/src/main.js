@@ -291,7 +291,7 @@ function candidateSlot(index) {
 }
 
 function headerMarkup() {
-  return `<header class="topbar"><p class="brand">${brandSymbol()}<span>PoliMatch</span></p><div class="topbar-actions"><span class="edition">Malaquita 2026</span><button class="account-button" id="account-button" type="button" aria-label="Salvar seu jogo com Google"><span class="account-avatar"><img class="account-photo" alt="" referrerpolicy="no-referrer" hidden>${brandSymbol("account-symbol")}</span><span data-account-label>Salvar jogo</span></button><button class="sound-toggle" id="sound-toggle" type="button"><span aria-hidden="true"></span></button></div></header>`;
+  return `<header class="topbar"><p class="brand">${brandSymbol()}<span>PoliMatch</span></p><div class="topbar-actions"><span class="edition">Malaquita 2026</span><button class="account-button" id="account-button" type="button" aria-label="Entrar com Google"><span class="account-avatar"><img class="account-photo" alt="" referrerpolicy="no-referrer" hidden>${brandSymbol("account-symbol")}</span><span data-account-label>Entrar</span></button><button class="sound-toggle" id="sound-toggle" type="button"><span aria-hidden="true"></span></button></div></header>`;
 }
 
 function candidateSlotModel(candidate, { actionMode = "vote" } = {}) {
@@ -339,9 +339,10 @@ function authOverlay() {
     <section class="auth-card">
       <button class="auth-close" id="close-auth" type="button" aria-label="Fechar">×</button>
       <span class="auth-mark" aria-hidden="true">${brandSymbol("auth-symbol")}</span>
-      <p class="eyebrow">${signedIn ? "Seu jogo está salvo" : "Leve seu ranking com você"}</p>
-      <h2 id="auth-title">${signedIn ? `Tudo certo, ${escapeHtml(state.account.displayName?.split(" ")[0] || "jogador")}!` : "Entrou, salvou, jogou."}</h2>
-      <p>${signedIn ? "Suas escolhas ficam ligadas a esta conta e podem continuar em outro aparelho." : "Use o Google para guardar suas escolhas. Sem cadastro, sem senha nova e sem interromper a diversão."}</p>
+      <p class="eyebrow">${signedIn ? "Conta conectada" : "Seu histórico com você"}</p>
+      <h2 id="auth-title">${signedIn ? `Tudo certo, ${escapeHtml(state.account.displayName?.split(" ")[0] || "jogador")}!` : "Entre com Google"}</h2>
+      <p>${signedIn ? "As próximas escolhas ficam ligadas a esta conta e podem continuar em outro aparelho." : "Entre para recuperar seu histórico. Sem cadastro, sem senha nova e sem interromper a diversão."}</p>
+      ${!signedIn && state.personalDuels > 0 ? '<p class="auth-config-note">Se esta conta já tiver um jogo, suas escolhas anônimas atuais ainda não serão incorporadas a ele.</p>' : ""}
       ${state.authError ? `<p class="auth-error" role="alert">${escapeHtml(state.authError)}</p>` : ""}
       ${signedIn
         ? `<button class="auth-secondary" id="logout" type="button" ${state.authBusy ? "disabled" : ""}>Sair desta conta</button>`
@@ -770,8 +771,8 @@ function renderHeader() {
   const accountName = state.account?.displayName?.split(" ")[0];
   const avatarUrl = safeUrl(state.account?.avatarUrl);
   refs.accountButton.classList.toggle("is-signed-in", Boolean(state.account));
-  refs.accountButton.setAttribute("aria-label", state.account ? "Abrir sua conta" : "Salvar seu jogo com Google");
-  refs.accountLabel.textContent = accountName ? `Olá, ${accountName}` : "Salvar jogo";
+  refs.accountButton.setAttribute("aria-label", state.account ? "Abrir sua conta" : "Entrar com Google");
+  refs.accountLabel.textContent = accountName ? `Olá, ${accountName}` : "Entrar";
   refs.accountPhoto.hidden = !avatarUrl;
   refs.accountFallback.hidden = Boolean(avatarUrl);
   if (avatarUrl) refs.accountPhoto.setAttribute("src", avatarUrl);

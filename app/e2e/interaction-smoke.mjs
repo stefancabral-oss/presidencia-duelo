@@ -278,8 +278,8 @@ try {
   const primaryNavLabels = await page.locator(".bottom-nav .nav-button:visible").allTextContents();
   if (primaryNavLabels.join("|") !== "Início|Duelo|Ranking") throw new Error("A navegação principal não apresenta Início, Duelo e Ranking nesta ordem");
   if (await page.getByRole("button", { name: "Coleção" }).count()) throw new Error("Coleção/Chromas ainda aparece na navegação pública");
-  await page.getByRole("button", { name: "Salvar seu jogo com Google" }).click();
-  await page.getByRole("heading", { name: "Entrou, salvou, jogou." }).waitFor();
+  await page.getByRole("button", { name: "Entrar com Google" }).click();
+  await page.getByRole("heading", { name: "Entre com Google" }).waitFor();
   if (!await page.getByText("Sem cadastro, sem senha nova").isVisible()) throw new Error("O acesso opcional ficou burocrático ou sem contexto");
   if (process.env.POLIMATCH_E2E_AUTH_SCREENSHOT) {
     await page.waitForTimeout(280);
@@ -326,7 +326,7 @@ try {
     failNextDailySession = true;
     await page.getByRole("button", { name: "Sair desta conta" }).click();
     await page.getByRole("heading", { name: "Não conseguimos atualizar a rodada." }).waitFor();
-    if (!await page.getByRole("button", { name: "Salvar seu jogo com Google" }).isVisible()) {
+    if (!await page.getByRole("button", { name: "Entrar com Google" }).isVisible()) {
       throw new Error("A falha diária pós-logout deixou a conta revogada aparecendo como conectada");
     }
     if (await page.evaluate(() => localStorage.getItem("polimatch:v3:recovery-key")) !== "e2e-recovery-key") {
@@ -343,7 +343,7 @@ try {
       throw new Error("O logout não rotacionou o roundId ligado à identidade anterior");
     }
 
-    await page.getByRole("button", { name: "Salvar seu jogo com Google" }).click();
+    await page.getByRole("button", { name: "Entrar com Google" }).click();
     failNextDailySession = true;
     await page.getByRole("button", { name: "Continuar com Google" }).click();
     await page.getByRole("heading", { name: "Tudo certo, Bia!" }).waitFor();

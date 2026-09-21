@@ -1,0 +1,13 @@
+{
+  "stage": "18_save_anonymous_progress",
+  "issue": 234,
+  "status": "partial",
+  "checks": [
+    { "name": "app_unit", "command": "npm test --prefix app", "result": "passed", "count": 167 },
+    { "name": "app_build", "command": "npm run build --prefix app", "result": "passed" },
+    { "name": "app_build_google_mock", "command": "VITE_GOOGLE_CLIENT_ID=e2e-client-id npm run build --prefix app", "result": "passed" },
+    { "name": "interaction_smoke", "command": "POLIMATCH_E2E_URL=http://127.0.0.1:4173/ node app/e2e/interaction-smoke.mjs", "result": "passed", "browser": "chromium" },
+    { "name": "prediction_identity", "command": "POLIMATCH_E2E_URL=http://127.0.0.1:4173/ node app/e2e/prediction-identity.mjs", "result": "passed", "browser": "chromium" },
+    { "name": "history_merge", "result": "not_implemented" }
+  ]
+}

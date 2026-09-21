@@ -979,16 +979,23 @@ async function selectRanking(queryable, topicId, {
 async function findPlayer(queryable, accessToken) {
   const token = String(accessToken || "").trim();
   const hash = accessTokenHash(token);
-  const result = SESSION_TOKEN_PATTERN.test(token)
-    ? await queryable.query(`SELECT p.id FROM player_sessions s JOIN anonymous_players p ON p.id=s.player_id
-        WHERE s.session_hash=$1 AND s.expires_at > now() FOR SHARE OF p`, [hash])
-    : await queryable.query("SELECT p.id FROM anonymous_players p WHERE p.recovery_hash = $1 FOR SHARE OF p", [hash]);
-  if (!result.rowCount) {
-    const error = new Error("sessão não encontrada ou expirada");
-    error.status = 401;
-    throw error;
+  const query = SESSION_TOKEN_PATTERN.test(token)
+    ? "SELECT player_id AS id FROM player_sessions WHERE session_hash=$1 AND expires_at>now()"
+    : "SELECT id FROM anonymous_players WHERE recovery_hash=$1";
+  // A trava por jogador cobre o restante da transação de escrita. Revalidar
+  // depois dela impede que um voto em voo use uma credencial já incorporada.
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const found = await queryable.query(query, [hash]);
+    if (!found.rowCount) break;
+    const id = found.rows[0].id;
+    await queryable.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`player:${id}`]);
+    const current = await queryable.query(query, [hash]);
+    if (current.rows[0]?.id === id) return current.rows[0];
+    if (!current.rowCount) break;
   }
-  return result.rows[0];
+  const error = new Error("sessão não encontrada ou expirada");
+  error.status = 401;
+  throw error;
 }
 
 async function createPlayerRecords(client, playerId, recoveryHash, candidateRegistry) {
@@ -1020,7 +1027,7 @@ async function accountForPlayer(queryable, playerId) {
 // no jogador ativo. O vínculo guarda a proveniência e torna o retry idempotente.
 async function combineGoogleHistory(client, { accountPlayerId, anonymousPlayerId, currentToken, dateKey, subject }) {
   if (accountPlayerId === anonymousPlayerId) return null;
-  await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`history:${anonymousPlayerId}`]);
+  await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`player:${accountPlayerId}`]);
   await client.query("SELECT id FROM anonymous_players WHERE id = ANY($1::uuid[]) ORDER BY id FOR UPDATE", [[accountPlayerId, anonymousPlayerId]]);
   const identity = await client.query("SELECT 1 FROM player_identities WHERE player_id=$1", [anonymousPlayerId]);
   const priorLink = await client.query("SELECT player_id FROM player_history_links WHERE source_player_id=$1", [anonymousPlayerId]);

@@ -522,6 +522,18 @@ async function createCleanSchema(client, candidateRegistry) {
       created_at timestamptz NOT NULL DEFAULT now()
     );
 
+    -- Histórico confirmado conserva seu proprietário original. Uma conta pode
+    -- ler fontes anteriores sem reescrever votos, rodadas ou cortes publicados.
+    CREATE TABLE IF NOT EXISTS player_history_links (
+      source_player_id uuid PRIMARY KEY REFERENCES anonymous_players(id) ON DELETE RESTRICT,
+      player_id uuid NOT NULL REFERENCES anonymous_players(id) ON DELETE RESTRICT,
+      linked_at timestamptz NOT NULL DEFAULT now(),
+      source_kind text NOT NULL CHECK (source_kind IN ('anonymous-session', 'previous-google-player')),
+      merge_token_hash char(64) UNIQUE,
+      CHECK (source_player_id <> player_id)
+    );
+    CREATE INDEX IF NOT EXISTS player_history_links_player_idx ON player_history_links (player_id);
+
     CREATE TABLE IF NOT EXISTS player_pools (
       player_id uuid NOT NULL REFERENCES anonymous_players(id) ON DELETE CASCADE,
       topic_id text NOT NULL REFERENCES ranking_pools(topic_id) ON DELETE CASCADE,
@@ -944,7 +956,10 @@ async function selectRanking(queryable, topicId, {
        COUNT(*) FILTER (WHERE winner_id = LEAST(winner_id, loser_id)) AS a_wins,
        COUNT(*) FILTER (WHERE winner_id = GREATEST(winner_id, loser_id)) AS b_wins
      FROM votes
-     WHERE player_id = $1 AND topic_id = $2
+     WHERE player_id IN (
+       SELECT $1::uuid UNION ALL
+       SELECT source_player_id FROM player_history_links WHERE player_id = $1
+     ) AND topic_id = $2
      GROUP BY 1, 2
      ORDER BY 1, 2`,
     params,
@@ -965,8 +980,9 @@ async function findPlayer(queryable, accessToken) {
   const token = String(accessToken || "").trim();
   const hash = accessTokenHash(token);
   const result = SESSION_TOKEN_PATTERN.test(token)
-    ? await queryable.query("SELECT player_id AS id FROM player_sessions WHERE session_hash = $1 AND expires_at > now()", [hash])
-    : await queryable.query("SELECT id FROM anonymous_players WHERE recovery_hash = $1", [hash]);
+    ? await queryable.query(`SELECT p.id FROM player_sessions s JOIN anonymous_players p ON p.id=s.player_id
+        WHERE s.session_hash=$1 AND s.expires_at > now() FOR SHARE OF p`, [hash])
+    : await queryable.query("SELECT p.id FROM anonymous_players p WHERE p.recovery_hash = $1 FOR SHARE OF p", [hash]);
   if (!result.rowCount) {
     const error = new Error("sessão não encontrada ou expirada");
     error.status = 401;
@@ -997,6 +1013,72 @@ async function accountForPlayer(queryable, playerId) {
   if (!result.rowCount) return null;
   const row = result.rows[0];
   return { displayName: row.display_name, avatarUrl: row.avatar_url };
+}
+
+// A fonte de um histórico continua dona de seus votos e rodadas imutáveis.
+// Apenas placares pessoais derivados e inventário mutável são materializados
+// no jogador ativo. O vínculo guarda a proveniência e torna o retry idempotente.
+async function combineGoogleHistory(client, { accountPlayerId, anonymousPlayerId, currentToken, dateKey, subject }) {
+  if (accountPlayerId === anonymousPlayerId) return null;
+  await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`history:${anonymousPlayerId}`]);
+  await client.query("SELECT id FROM anonymous_players WHERE id = ANY($1::uuid[]) ORDER BY id FOR UPDATE", [[accountPlayerId, anonymousPlayerId]]);
+  const identity = await client.query("SELECT 1 FROM player_identities WHERE player_id=$1", [anonymousPlayerId]);
+  const priorLink = await client.query("SELECT player_id FROM player_history_links WHERE source_player_id=$1", [anonymousPlayerId]);
+  const rounds = await client.query("SELECT count(*)::integer AS count FROM choice_rounds WHERE player_id=$1", [anonymousPlayerId]);
+  if (identity.rowCount || priorLink.rowCount) throw contractError("esta sessão já pertence a outra conta", 409, "HISTORY_SOURCE_CLAIMED");
+  const anonymousChoices = Number(rounds.rows[0].count);
+  if (!anonymousChoices) return null;
+  const priorChoices = await client.query("SELECT count(*)::integer AS count FROM choice_rounds WHERE player_id=$1", [accountPlayerId]);
+  const daily = await client.query(`SELECT player_id,count(*)::integer AS count FROM daily_answers a
+    JOIN daily_editions e ON e.id=a.edition_id
+    WHERE a.player_id=ANY($1::uuid[]) AND e.edition_date=$2::date
+    GROUP BY player_id`, [[accountPlayerId, anonymousPlayerId], dateKey]);
+  const dailyCounts = new Map(daily.rows.map(row => [row.player_id, Number(row.count)]));
+  // Se a sessão anônima já respondeu à edição de hoje, ela continua ativa.
+  // Assim, nenhum answer_id precisa ser copiado nem a rodada reiniciada.
+  const keepAnonymousDaily = (dailyCounts.get(anonymousPlayerId) || 0) > 0;
+  const activeId = keepAnonymousDaily ? anonymousPlayerId : accountPlayerId;
+  const historicalId = keepAnonymousDaily ? accountPlayerId : anonymousPlayerId;
+  await client.query(`INSERT INTO player_pools (player_id,topic_id,version,duels)
+    SELECT $1,topic_id,version+1,duels FROM player_pools WHERE player_id=$2
+    ON CONFLICT (player_id,topic_id) DO UPDATE SET
+      version=player_pools.version+EXCLUDED.version,
+      duels=player_pools.duels+EXCLUDED.duels`, [activeId, historicalId]);
+  await client.query(`INSERT INTO player_stats (player_id,topic_id,candidate_id,rating,wins,losses)
+    SELECT $1,topic_id,candidate_id,rating,wins,losses FROM player_stats WHERE player_id=$2
+    ON CONFLICT (player_id,topic_id,candidate_id) DO UPDATE SET
+      rating=player_stats.rating+EXCLUDED.rating-1000,
+      wins=player_stats.wins+EXCLUDED.wins,
+      losses=player_stats.losses+EXCLUDED.losses`, [activeId, historicalId]);
+  await client.query(`INSERT INTO abuse_quota_counters (scope,subject_hash,window_start,used)
+    SELECT scope,$1,window_start,used FROM abuse_quota_counters
+    WHERE subject_hash=$2 AND scope LIKE 'player-%'
+    ON CONFLICT (scope,subject_hash,window_start) DO UPDATE SET
+      used=abuse_quota_counters.used+EXCLUDED.used,updated_at=now()`, [activeId, historicalId]);
+  await client.query(`INSERT INTO player_chromas (player_id,chroma_id,quantity,first_acquired_at,last_acquired_at)
+    SELECT $1,chroma_id,quantity,first_acquired_at,last_acquired_at FROM player_chromas WHERE player_id=$2
+    ON CONFLICT (player_id,chroma_id) DO UPDATE SET
+      quantity=player_chromas.quantity+EXCLUDED.quantity,
+      first_acquired_at=LEAST(player_chromas.first_acquired_at,EXCLUDED.first_acquired_at),
+      last_acquired_at=GREATEST(player_chromas.last_acquired_at,EXCLUDED.last_acquired_at)`, [activeId, historicalId]);
+  await client.query(`INSERT INTO equipped_chromas (player_id,topic_id,candidate_id,chroma_id,equipped_at)
+    SELECT $1,topic_id,candidate_id,chroma_id,equipped_at FROM equipped_chromas WHERE player_id=$2
+    ON CONFLICT (player_id,topic_id,candidate_id) DO NOTHING`, [activeId, historicalId]);
+  if (keepAnonymousDaily) {
+    await client.query("UPDATE player_history_links SET player_id=$1 WHERE player_id=$2", [anonymousPlayerId, accountPlayerId]);
+    await client.query("UPDATE player_identities SET player_id=$1 WHERE provider='google' AND subject=$2", [anonymousPlayerId, subject]);
+    // Other devices already signed into Google keep their sessions after the
+    // active daily owner changes; only the anonymous source is revoked.
+    await client.query("UPDATE player_sessions SET player_id=$1 WHERE player_id=$2", [anonymousPlayerId, accountPlayerId]);
+  }
+  await client.query(`INSERT INTO player_history_links
+    (source_player_id,player_id,source_kind,merge_token_hash) VALUES ($1,$2,$3,$4)`,
+    [historicalId, activeId, keepAnonymousDaily ? "previous-google-player" : "anonymous-session", accessTokenHash(currentToken)]);
+  await client.query("UPDATE anonymous_players SET recovery_hash=$1 WHERE id=$2", [recoveryKeyHash(createRecoveryKey()), anonymousPlayerId]);
+  await client.query("DELETE FROM player_sessions WHERE player_id=$1", [anonymousPlayerId]);
+  return { playerId: activeId, status: "combined", anonymousChoices, previousChoices: Number(priorChoices.rows[0].count),
+    activeDaily: keepAnonymousDaily ? "anonymous" : "account",
+    dailyConflict: (dailyCounts.get(anonymousPlayerId) || 0) > 0 && (dailyCounts.get(accountPlayerId) || 0) > 0 };
 }
 
 function assertPlayerVersion(value, current) {
@@ -1777,6 +1859,29 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
         let playerId = linked.rows[0]?.player_id;
         const firstLink = !playerId;
         if (!playerId && currentToken) playerId = (await findPlayer(client, currentToken)).id;
+        let merge = null;
+        if (!firstLink && currentToken) {
+          let currentPlayer;
+          try {
+            currentPlayer = (await findPlayer(client, currentToken)).id;
+          } catch (error) {
+            if (error.status !== 401) throw error;
+            const replay = await client.query(`SELECT 1 FROM player_history_links
+              WHERE merge_token_hash=$1 AND player_id=$2`, [accessTokenHash(currentToken), playerId]);
+            if (!replay.rowCount) throw error;
+            merge = { status: "alreadyCombined" };
+          }
+          if (currentPlayer && currentPlayer !== playerId) {
+            merge = await combineGoogleHistory(client, {
+              accountPlayerId: playerId,
+              anonymousPlayerId: currentPlayer,
+              currentToken,
+              dateKey: editorialDateKey(clockInstant(clock)),
+              subject,
+            });
+            if (merge) playerId = merge.playerId;
+          }
+        }
         if (!playerId) {
           playerId = randomUUID();
           await createPlayerRecords(client, playerId, recoveryKeyHash(createRecoveryKey()), candidateRegistry);
@@ -1804,7 +1909,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
         const personal = await registryRanking(client, normalizedTopic, { playerId });
         const account = { displayName: String(identity.displayName || "Jogador"), avatarUrl: String(identity.avatarUrl || "") };
         await client.query("COMMIT");
-        return { sessionToken, account, player: { ...personal, account } };
+        return { sessionToken, account, player: { ...personal, account }, merge };
       } catch (error) {
         await client.query("ROLLBACK");
         throw error;
@@ -2241,12 +2346,13 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
       let session;
       try {
         const player = await findPlayer(client, recoveryKey);
-        const result = await client.query(`SELECT e.id FROM daily_editions e JOIN daily_completions c ON c.edition_id=e.id
-          WHERE c.player_id=$1 AND e.closes_at <= $2 AND e.topic_id='eleicoes-2026'
-          ORDER BY e.edition_date DESC LIMIT 1`, [player.id, requestedAt]);
+        const result = await client.query(`SELECT e.id,c.player_id FROM daily_editions e JOIN daily_completions c ON c.edition_id=e.id
+          WHERE c.player_id IN (SELECT $1::uuid UNION ALL SELECT source_player_id FROM player_history_links WHERE player_id=$1)
+            AND e.closes_at <= $2 AND e.topic_id='eleicoes-2026'
+          ORDER BY e.edition_date DESC,(c.player_id=$1) DESC LIMIT 1`, [player.id, requestedAt]);
         if (!result.rowCount) return { status: "pending" };
         const materialized = await loadMaterializedDailyEditionById(client, result.rows[0].id);
-        session = await selectDailyPlayerSession(client, materialized, player.id);
+        session = await selectDailyPlayerSession(client, materialized, result.rows[0].player_id);
       } finally { client.release(); }
       const cut = await store.dailyCut(session.edition.topicId, session.edition.date, { now: requestedAt });
       return { status: "published", mirror: sessionMirror(session), comparison: compareSessionWithCut(session, cut) };
@@ -2413,7 +2519,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           `SELECT DISTINCT edition.edition_date::text AS edition_date
            FROM daily_editions AS edition
            INNER JOIN daily_answers AS answer ON answer.edition_id = edition.id
-           WHERE answer.player_id = $1
+           WHERE answer.player_id IN (SELECT $1::uuid UNION ALL SELECT source_player_id FROM player_history_links WHERE player_id=$1)
              AND edition.topic_id = $2
              AND edition.closes_at <= $3::timestamptz
            ORDER BY edition_date`,
@@ -2466,7 +2572,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           );
         }
         const answersResult = await reader.query(
-          `SELECT answer.edition_id, answer.slot, answer.answer_id, answer.winner_id, answer.answered_at,
+          `SELECT answer.edition_id, answer.player_id, answer.slot, answer.answer_id, answer.winner_id, answer.answered_at,
                   prediction.prediction_id, prediction.predicted_candidate_id,
                   prediction.skipped, prediction.responded_at
            FROM daily_answers AS answer
@@ -2474,16 +2580,17 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
              ON prediction.edition_id = answer.edition_id
             AND prediction.player_id = answer.player_id
             AND prediction.slot = answer.slot
-           WHERE answer.player_id = $1
+           WHERE answer.player_id IN (SELECT $1::uuid UNION ALL SELECT source_player_id FROM player_history_links WHERE player_id=$1)
              AND answer.edition_id = ANY($2::text[])
            ORDER BY answer.edition_id, answer.slot`,
           [playerId, editionIds],
         );
         const rowsByEdition = new Map();
         for (const row of answersResult.rows) {
-          const rows = rowsByEdition.get(row.edition_id) || [];
+          const key = `${row.edition_id}:${row.player_id}`;
+          const rows = rowsByEdition.get(key) || [];
           rows.push(row);
-          rowsByEdition.set(row.edition_id, rows);
+          rowsByEdition.set(key, rows);
         }
 
         const totals = {
@@ -2494,8 +2601,10 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           ties: 0,
           noSample: 0,
         };
-        const sessions = cuts.map((cut) => {
-          const rows = rowsByEdition.get(cut.edition.id) || [];
+        const sessions = cuts.flatMap((cut) => [...rowsByEdition.entries()]
+          .filter(([key]) => key.startsWith(`${cut.edition.id}:`))
+          .map(([key, rows]) => {
+          const historyKind = key === `${cut.edition.id}:${playerId}` ? "current" : "previous";
           const bySlot = new Map(rows.map((row) => [Number(row.slot), row]));
           const rounds = cut.rounds.map((round) => {
             const resolved = resolveDailyPredictionRound(round, { completedPlayers: cut.completedPlayers });
@@ -2531,6 +2640,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           });
           return {
             edition: cut.edition,
+            historyKind,
             methodology: cut.methodology,
             completedPlayers: cut.completedPlayers,
             sampleNotice: cut.sampleNotice,
@@ -2539,7 +2649,8 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
             completed: rows.length === cut.edition.totalRounds,
             rounds,
           };
-        }).sort((left, right) => right.edition.date.localeCompare(left.edition.date));
+        })).sort((left, right) => right.edition.date.localeCompare(left.edition.date)
+          || (left.historyKind === "current" ? -1 : right.historyKind === "current" ? 1 : 0));
         await reader.query("COMMIT");
         return {
           baselinePercent: DAILY_PREDICTION_BASELINE_PERCENT,

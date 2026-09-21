@@ -72,7 +72,9 @@ export function gameProgressStore({ pool, findPlayer, candidateCatalog, ranking,
           const played = personal.ranking.filter(person => person.decisions > 0);
           const boundary = played[4]?.rank;
           const topIds = played.filter((person, index) => index < 5 || (boundary != null && person.rank === boundary)).map(person => person.id);
-          const comparisons = await client.query("SELECT winner_id, loser_id FROM votes WHERE player_id=$1 AND topic_id=$2 AND winner_id=ANY($3::text[]) AND loser_id=ANY($3::text[])", [player.id, topic, topIds]);
+          const comparisons = await client.query(`SELECT winner_id, loser_id FROM votes
+            WHERE player_id IN (SELECT $1::uuid UNION ALL SELECT source_player_id FROM player_history_links WHERE player_id=$1)
+              AND topic_id=$2 AND winner_id=ANY($3::text[]) AND loser_id=ANY($3::text[])`, [player.id, topic, topIds]);
           const selected = uncertainPair(topIds, comparisons.rows.map(row => ({ winnerId: row.winner_id, loserId: row.loser_id })));
           remaining = selected.remaining; candidateIds = selected.pair?.candidateIds;
         }
@@ -130,7 +132,8 @@ export function gameProgressStore({ pool, findPlayer, candidateCatalog, ranking,
           count(d.round_id) FILTER (WHERE d.candidate_id IS NULL)::int AS skipped,
           count(*) FILTER (WHERE d.round_id IS NULL)::int AS pending
           FROM choice_rounds r JOIN discard_offers o ON o.round_id=r.round_id LEFT JOIN round_discards d ON d.round_id=r.round_id
-          WHERE r.player_id=$1 AND ($2::text IS NULL OR r.daily_edition_id=$2)`, [player.id, editionId]);
+          WHERE r.player_id IN (SELECT $1::uuid UNION ALL SELECT source_player_id FROM player_history_links WHERE player_id=$1)
+            AND ($2::text IS NULL OR r.daily_edition_id=$2)`, [player.id, editionId]);
         const counts = result.rows[0];
         return { editionId, ...counts, completionRate: counts.rounds ? counts.completed / counts.rounds : null };
       });
@@ -138,18 +141,22 @@ export function gameProgressStore({ pool, findPlayer, candidateCatalog, ranking,
     async collection(recoveryKey) {
       return transaction(recoveryKey, async (client, player) => {
         if (collectionEnabled) {
-          const completed = await client.query(`SELECT c.edition_id FROM daily_completions c
+          const completed = await client.query(`SELECT c.player_id,c.edition_id FROM daily_completions c
             LEFT JOIN finish_rewards r ON r.player_id=c.player_id AND r.edition_id=c.edition_id
-            WHERE c.player_id=$1 AND r.edition_id IS NULL ORDER BY c.completed_at,c.edition_id`, [player.id]);
-          const existing = await client.query("SELECT finish_id FROM finish_rewards WHERE player_id=$1", [player.id]);
+            WHERE c.player_id IN (SELECT $1::uuid UNION ALL SELECT source_player_id FROM player_history_links WHERE player_id=$1)
+              AND r.edition_id IS NULL ORDER BY c.completed_at,c.edition_id`, [player.id]);
+          const existing = await client.query(`SELECT finish_id FROM finish_rewards
+            WHERE player_id IN (SELECT $1::uuid UNION ALL SELECT source_player_id FROM player_history_links WHERE player_id=$1)`, [player.id]);
           const owned = existing.rows.map(row => row.finish_id);
-          for (const { edition_id } of completed.rows) {
-            const finish = nextFinish(owned, `${player.id}:${edition_id}`);
-            await client.query("INSERT INTO finish_rewards(player_id,edition_id,finish_id) VALUES($1,$2,$3)", [player.id, edition_id, finish?.id || null]);
+          for (const { player_id, edition_id } of completed.rows) {
+            const finish = nextFinish(owned, `${player_id}:${edition_id}`);
+            await client.query("INSERT INTO finish_rewards(player_id,edition_id,finish_id) VALUES($1,$2,$3)", [player_id, edition_id, finish?.id || null]);
             if (finish) owned.push(finish.id);
           }
         }
-        const owned = await client.query("SELECT finish_id,acquired_at FROM finish_rewards WHERE player_id=$1 AND finish_id IS NOT NULL ORDER BY acquired_at,finish_id", [player.id]);
+        const owned = await client.query(`SELECT DISTINCT ON (finish_id) finish_id,acquired_at FROM finish_rewards
+          WHERE player_id IN (SELECT $1::uuid UNION ALL SELECT source_player_id FROM player_history_links WHERE player_id=$1)
+            AND finish_id IS NOT NULL ORDER BY finish_id,acquired_at`, [player.id]);
         return { enabled: collectionEnabled, purchasable: false, total: FINISHES.length,
           items: owned.rows.map(row => ({ ...FINISHES.find(item => item.id === row.finish_id), acquiredAt: new Date(row.acquired_at).toISOString() })) };
       });

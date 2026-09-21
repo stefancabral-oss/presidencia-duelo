@@ -280,7 +280,7 @@ try {
   if (await page.getByRole("button", { name: "Coleção" }).count()) throw new Error("Coleção/Chromas ainda aparece na navegação pública");
   await page.getByRole("button", { name: "Entrar com Google" }).click();
   await page.getByRole("heading", { name: "Entre com Google" }).waitFor();
-  if (!await page.getByText("Sem cadastro, sem senha nova").isVisible()) throw new Error("O acesso opcional ficou burocrático ou sem contexto");
+  if (!await page.getByText("Suas escolhas anônimas confirmadas serão reunidas à conta existente.", { exact: false }).isVisible()) throw new Error("O acesso opcional não explica como salvar as escolhas anônimas");
   if (process.env.POLIMATCH_E2E_AUTH_SCREENSHOT) {
     await page.waitForTimeout(280);
     await page.screenshot({ path: process.env.POLIMATCH_E2E_AUTH_SCREENSHOT });

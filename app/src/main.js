@@ -60,6 +60,7 @@ const state = {
   authBusy: false,
   authError: "",
   authErrorKind: "",
+  authNotice: "",
   collection: [],
   gameFeatures: {},
   pairRemaining: 0,
@@ -341,8 +342,8 @@ function authOverlay() {
       <span class="auth-mark" aria-hidden="true">${brandSymbol("auth-symbol")}</span>
       <p class="eyebrow">${signedIn ? "Conta conectada" : "Seu histórico com você"}</p>
       <h2 id="auth-title">${signedIn ? `Tudo certo, ${escapeHtml(state.account.displayName?.split(" ")[0] || "jogador")}!` : "Entre com Google"}</h2>
-      <p>${signedIn ? "As próximas escolhas ficam ligadas a esta conta e podem continuar em outro aparelho." : "Entre para recuperar seu histórico. Sem cadastro, sem senha nova e sem interromper a diversão."}</p>
-      ${!signedIn && state.personalDuels > 0 ? '<p class="auth-config-note">Se esta conta já tiver um jogo, suas escolhas anônimas atuais ainda não serão incorporadas a ele.</p>' : ""}
+      <p>${signedIn ? "Seu histórico fica ligado a esta conta e pode continuar em outro aparelho." : "Entre para recuperar seu histórico. Suas escolhas anônimas confirmadas serão reunidas à conta existente."}</p>
+      ${signedIn && state.authNotice ? `<p class="auth-config-note" role="status">${escapeHtml(state.authNotice)}</p>` : ""}
       ${state.authError ? `<p class="auth-error" role="alert">${escapeHtml(state.authError)}</p>` : ""}
       ${signedIn
         ? `<button class="auth-secondary" id="logout" type="button" ${state.authBusy ? "disabled" : ""}>Sair desta conta</button>`
@@ -537,7 +538,8 @@ function dailyPredictionResultsScreen() {
       session.completedPlayers === 1 ? PREDICTION_REVEAL_COPY.completedSessionsOneTemplate : PREDICTION_REVEAL_COPY.completedSessionsManyTemplate,
       { count: session.completedPlayers },
     );
-    return `<details class="prediction-session"${results.sessions[0] === session ? " open" : ""}><summary><span><strong>${escapeHtml(date)}</strong><small>${escapeHtml(session.methodology)}</small></span><b>${completedSessions}</b></summary>${session.sampleNotice ? `<p class="prediction-sample-note">${escapeHtml(session.sampleNotice)}</p>` : ""}<ol>${rounds}</ol></details>`;
+    const historyLabel = session.historyKind === "previous" ? " · partida anterior" : "";
+    return `<details class="prediction-session"${results.sessions[0] === session ? " open" : ""}><summary><span><strong>${escapeHtml(date)}${historyLabel}</strong><small>${escapeHtml(session.methodology)}</small></span><b>${completedSessions}</b></summary>${session.sampleNotice ? `<p class="prediction-sample-note">${escapeHtml(session.sampleNotice)}</p>` : ""}<ol>${rounds}</ol></details>`;
   }).join("");
   return `<section class="prediction-results-screen">
     <section class="prediction-score-card"><p class="eyebrow">${PREDICTION_REVEAL_COPY.scoreboardEyebrow}</p><h1>${accuracy}</h1><p><strong>${formatAggregateCopy(PREDICTION_REVEAL_COPY.scoreTemplate, { correct: score.correct, scored: score.scored })}</strong> ${PREDICTION_REVEAL_COPY.scoreDetail}</p><span>${formatAggregateCopy(PREDICTION_REVEAL_COPY.baselineComparisonTemplate, { percent: `<b>${results.baselinePercent}</b>` })}</span><small>${PREDICTION_REVEAL_COPY.neutralResults}</small></section>
@@ -1904,6 +1906,11 @@ async function handleGoogleCredential(response) {
   localStorage.setItem("polimatch:v3:recovery-key", result.sessionToken);
   state.recoveryKey = result.sessionToken;
   state.account = result.account;
+  state.authNotice = result.merge?.status === "combined"
+    ? result.merge.dailyConflict
+      ? `Suas ${result.merge.anonymousChoices} escolhas recentes foram reunidas ao histórico. Havia duas sessões para a rodada do dia; a sessão anônima recente continua ativa e a anterior permanece no histórico.`
+      : `Suas ${result.merge.anonymousChoices} escolhas recentes foram reunidas ao histórico. A rodada do dia continua na sessão ${result.merge.activeDaily === "anonymous" ? "anônima recente" : "da conta"}.`
+    : result.merge?.status === "alreadyCombined" ? "Suas escolhas já estavam reunidas; o acesso foi recuperado." : "";
   state.predictionResults = null;
   state.predictionResultsError = "";
   state.personalRanking = rankingForCatalog(result.player, state.candidates);
@@ -1936,6 +1943,7 @@ async function signOut() {
     resetPendingVoteForIdentityChange(state);
     state.recoveryKey = player.recoveryKey;
     state.account = null;
+    state.authNotice = "";
     state.predictionResults = null;
     state.predictionResultsError = "";
     state.personalRanking = rankingForCatalog(player.personal, state.candidates);

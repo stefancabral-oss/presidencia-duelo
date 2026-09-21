@@ -1224,8 +1224,82 @@ await assert.rejects(
   ),
   /imutáveis/,
 );
+
+// Uma conta antiga e uma sessão anônima respondem o mesmo slot. O vínculo
+// preserva os dois recibos, continua a sessão recente e não fabrica voto.
+const mergeSubject = `merge-${randomUUID()}`;
+const accountSource = await dailyStore.createPlayer({ networkHash: "2".repeat(64) });
+const accountSourceId = await playerIdFor(accountSource.recoveryKey);
+const accountDaily = await dailyStore.dailySession(accountSource.recoveryKey, "eleicoes-2026");
+await clearMinuteQuota();
+await dailyStore.dailyVote({
+  topicId: "eleicoes-2026", editionId: accountDaily.edition.id, slot: 1,
+  winnerId: accountDaily.round.candidateIds[0], answerId: randomUUID(),
+  recoveryKey: accountSource.recoveryKey, playerVersion: 0,
+});
+const oldAccount = await dailyStore.signInWithGoogle({
+  identity: { subject: mergeSubject, displayName: "Teste" },
+  currentToken: accountSource.recoveryKey, topicId: "eleicoes-2026",
+});
+const anonymousSource = await dailyStore.createPlayer({ networkHash: "3".repeat(64) });
+const anonymousSourceId = await playerIdFor(anonymousSource.recoveryKey);
+const anonymousDaily = await dailyStore.dailySession(anonymousSource.recoveryKey, "eleicoes-2026");
+await clearMinuteQuota();
+await dailyStore.dailyVote({
+  topicId: "eleicoes-2026", editionId: anonymousDaily.edition.id, slot: 1,
+  winnerId: anonymousDaily.round.candidateIds[1], answerId: randomUUID(),
+  recoveryKey: anonymousSource.recoveryKey, playerVersion: 0,
+});
+const beforeMerge = await quotaMaintenance.query(
+  "SELECT (SELECT count(*) FROM votes) AS votes, (SELECT count(*) FROM choice_rounds) AS rounds",
+);
+const combined = await dailyStore.signInWithGoogle({
+  identity: { subject: mergeSubject, displayName: "Teste" },
+  currentToken: anonymousSource.recoveryKey, topicId: "eleicoes-2026",
+});
+assert.equal(combined.merge.status, "combined");
+assert.equal(combined.merge.dailyConflict, true);
+assert.equal(combined.merge.activeDaily, "anonymous");
+assert.equal(combined.player.duels, 2);
+assert.equal((await dailyStore.dailySession(combined.sessionToken, "eleicoes-2026")).progress.answered, 1);
+assert.equal((await dailyStore.playerRanking(oldAccount.sessionToken, "eleicoes-2026")).duels, 2);
+await assert.rejects(dailyStore.playerRanking(anonymousSource.recoveryKey, "eleicoes-2026"), /expirada/);
+const retry = await dailyStore.signInWithGoogle({
+  identity: { subject: mergeSubject, displayName: "Teste" },
+  currentToken: anonymousSource.recoveryKey, topicId: "eleicoes-2026",
+});
+assert.equal(retry.merge.status, "alreadyCombined");
+assert.equal(retry.player.duels, 2);
+const afterMerge = await quotaMaintenance.query(
+  `SELECT (SELECT count(*) FROM votes) AS votes, (SELECT count(*) FROM choice_rounds) AS rounds,
+    (SELECT count(*) FROM daily_answers WHERE player_id=ANY($1::uuid[])) AS preserved_answers,
+    (SELECT count(*) FROM player_history_links WHERE player_id=$2) AS links`,
+  [[accountSourceId, anonymousSourceId], anonymousSourceId],
+);
+assert.equal(afterMerge.rows[0].votes, beforeMerge.rows[0].votes);
+assert.equal(afterMerge.rows[0].rounds, beforeMerge.rows[0].rounds);
+assert.equal(Number(afterMerge.rows[0].preserved_answers), 2);
+assert.equal(Number(afterMerge.rows[0].links), 1);
+
+// Um segundo vínculo no modo livre soma uma única vez e mantém a rodada diária
+// atual; o antigo login da conta continua funcional em outro dispositivo.
+const freeSource = await dailyStore.createPlayer({ networkHash: "4".repeat(64) });
+await clearMinuteQuota();
+await dailyStore.roundVote({
+  topicId: "eleicoes-2026", winnerId: freeCandidates[0], candidateIds: freeCandidates,
+  roundId: randomUUID(), recoveryKey: freeSource.recoveryKey, playerVersion: 0,
+});
+const freeCombined = await dailyStore.signInWithGoogle({
+  identity: { subject: mergeSubject, displayName: "Teste" },
+  currentToken: freeSource.recoveryKey, topicId: "eleicoes-2026",
+});
+assert.equal(freeCombined.merge.activeDaily, "account");
+assert.equal(freeCombined.player.duels, 3);
+assert.equal((await dailyStore.dailySession(freeCombined.sessionToken, "eleicoes-2026")).progress.answered, 1);
+assert.equal((await dailyStore.playerRanking(oldAccount.sessionToken, "eleicoes-2026")).duels, 3);
+await assert.rejects(dailyStore.playerRanking(freeSource.recoveryKey, "eleicoes-2026"), /expirada/);
 await crossingStore.close();
 await dailyStore.close();
 await quotaMaintenance.end();
 
-console.log("Smoke PostgreSQL aprovado: reset e upgrade aditivos, identidade/sessão, Elo idempotente, edição diária comum, apostas lacradas e idempotentes, 10/10 atômico, reload, concorrência, virada de São Paulo, corte fechado e modo livre separado.");
+console.log("Smoke PostgreSQL aprovado: reset e upgrade aditivos, identidade/sessão, incorporação de escolhas anônimas, Elo idempotente, edição diária comum, apostas lacradas e idempotentes, 10/10 atômico, reload, concorrência, virada de São Paulo, corte fechado e modo livre separado.");

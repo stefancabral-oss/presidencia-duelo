@@ -1,0 +1,348 @@
+{
+  "schemaVersion": 1,
+  "issue": 211,
+  "branch": "feat/211-official-import",
+  "baseCommit": "ffc38984f7d8b33647d3cfbcad3029fca2ec2e38",
+  "recordedAt": "2026-09-18T17:46:28.921Z",
+  "local": {
+    "unitTests": {
+      "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
+      "firstRun": {
+        "tests": 431,
+        "passed": 431,
+        "failed": 0
+      },
+      "secondRun": {
+        "tests": 432,
+        "passed": 431,
+        "failed": 1,
+        "failedFile": "app/src/card-art-pilot-participant-validation.test.js",
+        "assertionFailureReported": false,
+        "isolatedRetry": {
+          "tests": 11,
+          "passed": 11,
+          "failed": 0
+        }
+      },
+      "finalRetry": {
+        "tests": 431,
+        "passed": 431,
+        "failed": 0,
+        "durationMs": 26668.0628
+      }
+    },
+    "build": {
+      "command": "node app/node_modules/vite/bin/vite.js build app",
+      "status": "passed"
+    },
+    "runtime": "Node.js 24.19.0 on Windows",
+    "planning": {
+      "status": "passed",
+      "markdownFiles": 34,
+      "localLinksChecked": 108,
+      "errors": []
+    },
+    "diffCheck": "passed",
+    "targetedAfterFinalZipCleanup": {
+      "tests": 32,
+      "passed": 32,
+      "failed": 0
+    },
+    "integralRevision": {
+      "targeted": {
+        "command": "node --test --test-concurrency=1 back/src/civic-divulga-detail.test.js back/src/civic-import.test.js",
+        "tests": 49,
+        "passed": 49,
+        "failed": 0
+      },
+      "fullSuite": {
+        "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
+        "tests": 448,
+        "passed": 448,
+        "failed": 0,
+        "durationMs": 26327.7328
+      },
+      "build": {
+        "command": "node app/node_modules/vite/bin/vite.js build app",
+        "status": "passed"
+      },
+      "portableSnapshot": {
+        "command": "node back/scripts/civic-import-snapshot.mjs stages/17_candidate_news/output/B02-pilot-delivery.json ../b02-pilot-portable-check",
+        "freshDirectory": true,
+        "restoredBatchId": "254cafe319d15c06a0f893af202638cc00c91b44770f7847340a0d8da92f1209",
+        "synthetic": false,
+        "complete": false,
+        "accounted": true
+      },
+      "initialTestCorrection": "One new test initially expected an uncombined legacy synthetic status; corrected assertion to the existing APTO / DEFERIDO COM RECURSO contract, then targeted and full suites passed.",
+      "targetedAtPublishedHead": {
+        "tests": 49,
+        "passed": 49,
+        "failed": 0,
+        "durationMs": 1628.6472,
+        "commit": "767ea9dfac86a6132847525185a66de02eafb018"
+      }
+    },
+    "processReview": {
+      "tests": 13,
+      "passed": 13,
+      "failed": 0,
+      "command": "node --test back/src/civic-process-review.test.js",
+      "realCliRepeatedWithoutOverwrite": true,
+      "planning": {
+        "status": "passed",
+        "markdownFiles": 35,
+        "localLinksChecked": 119
+      },
+      "portableCli": {
+        "command": "node back/scripts/civic-process-review.mjs stages/17_candidate_news/output/B02-pilot-delivery.json stages/17_candidate_news/output/B02-case-review.json stages/17_candidate_news/output/B02-process-evidence.json ../b02-source-cache/process-review-pinned-3d8d48bb.json",
+        "status": "passed",
+        "evidenceId": "3d8d48bb1c8e2e9757d4769cc5214a3b2632ff126cbac995ae4759625124f9b0",
+        "complete": false
+      },
+      "durationMs": 348.2744
+    },
+    "processRevisionFullSuite": {
+      "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
+      "tests": 461,
+      "passed": 461,
+      "failed": 0,
+      "durationMs": 27986.909,
+      "runtime": "Node.js 24.19.0 Windows",
+      "CIVIC_PYTHON": "bundled Python",
+      "previous": {
+        "command": "node --test --test-concurrency=1 app/src/*.test.js back/src/*.test.js shared/*.test.js",
+        "tests": 458,
+        "passed": 458,
+        "failed": 0,
+        "durationMs": 30083.0958,
+        "runtime": "Node.js 24.19.0 Windows",
+        "CIVIC_PYTHON": "bundled Python"
+      }
+    }
+  },
+  "pilot": {
+    "batchId": "254cafe319d15c06a0f893af202638cc00c91b44770f7847340a0d8da92f1209",
+    "synthetic": false,
+    "candidacies": 37,
+    "persons": 95,
+    "tickets": 0,
+    "observedRelationships": 33,
+    "quarantine": 0,
+    "accounted": true,
+    "complete": false,
+    "reimportRepeated": true,
+    "publication": "staging_only",
+    "otherUfsImported": false
+  },
+  "ci": {
+    "status": "passed",
+    "validatedCodeCommit": "767ea9dfac86a6132847525185a66de02eafb018",
+    "runtime": "Node.js 22 on Linux",
+    "database": "PostgreSQL 16",
+    "backendUnitTests": {
+      "tests": 193,
+      "passed": 193,
+      "failed": 0
+    },
+    "runs": [
+      {
+        "name": "Backend and Shared",
+        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35342044600",
+        "conclusion": "success"
+      },
+      {
+        "name": "Civic Planning",
+        "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35342044603",
+        "conclusion": "success"
+      }
+    ],
+    "latestChecks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks",
+    "previousValidation": {
+      "status": "passed",
+      "validatedCodeCommit": "5a9f47b6e78494efc48613f16fbe1e8681b1649e",
+      "runtime": "Node.js 22 on Linux",
+      "database": "PostgreSQL 16",
+      "backendUnitTests": {
+        "tests": 176,
+        "passed": 176,
+        "failed": 0
+      },
+      "runs": [
+        {
+          "name": "Backend and Shared",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35296339181",
+          "conclusion": "success"
+        },
+        {
+          "name": "Civic Planning",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35296339169",
+          "conclusion": "success"
+        }
+      ],
+      "latestChecks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks"
+    },
+    "jobs": [
+      {
+        "name": "back-unit",
+        "conclusion": "success"
+      },
+      {
+        "name": "back-integration-postgres",
+        "conclusion": "success"
+      },
+      {
+        "name": "shared-data",
+        "conclusion": "success"
+      }
+    ],
+    "processRevision": {
+      "status": "passed",
+      "validatedCodeCommit": "00a2b2ab40c87dbd60fe39a0ce33458ca64087d9",
+      "runtime": "Node.js 22 Linux",
+      "database": "PostgreSQL 16",
+      "backendUnitTests": {
+        "tests": 203,
+        "passed": 203,
+        "failed": 0
+      },
+      "runs": [
+        {
+          "name": "Backend and Shared",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35375790683",
+          "conclusion": "success"
+        },
+        {
+          "name": "Civic Planning",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35375790684",
+          "conclusion": "success"
+        }
+      ],
+      "jobs": [
+        {
+          "name": "back-unit",
+          "conclusion": "success"
+        },
+        {
+          "name": "back-integration-postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "shared-data",
+          "conclusion": "success"
+        }
+      ],
+      "checks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks"
+    },
+    "pinnedProcessRevision": {
+      "status": "passed",
+      "validatedCodeCommit": "19e14690d5c2f29fc2ea0281ac688875a52f7d67",
+      "runtime": "Node.js 22 Linux",
+      "database": "PostgreSQL 16",
+      "backendUnitTests": {
+        "tests": 206,
+        "passed": 206,
+        "failed": 0
+      },
+      "runs": [
+        {
+          "name": "Backend and Shared",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35376153177",
+          "conclusion": "success"
+        },
+        {
+          "name": "Civic Planning",
+          "url": "https://github.com/stefancabral-oss/presidencia-duelo/actions/runs/35376153176",
+          "conclusion": "success"
+        }
+      ],
+      "jobs": [
+        {
+          "name": "back-unit",
+          "conclusion": "success"
+        },
+        {
+          "name": "back-integration-postgres",
+          "conclusion": "success"
+        },
+        {
+          "name": "shared-data",
+          "conclusion": "success"
+        }
+      ],
+      "checks": "https://github.com/stefancabral-oss/presidencia-duelo/pull/231/checks"
+    }
+  },
+  "acceptance": {
+    "human": "pending",
+    "legalValidity": "pending",
+    "apiTerms": "pending",
+    "databaseWritten": false,
+    "publicRoutesAdded": false,
+    "deployed": false,
+    "absentFromListLocatedInDetail": 4,
+    "ambiguousDetailHistories": 7,
+    "technicalChatAcceptance": {
+      "actor": "Stefan",
+      "recordedDate": "2026-09-18",
+      "text": "211 ok",
+      "scope": "Previous technical delivery; does not approve subsequent dossier or legal intervals"
+    }
+  },
+  "individualSourceReview": {
+    "command": "node back/scripts/civic-divulga-review.mjs <pinned-manifest> <new-review.json>",
+    "reviewId": "081e8e6eff4cf8b7f85ee0cc296e1a6a07da58c44ba2924899c551e1b9289b93",
+    "officialCandidacies": 37,
+    "inspectedCandidacies": 37,
+    "individualDetails": 95,
+    "roleCompleteObservations": 30,
+    "ambiguousHistories": 7,
+    "legalIntervalsProven": 0,
+    "originLocalUpdates": 95,
+    "explicitSubstitutions": 7,
+    "agreesWithPinnedList": 29,
+    "apiLicense": null,
+    "sourceAccessBasis": "Resolução TSE 23.609/2019, art. 74: public consultation; not a general API reuse license",
+    "publicProcessLookup": {
+      "status": "partial: new visual challenge requires intervention",
+      "actsRead": true,
+      "actsReadCount": 12,
+      "initialChallengesCompleted": true,
+      "authorizationReceived": {
+        "actor": "Stefan",
+        "text": "Sim",
+        "date": "2026-09-18"
+      },
+      "bypassed": false,
+      "temporaryUnavailabilityObserved": true,
+      "failedVisualChallengeAttempts": 3,
+      "interventionRequested": true
+    }
+  },
+  "reviewCorrections": {
+    "durableMinimizedExport": true,
+    "archivedReplayDoesNotRollback": true,
+    "verifiedHistoryRetainedWithPendingInterval": true,
+    "sameHostDeadPidLockRecovery": true,
+    "lastReconciledArchiveValidated": true
+  },
+  "mergeCompatibility": {
+    "main": "ffc38984f7d8b33647d3cfbcad3029fca2ec2e38",
+    "pr232": "e2716217d6c5a2993dd6fa21ec33de28634e4881",
+    "method": "git merge-tree --write-tree HEAD origin/feat/213-news-collection",
+    "conflicts": false
+  },
+  "processSourceReview": {
+    "evidenceId": "3d8d48bb1c8e2e9757d4769cc5214a3b2632ff126cbac995ae4759625124f9b0",
+    "documents": 12,
+    "candidaciesWithDocuments": 9,
+    "candidacies": 37,
+    "individualDetails": 95,
+    "legalIntervalsProven": 0,
+    "humanAcceptance": "pending",
+    "complete": false,
+    "source": "public PJe documents consulted via normal browser UI",
+    "artifact": "B02-process-review.json",
+    "rawDocumentsCommitted": false
+  }
+}

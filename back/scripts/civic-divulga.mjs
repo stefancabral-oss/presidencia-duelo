@@ -1,0 +1,14 @@
+import { readFile,writeFile } from 'node:fs/promises';
+import { resolve,dirname } from 'node:path';
+import { collectDivulgaPilot,divulgaRelationships } from '../src/civic-divulga.js';
+import { parseTseCsv } from '../src/civic-import.js';
+const [manifestArgument,outputArgument]=process.argv.slice(2);
+if(!manifestArgument||!outputArgument||process.argv.length!==4)throw new Error('Usage: node back/scripts/civic-divulga.mjs manifest.json new-relations.json');
+const manifestPath=resolve(manifestArgument),manifest=JSON.parse(await readFile(manifestPath,'utf8'));
+if(manifest.synthetic)throw new Error('Official relationship collection does not accept synthetic manifests');
+const collection=await collectDivulgaPilot({year:manifest.year,pilotUf:manifest.pilotUf,apiElectionKey:manifest.divulgaElectionKey});
+const candidates=parseTseCsv(await readFile(resolve(dirname(manifestPath),manifest.candidates.path)),{encoding:manifest.candidates.encoding});
+const relations=divulgaRelationships(collection,candidates,manifest.electionKeys);
+await writeFile(resolve(outputArgument),JSON.stringify(relations,null,2)+'\n',{flag:'wx'});
+await writeFile(resolve(outputArgument)+'.projection.json',JSON.stringify(collection,null,2)+'\n',{flag:'wx'});
+console.log(JSON.stringify({publication:'observation_only',sourceAtKnown:false,legalValidityInferred:false,scopes:collection.projections.map(p=>({jurisdiction:p.jurisdiction,officeCode:p.officeCode,observedApiHolders:p.holders.length,rawResponseSha256:p.rawResponseSha256}))},null,2));

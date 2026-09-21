@@ -1,0 +1,641 @@
+[
+  {
+    "electionKey": "6257",
+    "holderKey": "280002552484",
+    "members": [
+      {
+        "sourceKey": "280002552485"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+      "locator": "parent.id=280002552484; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.071Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6257",
+    "holderKey": "280002551975",
+    "members": [
+      {
+        "sourceKey": "280002551976"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+      "locator": "parent.id=280002551975; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.071Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6257",
+    "holderKey": "280002551547",
+    "members": [
+      {
+        "sourceKey": "280002551546"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+      "locator": "parent.id=280002551547; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.071Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6257",
+    "holderKey": "280002551544",
+    "members": [
+      {
+        "sourceKey": "280002551543"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+      "locator": "parent.id=280002551544; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.071Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6257",
+    "holderKey": "280002541457",
+    "members": [
+      {
+        "sourceKey": "280002541458"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+      "locator": "parent.id=280002541457; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.071Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6257",
+    "holderKey": "280002554479",
+    "members": [
+      {
+        "sourceKey": "280002554490"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+      "locator": "parent.id=280002554479; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.071Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6257",
+    "holderKey": "280002542548",
+    "members": [
+      {
+        "sourceKey": "280002542549"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+      "locator": "parent.id=280002542548; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.071Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6257",
+    "holderKey": "280002540694",
+    "members": [
+      {
+        "sourceKey": "280002540693"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+      "locator": "parent.id=280002540694; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.071Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6257",
+    "holderKey": "280002551932",
+    "members": [
+      {
+        "sourceKey": "280002551933"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+      "locator": "parent.id=280002551932; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.071Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6257",
+    "holderKey": "280002552487",
+    "members": [
+      {
+        "sourceKey": "280002552486"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+      "locator": "parent.id=280002552487; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.071Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6257",
+    "holderKey": "280002538811",
+    "members": [
+      {
+        "sourceKey": "280002538812"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+      "locator": "parent.id=280002538811; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.071Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6257",
+    "holderKey": "280002548139",
+    "members": [
+      {
+        "sourceKey": "280002548140"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+      "locator": "parent.id=280002548139; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.071Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6257",
+    "holderKey": "280002539826",
+    "members": [
+      {
+        "sourceKey": "280002539825"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/BR/20322002026/1/candidatoscomvicessuplentes",
+      "locator": "parent.id=280002539826; parent.vices[].sq_CANDIDATO; response sha256=813e5661b0e025be02b5a85ddb013937a4ad74503df36379d5e5c4b207247728",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.071Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002550913",
+    "members": [
+      {
+        "sourceKey": "250002550912"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/3/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002550913; parent.vices[].sq_CANDIDATO; response sha256=0ba30488007297b25a322b43d8b12fdecf2ece39fa5073485da1ce49d6da5cfd",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.093Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002549705",
+    "members": [
+      {
+        "sourceKey": "250002549704"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/3/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002549705; parent.vices[].sq_CANDIDATO; response sha256=0ba30488007297b25a322b43d8b12fdecf2ece39fa5073485da1ce49d6da5cfd",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.093Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002553062",
+    "members": [
+      {
+        "sourceKey": "250002553061"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/3/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002553062; parent.vices[].sq_CANDIDATO; response sha256=0ba30488007297b25a322b43d8b12fdecf2ece39fa5073485da1ce49d6da5cfd",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.093Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002541303",
+    "members": [
+      {
+        "sourceKey": "250002541302"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/3/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002541303; parent.vices[].sq_CANDIDATO; response sha256=0ba30488007297b25a322b43d8b12fdecf2ece39fa5073485da1ce49d6da5cfd",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.093Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002544912",
+    "members": [
+      {
+        "sourceKey": "250002552372"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/3/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002544912; parent.vices[].sq_CANDIDATO; response sha256=0ba30488007297b25a322b43d8b12fdecf2ece39fa5073485da1ce49d6da5cfd",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.093Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002541308",
+    "members": [
+      {
+        "sourceKey": "250002541309"
+      },
+      {
+        "sourceKey": "250002541313"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002541308; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002541362",
+    "members": [
+      {
+        "sourceKey": "250002541363"
+      },
+      {
+        "sourceKey": "250002541361"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002541362; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002552955",
+    "members": [
+      {
+        "sourceKey": "250002552954"
+      },
+      {
+        "sourceKey": "250002552956"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002552955; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002544673",
+    "members": [
+      {
+        "sourceKey": "250002554098"
+      },
+      {
+        "sourceKey": "250002544672"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002544673; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002541312",
+    "members": [
+      {
+        "sourceKey": "250002541311"
+      },
+      {
+        "sourceKey": "250002541310"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002541312; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002554075",
+    "members": [
+      {
+        "sourceKey": "250002554136"
+      },
+      {
+        "sourceKey": "250002554143"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002554075; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002544516",
+    "members": [
+      {
+        "sourceKey": "250002544518"
+      },
+      {
+        "sourceKey": "250002544515"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002544516; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002544514",
+    "members": [
+      {
+        "sourceKey": "250002544513"
+      },
+      {
+        "sourceKey": "250002544517"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002544514; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002551501",
+    "members": [
+      {
+        "sourceKey": "250002551504"
+      },
+      {
+        "sourceKey": "250002551506"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002551501; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002552153",
+    "members": [
+      {
+        "sourceKey": "250002552151"
+      },
+      {
+        "sourceKey": "250002552152"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002552153; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002532794",
+    "members": [
+      {
+        "sourceKey": "250002550682"
+      },
+      {
+        "sourceKey": "250002532792"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002532794; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002551502",
+    "members": [
+      {
+        "sourceKey": "250002551505"
+      },
+      {
+        "sourceKey": "250002551503"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002551502; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002552369",
+    "members": [
+      {
+        "sourceKey": "250002552371"
+      },
+      {
+        "sourceKey": "250002552370"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002552369; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002541365",
+    "members": [
+      {
+        "sourceKey": "250002541366"
+      },
+      {
+        "sourceKey": "250002541364"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002541365; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  },
+  {
+    "electionKey": "6259",
+    "holderKey": "250002553252",
+    "members": [
+      {
+        "sourceKey": "250002553251"
+      },
+      {
+        "sourceKey": "250002553250"
+      }
+    ],
+    "validFrom": null,
+    "validTo": null,
+    "evidence": {
+      "url": "https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura/listar/2026/SP/20322002026/5/candidatoscomvicessuplentes",
+      "locator": "parent.id=250002553252; parent.vices[].sq_CANDIDATO; response sha256=71da1f53e64c494f72f03211e9701438c5934861a6e1ee822d43914c6ec0b8bc",
+      "sourceAt": null,
+      "fetchedAt": "2026-09-18T01:32:31.135Z",
+      "license": null
+    }
+  }
+]

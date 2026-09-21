@@ -1,0 +1,14 @@
+import { readFile } from 'node:fs/promises';
+import { resolve, dirname } from 'node:path';
+import { sha256 } from '../src/civic-import.js';
+import { saveCivicImport } from '../src/civic-import-store.js';
+const [deliveryArgument, directoryArgument] = process.argv.slice(2);
+if (!deliveryArgument || !directoryArgument || process.argv.length !== 4) throw new Error('Usage: node back/scripts/civic-import-snapshot.mjs delivery-manifest.json staging-directory');
+const manifestPath = resolve(deliveryArgument), delivery = JSON.parse(await readFile(manifestPath,'utf8'));
+if (delivery.version !== 1 || typeof delivery.export?.path !== 'string' || !/^[a-f0-9]{64}$/.test(delivery.export.sha256)) throw new Error('Snapshot delivery manifest');
+const bytes = await readFile(resolve(dirname(manifestPath),delivery.export.path));
+if (bytes.length > 16 * 1024 * 1024 || sha256(bytes) !== delivery.export.sha256) throw new Error('Snapshot delivery checksum/limit');
+const snapshot = JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
+if (snapshot.batchId !== delivery.export.batchId || snapshot.report.transformedRecordsSha256 !== delivery.export.transformedRecordsSha256) throw new Error('Snapshot delivery identity');
+const result = await saveCivicImport(resolve(directoryArgument),snapshot);
+console.log(JSON.stringify({batchId:result.batch.batchId,latestBatch:result.state.latestBatch,repeated:result.repeated,stateChanged:result.stateChanged,historicalReplay:result.historicalReplay,publication:'staging_only',synthetic:result.batch.dataset.synthetic,complete:result.batch.report.complete,accounted:result.batch.report.accounted},null,2));

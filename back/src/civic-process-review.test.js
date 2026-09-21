@@ -1,0 +1,145 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile, writeFile, mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import { buildCivicProcessReview } from './civic-process-review.js';
+
+const detailsPath = new URL('../../stages/17_candidate_news/output/B02-case-review.json',import.meta.url);
+const evidencePath = new URL('../../stages/17_candidate_news/output/B02-process-evidence.json',import.meta.url);
+const deliveryPath = new URL('../../stages/17_candidate_news/output/B02-pilot-delivery.json',import.meta.url);
+const batchPath = new URL('../../stages/17_candidate_news/output/B02-pilot-export.json',import.meta.url);
+const details = JSON.parse(await readFile(detailsPath,'utf8'));
+const evidence = JSON.parse(await readFile(evidencePath,'utf8'));
+const batch = JSON.parse(await readFile(batchPath,'utf8'));
+const clone = value => structuredClone(value);
+const build = (details,evidence) => buildCivicProcessReview(details,evidence,batch);
+
+test('real documentary review accounts for the entire pilot without promoting legal intervals',()=>{
+  const output = build(details,evidence);
+  assert.equal(output.totals.candidacies,37);
+  assert.equal(output.totals.individualDetails,95);
+  assert.deepEqual(output.cases.map(c=>c.candidacyId),details.review.cases.map(c=>c.candidacyId));
+  assert.ok(output.cases.find(c=>c.sourceKey==='250002554075').documentIds.includes('guto-collective-decision'));
+  assert.ok(output.cases.find(c=>c.sourceKey==='250002544912').documentIds.includes('vivian-substitute-vice-decision'));
+  assert.equal(output.complete,false);
+  assert.equal(output.legalIntervalsProven,0);
+  assert.equal(output.humanAcceptance,'pending');
+  assert.ok(output.cases.every(c=>c.legalValidity.validFrom===null && c.legalValidity.inferred===false));
+  assert.equal(Object.hasOwn(output,'dataset'),false);
+  assert.equal(Object.hasOwn(output,'tickets'),false);
+});
+
+test('document evidence cannot be rebound to another batch or modified detail collection',()=>{
+  const other = clone(evidence); other.batchId='a'.repeat(64);
+  assert.throws(()=>build(details,other),/identity/);
+  const changed = clone(details); changed.collection.projections[0].registrationProcess='06030244720266260000';
+  assert.throws(()=>build(changed,evidence),/fingerprint/);
+});
+
+test('an official document needs a process belonging to at least one named source identity',()=>{
+  const bad = clone(evidence); bad.documents[0].sourceKeys=['250002544516'];
+  assert.throws(()=>build(details,bad),/process binding/);
+  bad.documents[0].sourceKeys=['999999999999'];
+  assert.throws(()=>build(details,bad),/source coverage/);
+});
+
+test('foreign jurisdictions and duplicate or absent source IDs fail closed',()=>{
+  const bad=clone(evidence); bad.documents[0].sourceKeys.push('280002548139');
+  assert.throws(()=>build(details,bad),/process binding/);
+  bad.documents[0].sourceKeys=['250002553928','250002553928'];
+  assert.throws(()=>build(details,bad),/source coverage/);
+});
+
+test('day-only facts stay day-only; impossible and future dates are rejected',()=>{
+  const good=clone(evidence); good.documents[0].datedFacts=[{event:'regional_judgment',date:'2026-09-08',precision:'day'}];
+  const output=build(details,good);
+  assert.deepEqual(output.documents[0].datedFacts,good.documents[0].datedFacts);
+  for(const date of ['2026-02-30','2099-09-08']) {
+    good.documents[0].datedFacts[0].date=date;
+    assert.throws(()=>build(details,good),/dated fact/);
+  }
+});
+
+test('personal identifiers, arbitrary DTO fields and extra data cannot enter the projection',()=>{
+  for(const summary of ['CPF 123.456.789-00','Contato pessoa@example.org','12345678901']) {
+    const bad=clone(evidence); bad.documents[0].summary=summary;
+    assert.throws(()=>build(details,bad),/document facts/);
+  }
+  const bad=clone(evidence); bad.documents[0].cpf='12345678901';
+  assert.throws(()=>build(details,bad),/fields/);
+});
+
+test('human acceptance, assumed timezone and invented legal intervals are refused',()=>{
+  const accepted=clone(evidence); accepted.humanAcceptance='approved';
+  assert.throws(()=>build(details,accepted),/boundary/);
+  const interval=clone(evidence); interval.documents[0].legalInterval={validFrom:'2026-09-08T18:00:46Z'};
+  assert.throws(()=>build(details,interval),/unverified legal/);
+  interval.documents[0].legalInterval=null; interval.documents[0].signedAt.timezone='UTC';
+  assert.throws(()=>build(details,interval),/document facts/);
+});
+
+test('only the observed official HTML document endpoint is accepted',()=>{
+  for(const url of ['https://example.org/documento','https://consultaunificadapje.tse.jus.br.evil.test/consulta-publica-unificada/documento','http://consultaunificadapje.tse.jus.br/consulta-publica-unificada/documento',evidence.documents[0].url+'&token=unnecessary']) {
+    const bad=clone(evidence); bad.documents[0].url=url;
+    assert.throws(()=>build(details,bad),/URL/);
+  }
+});
+
+test('identity ignores collection time but changes when a documented fact changes',()=>{
+  const later=clone(evidence); later.recordedAt='2026-09-19T00:00:00Z';
+  later.documents.forEach(d=>d.consultedAt='2026-09-19T00:00:00Z');
+  assert.equal(build(details,later).evidenceId,build(details,evidence).evidenceId);
+  later.documents[0].summary+=' Revisão factual posterior.';
+  assert.notEqual(build(details,later).evidenceId,build(details,evidence).evidenceId);
+});
+
+test('omitting a holder or changing an election identity cannot yield a partial review',()=>{
+  const missing=clone(details); missing.review.cases.pop();
+  assert.throws(()=>build(missing,evidence),/pinned candidacy coverage/);
+  const changed=clone(details); changed.review.cases[0].candidacyId=changed.review.cases[0].candidacyId.replace('6259','6257');
+  assert.throws(()=>build(changed,evidence),/pinned candidacy coverage/);
+});
+
+test('modified snapshot records fail the transformation fingerprint before document binding',()=>{
+  const changed=clone(batch); changed.dataset.records.candidacies[0].ballotName='Nome alterado';
+  assert.throws(()=>buildCivicProcessReview(details,evidence,changed),/pinned batch fingerprint/);
+});
+
+test('the CLI refuses a delivery with the wrong export checksum and creates no review',async()=>{
+  const folder=await mkdtemp(join(tmpdir(),'civic-process-review-'));
+  try {
+    const delivery=JSON.parse(await readFile(deliveryPath,'utf8'));
+    delivery.export.path=fileURLToPath(batchPath);
+    delivery.export.sha256='a'.repeat(64);
+    const manifest=join(folder,'delivery.json'), output=join(folder,'review.json');
+    await writeFile(manifest,JSON.stringify(delivery));
+    const result=spawnSync(process.execPath,[fileURLToPath(new URL('../scripts/civic-process-review.mjs',import.meta.url)),manifest,fileURLToPath(detailsPath),fileURLToPath(evidencePath),output],{encoding:'utf8'});
+    assert.notEqual(result.status,0);
+    assert.match(result.stderr,/delivery checksum/);
+    await assert.rejects(readFile(output),{code:'ENOENT'});
+  } finally {
+    assert.ok(resolve(folder).startsWith(resolve(tmpdir())+sep+'civic-process-review-'));
+    await rm(folder,{recursive:true,force:true});
+  }
+});
+
+test('real CLI exports immutable review and refuses overwriting an earlier evidence pack',async()=>{
+  const folder=await mkdtemp(join(tmpdir(),'civic-process-review-'));
+  const output=join(folder,'review.json');
+  const args=[fileURLToPath(new URL('../scripts/civic-process-review.mjs',import.meta.url)),fileURLToPath(deliveryPath),fileURLToPath(detailsPath),fileURLToPath(evidencePath),output];
+  try {
+    const first=spawnSync(process.execPath,args,{encoding:'utf8'});
+    assert.equal(first.status,0,first.stderr);
+    const original=await readFile(output,'utf8');
+    assert.equal(JSON.parse(original).complete,false);
+    const repeat=spawnSync(process.execPath,args,{encoding:'utf8'});
+    assert.notEqual(repeat.status,0);
+    assert.equal(await readFile(output,'utf8'),original);
+  } finally {
+    assert.ok(resolve(folder).startsWith(resolve(tmpdir())+sep+'civic-process-review-'));
+    await rm(folder,{recursive:true,force:true});
+  }
+});

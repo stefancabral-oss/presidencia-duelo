@@ -1,0 +1,148 @@
+/* Áreas cívicas (FRONT · F01 · #217). Estilos isolados sob `.civic-*`.
+   Hierarquia: shell malaquita existente; superfícies de leitura em porcelana
+   (`--paper`) para texto factual; sem ouro de mérito, sem acabamentos de coleção,
+   sem cores por partido ou orientação. Exposição equivalente: cartões com os
+   mesmos limites, mesmos slots de informação e mesma ordem do contrato. */
+
+.civic-screen { width: min(100%, 980px); gap: 18px; }
+.civic-header { display: grid; gap: 6px; }
+.civic-title { margin: 0; }
+.civic-title:focus-visible { outline: 2px solid var(--gold); outline-offset: 6px; border-radius: 6px; }
+.civic-lead { margin: 0; }
+
+.civic-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.civic-button { min-height: 44px; padding: 10px 16px; border: 1px solid rgb(232 206 126 / 34%); border-radius: 14px; background: linear-gradient(180deg, rgb(232 206 126 / 16%), rgb(232 206 126 / 6%)); color: #f4ecd6; font-weight: 800; letter-spacing: .02em; cursor: pointer; }
+.civic-button.is-secondary { background: rgb(0 35 28 / 60%); color: #d9e2dd; border-color: rgb(175 190 183 / 30%); }
+.civic-button:disabled, .civic-button[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
+.civic-button:focus-visible, .civic-link:focus-visible, .civic-filters :is(input, select):focus-visible, .civic-compare-toggle input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.civic-link { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.civic-link.is-unavailable { text-decoration: none; opacity: .8; }
+
+/* Estados */
+.civic-state { display: grid; gap: 10px; }
+.civic-state-status { margin: 0; color: var(--muted); font-weight: 700; }
+.civic-state-status:empty { display: none; }
+.civic-screen[aria-busy="true"] .civic-results { opacity: .6; transition: opacity 160ms ease; }
+.civic-state-error { display: grid; gap: 10px; padding: 16px; border: 1px solid rgb(255 141 132 / 40%); border-radius: 16px; background: rgb(60 20 16 / 60%); }
+.civic-state-error p { margin: 0; line-height: 1.45; }
+.civic-state-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.civic-state-empty { margin: 0; padding: 16px; border: 1px dashed rgb(175 190 183 / 40%); border-radius: 16px; color: var(--muted); }
+.civic-notices { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.civic-notice { padding: 10px 12px; border-left: 3px solid rgb(175 190 183 / 60%); border-radius: 0 10px 10px 0; background: rgb(0 35 28 / 55%); color: #e6ece9; font-size: .9rem; line-height: 1.4; }
+.civic-notice[data-tone="warning"] { border-left-color: var(--negative); }
+.civic-notice[data-tone="stale"] { border-left-color: #d9b56a; }
+.civic-notice[data-tone="pending"] { border-left-color: #8fb2c9; }
+.civic-notice[data-tone="corrected"] { border-left-color: #7fc9a6; }
+.civic-notice[data-tone="withdrawn"], .civic-notice[data-tone="restricted"] { border-left-color: var(--negative); }
+
+/* Filtros */
+.civic-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: rgb(0 35 28 / 62%); }
+.civic-field { display: grid; gap: 4px; }
+.civic-field label { color: var(--muted); font-size: .72rem; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
+.civic-filters :is(input, select) { min-height: 44px; padding: 8px 10px; border: 1px solid rgb(175 190 183 / 34%); border-radius: 10px; background: var(--paper); color: var(--ink); font: inherit; }
+.civic-filter-actions { display: flex; align-items: end; gap: 8px; grid-column: 1 / -1; }
+.civic-coverage { margin: 0; color: var(--muted); font-size: .9rem; }
+.civic-coverage[data-state="partial"], .civic-coverage[data-state="unreconciled"] { color: #f0dfb0; }
+
+/* Cartões de candidatura: superfície porcelana, mesma altura mínima para todos */
+.civic-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.civic-card { display: grid; grid-template-columns: 84px 1fr; gap: 12px; min-height: 176px; padding: 12px; border: 1px solid rgb(19 35 29 / 12%); border-radius: 18px; background: var(--paper); color: var(--ink); box-shadow: 0 10px 24px rgb(0 13 9 / 18%); }
+.civic-card-body { display: grid; align-content: start; gap: 4px; min-width: 0; }
+.civic-card-title { margin: 0; font-size: 1.05rem; line-height: 1.2; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.civic-card-title a { color: inherit; }
+.civic-card-meta, .civic-card-source, .civic-status { margin: 0; font-size: .82rem; line-height: 1.35; color: #3c4a44; }
+.civic-status strong { color: var(--ink); }
+.civic-compare-toggle { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; font-size: .82rem; font-weight: 700; }
+.civic-compare-toggle input { width: 20px; height: 20px; margin: 0; }
+
+.civic-photo { display: grid; gap: 4px; margin: 0; }
+.civic-photo.is-card { width: 84px; }
+.civic-photo.is-profile { width: min(100%, 220px); }
+.civic-photo img, .civic-photo-placeholder { display: grid; place-items: center; width: 100%; aspect-ratio: 3 / 4; border-radius: 12px; object-fit: cover; background: linear-gradient(160deg, #dfe6e2, #c7d3cd); color: #3c4a44; font-size: 1.4rem; font-weight: 900; letter-spacing: .04em; }
+.civic-photo-caption { font-size: .68rem; line-height: 1.3; color: #55635d; }
+.civic-photo[data-photo-state="pending"] .civic-photo-placeholder { background: repeating-linear-gradient(135deg, #dfe6e2 0 8px, #d2dbd6 8px 16px); }
+
+/* Ficha */
+.civic-profile { display: grid; gap: 16px; }
+.civic-profile-top { display: grid; grid-template-columns: minmax(0, 220px) 1fr; gap: 16px; padding: 16px; border-radius: 22px; background: var(--paper); color: var(--ink); }
+.civic-profile-top h2 { margin: 0 0 4px; font-size: 1.5rem; letter-spacing: -.03em; }
+.civic-profile-top p { margin: 0 0 6px; line-height: 1.4; }
+.civic-section { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: rgb(0 35 28 / 58%); }
+.civic-section > h3 { margin: 0; font-size: 1.05rem; }
+.civic-section-note { margin: 0; color: var(--muted); font-size: .9rem; }
+.civic-ticket { display: grid; gap: 8px; padding: 12px; border-radius: 14px; background: rgb(247 244 236 / 8%); }
+.civic-ticket[data-current="true"] { outline: 1px solid rgb(232 206 126 / 30%); }
+.civic-ticket-title { margin: 0; font-size: .95rem; }
+.civic-ticket-period { color: var(--muted); font-weight: 500; }
+.civic-ticket-completeness, .civic-ticket-source { margin: 0; font-size: .85rem; color: var(--muted); }
+.civic-members { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.civic-member { display: grid; grid-template-columns: 34px auto 1fr; align-items: center; gap: 8px; }
+.civic-member-avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #dfe6e2; color: #3c4a44; font-size: .75rem; font-weight: 900; }
+.civic-member-role { color: var(--muted); font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.civic-member.is-gap .civic-member-name { color: var(--muted); font-style: italic; }
+
+/* Afirmações: natureza por rótulo textual, não por cor de mérito */
+.civic-claims { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.civic-claim { display: grid; gap: 6px; padding: 12px; border-radius: 14px; background: var(--paper); color: var(--ink); }
+.civic-claim-labels, .civic-slot-labels { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.civic-tag { display: inline-block; padding: 2px 8px; border: 1px solid rgb(19 35 29 / 18%); border-radius: 999px; font-size: .7rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.civic-tag.is-nature { border-style: dashed; }
+.civic-tag.is-theme { text-transform: none; letter-spacing: 0; }
+.civic-claim-text { margin: 0; line-height: 1.45; }
+.civic-claim-source { margin: 0; font-size: .8rem; color: #3c4a44; }
+.civic-source-kind { font-weight: 800; }
+
+/* Comparação: colunas equivalentes, mesma grade de temas */
+.civic-compare-bar { position: sticky; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid rgb(232 206 126 / 30%); border-radius: 16px; background: rgb(1 30 23 / 94%); backdrop-filter: blur(12px); }
+.civic-compare-count { font-weight: 800; }
+.civic-compare-grid { display: grid; gap: 12px; }
+.civic-compare-columns { display: grid; grid-template-columns: repeat(var(--civic-columns, 2), minmax(0, 1fr)); gap: 12px; }
+.civic-compare-theme { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 16px; background: rgb(0 35 28 / 58%); }
+.civic-compare-theme > h3 { margin: 0; font-size: 1rem; }
+.civic-compare-cell { display: grid; gap: 8px; min-height: 56px; }
+.civic-compare-cell .civic-claims { gap: 8px; }
+.civic-compare-empty { margin: 0; padding: 10px; border: 1px dashed rgb(175 190 183 / 40%); border-radius: 12px; color: var(--muted); font-size: .85rem; }
+
+/* Notícias */
+.civic-events { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.civic-event-card { display: grid; gap: 6px; padding: 14px; border-radius: 18px; background: var(--paper); color: var(--ink); }
+.civic-event-title { margin: 0; font-size: 1.1rem; letter-spacing: -.02em; }
+.civic-event-title a { color: inherit; }
+.civic-event-summary, .civic-event-meta, .civic-event-slots { margin: 0; line-height: 1.4; }
+.civic-event-meta, .civic-event-slots { font-size: .82rem; color: #3c4a44; }
+.civic-slot-dots { display: flex; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.civic-slot-dots li { padding: 2px 8px; border: 1px solid rgb(19 35 29 / 18%); border-radius: 999px; font-size: .68rem; font-weight: 800; }
+.civic-slot-dots li:not([data-state="present"]) { border-style: dashed; color: #55635d; }
+.civic-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.civic-slot { display: grid; gap: 8px; min-height: 160px; padding: 14px; border-radius: 16px; background: var(--paper); color: var(--ink); }
+.civic-slot:not([data-state="present"]) { background: repeating-linear-gradient(135deg, rgb(247 244 236 / 92%) 0 12px, rgb(232 236 233 / 92%) 12px 24px); }
+.civic-slot p, .civic-slot h4 { margin: 0; line-height: 1.4; }
+.civic-slot-title { font-size: .85rem; }
+.civic-slot-state { color: #3c4a44; }
+.civic-slot-headline { font-size: 1rem; }
+.civic-slot-headline a { color: inherit; }
+.civic-slot-outlet, .civic-slot-note, .civic-slot-relevance, .civic-slot-method, .civic-slot-checked, .civic-slot-gap { font-size: .82rem; color: #3c4a44; }
+.civic-slot-gap { font-style: italic; }
+
+.civic-history { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: .85rem; color: var(--muted); }
+.civic-footer-note { margin: 0; color: var(--muted); font-size: .8rem; line-height: 1.4; }
+
+/* Navegação proposta (hipótese a validar): Início · Jogar · Candidatos · Notícias · Mais */
+.nav-button[data-civic-area="directory"]::before { content: "▤"; }
+.nav-button[data-civic-area="news"]::before { content: "▣"; }
+.nav-button[data-nav-more]::before { content: "⋯"; }
+.nav-more-sheet { position: fixed; left: 50%; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 21; width: min(calc(100% - (2 * var(--shell-gutter))), 520px); transform: translateX(-50%); display: grid; gap: 6px; padding: 10px; border: 1px solid rgb(232 206 126 / 26%); border-radius: 18px; background: rgb(1 30 23 / 96%); box-shadow: 0 -10px 30px rgb(0 13 9 / 30%); }
+.nav-more-sheet .nav-button { min-height: 48px; grid-auto-flow: column; justify-content: start; gap: 10px; padding-inline: 12px; font-size: .74rem; }
+.nav-more-sheet .nav-button::before { font-size: 1rem; }
+
+@media (max-width: 640px) {
+  .civic-card { grid-template-columns: 72px 1fr; min-height: 168px; }
+  .civic-photo.is-card { width: 72px; }
+  .civic-profile-top { grid-template-columns: 1fr; }
+  .civic-compare-columns { grid-template-columns: 1fr; }
+  .civic-compare-columns[data-columns="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .civic-screen[aria-busy="true"] .civic-results { transition: none; }
+}

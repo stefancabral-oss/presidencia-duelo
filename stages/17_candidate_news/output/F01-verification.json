@@ -166,5 +166,16 @@
       "observation": "Stefan aprovou o gate humano de F01 em 22/09/2026, autorizando o merge da cadeia #237→#238→#233. Registro é a decisão de produto/editorial do responsável; não declara que a medição formal de zoom 200% ou leitores de tela (NVDA/VoiceOver) tenha ocorrido — essa evidência específica continua em aberto."
     }
   },
-  "rollback": "Reverter o commit remove telas, componentes e CSS; nenhuma dependência do jogo."
+  "rollback": "Reverter o commit remove telas, componentes e CSS; nenhuma dependência do jogo.",
+  "styleAdjustment": {
+    "date": "2026-09-22",
+    "reason": "Stefan: \"acho as letras muito grandes e nada de minimalista\"",
+    "file": "app/src/civic/ui/civic.css",
+    "pullRequest": "https://github.com/stefancabral-oss/presidencia-duelo/pull/240",
+    "mergeCommit": "55b21c2",
+    "mergedBy": "Stefan Cabral",
+    "mergeMethod": "squash",
+    "localTests": { "unitTests": "199/199", "build": "passed", "e2e": "13/13 civic-navigation.mjs (chromium)" },
+    "ci": ["validate: success", "browser-smoke (chromium): success", "browser-smoke (webkit): success"]
+  }
 }

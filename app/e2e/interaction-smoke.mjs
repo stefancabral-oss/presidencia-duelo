@@ -153,6 +153,7 @@ let failNextLogout = false;
 let failNextDailySession = false;
 let holdNextSuccessfulRoundVote = false;
 let successfulRoundVotes = 0;
+let successfulGoogleLogins = 0;
 page.on("pageerror", (error) => pageErrors.push(error.message));
 
 await page.route("https://accounts.google.com/gsi/client", (route) => route.fulfill({
@@ -183,7 +184,9 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
       await route.fulfill({ status: 503, json: { error: "falha passageira de login" } });
       return;
     }
-    body = { sessionToken: `pms_${"s".repeat(43)}`, account: { displayName: "Bia", avatarUrl: "" }, player: { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking(), account: { displayName: "Bia", avatarUrl: "" } } };
+    successfulGoogleLogins += 1;
+    body = { sessionToken: `pms_${"s".repeat(43)}`, account: { displayName: "Bia", avatarUrl: "" }, player: { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking(), account: { displayName: "Bia", avatarUrl: "" } },
+      merge: successfulGoogleLogins > 1 ? { status: "combined", anonymousChoices: 1, activeDaily: "anonymous", dailyConflict: true } : null };
   }
   else if (path === "/api/auth/logout" && request.method() === "POST") {
     if (failNextLogout) {
@@ -347,6 +350,7 @@ try {
     failNextDailySession = true;
     await page.getByRole("button", { name: "Continuar com Google" }).click();
     await page.getByRole("heading", { name: "Tudo certo, Bia!" }).waitFor();
+    await page.locator(".auth-config-note[role=status]", { hasText: /Suas 1 escolhas recentes foram reunidas ao histórico.*sessão anônima recente continua ativa/i }).waitFor();
     await page.getByRole("button", { name: "Voltar ao jogo" }).click();
     await page.getByRole("heading", { name: "Não conseguimos atualizar a rodada." }).waitFor();
     if (!await page.getByRole("button", { name: "Abrir sua conta" }).isVisible()) {

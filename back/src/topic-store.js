@@ -1057,11 +1057,9 @@ async function combineGoogleHistory(client, { accountPlayerId, anonymousPlayerId
       rating=player_stats.rating+EXCLUDED.rating-1000,
       wins=player_stats.wins+EXCLUDED.wins,
       losses=player_stats.losses+EXCLUDED.losses`, [activeId, historicalId]);
-  await client.query(`INSERT INTO abuse_quota_counters (scope,subject_hash,window_start,used)
-    SELECT scope,$1,window_start,used FROM abuse_quota_counters
-    WHERE subject_hash=$2 AND scope LIKE 'player-%'
-    ON CONFLICT (scope,subject_hash,window_start) DO UPDATE SET
-      used=abuse_quota_counters.used+EXCLUDED.used,updated_at=now()`, [activeId, historicalId]);
+  // A cota pertence à origem que efetuou cada escolha. Os contadores antigos
+  // seguem auditáveis nessa origem; somá-los ao dono da sessão diária ativa
+  // impediria completar seus dez slots quando as duas partidas jogaram hoje.
   await client.query(`INSERT INTO player_chromas (player_id,chroma_id,quantity,first_acquired_at,last_acquired_at)
     SELECT $1,chroma_id,quantity,first_acquired_at,last_acquired_at FROM player_chromas WHERE player_id=$2
     ON CONFLICT (player_id,chroma_id) DO UPDATE SET
@@ -2591,7 +2589,7 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
             AND prediction.slot = answer.slot
            WHERE answer.player_id IN (SELECT $1::uuid UNION ALL SELECT source_player_id FROM player_history_links WHERE player_id=$1)
              AND answer.edition_id = ANY($2::text[])
-           ORDER BY answer.edition_id, answer.slot`,
+           ORDER BY answer.edition_id, answer.player_id, answer.slot`,
           [playerId, editionIds],
         );
         const rowsByEdition = new Map();
@@ -2660,6 +2658,13 @@ export function createTopicStore(connectionString = process.env.DATABASE_URL, {
           };
         })).sort((left, right) => right.edition.date.localeCompare(left.edition.date)
           || (left.historyKind === "current" ? -1 : right.historyKind === "current" ? 1 : 0));
+        let priorEditionId = null;
+        let historyOrdinal = 0;
+        for (const session of sessions) {
+          if (session.edition.id !== priorEditionId) historyOrdinal = 0;
+          session.historyOrdinal = historyOrdinal++;
+          priorEditionId = session.edition.id;
+        }
         await reader.query("COMMIT");
         return {
           baselinePercent: DAILY_PREDICTION_BASELINE_PERCENT,

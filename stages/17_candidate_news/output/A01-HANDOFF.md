@@ -25,6 +25,10 @@ Responsável de produto valida a organização da navegação e o retorno à rod
 
 Desligar as flags no servidor restaura a barra atual sem deploy de código. Reverter o commit remove o shell e os hooks; não há alteração de banco, service worker, manifest ou deploy.
 
-## CI da PR #233
+## CI da árvore completa
 
 Head documental `ccb74d5`: UI Interaction Smoke aprovado em Chromium e WebKit (inclui `civic-navigation.mjs`), Design Validator e Civic Planning aprovados. Backend/Shared não dispara porque a PR não altera `back/` nem `shared/`. Registro posterior só de evidência; nenhum gate humano foi aprovado.
+
+## Divisão em PR própria — 22/09/2026
+
+A pedido de Stefan, a PR única #233 foi dividida em três PRs empilhadas por unidade. A PR #233 foi reaproveitada para esta unidade (A01): base atualizada de `main` para a branch de F01, mostrando só o diff de A01 e da documentação (`03d9fe3`, `ccb74d5`, `d5083bb`). É a última da cadeia e a única que fecha a árvore completa e passa CI verde, porque A01 integra F01 ([PR #238](https://github.com/stefancabral-oss/presidencia-duelo/pull/238)) e A02 ([PR #237](https://github.com/stefancabral-oss/presidencia-duelo/pull/237)). Ordem de merge: #237 → #238 → #233. Nenhum código foi alterado nesta divisão, só a estrutura de PRs.

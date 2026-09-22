@@ -24,6 +24,10 @@ Produto valida a proposta de navegação e a hierarquia; editorial valida lingua
 
 Reverter o commit remove telas, componentes, CSS e capturas; nenhuma dependência do jogo, do banco ou do deploy.
 
-## CI da PR #233
+## CI da árvore completa
 
 Head documental `ccb74d5`: UI Interaction Smoke aprovado em Chromium e WebKit (inclui `civic-navigation.mjs`), Design Validator e Civic Planning aprovados. Backend/Shared não dispara porque a PR não altera `back/` nem `shared/`. Registro posterior só de evidência; nenhum gate humano foi aprovado.
+
+## Divisão em PR própria — 22/09/2026
+
+A pedido de Stefan, a PR única #233 foi dividida em três PRs empilhadas por unidade. Esta unidade (F01) passou a ter [PR #238](https://github.com/stefancabral-oss/presidencia-duelo/pull/238), base na branch de A02, somando os commits `1083e74`+`e56c988`. F01 e A01 têm import cruzado (`screens.js` usa `router.js` de A01); por isso a PR #238 fica com CI vermelho isolada e só fecha verde somada à PR seguinte ([#233](https://github.com/stefancabral-oss/presidencia-duelo/pull/233) A01). A unidade A02 está em [PR #237](https://github.com/stefancabral-oss/presidencia-duelo/pull/237). Ordem de merge: #237 → #238 → #233. Nenhum código foi alterado nesta divisão, só a estrutura de PRs.

@@ -23,6 +23,10 @@ Produto revisa textos e recuperação de erro; responsável por privacidade conf
 
 Módulos isolados em `app/src/civic/`; reverter o commit não afeta jogo, banco ou storage do jogador. `clear()` remove a única chave gravada.
 
-## CI da PR #233
+## CI da árvore completa
 
 Head documental `ccb74d5`: UI Interaction Smoke aprovado em Chromium e WebKit (inclui `civic-navigation.mjs`), Design Validator e Civic Planning aprovados. Backend/Shared não dispara porque a PR não altera `back/` nem `shared/`. Registro posterior só de evidência; nenhum gate humano foi aprovado.
+
+## Divisão em PR própria — 22/09/2026
+
+A pedido de Stefan, a PR única #233 foi dividida em três PRs empilhadas por unidade. Esta unidade (A02) passou a ter [PR #237](https://github.com/stefancabral-oss/presidencia-duelo/pull/237), base `main`, contendo só o commit `1083e74`. F01 e A01 têm import cruzado com A02 (`view-models.js` usa `router.js` de A01); por isso a PR #237 fica com CI vermelho isolada e só fecha verde somada às PRs seguintes ([#238](https://github.com/stefancabral-oss/presidencia-duelo/pull/238) F01 e [#233](https://github.com/stefancabral-oss/presidencia-duelo/pull/233) A01). Ordem de merge: #237 → #238 → #233. Nenhum código foi alterado nesta divisão, só a estrutura de PRs.

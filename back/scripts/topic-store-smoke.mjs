@@ -1322,6 +1322,13 @@ assert.equal(freeCombined.player.duels, 21);
 assert.equal((await dailyStore.dailySession(freeCombined.sessionToken, "eleicoes-2026")).progress.answered, 10);
 assert.equal((await dailyStore.playerRanking(oldAccount.sessionToken, "eleicoes-2026")).duels, 21);
 await assert.rejects(dailyStore.playerRanking(freeSource.recoveryKey, "eleicoes-2026"), /expirada/);
+const reopenedMergedStore = createTopicStore(connectionString, {
+  clock: () => dailyNow, candidateRegistry: mutableCandidateRegistry,
+});
+await reopenedMergedStore.init();
+assert.equal((await reopenedMergedStore.playerRanking(freeCombined.sessionToken, "eleicoes-2026")).duels, 21);
+assert.equal((await reopenedMergedStore.dailySession(freeCombined.sessionToken, "eleicoes-2026")).progress.answered, 10);
+await reopenedMergedStore.close();
 
 // Uma falha depois de materializar o placar, no ponto do vínculo auditável,
 // deve reverter tudo: chave anônima, votos e placar continuam intactos.

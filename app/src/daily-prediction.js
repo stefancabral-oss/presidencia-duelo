@@ -149,9 +149,15 @@ export function validateDailyPredictionResults(payload) {
   const answerIds = new Set();
   const predictionIds = new Set();
   let previousDate = null;
+  let previousEditionId = null;
+  let previousOrdinal = -1;
+  let previousPartitioned = false;
 
   for (const session of payload.sessions) {
     const { edition } = session || {};
+    const sameDate = previousDate === edition?.date;
+    const partitioned = session?.historyKind === "current" || session?.historyKind === "previous";
+    const hasOrdinal = Number.isSafeInteger(session?.historyOrdinal) && session.historyOrdinal >= 0;
     if (!edition || !DATE_PATTERN.test(String(edition.date || ""))
       || edition.topicId !== DAILY_TOPIC || !isSupportedDailyRulesetIdentity({
         id: edition.rulesetId,
@@ -163,8 +169,12 @@ export function validateDailyPredictionResults(payload) {
       || edition.id !== `${edition.rulesetId}:v${edition.rulesetVersion}:${DAILY_TOPIC}:${edition.date}:${edition.catalogHash.slice(0, 16)}`
       || !Number.isSafeInteger(edition.candidateCount) || edition.candidateCount < SELECTED_CANDIDATES
       || edition.totalRounds !== DAILY_ROUNDS || edition.cardsPerRound !== DAILY_CARDS
-      || editionIds.has(edition.id) || editionDates.has(edition.date)
-      || (previousDate && edition.date >= previousDate)
+      || (editionIds.has(edition.id) && !sameDate) || (editionDates.has(edition.date) && !sameDate)
+      || (previousDate && edition.date > previousDate)
+      || (sameDate && (edition.id !== previousEditionId || !partitioned || !previousPartitioned
+        || session.historyKind !== "previous" || session.historyOrdinal !== previousOrdinal + 1))
+      || (!sameDate && ((partitioned !== hasOrdinal) || (partitioned && session.historyOrdinal !== 0)))
+      || (partitioned && (!hasOrdinal || (session.historyKind === "current" && session.historyOrdinal !== 0)))
       || !Number.isSafeInteger(session.completedPlayers) || session.completedPlayers < 0
       || session.methodology !== dailyMethodologyForDate(edition.date)
       || !Object.hasOwn(session, "sampleNotice")
@@ -185,6 +195,9 @@ export function validateDailyPredictionResults(payload) {
     editionIds.add(edition.id);
     editionDates.add(edition.date);
     previousDate = edition.date;
+    previousEditionId = edition.id;
+    previousOrdinal = session.historyOrdinal ?? -1;
+    previousPartitioned = partitioned;
     const catalogIds = session.catalog.map(({ id }) => String(id || ""));
     const catalog = new Set(catalogIds);
     if (catalog.size !== SELECTED_CANDIDATES

@@ -153,6 +153,7 @@ let failNextLogout = false;
 let failNextDailySession = false;
 let holdNextSuccessfulRoundVote = false;
 let successfulRoundVotes = 0;
+let successfulGoogleLogins = 0;
 page.on("pageerror", (error) => pageErrors.push(error.message));
 
 await page.route("https://accounts.google.com/gsi/client", (route) => route.fulfill({
@@ -183,7 +184,9 @@ await page.route(/\/api(?:\/|$)/, async (route) => {
       await route.fulfill({ status: 503, json: { error: "falha passageira de login" } });
       return;
     }
-    body = { sessionToken: `pms_${"s".repeat(43)}`, account: { displayName: "Bia", avatarUrl: "" }, player: { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking(), account: { displayName: "Bia", avatarUrl: "" } } };
+    successfulGoogleLogins += 1;
+    body = { sessionToken: `pms_${"s".repeat(43)}`, account: { displayName: "Bia", avatarUrl: "" }, player: { version: 0, duels: 0, rankingPolicy: personalRankingPolicy, ranking: ranking(), account: { displayName: "Bia", avatarUrl: "" } },
+      merge: successfulGoogleLogins > 1 ? { status: "combined", anonymousChoices: 1, activeDaily: "anonymous", dailyConflict: true } : null };
   }
   else if (path === "/api/auth/logout" && request.method() === "POST") {
     if (failNextLogout) {
@@ -278,9 +281,9 @@ try {
   const primaryNavLabels = await page.locator(".bottom-nav .nav-button:visible").allTextContents();
   if (primaryNavLabels.join("|") !== "Início|Duelo|Ranking") throw new Error("A navegação principal não apresenta Início, Duelo e Ranking nesta ordem");
   if (await page.getByRole("button", { name: "Coleção" }).count()) throw new Error("Coleção/Chromas ainda aparece na navegação pública");
-  await page.getByRole("button", { name: "Salvar seu jogo com Google" }).click();
-  await page.getByRole("heading", { name: "Entrou, salvou, jogou." }).waitFor();
-  if (!await page.getByText("Sem cadastro, sem senha nova").isVisible()) throw new Error("O acesso opcional ficou burocrático ou sem contexto");
+  await page.getByRole("button", { name: "Entrar com Google" }).click();
+  await page.getByRole("heading", { name: "Entre com Google" }).waitFor();
+  if (!await page.getByText("Suas escolhas anônimas confirmadas serão reunidas à conta existente.", { exact: false }).isVisible()) throw new Error("O acesso opcional não explica como salvar as escolhas anônimas");
   if (process.env.POLIMATCH_E2E_AUTH_SCREENSHOT) {
     await page.waitForTimeout(280);
     await page.screenshot({ path: process.env.POLIMATCH_E2E_AUTH_SCREENSHOT });
@@ -326,7 +329,7 @@ try {
     failNextDailySession = true;
     await page.getByRole("button", { name: "Sair desta conta" }).click();
     await page.getByRole("heading", { name: "Não conseguimos atualizar a rodada." }).waitFor();
-    if (!await page.getByRole("button", { name: "Salvar seu jogo com Google" }).isVisible()) {
+    if (!await page.getByRole("button", { name: "Entrar com Google" }).isVisible()) {
       throw new Error("A falha diária pós-logout deixou a conta revogada aparecendo como conectada");
     }
     if (await page.evaluate(() => localStorage.getItem("polimatch:v3:recovery-key")) !== "e2e-recovery-key") {
@@ -343,10 +346,11 @@ try {
       throw new Error("O logout não rotacionou o roundId ligado à identidade anterior");
     }
 
-    await page.getByRole("button", { name: "Salvar seu jogo com Google" }).click();
+    await page.getByRole("button", { name: "Entrar com Google" }).click();
     failNextDailySession = true;
     await page.getByRole("button", { name: "Continuar com Google" }).click();
     await page.getByRole("heading", { name: "Tudo certo, Bia!" }).waitFor();
+    await page.locator(".auth-config-note[role=status]", { hasText: /Suas 1 escolhas recentes foram reunidas ao histórico.*sessão anônima recente continua ativa/i }).waitFor();
     await page.getByRole("button", { name: "Voltar ao jogo" }).click();
     await page.getByRole("heading", { name: "Não conseguimos atualizar a rodada." }).waitFor();
     if (!await page.getByRole("button", { name: "Abrir sua conta" }).isVisible()) {

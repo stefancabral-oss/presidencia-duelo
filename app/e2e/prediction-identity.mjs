@@ -112,7 +112,7 @@ try {
   await page.getByRole("button", { name: "Meu placar de apostas" }).click();
   await page.getByRole("heading", { name: "Apurando recortes fechados…" }).waitFor();
   await waitForHeldRequest();
-  await page.getByRole("button", { name: "Salvar seu jogo com Google" }).click();
+  await page.getByRole("button", { name: "Entrar com Google" }).click();
   await page.getByRole("button", { name: "Continuar com Google" }).click();
   await page.getByRole("heading", { name: "Tudo certo, Bia!" }).waitFor();
   releaseHeldResults();
@@ -132,7 +132,7 @@ try {
   await waitForHeldRequest();
   await page.getByRole("button", { name: "Abrir sua conta" }).click();
   await page.getByRole("button", { name: "Sair desta conta" }).click();
-  await page.getByRole("button", { name: "Salvar seu jogo com Google" }).waitFor();
+  await page.getByRole("button", { name: "Entrar com Google" }).waitFor();
   releaseHeldResults();
   await page.getByRole("heading", { name: "Ainda não há recorte fechado." }).waitFor();
   await page.locator('[data-screen="topics"]').click();

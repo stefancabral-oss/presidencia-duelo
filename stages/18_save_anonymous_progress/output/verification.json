@@ -1,0 +1,19 @@
+{
+  "stage": "18_save_anonymous_progress",
+  "issue": 234,
+  "status": "technical_review",
+  "commit": "ed2900aa64187a32c8e42b50260484a174a10999",
+  "checks": [
+    { "name": "app_unit", "command": "npm test --prefix app", "result": "passed", "count": 168 },
+    { "name": "app_build", "command": "npm run build --prefix app", "result": "passed" },
+    { "name": "app_build_google_mock", "command": "VITE_GOOGLE_CLIENT_ID=e2e-client-id npm run build --prefix app", "result": "passed" },
+    { "name": "interaction_smoke", "command": "POLIMATCH_E2E_URL=http://127.0.0.1:4173/ node app/e2e/interaction-smoke.mjs", "result": "passed", "browser": "chromium" },
+    { "name": "prediction_identity", "command": "POLIMATCH_E2E_URL=http://127.0.0.1:4173/ node app/e2e/prediction-identity.mjs", "result": "passed", "browser": "chromium" },
+    { "name": "back_focused", "command": "node --test back/src/topic-store.test.js back/src/google-auth.test.js back/src/http-app.test.js", "result": "passed", "count": 51 },
+    { "name": "back_unit_ci", "run": 35678125860, "result": "passed" },
+    { "name": "back_integration_postgres_ci", "run": 35678125860, "result": "passed" },
+    { "name": "shared_data_ci", "run": 35678125860, "result": "passed" },
+    { "name": "design_validator_ci", "run": 35678125780, "result": "passed" },
+    { "name": "real_google_account_acceptance", "result": "pending_human_gate" }
+  ]
+}

@@ -1224,8 +1224,151 @@ await assert.rejects(
   ),
   /imutáveis/,
 );
+
+// Uma conta antiga e uma sessão anônima respondem o mesmo slot. O vínculo
+// preserva os dois recibos, continua a sessão recente e não fabrica voto.
+const mergeSubject = `merge-${randomUUID()}`;
+const accountSource = await dailyStore.createPlayer({ networkHash: "2".repeat(64) });
+const accountSourceId = await playerIdFor(accountSource.recoveryKey);
+let accountDaily = await dailyStore.dailySession(accountSource.recoveryKey, "eleicoes-2026");
+for (let slot = 1; slot <= 10; slot += 1) {
+  await clearMinuteQuota();
+  const result = await dailyStore.dailyVote({
+    topicId: "eleicoes-2026", editionId: accountDaily.edition.id, slot,
+    winnerId: accountDaily.round.candidateIds[0], answerId: randomUUID(),
+    recoveryKey: accountSource.recoveryKey, playerVersion: slot - 1,
+  });
+  accountDaily = result.dailySession;
+}
+assert.equal(accountDaily.status, "completed");
+const oldAccount = await dailyStore.signInWithGoogle({
+  identity: { subject: mergeSubject, displayName: "Teste" },
+  currentToken: accountSource.recoveryKey, topicId: "eleicoes-2026",
+});
+const anonymousSource = await dailyStore.createPlayer({ networkHash: "3".repeat(64) });
+const anonymousSourceId = await playerIdFor(anonymousSource.recoveryKey);
+const anonymousDaily = await dailyStore.dailySession(anonymousSource.recoveryKey, "eleicoes-2026");
+await clearMinuteQuota();
+await dailyStore.dailyVote({
+  topicId: "eleicoes-2026", editionId: anonymousDaily.edition.id, slot: 1,
+  winnerId: anonymousDaily.round.candidateIds[1], answerId: randomUUID(),
+  recoveryKey: anonymousSource.recoveryKey, playerVersion: 0,
+});
+const beforeMerge = await quotaMaintenance.query(
+  "SELECT (SELECT count(*) FROM votes) AS votes, (SELECT count(*) FROM choice_rounds) AS rounds",
+);
+const combined = await dailyStore.signInWithGoogle({
+  identity: { subject: mergeSubject, displayName: "Teste" },
+  currentToken: anonymousSource.recoveryKey, topicId: "eleicoes-2026",
+});
+assert.equal(combined.merge.status, "combined");
+assert.equal(combined.merge.dailyConflict, true);
+assert.equal(combined.merge.activeDaily, "anonymous");
+assert.equal(combined.player.duels, 11);
+assert.equal((await dailyStore.dailySession(combined.sessionToken, "eleicoes-2026")).progress.answered, 1);
+assert.equal((await dailyStore.playerRanking(oldAccount.sessionToken, "eleicoes-2026")).duels, 11);
+await assert.rejects(dailyStore.playerRanking(anonymousSource.recoveryKey, "eleicoes-2026"), /expirada/);
+const retry = await dailyStore.signInWithGoogle({
+  identity: { subject: mergeSubject, displayName: "Teste" },
+  currentToken: anonymousSource.recoveryKey, topicId: "eleicoes-2026",
+});
+assert.equal(retry.merge.status, "alreadyCombined");
+assert.equal(retry.player.duels, 11);
+const afterMerge = await quotaMaintenance.query(
+  `SELECT (SELECT count(*) FROM votes) AS votes, (SELECT count(*) FROM choice_rounds) AS rounds,
+    (SELECT count(*) FROM daily_answers WHERE player_id=ANY($1::uuid[])) AS preserved_answers,
+    (SELECT count(*) FROM player_history_links WHERE player_id=$2) AS links`,
+  [[accountSourceId, anonymousSourceId], anonymousSourceId],
+);
+assert.equal(afterMerge.rows[0].votes, beforeMerge.rows[0].votes);
+assert.equal(afterMerge.rows[0].rounds, beforeMerge.rows[0].rounds);
+assert.equal(Number(afterMerge.rows[0].preserved_answers), 11);
+assert.equal(Number(afterMerge.rows[0].links), 1);
+let continuedDaily = await dailyStore.dailySession(combined.sessionToken, "eleicoes-2026");
+let continuedVersion = combined.player.version;
+for (let slot = 2; slot <= 10; slot += 1) {
+  await clearMinuteQuota();
+  const result = await dailyStore.dailyVote({
+    topicId: "eleicoes-2026", editionId: continuedDaily.edition.id, slot,
+    winnerId: continuedDaily.round.candidateIds[1], answerId: randomUUID(),
+    recoveryKey: combined.sessionToken, playerVersion: continuedVersion,
+  });
+  continuedDaily = result.dailySession;
+  continuedVersion = result.player.version;
+}
+assert.equal(continuedDaily.status, "completed");
+const mergedResults = await dailyStore.dailyPredictionResults(
+  combined.sessionToken, "eleicoes-2026", { now: new Date("2026-09-18T12:00:00Z") },
+);
+const sameDay = mergedResults.sessions.filter((session) => session.edition.id === continuedDaily.edition.id);
+assert.deepEqual(sameDay.map(({ historyKind, historyOrdinal }) => [historyKind, historyOrdinal]),
+  [["current", 0], ["previous", 1]]);
+assert.ok(sameDay.every((session) => session.completed));
+
+// Um segundo vínculo no modo livre soma uma única vez e mantém a rodada diária
+// atual; o antigo login da conta continua funcional em outro dispositivo.
+const freeSource = await dailyStore.createPlayer({ networkHash: "4".repeat(64) });
+await clearMinuteQuota();
+await dailyStore.roundVote({
+  topicId: "eleicoes-2026", winnerId: freeCandidates[0], candidateIds: freeCandidates,
+  roundId: randomUUID(), recoveryKey: freeSource.recoveryKey, playerVersion: 0,
+});
+const freeCombined = await dailyStore.signInWithGoogle({
+  identity: { subject: mergeSubject, displayName: "Teste" },
+  currentToken: freeSource.recoveryKey, topicId: "eleicoes-2026",
+});
+assert.equal(freeCombined.merge.activeDaily, "account");
+assert.equal(freeCombined.player.duels, 21);
+assert.equal((await dailyStore.dailySession(freeCombined.sessionToken, "eleicoes-2026")).progress.answered, 10);
+assert.equal((await dailyStore.playerRanking(oldAccount.sessionToken, "eleicoes-2026")).duels, 21);
+await assert.rejects(dailyStore.playerRanking(freeSource.recoveryKey, "eleicoes-2026"), /expirada/);
+const reopenedMergedStore = createTopicStore(connectionString, {
+  clock: () => dailyNow, candidateRegistry: mutableCandidateRegistry,
+});
+await reopenedMergedStore.init();
+assert.equal((await reopenedMergedStore.playerRanking(freeCombined.sessionToken, "eleicoes-2026")).duels, 21);
+assert.equal((await reopenedMergedStore.dailySession(freeCombined.sessionToken, "eleicoes-2026")).progress.answered, 10);
+await reopenedMergedStore.close();
+
+// Uma falha depois de materializar o placar, no ponto do vínculo auditável,
+// deve reverter tudo: chave anônima, votos e placar continuam intactos.
+const rollbackSubject = `rollback-${randomUUID()}`;
+const rollbackAccount = await dailyStore.createPlayer({ networkHash: "5".repeat(64) });
+await dailyStore.signInWithGoogle({ identity: { subject: rollbackSubject, displayName: "Teste" },
+  currentToken: rollbackAccount.recoveryKey, topicId: "eleicoes-2026" });
+const rollbackSource = await dailyStore.createPlayer({ networkHash: "6".repeat(64) });
+await clearMinuteQuota();
+await dailyStore.roundVote({ topicId: "eleicoes-2026", winnerId: freeCandidates[0], candidateIds: freeCandidates,
+  roundId: randomUUID(), recoveryKey: rollbackSource.recoveryKey, playerVersion: 0 });
+const rollbackBefore = await quotaMaintenance.query(
+  "SELECT (SELECT count(*) FROM votes) AS votes, (SELECT count(*) FROM player_history_links) AS links",
+);
+await quotaMaintenance.query(`CREATE FUNCTION reject_test_merge() RETURNS trigger LANGUAGE plpgsql AS $$
+  BEGIN RAISE EXCEPTION 'merge rollback test'; END $$;
+  CREATE TRIGGER reject_test_merge BEFORE INSERT ON player_history_links
+  FOR EACH ROW EXECUTE FUNCTION reject_test_merge()`);
+await assert.rejects(dailyStore.signInWithGoogle({
+  identity: { subject: rollbackSubject, displayName: "Teste" },
+  currentToken: rollbackSource.recoveryKey, topicId: "eleicoes-2026",
+}), /merge rollback test/);
+assert.equal((await dailyStore.playerRanking(rollbackSource.recoveryKey, "eleicoes-2026")).duels, 1);
+const rollbackAfter = await quotaMaintenance.query(
+  "SELECT (SELECT count(*) FROM votes) AS votes, (SELECT count(*) FROM player_history_links) AS links",
+);
+assert.deepEqual(rollbackAfter.rows[0], rollbackBefore.rows[0]);
+await quotaMaintenance.query("DROP TRIGGER reject_test_merge ON player_history_links; DROP FUNCTION reject_test_merge()");
+const recoveredMerge = await dailyStore.signInWithGoogle({
+  identity: { subject: rollbackSubject, displayName: "Teste" },
+  currentToken: rollbackSource.recoveryKey, topicId: "eleicoes-2026",
+});
+assert.equal(recoveredMerge.merge.status, "combined");
+assert.equal(recoveredMerge.player.duels, 1);
+await assert.rejects(dailyStore.signInWithGoogle({
+  identity: { subject: `other-${randomUUID()}`, displayName: "Outra conta" },
+  currentToken: rollbackSource.recoveryKey, topicId: "eleicoes-2026",
+}), /expirada/);
 await crossingStore.close();
 await dailyStore.close();
 await quotaMaintenance.end();
 
-console.log("Smoke PostgreSQL aprovado: reset e upgrade aditivos, identidade/sessão, Elo idempotente, edição diária comum, apostas lacradas e idempotentes, 10/10 atômico, reload, concorrência, virada de São Paulo, corte fechado e modo livre separado.");
+console.log("Smoke PostgreSQL aprovado: reset e upgrade aditivos, identidade/sessão, incorporação de escolhas anônimas, Elo idempotente, edição diária comum, apostas lacradas e idempotentes, 10/10 atômico, reload, concorrência, virada de São Paulo, corte fechado e modo livre separado.");

@@ -60,6 +60,7 @@ const state = {
   authBusy: false,
   authError: "",
   authErrorKind: "",
+  authNotice: "",
   collection: [],
   gameFeatures: {},
   pairRemaining: 0,
@@ -291,7 +292,7 @@ function candidateSlot(index) {
 }
 
 function headerMarkup() {
-  return `<header class="topbar"><p class="brand">${brandSymbol()}<span>PoliMatch</span></p><div class="topbar-actions"><span class="edition">Malaquita 2026</span><button class="account-button" id="account-button" type="button" aria-label="Salvar seu jogo com Google"><span class="account-avatar"><img class="account-photo" alt="" referrerpolicy="no-referrer" hidden>${brandSymbol("account-symbol")}</span><span data-account-label>Salvar jogo</span></button><button class="sound-toggle" id="sound-toggle" type="button"><span aria-hidden="true"></span></button></div></header>`;
+  return `<header class="topbar"><p class="brand">${brandSymbol()}<span>PoliMatch</span></p><div class="topbar-actions"><span class="edition">Malaquita 2026</span><button class="account-button" id="account-button" type="button" aria-label="Entrar com Google"><span class="account-avatar"><img class="account-photo" alt="" referrerpolicy="no-referrer" hidden>${brandSymbol("account-symbol")}</span><span data-account-label>Entrar</span></button><button class="sound-toggle" id="sound-toggle" type="button"><span aria-hidden="true"></span></button></div></header>`;
 }
 
 function candidateSlotModel(candidate, { actionMode = "vote" } = {}) {
@@ -339,9 +340,10 @@ function authOverlay() {
     <section class="auth-card">
       <button class="auth-close" id="close-auth" type="button" aria-label="Fechar">×</button>
       <span class="auth-mark" aria-hidden="true">${brandSymbol("auth-symbol")}</span>
-      <p class="eyebrow">${signedIn ? "Seu jogo está salvo" : "Leve seu ranking com você"}</p>
-      <h2 id="auth-title">${signedIn ? `Tudo certo, ${escapeHtml(state.account.displayName?.split(" ")[0] || "jogador")}!` : "Entrou, salvou, jogou."}</h2>
-      <p>${signedIn ? "Suas escolhas ficam ligadas a esta conta e podem continuar em outro aparelho." : "Use o Google para guardar suas escolhas. Sem cadastro, sem senha nova e sem interromper a diversão."}</p>
+      <p class="eyebrow">${signedIn ? "Conta conectada" : "Seu histórico com você"}</p>
+      <h2 id="auth-title">${signedIn ? `Tudo certo, ${escapeHtml(state.account.displayName?.split(" ")[0] || "jogador")}!` : "Entre com Google"}</h2>
+      <p>${signedIn ? "Seu histórico fica ligado a esta conta e pode continuar em outro aparelho." : "Entre para recuperar seu histórico. Suas escolhas anônimas confirmadas serão reunidas à conta existente."}</p>
+      ${signedIn && state.authNotice ? `<p class="auth-config-note" role="status">${escapeHtml(state.authNotice)}</p>` : ""}
       ${state.authError ? `<p class="auth-error" role="alert">${escapeHtml(state.authError)}</p>` : ""}
       ${signedIn
         ? `<button class="auth-secondary" id="logout" type="button" ${state.authBusy ? "disabled" : ""}>Sair desta conta</button>`
@@ -536,7 +538,8 @@ function dailyPredictionResultsScreen() {
       session.completedPlayers === 1 ? PREDICTION_REVEAL_COPY.completedSessionsOneTemplate : PREDICTION_REVEAL_COPY.completedSessionsManyTemplate,
       { count: session.completedPlayers },
     );
-    return `<details class="prediction-session"${results.sessions[0] === session ? " open" : ""}><summary><span><strong>${escapeHtml(date)}</strong><small>${escapeHtml(session.methodology)}</small></span><b>${completedSessions}</b></summary>${session.sampleNotice ? `<p class="prediction-sample-note">${escapeHtml(session.sampleNotice)}</p>` : ""}<ol>${rounds}</ol></details>`;
+    const historyLabel = session.historyKind === "previous" ? " · partida anterior" : "";
+    return `<details class="prediction-session"${results.sessions[0] === session ? " open" : ""}><summary><span><strong>${escapeHtml(date)}${historyLabel}</strong><small>${escapeHtml(session.methodology)}</small></span><b>${completedSessions}</b></summary>${session.sampleNotice ? `<p class="prediction-sample-note">${escapeHtml(session.sampleNotice)}</p>` : ""}<ol>${rounds}</ol></details>`;
   }).join("");
   return `<section class="prediction-results-screen">
     <section class="prediction-score-card"><p class="eyebrow">${PREDICTION_REVEAL_COPY.scoreboardEyebrow}</p><h1>${accuracy}</h1><p><strong>${formatAggregateCopy(PREDICTION_REVEAL_COPY.scoreTemplate, { correct: score.correct, scored: score.scored })}</strong> ${PREDICTION_REVEAL_COPY.scoreDetail}</p><span>${formatAggregateCopy(PREDICTION_REVEAL_COPY.baselineComparisonTemplate, { percent: `<b>${results.baselinePercent}</b>` })}</span><small>${PREDICTION_REVEAL_COPY.neutralResults}</small></section>
@@ -770,8 +773,8 @@ function renderHeader() {
   const accountName = state.account?.displayName?.split(" ")[0];
   const avatarUrl = safeUrl(state.account?.avatarUrl);
   refs.accountButton.classList.toggle("is-signed-in", Boolean(state.account));
-  refs.accountButton.setAttribute("aria-label", state.account ? "Abrir sua conta" : "Salvar seu jogo com Google");
-  refs.accountLabel.textContent = accountName ? `Olá, ${accountName}` : "Salvar jogo";
+  refs.accountButton.setAttribute("aria-label", state.account ? "Abrir sua conta" : "Entrar com Google");
+  refs.accountLabel.textContent = accountName ? `Olá, ${accountName}` : "Entrar";
   refs.accountPhoto.hidden = !avatarUrl;
   refs.accountFallback.hidden = Boolean(avatarUrl);
   if (avatarUrl) refs.accountPhoto.setAttribute("src", avatarUrl);
@@ -1903,6 +1906,11 @@ async function handleGoogleCredential(response) {
   localStorage.setItem("polimatch:v3:recovery-key", result.sessionToken);
   state.recoveryKey = result.sessionToken;
   state.account = result.account;
+  state.authNotice = result.merge?.status === "combined"
+    ? result.merge.dailyConflict
+      ? `Suas ${result.merge.anonymousChoices} escolhas recentes foram reunidas ao histórico. Havia duas sessões para a rodada do dia; a sessão anônima recente continua ativa e a anterior permanece no histórico.`
+      : `Suas ${result.merge.anonymousChoices} escolhas recentes foram reunidas ao histórico. A rodada do dia continua na sessão ${result.merge.activeDaily === "anonymous" ? "anônima recente" : "da conta"}.`
+    : result.merge?.status === "alreadyCombined" ? "Suas escolhas já estavam reunidas; o acesso foi recuperado." : "";
   state.predictionResults = null;
   state.predictionResultsError = "";
   state.personalRanking = rankingForCatalog(result.player, state.candidates);
@@ -1935,6 +1943,7 @@ async function signOut() {
     resetPendingVoteForIdentityChange(state);
     state.recoveryKey = player.recoveryKey;
     state.account = null;
+    state.authNotice = "";
     state.predictionResults = null;
     state.predictionResultsError = "";
     state.personalRanking = rankingForCatalog(player.personal, state.candidates);

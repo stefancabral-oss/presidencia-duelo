@@ -188,6 +188,35 @@ test("a forged distribution or score fails closed", () => {
   assert.throws(() => validateDailyPredictionResults(forgedScore), /score/);
 });
 
+test("closed results keep separate same-day histories without accepting a duplicate partition", () => {
+  const payload = closedPayload();
+  payload.sessions[0].historyKind = "current";
+  payload.sessions[0].historyOrdinal = 0;
+  const previous = structuredClone(payload.sessions[0]);
+  previous.historyKind = "previous";
+  previous.historyOrdinal = 1;
+  previous.rounds.forEach((round) => {
+    round.preference = null;
+    round.prediction = null;
+    round.result = "not-answered";
+  });
+  previous.rounds[0].preference = {
+    answerId: uuid("7", 1), candidateId: previous.rounds[0].candidateIds[0],
+    answeredAt: "2026-09-16T15:00:00.000Z",
+  };
+  payload.sessions.push(previous);
+  assert.equal(validateDailyPredictionResults(payload), payload);
+  const repeated = structuredClone(payload);
+  repeated.sessions[1].historyOrdinal = 0;
+  assert.throws(() => validateDailyPredictionResults(repeated), /sessions/);
+  const forgedCurrent = structuredClone(payload);
+  forgedCurrent.sessions[1].historyKind = "current";
+  assert.throws(() => validateDailyPredictionResults(forgedCurrent), /sessions/);
+  const mismatchedEdition = structuredClone(payload);
+  mismatchedEdition.sessions[1].edition.id = "other-edition";
+  assert.throws(() => validateDailyPredictionResults(mismatchedEdition), /sessions/);
+});
+
 test("ACCEPTED_INVALID_REVEAL rejects reinterpreted editions, broken partitions and incoherent history", () => {
   const corruptions = [
     (value) => { value.sessions[0].edition.topicId = "forged-topic"; },

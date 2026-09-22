@@ -135,3 +135,8 @@ jobs:
         env:
           POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
         run: node app/e2e/vote-trust-states.mjs
+
+      - name: Validate civic navigation shell (candidates and news, #223/#224/#217)
+        env:
+          POLIMATCH_E2E_BROWSER: ${{ matrix.browser }}
+        run: node app/e2e/civic-navigation.mjs

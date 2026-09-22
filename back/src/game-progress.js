@@ -56,9 +56,6 @@ export function gameProgressStore({ pool, findPlayer, candidateCatalog, ranking,
       const catalog = candidateCatalog(topic);
       if (catalog.length < 2) fail("elenco insuficiente", 409);
       return transaction(recoveryKey, async (client, player) => {
-        const pending = await client.query(`SELECT i.* FROM issued_pair_rounds i LEFT JOIN choice_rounds r ON r.round_id=i.id
-          WHERE i.player_id=$1 AND i.topic_id=$2 AND i.mode=$3 AND r.round_id IS NULL
-            AND i.candidate_ids <@ $4::text[] ORDER BY i.created_at LIMIT 1`, [player.id, topic, mode, catalog.map(person => person.id)]);
         const completed = await client.query(`SELECT count(*) AS count FROM choice_rounds
           WHERE player_id IN (SELECT $1::uuid UNION ALL SELECT source_player_id FROM player_history_links WHERE player_id=$1)
             AND topic_id=$2 AND choice_mode=$3`, [player.id, topic, mode]);
@@ -81,7 +78,10 @@ export function gameProgressStore({ pool, findPlayer, candidateCatalog, ranking,
           remaining = selected.remaining; candidateIds = selected.pair?.candidateIds;
         }
         if (!remaining) return { status: "completed", mode, remaining: 0, round: null };
-        if (pending.rowCount && pending.rows[0].candidate_ids.every(id => catalog.some(person => person.id === id))) {
+        const pending = await client.query(`SELECT i.* FROM issued_pair_rounds i LEFT JOIN choice_rounds r ON r.round_id=i.id
+          WHERE i.player_id=$1 AND i.topic_id=$2 AND i.mode=$3 AND r.round_id IS NULL
+            AND i.candidate_ids=$4::text[] ORDER BY i.created_at LIMIT 1`, [player.id, topic, mode, candidateIds]);
+        if (pending.rowCount) {
           return { status: "active", mode, remaining, round: { id: pending.rows[0].id, candidateIds: pending.rows[0].candidate_ids } };
         }
         const id = randomUUID();

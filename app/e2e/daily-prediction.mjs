@@ -196,6 +196,7 @@ function createServer() {
     loseNextPredictionResponse: true,
     divergeNextPredictionResponse: false,
     failResults: true,
+    resultsOverride: null,
     predictionRequestCount: 0,
     dailySessionOverride: null,
     dailySessionGate: null,
@@ -275,7 +276,7 @@ async function installApi(page, server) {
     }
     if (pathname === "/api/daily-prediction-results") {
       if (server.failResults) return route.fulfill({ status: 503, json: { error: "placar temporariamente indisponível" } });
-      return route.fulfill({ status: 200, json: closedResults() });
+      return route.fulfill({ status: 200, json: server.resultsOverride || closedResults() });
     }
     return route.fulfill({ status: 404, json: { error: "rota não encontrada" } });
   });
@@ -356,6 +357,27 @@ try {
   await page.getByText("1 de 1", { exact: false }).waitFor();
   await page.getByText("Empate — não pontua", { exact: true }).waitFor();
   await page.getByText("Acima de", { exact: false }).waitFor();
+
+  const mergedHistory = closedResults();
+  mergedHistory.sessions[0].historyKind = "current";
+  mergedHistory.sessions[0].historyOrdinal = 0;
+  const previousSession = structuredClone(mergedHistory.sessions[0]);
+  previousSession.historyKind = "previous";
+  previousSession.historyOrdinal = 1;
+  previousSession.rounds.forEach((round) => {
+    round.preference = null;
+    round.prediction = null;
+    round.result = "not-answered";
+  });
+  previousSession.rounds[0].preference = { answerId: uuid("7", 1),
+    candidateId: previousSession.rounds[0].candidateIds[0], answeredAt: "2026-09-15T14:00:00.000Z" };
+  mergedHistory.sessions.push(previousSession);
+  server.resultsOverride = mergedHistory;
+  await page.getByRole("button", { name: "Voltar ao início" }).click();
+  await page.getByRole("button", { name: "Meu placar de apostas" }).click();
+  await page.locator(".prediction-session").nth(1).waitFor();
+  await page.getByText("partida anterior", { exact: false }).waitFor();
+  assert.equal(await page.locator(".prediction-session").count(), 2, "o histórico incorporado não apareceu em separado");
 
   const midnightPage = await context.newPage();
   const midnightErrors = [];

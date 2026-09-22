@@ -89,8 +89,9 @@ try {
   const oldPair = await store.pairRound(previousWarmup.recoveryKey, "eleicoes-2026", "warmup");
   await store.pairVote({ recoveryKey: previousWarmup.recoveryKey, roundId: oldPair.round.id,
     winnerId: oldPair.round.candidateIds[0], playerVersion: 0 });
-  await store.signInWithGoogle({ identity: { subject: warmupSubject, displayName: "Jogador" },
+  const warmupAccount = await store.signInWithGoogle({ identity: { subject: warmupSubject, displayName: "Jogador" },
     currentToken: previousWarmup.recoveryKey, topicId: "eleicoes-2026" });
+  const stalePair = await store.pairRound(warmupAccount.sessionToken, "eleicoes-2026", "warmup");
   const anonymousPair = await store.pairRound(recentWarmup.recoveryKey, "eleicoes-2026", "warmup");
   await store.pairVote({ recoveryKey: recentWarmup.recoveryKey, roundId: anonymousPair.round.id,
     winnerId: anonymousPair.round.candidateIds[0], playerVersion: 0 });
@@ -99,6 +100,7 @@ try {
   assert.equal(warmupMerge.player.duels, 2);
   const finalPair = await store.pairRound(warmupMerge.sessionToken, "eleicoes-2026", "warmup");
   assert.equal(finalPair.remaining, 1);
+  assert.notEqual(finalPair.round.id, stalePair.round.id);
   assert.notDeepEqual(finalPair.round.candidateIds, oldPair.round.candidateIds);
   await store.pairVote({ recoveryKey: warmupMerge.sessionToken, roundId: finalPair.round.id,
     winnerId: finalPair.round.candidateIds[0], playerVersion: warmupMerge.player.version });

@@ -16,7 +16,7 @@ PR: https://github.com/stefancabral-oss/presidencia-duelo/pull/235
 
 ## Evidência
 
-- `back/scripts/topic-store-smoke.mjs` exercita conflito diário com conta anterior 10/10 e sessão anônima que prossegue até 10/10, retry, outra sessão Google, incorporação posterior no modo livre, revogação da origem, preservação de respostas e ausência de votos públicos extras. `back/scripts/game-progress-smoke.mjs` cobre o aquecimento somado. A integração PostgreSQL passou no CI para `ed2900a`.
+- `back/scripts/topic-store-smoke.mjs` exercita conflito diário com conta anterior 10/10 e sessão anônima que prossegue até 10/10, retry, outra sessão Google, incorporação posterior no modo livre, revogação da origem, rollback de falha no vínculo, preservação de respostas e ausência de votos públicos extras. `back/scripts/game-progress-smoke.mjs` cobre o aquecimento somado e emissão pendente. A integração PostgreSQL passou no CI para `ed2900a`; a PR exige CI verde no head atual.
 - `back-unit`, `shared-data` e `Design Validator` passaram no mesmo commit. Chromium e WebKit passaram em `f3f0f45`; o CI do head da PR valida também o novo aviso e o histórico duplicado no navegador.
 - Localmente, 168 testes do app, 51 testes focados de backend e build do app passaram.
 - O suite completo de backend no Windows ficou limitado por Python local indisponível e fixture documental externa; o `back-unit` do CI passou.

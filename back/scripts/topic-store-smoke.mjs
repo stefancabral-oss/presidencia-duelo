@@ -1322,6 +1322,44 @@ assert.equal(freeCombined.player.duels, 21);
 assert.equal((await dailyStore.dailySession(freeCombined.sessionToken, "eleicoes-2026")).progress.answered, 10);
 assert.equal((await dailyStore.playerRanking(oldAccount.sessionToken, "eleicoes-2026")).duels, 21);
 await assert.rejects(dailyStore.playerRanking(freeSource.recoveryKey, "eleicoes-2026"), /expirada/);
+
+// Uma falha depois de materializar o placar, no ponto do vínculo auditável,
+// deve reverter tudo: chave anônima, votos e placar continuam intactos.
+const rollbackSubject = `rollback-${randomUUID()}`;
+const rollbackAccount = await dailyStore.createPlayer({ networkHash: "5".repeat(64) });
+await dailyStore.signInWithGoogle({ identity: { subject: rollbackSubject, displayName: "Teste" },
+  currentToken: rollbackAccount.recoveryKey, topicId: "eleicoes-2026" });
+const rollbackSource = await dailyStore.createPlayer({ networkHash: "6".repeat(64) });
+await clearMinuteQuota();
+await dailyStore.roundVote({ topicId: "eleicoes-2026", winnerId: freeCandidates[0], candidateIds: freeCandidates,
+  roundId: randomUUID(), recoveryKey: rollbackSource.recoveryKey, playerVersion: 0 });
+const rollbackBefore = await quotaMaintenance.query(
+  "SELECT (SELECT count(*) FROM votes) AS votes, (SELECT count(*) FROM player_history_links) AS links",
+);
+await quotaMaintenance.query(`CREATE FUNCTION reject_test_merge() RETURNS trigger LANGUAGE plpgsql AS $$
+  BEGIN RAISE EXCEPTION 'merge rollback test'; END $$;
+  CREATE TRIGGER reject_test_merge BEFORE INSERT ON player_history_links
+  FOR EACH ROW EXECUTE FUNCTION reject_test_merge()`);
+await assert.rejects(dailyStore.signInWithGoogle({
+  identity: { subject: rollbackSubject, displayName: "Teste" },
+  currentToken: rollbackSource.recoveryKey, topicId: "eleicoes-2026",
+}), /merge rollback test/);
+assert.equal((await dailyStore.playerRanking(rollbackSource.recoveryKey, "eleicoes-2026")).duels, 1);
+const rollbackAfter = await quotaMaintenance.query(
+  "SELECT (SELECT count(*) FROM votes) AS votes, (SELECT count(*) FROM player_history_links) AS links",
+);
+assert.deepEqual(rollbackAfter.rows[0], rollbackBefore.rows[0]);
+await quotaMaintenance.query("DROP TRIGGER reject_test_merge ON player_history_links; DROP FUNCTION reject_test_merge()");
+const recoveredMerge = await dailyStore.signInWithGoogle({
+  identity: { subject: rollbackSubject, displayName: "Teste" },
+  currentToken: rollbackSource.recoveryKey, topicId: "eleicoes-2026",
+});
+assert.equal(recoveredMerge.merge.status, "combined");
+assert.equal(recoveredMerge.player.duels, 1);
+await assert.rejects(dailyStore.signInWithGoogle({
+  identity: { subject: `other-${randomUUID()}`, displayName: "Outra conta" },
+  currentToken: rollbackSource.recoveryKey, topicId: "eleicoes-2026",
+}), /expirada/);
 await crossingStore.close();
 await dailyStore.close();
 await quotaMaintenance.end();

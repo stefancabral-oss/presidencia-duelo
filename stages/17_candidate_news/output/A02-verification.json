@@ -149,11 +149,12 @@
     "noPlayerSignalsInStorageOrLogs": "passed (unit + E2E storage; logs não instrumentados)",
     "publicVersionsPreserved": "passed (registros pendentes não viram aprovados)",
     "realEndpoints": "pending (B06 #215; caminhos são proposta)",
-    "productAndPrivacyReview": "pending",
+    "productAndPrivacyReview": "approved",
     "human": {
-      "decision": "pending",
-      "responsible": null,
-      "observation": "Nenhum gate humano foi aprovado por esta execução."
+      "decision": "approved",
+      "responsible": "Stefan Cabral",
+      "approvedAt": "2026-09-22T03:07:04Z",
+      "observation": "Stefan aprovou o gate humano de A02 em 22/09/2026, autorizando o merge da cadeia #237→#238→#233. Registro é a decisão de produto/privacidade do responsável; não declara medição formal adicional além da já registrada em local/e2e. realEndpoints segue pending — depende de B06 (#215), fora do escopo deste gate."
     }
   },
   "rollback": "Módulos isolados em app/src/civic; reverter o commit não afeta jogo, banco ou storage do jogador. A chave polimatch:civic:uf pode ser removida com clear()."

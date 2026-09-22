@@ -17,9 +17,9 @@ Issue [#223](https://github.com/stefancabral-oss/presidencia-duelo/issues/223), 
 - Regressão local em Chromium: os 13 scripts E2E existentes do workflow passaram com o shell integrado (flags desligadas nesses cenários). Coleção segue `gameFeatures.collection`, como antes.
 - Limites: WebKit só será exercitado no CI da PR; zoom e leitores de tela não foram medidos; a entrada por vínculo pessoa → candidatura a partir do perfil do jogo depende de B06 e não foi implementada; cache, flags operacionais e isolamento do PWA pertencem a A03.
 
-## Revisão humana pendente
+## Revisão humana
 
-Responsável de produto valida a organização da navegação e o retorno à rodada no protótipo integrado. Nenhuma decisão humana foi registrada; #223 permanece aberta. Detalhes em [A01-verification.json](A01-verification.json).
+Stefan (responsável de produto) aprovou este gate em 22/09/2026, autorizando o merge da cadeia #237→#238→#233. #223 permanece aberta até seu próprio critério de conclusão; a aprovação do gate não fecha a issue. Detalhes em [A01-verification.json](A01-verification.json).
 
 ## Reversão
 

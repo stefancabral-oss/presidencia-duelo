@@ -16,9 +16,9 @@ Issue [#217](https://github.com/stefancabral-oss/presidencia-duelo/issues/217), 
 - Só especificação, sem medição: zoom até 200% e leitores de tela (NVDA/VoiceOver). Nenhuma sessão real de produto ou usabilidade ocorreu; capturas e testes não substituem essa evidência.
 - Decisões e dúvidas registradas no protótipo: `Ranking` dentro de `Mais` versus `Notícias` dentro de `Mais`; rótulos das naturezas das afirmações; frase sobre o espaço internacional.
 
-## Revisão humana pendente
+## Revisão humana
 
-Produto valida a proposta de navegação e a hierarquia; editorial valida linguagem de pendência/fonte e os rótulos; revisão assistiva humana e pessoas usuárias validam os fluxos centrais. #217 permanece aberta. Detalhes em [F01-verification.json](F01-verification.json).
+Stefan (produto e editorial) aprovou este gate em 22/09/2026, autorizando o merge da cadeia #237→#238→#233. Medição formal de zoom até 200% e leitores de tela (NVDA/VoiceOver) continua em aberto — a aprovação é a decisão de produto do responsável, não uma declaração de que essa medição ocorreu. #217 permanece aberta até seu próprio critério de conclusão; a aprovação do gate não fecha a issue. Detalhes em [F01-verification.json](F01-verification.json).
 
 ## Reversão
 

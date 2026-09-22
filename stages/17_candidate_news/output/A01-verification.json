@@ -141,11 +141,12 @@
     "focusReturn": "passed (E2E)",
     "frontMountsViaContract": "passed (telas F01 montadas pelo shell sem editar o motor de votação)",
     "rankingCollectionReachable": "passed (E2E: Ranking em Mais; Coleção segue gameFeatures.collection)",
-    "productValidation": "pending",
+    "productValidation": "approved",
     "human": {
-      "decision": "pending",
-      "responsible": null,
-      "observation": "Nenhum gate humano foi aprovado por esta execução."
+      "decision": "approved",
+      "responsible": "Stefan Cabral",
+      "approvedAt": "2026-09-22T03:07:04Z",
+      "observation": "Stefan aprovou o gate humano de A01 em 22/09/2026, autorizando o merge da cadeia #237→#238→#233. Registro é a decisão de produto do responsável; não declara medição formal adicional além da já registrada em local/e2e."
     }
   },
   "rollback": "Desligar civicDirectory/civicNews nas capacidades do servidor restaura a barra atual; reverter o commit remove o shell. Sem alteração de banco, deploy ou service worker."

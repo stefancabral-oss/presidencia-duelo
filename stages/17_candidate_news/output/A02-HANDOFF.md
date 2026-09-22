@@ -15,9 +15,9 @@ Issue [#224](https://github.com/stefancabral-oss/presidencia-duelo/issues/224), 
 - E2E Chromium: corrida de UF, retirada/limite e comparação; inspeção de `localStorage` no navegador encontrou só `polimatch:civic:uf`.
 - Limites: endpoints reais são de B06 (#215) e a integração ponta a ponta é de A04 (#226); os caminhos `/api/civic/v1/*` são proposta. Logs não foram instrumentados (nada é registrado pelo cliente). Não houve leitura de API real.
 
-## Revisão humana pendente
+## Revisão humana
 
-Produto revisa textos e recuperação de erro; responsável por privacidade confirma a preferência local e a ausência de vínculos com dados do jogador. #224 permanece aberta. Detalhes em [A02-verification.json](A02-verification.json).
+Stefan (produto e responsável por privacidade) aprovou este gate em 22/09/2026, autorizando o merge da cadeia #237→#238→#233. #224 permanece aberta até seu próprio critério de conclusão; a aprovação do gate não fecha a issue. Endpoints reais de B06 (#215) continuam fora deste gate. Detalhes em [A02-verification.json](A02-verification.json).
 
 ## Reversão
 

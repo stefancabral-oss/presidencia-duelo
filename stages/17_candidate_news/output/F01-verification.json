@@ -156,13 +156,14 @@
     "navigationProposalUnderSixButtons": "passed (cinco botões; Ranking/Coleção em Mais) — hipótese a validar",
     "keyboardFocusZoomEquivalence": "parcial: teclado e foco no E2E; zoom 200% e leitores de tela só especificados",
     "noElectoralRecommendation": "especificação; revisão editorial pendente",
-    "productValidation": "pending",
-    "editorialValidation": "pending",
-    "assistiveReview": "pending",
+    "productValidation": "approved",
+    "editorialValidation": "approved",
+    "assistiveReview": "pending (sem medição formal de zoom 200%/leitor de tela registrada; ver observação do gate)",
     "human": {
-      "decision": "pending",
-      "responsible": null,
-      "observation": "Nenhum gate humano foi aprovado por esta execução."
+      "decision": "approved",
+      "responsible": "Stefan Cabral",
+      "approvedAt": "2026-09-22T03:07:04Z",
+      "observation": "Stefan aprovou o gate humano de F01 em 22/09/2026, autorizando o merge da cadeia #237→#238→#233. Registro é a decisão de produto/editorial do responsável; não declara que a medição formal de zoom 200% ou leitores de tela (NVDA/VoiceOver) tenha ocorrido — essa evidência específica continua em aberto."
     }
   },
   "rollback": "Reverter o commit remove telas, componentes e CSS; nenhuma dependência do jogo."
